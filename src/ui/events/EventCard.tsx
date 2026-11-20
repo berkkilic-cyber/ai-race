@@ -5,7 +5,7 @@ import { canApply, type ContentPack, type EventDef, type GameState } from '@/eng
 
 import { fmtDay } from '../format';
 import { failureText, t } from '../i18n';
-import { colors, type } from '../theme';
+import { colors, voice } from '../theme';
 import { ChoiceButton } from './ChoiceButton';
 import { EventFrame } from './EventFrame';
 import { toneHaptic } from './haptics';
@@ -18,7 +18,7 @@ export interface EventCardProps {
   onChoose: (choiceId: string) => void;
 }
 
-/** The pending event as a breaking-news card. There is no close button: only a choice ends it. */
+/** The pending event as a tabloid front page. There is no close button: only a choice ends it. */
 export function EventCard({ event, state, pack, onChoose }: EventCardProps) {
   useEffect(() => {
     toneHaptic(event.tone);
@@ -55,8 +55,9 @@ export function EventCard({ event, state, pack, onChoose }: EventCardProps) {
   );
 }
 
-const styles = StyleSheet.create({
-  title: { color: colors.text, fontSize: type.xl, fontWeight: '800', lineHeight: 29 },
-  body: { color: colors.text, fontSize: type.m, lineHeight: 22 },
-  prompt: { color: colors.dim, fontSize: type.xs, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1 },
+export const storyStyles = StyleSheet.create({
+  title: { ...voice.loudHeadline, color: colors.newsInk, fontSize: 34, lineHeight: 33 },
+  body: { color: colors.newsInk, fontSize: 15, lineHeight: 21 },
+  prompt: { ...voice.loudKicker, color: colors.newsDim, fontSize: 12, letterSpacing: 1.6 },
 });
+const styles = storyStyles;

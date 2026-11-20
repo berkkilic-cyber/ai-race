@@ -5,7 +5,7 @@ import type { EventChoiceDef } from '@/engine';
 
 import { fmtCash, fmtCompact } from '../format';
 import { t } from '../i18n';
-import { colors, radius, spacing, touch, type } from '../theme';
+import { colors, spacing, touch, voice } from '../theme';
 import { effectHints } from './hints';
 import { HintChip, RiskTag } from './HintChip';
 
@@ -24,7 +24,11 @@ export interface ChoiceButtonProps {
   onChoose: (choiceId: string) => void;
 }
 
-/** One large choice: label, cost, hint chips, Risky tag; disabled choices stay visible with the reason. */
+/**
+ * One large choice as a strong ink button: condensed label, price tag, hint chips, Risky
+ * stamp. It depresses into its shadow when pressed. Disabled choices stay visible on a
+ * dashed newsprint outline with the reason.
+ */
 export const ChoiceButton = memo(function ChoiceButton({ choice, disabledReason, onChoose }: ChoiceButtonProps) {
   const hints = useMemo(() => effectHints(choice.effects), [choice.effects]);
   const cost = choiceCostText(choice);
@@ -70,22 +74,25 @@ export const ChoiceButton = memo(function ChoiceButton({ choice, disabledReason,
 const styles = StyleSheet.create({
   button: {
     minHeight: touch + 12,
-    borderRadius: radius.s,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.raised,
+    backgroundColor: colors.newsInk,
     paddingHorizontal: spacing.m,
-    paddingVertical: spacing.m,
+    paddingVertical: spacing.s + 2,
     gap: spacing.s,
+    marginRight: 3,
+    marginBottom: 3,
+    shadowColor: colors.newsRed,
+    shadowOffset: { width: 3, height: 3 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
   },
-  pressed: { borderColor: colors.player, backgroundColor: colors.bg },
-  disabled: { backgroundColor: colors.surface, borderStyle: 'dashed' },
+  pressed: { transform: [{ translateX: 3 }, { translateY: 3 }], shadowOffset: { width: 0, height: 0 } },
+  disabled: { backgroundColor: colors.newsWash, borderWidth: 1, borderColor: colors.newsDim, borderStyle: 'dashed', shadowOpacity: 0 },
   top: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.s },
-  label: { flex: 1, color: colors.text, fontSize: type.m, fontWeight: '700', lineHeight: 20 },
-  dimText: { color: colors.dim },
-  cost: { backgroundColor: colors.player, borderRadius: radius.pill, paddingHorizontal: spacing.s, paddingVertical: 2, marginTop: 1 },
-  costDisabled: { backgroundColor: colors.raised },
-  costText: { color: colors.onPlayer, fontSize: type.xs, fontWeight: '800' },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
-  reason: { color: colors.bad, fontSize: type.xs, fontWeight: '600' },
+  label: { ...voice.loudKicker, flex: 1, color: colors.newsPaper, fontSize: 18, lineHeight: 20, letterSpacing: 0.4 },
+  dimText: { color: colors.newsDim },
+  cost: { backgroundColor: colors.newsPaper, paddingHorizontal: 6, paddingVertical: 1, marginTop: 1 },
+  costDisabled: { backgroundColor: colors.newsPaper },
+  costText: { ...voice.loudKicker, color: colors.newsInk, fontSize: 13, lineHeight: 16, letterSpacing: 0.4 },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing.xs },
+  reason: { ...voice.loudKicker, color: colors.newsRed, fontSize: 12, letterSpacing: 0.6 },
 });

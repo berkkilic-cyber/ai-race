@@ -2,16 +2,19 @@ import { memo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { t } from '../i18n';
-import { colors, radius, spacing, type } from '../theme';
+import { colors, spacing, voice } from '../theme';
 import { HINT_LABEL_KEYS, type EffectHint } from './hints';
 
-/** Direction-only chip: an arrow and the thing that moves, green when good for the player, red when bad. */
+/**
+ * Direction-only chip: an arrow and the thing that moves, green when good for the
+ * player, red when bad. Hard-edged newsprint label (it sits on an ink choice button).
+ */
 export const HintChip = memo(function HintChip({ hint, muted }: { hint: EffectHint; muted?: boolean }) {
   const subject = t(HINT_LABEL_KEYS[hint.subject]);
-  const color = muted ? colors.dim : hint.good ? colors.good : colors.bad;
+  const color = muted ? colors.newsDim : hint.good ? colors.newsGood : colors.newsRed;
   return (
     <View
-      style={[styles.chip, { borderColor: color }]}
+      style={[styles.chip, muted && styles.chipMuted]}
       accessibilityLabel={t(hint.dir === 'up' ? 'ui.events.hint.up' : 'ui.events.hint.down', { subject })}
     >
       <Text style={[styles.arrow, { color }]}>{hint.dir === 'up' ? '▲' : '▼'}</Text>
@@ -22,12 +25,11 @@ export const HintChip = memo(function HintChip({ hint, muted }: { hint: EffectHi
   );
 });
 
-/** Amber "Risky" tag for choices with a gamble. */
+/** "Risky" as a rotated red stamp for choices with a gamble. */
 export function RiskTag({ muted }: { muted?: boolean }) {
-  const color = muted ? colors.dim : colors.player;
   return (
-    <View style={[styles.chip, styles.risk, { borderColor: color }]}>
-      <Text style={[styles.text, styles.riskText, { color }]}>{t('ui.events.risky')}</Text>
+    <View style={[styles.stamp, muted && styles.stampMuted]}>
+      <Text style={[styles.stampText, muted && styles.stampTextMuted]}>{t('ui.events.risky')}</Text>
     </View>
   );
 }
@@ -37,14 +39,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 3,
-    borderWidth: 1,
-    borderRadius: radius.pill,
-    paddingHorizontal: spacing.s,
-    paddingVertical: 2,
-    backgroundColor: colors.bg,
+    paddingHorizontal: 5,
+    paddingVertical: 1,
+    backgroundColor: colors.newsPaper,
   },
-  arrow: { fontSize: 8, fontWeight: '900' },
-  text: { fontSize: type.xs, fontWeight: '700' },
-  risk: { borderStyle: 'dashed' },
-  riskText: { textTransform: 'uppercase', letterSpacing: 0.5 },
+  chipMuted: { backgroundColor: colors.newsWash },
+  arrow: { fontSize: 8 },
+  text: { ...voice.loudKicker, fontSize: 12, lineHeight: 15, letterSpacing: 0.6 },
+  stamp: {
+    marginLeft: spacing.xs,
+    paddingHorizontal: 6,
+    paddingVertical: 0,
+    borderWidth: 2,
+    borderColor: colors.newsRed,
+    backgroundColor: colors.newsRed,
+    transform: [{ rotate: '-6deg' }],
+  },
+  stampMuted: { backgroundColor: colors.newsWash, borderColor: colors.newsRed },
+  stampText: { ...voice.loudKicker, fontSize: 12, lineHeight: 15, letterSpacing: 1.6, color: colors.newsPaper },
+  stampTextMuted: { color: colors.newsRed },
 });

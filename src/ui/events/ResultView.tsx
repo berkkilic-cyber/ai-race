@@ -6,7 +6,7 @@ import type { EventDef, GameState } from '@/engine';
 import { Button } from '../components/Button';
 import { t } from '../i18n';
 import type { EventResult } from '../store/game';
-import { colors, radius, spacing, tabular, type } from '../theme';
+import { colors, spacing, voice } from '../theme';
 import { DELTA_LABEL_KEYS, formatDelta, type StatDelta } from './deltas';
 import { EventFrame } from './EventFrame';
 import { toneHaptic } from './haptics';
@@ -41,17 +41,17 @@ export function ResultView({ event, result, playerLabId, deltas, onContinue }: R
             {deltas.length === 0 ? <Text style={styles.nothing}>{t('ui.events.result.nothing')}</Text> : null}
             {deltas.map((d) => (
               <View key={d.id} style={styles.row}>
-                <View style={[styles.mark, { backgroundColor: d.good ? colors.good : colors.bad }]} />
+                <View style={[styles.mark, { backgroundColor: d.good ? colors.newsGood : colors.newsRed }]} />
                 <Text style={styles.rowLabel} numberOfLines={1}>
                   {t(DELTA_LABEL_KEYS[d.id])}
                 </Text>
-                <Text style={[styles.rowValue, { color: d.good ? colors.good : colors.bad }]}>{formatDelta(d, t('ui.events.delta.points'))}</Text>
+                <Text style={[styles.rowValue, { color: d.good ? colors.newsGood : colors.newsRed }]}>{formatDelta(d, t('ui.events.delta.points'))}</Text>
               </View>
             ))}
           </View>
         ) : null
       }
-      footer={<Button label={t('ui.events.continue')} variant="primary" onPress={onContinue} testID="event-continue" />}
+      footer={<Button label={t('ui.events.continue')} variant="ink" onPress={onContinue} testID="event-continue" />}
     >
       <Text style={styles.title}>{t(event.titleKey)}</Text>
       {choice ? <Text style={styles.choice}>{`› ${t(choice.labelKey)}`}</Text> : null}
@@ -61,14 +61,14 @@ export function ResultView({ event, result, playerLabId, deltas, onContinue }: R
 }
 
 const styles = StyleSheet.create({
-  title: { color: colors.text, fontSize: type.l, fontWeight: '800' },
-  choice: { color: colors.player, fontSize: type.s, fontWeight: '700' },
-  body: { color: colors.text, fontSize: type.m, lineHeight: 22 },
-  changes: { backgroundColor: colors.bg, borderRadius: radius.s, borderWidth: 1, borderColor: colors.border, padding: spacing.m, gap: spacing.s },
-  heading: { color: colors.dim, fontSize: type.xs, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1 },
-  nothing: { color: colors.dim, fontSize: type.s },
-  row: { flexDirection: 'row', alignItems: 'center', gap: spacing.s },
-  mark: { width: 3, height: 14, borderRadius: 2 },
-  rowLabel: { flex: 1, color: colors.text, fontSize: type.s },
-  rowValue: { fontSize: type.s, fontWeight: '800', ...tabular },
+  title: { ...voice.loudHeadline, color: colors.newsInk, fontSize: 28, lineHeight: 28 },
+  choice: { ...voice.loudKicker, color: colors.newsRed, fontSize: 14, letterSpacing: 0.8 },
+  body: { color: colors.newsInk, fontSize: 15, lineHeight: 21 },
+  changes: { gap: 0 },
+  heading: { ...voice.loudKicker, color: colors.newsInk, fontSize: 12, letterSpacing: 1.6, paddingBottom: spacing.xs, borderBottomWidth: 3, borderColor: colors.newsInk },
+  nothing: { color: colors.newsDim, fontSize: 13, paddingTop: spacing.s },
+  row: { flexDirection: 'row', alignItems: 'center', gap: spacing.s, paddingVertical: 6, borderBottomWidth: 1, borderColor: colors.newsRule },
+  mark: { width: 4, height: 14 },
+  rowLabel: { flex: 1, color: colors.newsInk, fontSize: 14 },
+  rowValue: { ...voice.loudKicker, fontSize: 17, lineHeight: 19, letterSpacing: 0.3, fontVariant: ['tabular-nums'] },
 });

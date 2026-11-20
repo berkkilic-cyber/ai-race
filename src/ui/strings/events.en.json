@@ -1,6 +1,6 @@
 {
   "ui.events.label.bad": "Breaking",
-  "ui.events.label.good": "Good news",
+  "ui.events.label.good": "Exclusive",
   "ui.events.label.neutral": "Developing",
   "ui.events.live": "Live",
   "ui.events.choose": "Choose your response",
@@ -15,7 +15,7 @@
   "ui.events.hint.rivals": "Rivals",
   "ui.events.hint.up": "{subject} up",
   "ui.events.hint.down": "{subject} down",
-  "ui.events.result.label": "Outcome",
+  "ui.events.result.label": "Follow-up",
   "ui.events.result.backfired": "Backfired",
   "ui.events.result.changed": "What changed",
   "ui.events.result.nothing": "Nothing measurable changed.",
