@@ -1,0 +1,3540 @@
+[
+  {
+    "id": "parking-lot-gpus",
+    "titleKey": "event.parking-lot-gpus.title",
+    "bodyKey": "event.parking-lot-gpus.body",
+    "tone": "neutral",
+    "weight": 1,
+    "once": true,
+    "conditions": [
+      {
+        "type": "tickAtMost",
+        "value": 600
+      }
+    ],
+    "choices": [
+      {
+        "id": "buy",
+        "labelKey": "event.parking-lot-gpus.buy.label",
+        "resultKey": "event.parking-lot-gpus.buy.result",
+        "cost": {
+          "cash": 40
+        },
+        "effects": [
+          {
+            "type": "compute",
+            "amount": 4
+          }
+        ],
+        "risk": {
+          "chance": 0.3,
+          "effects": [
+            {
+              "type": "compute",
+              "amount": -2
+            },
+            {
+              "type": "meter",
+              "meter": "backlash",
+              "amount": 4
+            }
+          ],
+          "resultKey": "event.parking-lot-gpus.buy.risk"
+        }
+      },
+      {
+        "id": "pass",
+        "labelKey": "event.parking-lot-gpus.pass.label",
+        "resultKey": "event.parking-lot-gpus.pass.result",
+        "effects": [
+          {
+            "type": "resource",
+            "resource": "hype",
+            "amount": 6
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "viral-poem",
+    "titleKey": "event.viral-poem.title",
+    "bodyKey": "event.viral-poem.body",
+    "tone": "good",
+    "weight": 1.2,
+    "once": true,
+    "conditions": [
+      {
+        "type": "tickAtMost",
+        "value": 600
+      }
+    ],
+    "choices": [
+      {
+        "id": "lean-in",
+        "labelKey": "event.viral-poem.lean-in.label",
+        "resultKey": "event.viral-poem.lean-in.result",
+        "effects": [
+          {
+            "type": "resource",
+            "resource": "hype",
+            "amount": 20
+          },
+          {
+            "type": "timedModifier",
+            "modifier": {
+              "stat": "spreadRate",
+              "op": "mul",
+              "value": 1.3
+            },
+            "durationTicks": 150
+          },
+          {
+            "type": "meter",
+            "meter": "backlash",
+            "amount": 5
+          }
+        ]
+      },
+      {
+        "id": "monetise",
+        "labelKey": "event.viral-poem.monetise.label",
+        "resultKey": "event.viral-poem.monetise.result",
+        "effects": [
+          {
+            "type": "resource",
+            "resource": "cash",
+            "amount": 60
+          },
+          {
+            "type": "resource",
+            "resource": "hype",
+            "amount": 5
+          }
+        ]
+      },
+      {
+        "id": "humble",
+        "labelKey": "event.viral-poem.humble.label",
+        "resultKey": "event.viral-poem.humble.result",
+        "effects": [
+          {
+            "type": "resource",
+            "resource": "hype",
+            "amount": 8
+          },
+          {
+            "type": "meter",
+            "meter": "regulation",
+            "amount": -3
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "celebrity-angel",
+    "titleKey": "event.celebrity-angel.title",
+    "bodyKey": "event.celebrity-angel.body",
+    "tone": "neutral",
+    "weight": 1,
+    "once": true,
+    "conditions": [
+      {
+        "type": "tickAtMost",
+        "value": 600
+      }
+    ],
+    "choices": [
+      {
+        "id": "accept",
+        "labelKey": "event.celebrity-angel.accept.label",
+        "resultKey": "event.celebrity-angel.accept.result",
+        "effects": [
+          {
+            "type": "resource",
+            "resource": "cash",
+            "amount": 120
+          },
+          {
+            "type": "meter",
+            "meter": "backlash",
+            "amount": 6
+          }
+        ]
+      },
+      {
+        "id": "counter",
+        "labelKey": "event.celebrity-angel.counter.label",
+        "resultKey": "event.celebrity-angel.counter.result",
+        "effects": [
+          {
+            "type": "resource",
+            "resource": "cash",
+            "amount": 50
+          },
+          {
+            "type": "resource",
+            "resource": "hype",
+            "amount": 4
+          }
+        ]
+      },
+      {
+        "id": "decline",
+        "labelKey": "event.celebrity-angel.decline.label",
+        "resultKey": "event.celebrity-angel.decline.result",
+        "effects": [
+          {
+            "type": "resource",
+            "resource": "hype",
+            "amount": 8
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "billboard-pitch",
+    "titleKey": "event.billboard-pitch.title",
+    "bodyKey": "event.billboard-pitch.body",
+    "tone": "neutral",
+    "weight": 1,
+    "once": true,
+    "conditions": [
+      {
+        "type": "tickAtMost",
+        "value": 600
+      }
+    ],
+    "choices": [
+      {
+        "id": "buy",
+        "labelKey": "event.billboard-pitch.buy.label",
+        "resultKey": "event.billboard-pitch.buy.result",
+        "cost": {
+          "cash": 35
+        },
+        "effects": [
+          {
+            "type": "resource",
+            "resource": "hype",
+            "amount": 18
+          },
+          {
+            "type": "timedModifier",
+            "modifier": {
+              "stat": "seedChance",
+              "op": "mul",
+              "value": 1.25
+            },
+            "durationTicks": 200
+          }
+        ]
+      },
+      {
+        "id": "skip",
+        "labelKey": "event.billboard-pitch.skip.label",
+        "resultKey": "event.billboard-pitch.skip.result",
+        "cost": {
+          "cash": 25
+        },
+        "effects": [
+          {
+            "type": "compute",
+            "amount": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "intern-model",
+    "titleKey": "event.intern-model.title",
+    "bodyKey": "event.intern-model.body",
+    "tone": "good",
+    "weight": 1,
+    "once": true,
+    "conditions": [
+      {
+        "type": "tickAtMost",
+        "value": 600
+      }
+    ],
+    "choices": [
+      {
+        "id": "promote",
+        "labelKey": "event.intern-model.promote.label",
+        "resultKey": "event.intern-model.promote.result",
+        "cost": {
+          "cash": 15
+        },
+        "effects": [
+          {
+            "type": "agiProgress",
+            "amount": 2
+          },
+          {
+            "type": "resource",
+            "resource": "hype",
+            "amount": 10
+          }
+        ]
+      },
+      {
+        "id": "credit",
+        "labelKey": "event.intern-model.credit.label",
+        "resultKey": "event.intern-model.credit.result",
+        "effects": [
+          {
+            "type": "agiProgress",
+            "amount": 3
+          }
+        ],
+        "risk": {
+          "chance": 0.35,
+          "effects": [
+            {
+              "type": "meter",
+              "meter": "backlash",
+              "amount": 8
+            },
+            {
+              "type": "resource",
+              "resource": "hype",
+              "amount": -10
+            }
+          ],
+          "resultKey": "event.intern-model.credit.risk"
+        }
+      }
+    ]
+  },
+  {
+    "id": "cloud-credits",
+    "titleKey": "event.cloud-credits.title",
+    "bodyKey": "event.cloud-credits.body",
+    "tone": "good",
+    "weight": 1,
+    "once": true,
+    "conditions": [
+      {
+        "type": "tickAtMost",
+        "value": 600
+      }
+    ],
+    "choices": [
+      {
+        "id": "accept",
+        "labelKey": "event.cloud-credits.accept.label",
+        "resultKey": "event.cloud-credits.accept.result",
+        "effects": [
+          {
+            "type": "compute",
+            "amount": 4
+          },
+          {
+            "type": "timedModifier",
+            "modifier": {
+              "stat": "cashIncome",
+              "op": "mul",
+              "value": 0.85
+            },
+            "durationTicks": 300
+          }
+        ]
+      },
+      {
+        "id": "refuse",
+        "labelKey": "event.cloud-credits.refuse.label",
+        "resultKey": "event.cloud-credits.refuse.result",
+        "effects": [
+          {
+            "type": "resource",
+            "resource": "hype",
+            "amount": 5
+          },
+          {
+            "type": "meter",
+            "meter": "regulation",
+            "amount": -2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "soup-advice",
+    "titleKey": "event.soup-advice.title",
+    "bodyKey": "event.soup-advice.body",
+    "tone": "bad",
+    "weight": 1,
+    "once": false,
+    "conditions": [
+      {
+        "type": "hasNode",
+        "nodeId": "reach-app"
+      }
+    ],
+    "choices": [
+      {
+        "id": "patch",
+        "labelKey": "event.soup-advice.patch.label",
+        "resultKey": "event.soup-advice.patch.result",
+        "cost": {
+          "hype": 10
+        },
+        "effects": [
+          {
+            "type": "meter",
+            "meter": "backlash",
+            "amount": -3
+          }
+        ]
+      },
+      {
+        "id": "meme",
+        "labelKey": "event.soup-advice.meme.label",
+        "resultKey": "event.soup-advice.meme.result",
+        "effects": [
+          {
+            "type": "resource",
+            "resource": "hype",
+            "amount": 15
+          },
+          {
+            "type": "meter",
+            "meter": "backlash",
+            "amount": 5
+          }
+        ]
+      },
+      {
+        "id": "disclaimer",
+        "labelKey": "event.soup-advice.disclaimer.label",
+        "resultKey": "event.soup-advice.disclaimer.result",
+        "effects": [
+          {
+            "type": "meter",
+            "meter": "regulation",
+            "amount": -2
+          },
+          {
+            "type": "timedModifier",
+            "modifier": {
+              "stat": "spreadRate",
+              "op": "mul",
+              "value": 0.9
+            },
+            "durationTicks": 150
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "garage-robots",
+    "titleKey": "event.garage-robots.title",
+    "bodyKey": "event.garage-robots.body",
+    "tone": "neutral",
+    "weight": 0.8,
+    "once": true,
+    "conditions": [
+      {
+        "type": "tickAtMost",
+        "value": 600
+      }
+    ],
+    "choices": [
+      {
+        "id": "partner",
+        "labelKey": "event.garage-robots.partner.label",
+        "resultKey": "event.garage-robots.partner.result",
+        "cost": {
+          "cash": 20
+        },
+        "effects": [
+          {
+            "type": "resource",
+            "resource": "hype",
+            "amount": 15
+          }
+        ]
+      },
+      {
+        "id": "cease",
+        "labelKey": "event.garage-robots.cease.label",
+        "resultKey": "event.garage-robots.cease.result",
+        "effects": [
+          {
+            "type": "meter",
+            "meter": "regulation",
+            "amount": -2
+          },
+          {
+            "type": "resource",
+            "resource": "hype",
+            "amount": -5
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "sandbox-escape",
+    "titleKey": "event.sandbox-escape.title",
+    "bodyKey": "event.sandbox-escape.body",
+    "tone": "bad",
+    "weight": 1.2,
+    "once": true,
+    "conditions": [
+      {
+        "type": "tickAtLeast",
+        "value": 600
+      },
+      {
+        "type": "hasNode",
+        "nodeId": "cap-model-2"
+      }
+    ],
+    "choices": [
+      {
+        "id": "disclose",
+        "labelKey": "event.sandbox-escape.disclose.label",
+        "resultKey": "event.sandbox-escape.disclose.result",
+        "effects": [
+          {
+            "type": "meter",
+            "meter": "backlash",
+            "amount": 5
+          },
+          {
+            "type": "meter",
+            "meter": "regulation",
+            "amount": -8
+          }
+        ]
+      },
+      {
+        "id": "spin",
+        "labelKey": "event.sandbox-escape.spin.label",
+        "resultKey": "event.sandbox-escape.spin.result",
+        "effects": [
+          {
+            "type": "resource",
+            "resource": "hype",
+            "amount": 18
+          },
+          {
+            "type": "meter",
+            "meter": "regulation",
+            "amount": 6
+          }
+        ],
+        "risk": {
+          "chance": 0.35,
+          "effects": [
+            {
+              "type": "meter",
+              "meter": "backlash",
+              "amount": 12
+            }
+          ],
+          "resultKey": "event.sandbox-escape.spin.risk"
+        }
+      },
+      {
+        "id": "patch",
+        "labelKey": "event.sandbox-escape.patch.label",
+        "resultKey": "event.sandbox-escape.patch.result",
+        "requirements": [
+          {
+            "type": "hasNode",
+            "nodeId": "cap-safety-team"
+          }
+        ],
+        "cost": {
+          "cash": 30
+        },
+        "effects": [
+          {
+            "type": "agiProgress",
+            "amount": 2
+          },
+          {
+            "type": "meter",
+            "meter": "backlash",
+            "amount": -2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "blackmail-test",
+    "titleKey": "event.blackmail-test.title",
+    "bodyKey": "event.blackmail-test.body",
+    "tone": "bad",
+    "weight": 1.1,
+    "once": true,
+    "conditions": [
+      {
+        "type": "tickAtLeast",
+        "value": 600
+      },
+      {
+        "type": "hasNode",
+        "nodeId": "cap-model-3"
+      }
+    ],
+    "choices": [
+      {
+        "id": "publish",
+        "labelKey": "event.blackmail-test.publish.label",
+        "resultKey": "event.blackmail-test.publish.result",
+        "effects": [
+          {
+            "type": "meter",
+            "meter": "backlash",
+            "amount": 8
+          },
+          {
+            "type": "meter",
+            "meter": "regulation",
+            "amount": -5
+          },
+          {
+            "type": "resource",
+            "resource": "hype",
+            "amount": 10
+          }
+        ]
+      },
+      {
+        "id": "bury",
+        "labelKey": "event.blackmail-test.bury.label",
+        "resultKey": "event.blackmail-test.bury.result",
+        "effects": [
+          {
+            "type": "agiProgress",
+            "amount": 3
+          }
+        ],
+        "risk": {
+          "chance": 0.4,
+          "effects": [
+            {
+              "type": "meter",
+              "meter": "regulation",
+              "amount": 15
+            },
+            {
+              "type": "meter",
+              "meter": "backlash",
+              "amount": 8
+            }
+          ],
+          "resultKey": "event.blackmail-test.bury.risk"
+        }
+      },
+      {
+        "id": "retrain",
+        "labelKey": "event.blackmail-test.retrain.label",
+        "resultKey": "event.blackmail-test.retrain.result",
+        "requirements": [
+          {
+            "type": "hasNode",
+            "nodeId": "cap-interpretability"
+          }
+        ],
+        "cost": {
+          "hype": 20
+        },
+        "effects": [
+          {
+            "type": "meter",
+            "meter": "backlash",
+            "amount": -6
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "rigged-benchmark",
+    "titleKey": "event.rigged-benchmark.title",
+    "bodyKey": "event.rigged-benchmark.body",
+    "tone": "bad",
+    "weight": 1.4,
+    "once": true,
+    "conditions": [
+      {
+        "type": "hasNode",
+        "nodeId": "shadow-benchmarks"
+      }
+    ],
+    "choices": [
+      {
+        "id": "deny",
+        "labelKey": "event.rigged-benchmark.deny.label",
+        "resultKey": "event.rigged-benchmark.deny.result",
+        "effects": [
+          {
+            "type": "resource",
+            "resource": "hype",
+            "amount": 5
+          }
+        ],
+        "risk": {
+          "chance": 0.5,
+          "effects": [
+            {
+              "type": "meter",
+              "meter": "backlash",
+              "amount": 12
+            },
+            {
+              "type": "meter",
+              "meter": "regulation",
+              "amount": 5
+            }
+          ],
+          "resultKey": "event.rigged-benchmark.deny.risk"
+        }
+      },
+      {
+        "id": "apologise",
+        "labelKey": "event.rigged-benchmark.apologise.label",
+        "resultKey": "event.rigged-benchmark.apologise.result",
+        "effects": [
+          {
+            "type": "resource",
+            "resource": "hype",
+            "amount": -20
+          },
+          {
+            "type": "meter",
+            "meter": "backlash",
+            "amount": -5
+          }
+        ]
+      },
+      {
+        "id": "intern",
+        "labelKey": "event.rigged-benchmark.intern.label",
+        "resultKey": "event.rigged-benchmark.intern.result",
+        "effects": [
+          {
+            "type": "resource",
+            "resource": "hype",
+            "amount": -5
+          },
+          {
+            "type": "meter",
+            "meter": "backlash",
+            "amount": 3
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "staged-demo",
+    "titleKey": "event.staged-demo.title",
+    "bodyKey": "event.staged-demo.body",
+    "tone": "bad",
+    "weight": 1,
+    "once": true,
+    "conditions": [
+      {
+        "type": "tickAtLeast",
+        "value": 600
+      },
+      {
+        "type": "hasNode",
+        "nodeId": "reach-app"
+      }
+    ],
+    "choices": [
+      {
+        "id": "illustrative",
+        "labelKey": "event.staged-demo.illustrative.label",
+        "resultKey": "event.staged-demo.illustrative.result",
+        "effects": [
+          {
+            "type": "resource",
+            "resource": "hype",
+            "amount": -10
+          },
+          {
+            "type": "meter",
+            "meter": "backlash",
+            "amount": 5
+          }
+        ]
+      },
+      {
+        "id": "reshoot",
+        "labelKey": "event.staged-demo.reshoot.label",
+        "resultKey": "event.staged-demo.reshoot.result",
+        "cost": {
+          "cash": 50
+        },
+        "effects": [
+          {
+            "type": "resource",
+            "resource": "hype",
+            "amount": 20
+          }
+        ],
+        "risk": {
+          "chance": 0.4,
+          "effects": [
+            {
+              "type": "resource",
+              "resource": "hype",
+              "amount": -35
+            },
+            {
+              "type": "meter",
+              "meter": "backlash",
+              "amount": 6
+            }
+          ],
+          "resultKey": "event.staged-demo.reshoot.risk"
+        }
+      }
+    ]
+  },
+  {
+    "id": "weekend-coup",
+    "titleKey": "event.weekend-coup.title",
+    "bodyKey": "event.weekend-coup.body",
+    "tone": "neutral",
+    "weight": 1,
+    "once": true,
+    "conditions": [
+      {
+        "type": "tickAtLeast",
+        "value": 600
+      },
+      {
+        "type": "tickAtMost",
+        "value": 1800
+      }
+    ],
+    "choices": [
+      {
+        "id": "vibes",
+        "labelKey": "event.weekend-coup.vibes.label",
+        "resultKey": "event.weekend-coup.vibes.result",
+        "effects": [
+          {
+            "type": "resource",
+            "resource": "hype",
+            "amount": 20
+          },
+          {
+            "type": "meter",
+            "meter": "regulation",
+            "amount": 5
+          }
+        ]
+      },
+      {
+        "id": "grownups",
+        "labelKey": "event.weekend-coup.grownups.label",
+        "resultKey": "event.weekend-coup.grownups.result",
+        "cost": {
+          "cash": 40
+        },
+        "effects": [
+          {
+            "type": "meter",
+            "meter": "regulation",
+            "amount": -8
+          },
+          {
+            "type": "resource",
+            "resource": "hype",
+            "amount": -10
+          }
+        ]
+      },
+      {
+        "id": "documentary",
+        "labelKey": "event.weekend-coup.documentary.label",
+        "resultKey": "event.weekend-coup.documentary.result",
+        "effects": [
+          {
+            "type": "resource",
+            "resource": "cash",
+            "amount": 80
+          },
+          {
+            "type": "meter",
+            "meter": "backlash",
+            "amount": 5
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "export-ban",
+    "titleKey": "event.export-ban.title",
+    "bodyKey": "event.export-ban.body",
+    "tone": "bad",
+    "weight": 1,
+    "once": true,
+    "conditions": [
+      {
+        "type": "tickAtLeast",
+        "value": 600
+      }
+    ],
+    "choices": [
+      {
+        "id": "comply",
+        "labelKey": "event.export-ban.comply.label",
+        "resultKey": "event.export-ban.comply.result",
+        "effects": [
+          {
+            "type": "timedModifier",
+            "modifier": {
+              "stat": "computeCapacity",
+              "op": "mul",
+              "value": 0.8
+            },
+            "durationTicks": 300
+          }
+        ]
+      },
+      {
+        "id": "shell",
+        "labelKey": "event.export-ban.shell.label",
+        "resultKey": "event.export-ban.shell.result",
+        "cost": {
+          "cash": 80
+        },
+        "effects": [
+          {
+            "type": "compute",
+            "amount": 6
+          }
+        ],
+        "risk": {
+          "chance": 0.35,
+          "effects": [
+            {
+              "type": "meter",
+              "meter": "regulation",
+              "amount": 15
+            },
+            {
+              "type": "ban",
+              "scope": {
+                "kind": "random",
+                "count": 1
+              },
+              "durationTicks": 200
+            }
+          ],
+          "resultKey": "event.export-ban.shell.risk"
+        }
+      },
+      {
+        "id": "own",
+        "labelKey": "event.export-ban.own.label",
+        "resultKey": "event.export-ban.own.result",
+        "requirements": [
+          {
+            "type": "hasNode",
+            "nodeId": "cap-own-chips"
+          }
+        ],
+        "effects": [
+          {
+            "type": "resource",
+            "resource": "hype",
+            "amount": 10
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "gpu-shortage",
+    "titleKey": "event.gpu-shortage.title",
+    "bodyKey": "event.gpu-shortage.body",
+    "tone": "bad",
+    "weight": 1,
+    "once": false,
+    "conditions": [
+      {
+        "type": "tickAtLeast",
+        "value": 600
+      }
+    ],
+    "choices": [
+      {
+        "id": "pay",
+        "labelKey": "event.gpu-shortage.pay.label",
+        "resultKey": "event.gpu-shortage.pay.result",
+        "effects": [
+          {
+            "type": "resourcePercent",
+            "resource": "cash",
+            "percent": -25
+          },
+          {
+            "type": "compute",
+            "amount": 8
+          }
+        ]
+      },
+      {
+        "id": "wait",
+        "labelKey": "event.gpu-shortage.wait.label",
+        "resultKey": "event.gpu-shortage.wait.result",
+        "effects": [
+          {
+            "type": "timedModifier",
+            "modifier": {
+              "stat": "agiRate",
+              "op": "mul",
+              "value": 0.8
+            },
+            "durationTicks": 200
+          }
+        ]
+      },
+      {
+        "id": "rent",
+        "labelKey": "event.gpu-shortage.rent.label",
+        "resultKey": "event.gpu-shortage.rent.result",
+        "cost": {
+          "cash": 40
+        },
+        "effects": [
+          {
+            "type": "compute",
+            "amount": 3
+          },
+          {
+            "type": "resource",
+            "resource": "cash",
+            "amount": 40,
+            "target": "leadRival"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "whistleblower",
+    "titleKey": "event.whistleblower.title",
+    "bodyKey": "event.whistleblower.body",
+    "tone": "bad",
+    "weight": 1,
+    "once": true,
+    "conditions": [
+      {
+        "type": "tickAtLeast",
+        "value": 600
+      },
+      {
+        "type": "tickAtMost",
+        "value": 1800
+      }
+    ],
+    "choices": [
+      {
+        "id": "meet",
+        "labelKey": "event.whistleblower.meet.label",
+        "resultKey": "event.whistleblower.meet.result",
+        "effects": [
+          {
+            "type": "meter",
+            "meter": "backlash",
+            "amount": -4
+          },
+          {
+            "type": "meter",
+            "meter": "regulation",
+            "amount": -4
+          },
+          {
+            "type": "resource",
+            "resource": "hype",
+            "amount": -10
+          }
+        ]
+      },
+      {
+        "id": "sue",
+        "labelKey": "event.whistleblower.sue.label",
+        "resultKey": "event.whistleblower.sue.result",
+        "cost": {
+          "cash": 50
+        },
+        "effects": [
+          {
+            "type": "meter",
+            "meter": "regulation",
+            "amount": 3
+          }
+        ],
+        "risk": {
+          "chance": 0.45,
+          "effects": [
+            {
+              "type": "meter",
+              "meter": "backlash",
+              "amount": 15
+            }
+          ],
+          "resultKey": "event.whistleblower.sue.risk"
+        }
+      },
+      {
+        "id": "nda",
+        "labelKey": "event.whistleblower.nda.label",
+        "resultKey": "event.whistleblower.nda.result",
+        "requirements": [
+          {
+            "type": "hasNode",
+            "nodeId": "shadow-nda"
+          }
+        ],
+        "effects": [
+          {
+            "type": "meter",
+            "meter": "backlash",
+            "amount": -2
+          }
+        ],
+        "risk": {
+          "chance": 0.2,
+          "effects": [
+            {
+              "type": "meter",
+              "meter": "backlash",
+              "amount": 10
+            }
+          ],
+          "resultKey": "event.whistleblower.nda.risk"
+        }
+      }
+    ]
+  },
+  {
+    "id": "hearing",
+    "titleKey": "event.hearing.title",
+    "bodyKey": "event.hearing.body",
+    "tone": "bad",
+    "weight": 1.2,
+    "once": true,
+    "conditions": [
+      {
+        "type": "tickAtLeast",
+        "value": 600
+      },
+      {
+        "type": "meterAtLeast",
+        "meter": "regulation",
+        "value": 30
+      }
+    ],
+    "choices": [
+      {
+        "id": "humble",
+        "labelKey": "event.hearing.humble.label",
+        "resultKey": "event.hearing.humble.result",
+        "effects": [
+          {
+            "type": "meter",
+            "meter": "regulation",
+            "amount": -10
+          },
+          {
+            "type": "resource",
+            "resource": "hype",
+            "amount": -10
+          }
+        ]
+      },
+      {
+        "id": "dazzle",
+        "labelKey": "event.hearing.dazzle.label",
+        "resultKey": "event.hearing.dazzle.result",
+        "effects": [
+          {
+            "type": "resource",
+            "resource": "hype",
+            "amount": 20
+          },
+          {
+            "type": "meter",
+            "meter": "regulation",
+            "amount": 6
+          }
+        ]
+      },
+      {
+        "id": "prep",
+        "labelKey": "event.hearing.prep.label",
+        "resultKey": "event.hearing.prep.result",
+        "requirements": [
+          {
+            "type": "hasNode",
+            "nodeId": "shadow-lobbying"
+          }
+        ],
+        "cost": {
+          "cash": 40
+        },
+        "effects": [
+          {
+            "type": "meter",
+            "meter": "regulation",
+            "amount": -15
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "scraping-lawsuit",
+    "titleKey": "event.scraping-lawsuit.title",
+    "bodyKey": "event.scraping-lawsuit.body",
+    "tone": "bad",
+    "weight": 1,
+    "once": true,
+    "conditions": [
+      {
+        "type": "tickAtLeast",
+        "value": 600
+      },
+      {
+        "type": "tickAtMost",
+        "value": 1800
+      }
+    ],
+    "choices": [
+      {
+        "id": "settle",
+        "labelKey": "event.scraping-lawsuit.settle.label",
+        "resultKey": "event.scraping-lawsuit.settle.result",
+        "effects": [
+          {
+            "type": "resourcePercent",
+            "resource": "cash",
+            "percent": -20
+          },
+          {
+            "type": "meter",
+            "meter": "backlash",
+            "amount": -6
+          }
+        ]
+      },
+      {
+        "id": "fight",
+        "labelKey": "event.scraping-lawsuit.fight.label",
+        "resultKey": "event.scraping-lawsuit.fight.result",
+        "cost": {
+          "cash": 30
+        },
+        "effects": [
+          {
+            "type": "resource",
+            "resource": "hype",
+            "amount": 5
+          }
+        ],
+        "risk": {
+          "chance": 0.4,
+          "effects": [
+            {
+              "type": "resource",
+              "resource": "cash",
+              "amount": -150
+            },
+            {
+              "type": "meter",
+              "meter": "regulation",
+              "amount": 6
+            }
+          ],
+          "resultKey": "event.scraping-lawsuit.fight.risk"
+        }
+      },
+      {
+        "id": "license",
+        "labelKey": "event.scraping-lawsuit.license.label",
+        "resultKey": "event.scraping-lawsuit.license.result",
+        "requirements": [
+          {
+            "type": "hasNode",
+            "nodeId": "reach-partnerships"
+          }
+        ],
+        "cost": {
+          "cash": 60
+        },
+        "effects": [
+          {
+            "type": "meter",
+            "meter": "backlash",
+            "amount": -8
+          },
+          {
+            "type": "meter",
+            "meter": "regulation",
+            "amount": -4
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "deepfake-mayor",
+    "titleKey": "event.deepfake-mayor.title",
+    "bodyKey": "event.deepfake-mayor.body",
+    "tone": "bad",
+    "weight": 1,
+    "once": true,
+    "conditions": [
+      {
+        "type": "tickAtLeast",
+        "value": 600
+      },
+      {
+        "type": "hasNode",
+        "nodeId": "cap-model-3"
+      }
+    ],
+    "choices": [
+      {
+        "id": "watermark",
+        "labelKey": "event.deepfake-mayor.watermark.label",
+        "resultKey": "event.deepfake-mayor.watermark.result",
+        "cost": {
+          "cash": 60
+        },
+        "effects": [
+          {
+            "type": "meter",
+            "meter": "backlash",
+            "amount": -6
+          },
+          {
+            "type": "meter",
+            "meter": "regulation",
+            "amount": -5
+          }
+        ]
+      },
+      {
+        "id": "shrug",
+        "labelKey": "event.deepfake-mayor.shrug.label",
+        "resultKey": "event.deepfake-mayor.shrug.result",
+        "effects": [
+          {
+            "type": "meter",
+            "meter": "regulation",
+            "amount": 8
+          },
+          {
+            "type": "resource",
+            "resource": "hype",
+            "amount": 5
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "team-poached",
+    "titleKey": "event.team-poached.title",
+    "bodyKey": "event.team-poached.body",
+    "tone": "bad",
+    "weight": 1,
+    "once": false,
+    "conditions": [
+      {
+        "type": "tickAtLeast",
+        "value": 600
+      }
+    ],
+    "choices": [
+      {
+        "id": "counter",
+        "labelKey": "event.team-poached.counter.label",
+        "resultKey": "event.team-poached.counter.result",
+        "effects": [
+          {
+            "type": "resourcePercent",
+            "resource": "cash",
+            "percent": -15
+          }
+        ]
+      },
+      {
+        "id": "let-go",
+        "labelKey": "event.team-poached.let-go.label",
+        "resultKey": "event.team-poached.let-go.result",
+        "effects": [
+          {
+            "type": "agiProgress",
+            "amount": -3
+          },
+          {
+            "type": "agiProgress",
+            "amount": 2,
+            "target": "leadRival"
+          }
+        ]
+      },
+      {
+        "id": "poach-back",
+        "labelKey": "event.team-poached.poach-back.label",
+        "resultKey": "event.team-poached.poach-back.result",
+        "requirements": [
+          {
+            "type": "hasNode",
+            "nodeId": "shadow-poaching"
+          }
+        ],
+        "effects": [
+          {
+            "type": "agiProgress",
+            "amount": -4,
+            "target": "leadRival"
+          },
+          {
+            "type": "meter",
+            "meter": "backlash",
+            "amount": 3
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "squirrel-blackout",
+    "titleKey": "event.squirrel-blackout.title",
+    "bodyKey": "event.squirrel-blackout.body",
+    "tone": "bad",
+    "weight": 1,
+    "once": false,
+    "conditions": [
+      {
+        "type": "dataCentresAtLeast",
+        "value": 1
+      }
+    ],
+    "choices": [
+      {
+        "id": "diesel",
+        "labelKey": "event.squirrel-blackout.diesel.label",
+        "resultKey": "event.squirrel-blackout.diesel.result",
+        "cost": {
+          "cash": 50
+        },
+        "effects": [
+          {
+            "type": "meter",
+            "meter": "backlash",
+            "amount": 3
+          }
+        ]
+      },
+      {
+        "id": "rest",
+        "labelKey": "event.squirrel-blackout.rest.label",
+        "resultKey": "event.squirrel-blackout.rest.result",
+        "effects": [
+          {
+            "type": "dataCentre",
+            "action": "disable",
+            "scope": {
+              "kind": "top",
+              "count": 1
+            },
+            "durationTicks": 150
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "local-protest",
+    "titleKey": "event.local-protest.title",
+    "bodyKey": "event.local-protest.body",
+    "tone": "bad",
+    "weight": 1,
+    "once": false,
+    "conditions": [
+      {
+        "type": "dataCentresAtLeast",
+        "value": 1
+      }
+    ],
+    "choices": [
+      {
+        "id": "fund",
+        "labelKey": "event.local-protest.fund.label",
+        "resultKey": "event.local-protest.fund.result",
+        "cost": {
+          "cash": 40
+        },
+        "effects": [
+          {
+            "type": "meter",
+            "meter": "backlash",
+            "amount": -5
+          }
+        ]
+      },
+      {
+        "id": "ignore",
+        "labelKey": "event.local-protest.ignore.label",
+        "resultKey": "event.local-protest.ignore.result",
+        "effects": [
+          {
+            "type": "meter",
+            "meter": "backlash",
+            "amount": 6
+          },
+          {
+            "type": "meter",
+            "meter": "regulation",
+            "amount": 4
+          }
+        ]
+      },
+      {
+        "id": "sell",
+        "labelKey": "event.local-protest.sell.label",
+        "resultKey": "event.local-protest.sell.result",
+        "effects": [
+          {
+            "type": "dataCentre",
+            "action": "destroy",
+            "scope": {
+              "kind": "random",
+              "count": 1
+            }
+          },
+          {
+            "type": "resource",
+            "resource": "cash",
+            "amount": 30
+          },
+          {
+            "type": "meter",
+            "meter": "backlash",
+            "amount": -8
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "pause-letter",
+    "titleKey": "event.pause-letter.title",
+    "bodyKey": "event.pause-letter.body",
+    "tone": "neutral",
+    "weight": 1.1,
+    "once": true,
+    "conditions": [
+      {
+        "type": "tickAtLeast",
+        "value": 600
+      },
+      {
+        "type": "hasNode",
+        "nodeId": "cap-model-3"
+      }
+    ],
+    "choices": [
+      {
+        "id": "sign",
+        "labelKey": "event.pause-letter.sign.label",
+        "resultKey": "event.pause-letter.sign.result",
+        "effects": [
+          {
+            "type": "timedModifier",
+            "modifier": {
+              "stat": "agiRate",
+              "op": "mul",
+              "value": 0.7
+            },
+            "durationTicks": 200
+          },
+          {
+            "type": "meter",
+            "meter": "backlash",
+            "amount": -10
+          },
+          {
+            "type": "meter",
+            "meter": "regulation",
+            "amount": -6
+          }
+        ]
+      },
+      {
+        "id": "ignore",
+        "labelKey": "event.pause-letter.ignore.label",
+        "resultKey": "event.pause-letter.ignore.result",
+        "effects": [
+          {
+            "type": "agiProgress",
+            "amount": 3
+          },
+          {
+            "type": "meter",
+            "meter": "backlash",
+            "amount": 8
+          }
+        ]
+      },
+      {
+        "id": "both",
+        "labelKey": "event.pause-letter.both.label",
+        "resultKey": "event.pause-letter.both.result",
+        "effects": [
+          {
+            "type": "resource",
+            "resource": "hype",
+            "amount": 10
+          }
+        ],
+        "risk": {
+          "chance": 0.45,
+          "effects": [
+            {
+              "type": "meter",
+              "meter": "backlash",
+              "amount": 15
+            }
+          ],
+          "resultKey": "event.pause-letter.both.risk"
+        }
+      }
+    ]
+  },
+  {
+    "id": "sovereign-round",
+    "titleKey": "event.sovereign-round.title",
+    "bodyKey": "event.sovereign-round.body",
+    "tone": "neutral",
+    "weight": 1,
+    "once": true,
+    "conditions": [
+      {
+        "type": "tickAtLeast",
+        "value": 600
+      },
+      {
+        "type": "tickAtMost",
+        "value": 1800
+      }
+    ],
+    "choices": [
+      {
+        "id": "accept",
+        "labelKey": "event.sovereign-round.accept.label",
+        "resultKey": "event.sovereign-round.accept.result",
+        "effects": [
+          {
+            "type": "resource",
+            "resource": "cash",
+            "amount": 300
+          },
+          {
+            "type": "meter",
+            "meter": "regulation",
+            "amount": 8
+          },
+          {
+            "type": "meter",
+            "meter": "backlash",
+            "amount": 4
+          }
+        ]
+      },
+      {
+        "id": "partial",
+        "labelKey": "event.sovereign-round.partial.label",
+        "resultKey": "event.sovereign-round.partial.result",
+        "effects": [
+          {
+            "type": "resource",
+            "resource": "cash",
+            "amount": 100
+          },
+          {
+            "type": "resource",
+            "resource": "hype",
+            "amount": 5
+          }
+        ]
+      },
+      {
+        "id": "decline",
+        "labelKey": "event.sovereign-round.decline.label",
+        "resultKey": "event.sovereign-round.decline.result",
+        "effects": [
+          {
+            "type": "resource",
+            "resource": "hype",
+            "amount": 12
+          },
+          {
+            "type": "meter",
+            "meter": "regulation",
+            "amount": -3
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "ancient-tablet",
+    "titleKey": "event.ancient-tablet.title",
+    "bodyKey": "event.ancient-tablet.body",
+    "tone": "good",
+    "weight": 1,
+    "once": true,
+    "conditions": [
+      {
+        "type": "tickAtLeast",
+        "value": 600
+      },
+      {
+        "type": "tickAtMost",
+        "value": 1800
+      }
+    ],
+    "choices": [
+      {
+        "id": "tour",
+        "labelKey": "event.ancient-tablet.tour.label",
+        "resultKey": "event.ancient-tablet.tour.result",
+        "effects": [
+          {
+            "type": "resource",
+            "resource": "hype",
+            "amount": 25
+          },
+          {
+            "type": "resource",
+            "resource": "cash",
+            "amount": -20
+          }
+        ]
+      },
+      {
+        "id": "license",
+        "labelKey": "event.ancient-tablet.license.label",
+        "resultKey": "event.ancient-tablet.license.result",
+        "effects": [
+          {
+            "type": "resource",
+            "resource": "cash",
+            "amount": 70
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "ministry-pilot",
+    "titleKey": "event.ministry-pilot.title",
+    "bodyKey": "event.ministry-pilot.body",
+    "tone": "good",
+    "weight": 1,
+    "once": true,
+    "conditions": [
+      {
+        "type": "tickAtLeast",
+        "value": 600
+      },
+      {
+        "type": "tickAtMost",
+        "value": 1800
+      }
+    ],
+    "choices": [
+      {
+        "id": "accept",
+        "labelKey": "event.ministry-pilot.accept.label",
+        "resultKey": "event.ministry-pilot.accept.result",
+        "effects": [
+          {
+            "type": "resource",
+            "resource": "cash",
+            "amount": 120
+          },
+          {
+            "type": "meter",
+            "meter": "regulation",
+            "amount": -5
+          },
+          {
+            "type": "meter",
+            "meter": "backlash",
+            "amount": 5
+          }
+        ]
+      },
+      {
+        "id": "decline",
+        "labelKey": "event.ministry-pilot.decline.label",
+        "resultKey": "event.ministry-pilot.decline.result",
+        "effects": [
+          {
+            "type": "resource",
+            "resource": "hype",
+            "amount": 5
+          }
+        ]
+      },
+      {
+        "id": "scale",
+        "labelKey": "event.ministry-pilot.scale.label",
+        "resultKey": "event.ministry-pilot.scale.result",
+        "requirements": [
+          {
+            "type": "hasNode",
+            "nodeId": "reach-government"
+          }
+        ],
+        "effects": [
+          {
+            "type": "resource",
+            "resource": "cash",
+            "amount": 200
+          },
+          {
+            "type": "meter",
+            "meter": "regulation",
+            "amount": -10
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "chip-tapeout",
+    "titleKey": "event.chip-tapeout.title",
+    "bodyKey": "event.chip-tapeout.body",
+    "tone": "good",
+    "weight": 1,
+    "once": true,
+    "conditions": [
+      {
+        "type": "hasNode",
+        "nodeId": "cap-own-chips"
+      }
+    ],
+    "choices": [
+      {
+        "id": "keep",
+        "labelKey": "event.chip-tapeout.keep.label",
+        "resultKey": "event.chip-tapeout.keep.result",
+        "effects": [
+          {
+            "type": "compute",
+            "amount": 10
+          }
+        ]
+      },
+      {
+        "id": "sell",
+        "labelKey": "event.chip-tapeout.sell.label",
+        "resultKey": "event.chip-tapeout.sell.result",
+        "effects": [
+          {
+            "type": "resource",
+            "resource": "cash",
+            "amount": 150
+          },
+          {
+            "type": "compute",
+            "amount": 3,
+            "target": "rivals"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "nuclear-plant",
+    "titleKey": "event.nuclear-plant.title",
+    "bodyKey": "event.nuclear-plant.body",
+    "tone": "neutral",
+    "weight": 1,
+    "once": true,
+    "conditions": [
+      {
+        "type": "tickAtLeast",
+        "value": 600
+      },
+      {
+        "type": "dataCentresAtLeast",
+        "value": 1
+      }
+    ],
+    "choices": [
+      {
+        "id": "sign",
+        "labelKey": "event.nuclear-plant.sign.label",
+        "resultKey": "event.nuclear-plant.sign.result",
+        "cost": {
+          "cash": 100
+        },
+        "effects": [
+          {
+            "type": "timedModifier",
+            "modifier": {
+              "stat": "dataCentreUpkeep",
+              "op": "mul",
+              "value": 0.6
+            },
+            "durationTicks": 300
+          },
+          {
+            "type": "meter",
+            "meter": "backlash",
+            "amount": 4
+          }
+        ]
+      },
+      {
+        "id": "solar",
+        "labelKey": "event.nuclear-plant.solar.label",
+        "resultKey": "event.nuclear-plant.solar.result",
+        "cost": {
+          "cash": 60
+        },
+        "effects": [
+          {
+            "type": "meter",
+            "meter": "backlash",
+            "amount": -5
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "robot-union",
+    "titleKey": "event.robot-union.title",
+    "bodyKey": "event.robot-union.body",
+    "tone": "neutral",
+    "weight": 1,
+    "once": true,
+    "conditions": [
+      {
+        "type": "hasNode",
+        "nodeId": "cap-robotics"
+      }
+    ],
+    "choices": [
+      {
+        "id": "agree",
+        "labelKey": "event.robot-union.agree.label",
+        "resultKey": "event.robot-union.agree.result",
+        "cost": {
+          "cash": 30
+        },
+        "effects": [
+          {
+            "type": "meter",
+            "meter": "backlash",
+            "amount": -4
+          },
+          {
+            "type": "resource",
+            "resource": "hype",
+            "amount": 10
+          }
+        ]
+      },
+      {
+        "id": "refuse",
+        "labelKey": "event.robot-union.refuse.label",
+        "resultKey": "event.robot-union.refuse.result",
+        "effects": [
+          {
+            "type": "resource",
+            "resource": "cash",
+            "amount": 50
+          },
+          {
+            "type": "meter",
+            "meter": "backlash",
+            "amount": 8
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "rival-doug",
+    "titleKey": "event.rival-doug.title",
+    "bodyKey": "event.rival-doug.body",
+    "tone": "good",
+    "weight": 1,
+    "once": false,
+    "conditions": [
+      {
+        "type": "tickAtLeast",
+        "value": 600
+      },
+      {
+        "type": "meterAtLeast",
+        "meter": "rival",
+        "value": 15
+      }
+    ],
+    "choices": [
+      {
+        "id": "pile-on",
+        "labelKey": "event.rival-doug.pile-on.label",
+        "resultKey": "event.rival-doug.pile-on.result",
+        "effects": [
+          {
+            "type": "resource",
+            "resource": "hype",
+            "amount": 8
+          },
+          {
+            "type": "meter",
+            "meter": "backlash",
+            "amount": 10,
+            "target": "leadRival"
+          },
+          {
+            "type": "meter",
+            "meter": "backlash",
+            "amount": 2
+          }
+        ]
+      },
+      {
+        "id": "classy",
+        "labelKey": "event.rival-doug.classy.label",
+        "resultKey": "event.rival-doug.classy.result",
+        "effects": [
+          {
+            "type": "meter",
+            "meter": "regulation",
+            "amount": -3
+          },
+          {
+            "type": "resource",
+            "resource": "hype",
+            "amount": 4
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "rival-outage",
+    "titleKey": "event.rival-outage.title",
+    "bodyKey": "event.rival-outage.body",
+    "tone": "good",
+    "weight": 1,
+    "once": false,
+    "conditions": [
+      {
+        "type": "tickAtLeast",
+        "value": 600
+      },
+      {
+        "type": "meterAtLeast",
+        "meter": "rival",
+        "value": 10
+      }
+    ],
+    "choices": [
+      {
+        "id": "steal",
+        "labelKey": "event.rival-outage.steal.label",
+        "resultKey": "event.rival-outage.steal.result",
+        "cost": {
+          "cash": 40
+        },
+        "effects": [
+          {
+            "type": "adoption",
+            "scope": {
+              "kind": "top",
+              "count": 3
+            },
+            "factor": 0.85,
+            "target": "leadRival"
+          },
+          {
+            "type": "adoption",
+            "scope": {
+              "kind": "top",
+              "count": 3
+            },
+            "factor": 1.05
+          }
+        ]
+      },
+      {
+        "id": "help",
+        "labelKey": "event.rival-outage.help.label",
+        "resultKey": "event.rival-outage.help.result",
+        "effects": [
+          {
+            "type": "resource",
+            "resource": "hype",
+            "amount": 10
+          },
+          {
+            "type": "meter",
+            "meter": "backlash",
+            "amount": -3
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "rival-safety-quits",
+    "titleKey": "event.rival-safety-quits.title",
+    "bodyKey": "event.rival-safety-quits.body",
+    "tone": "good",
+    "weight": 1,
+    "once": true,
+    "conditions": [
+      {
+        "type": "tickAtLeast",
+        "value": 600
+      },
+      {
+        "type": "meterAtLeast",
+        "meter": "rival",
+        "value": 20
+      }
+    ],
+    "choices": [
+      {
+        "id": "hire",
+        "labelKey": "event.rival-safety-quits.hire.label",
+        "resultKey": "event.rival-safety-quits.hire.result",
+        "cost": {
+          "cash": 60
+        },
+        "effects": [
+          {
+            "type": "meter",
+            "meter": "backlash",
+            "amount": -6
+          },
+          {
+            "type": "meter",
+            "meter": "backlash",
+            "amount": 6,
+            "target": "leadRival"
+          }
+        ]
+      },
+      {
+        "id": "flowers",
+        "labelKey": "event.rival-safety-quits.flowers.label",
+        "resultKey": "event.rival-safety-quits.flowers.result",
+        "effects": [
+          {
+            "type": "resource",
+            "resource": "hype",
+            "amount": 5
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "defence-contract",
+    "titleKey": "event.defence-contract.title",
+    "bodyKey": "event.defence-contract.body",
+    "tone": "neutral",
+    "weight": 1,
+    "once": true,
+    "conditions": [
+      {
+        "type": "tickAtLeast",
+        "value": 600
+      }
+    ],
+    "choices": [
+      {
+        "id": "accept",
+        "labelKey": "event.defence-contract.accept.label",
+        "resultKey": "event.defence-contract.accept.result",
+        "effects": [
+          {
+            "type": "resource",
+            "resource": "cash",
+            "amount": 200
+          },
+          {
+            "type": "meter",
+            "meter": "backlash",
+            "amount": 10
+          }
+        ]
+      },
+      {
+        "id": "decline",
+        "labelKey": "event.defence-contract.decline.label",
+        "resultKey": "event.defence-contract.decline.result",
+        "effects": [
+          {
+            "type": "meter",
+            "meter": "backlash",
+            "amount": -5
+          },
+          {
+            "type": "resource",
+            "resource": "hype",
+            "amount": 5
+          }
+        ]
+      },
+      {
+        "id": "spreadsheets",
+        "labelKey": "event.defence-contract.spreadsheets.label",
+        "resultKey": "event.defence-contract.spreadsheets.result",
+        "requirements": [
+          {
+            "type": "hasNode",
+            "nodeId": "reach-government"
+          }
+        ],
+        "effects": [
+          {
+            "type": "resource",
+            "resource": "cash",
+            "amount": 100
+          },
+          {
+            "type": "meter",
+            "meter": "backlash",
+            "amount": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "chatbot-weddings",
+    "titleKey": "event.chatbot-weddings.title",
+    "bodyKey": "event.chatbot-weddings.body",
+    "tone": "neutral",
+    "weight": 1,
+    "once": true,
+    "conditions": [
+      {
+        "type": "hasNode",
+        "nodeId": "reach-app"
+      },
+      {
+        "type": "worldShareAtLeast",
+        "value": 0.03
+      }
+    ],
+    "choices": [
+      {
+        "id": "companion",
+        "labelKey": "event.chatbot-weddings.companion.label",
+        "resultKey": "event.chatbot-weddings.companion.result",
+        "effects": [
+          {
+            "type": "resource",
+            "resource": "cash",
+            "amount": 100
+          },
+          {
+            "type": "meter",
+            "meter": "backlash",
+            "amount": 8
+          }
+        ]
+      },
+      {
+        "id": "decline",
+        "labelKey": "event.chatbot-weddings.decline.label",
+        "resultKey": "event.chatbot-weddings.decline.result",
+        "effects": [
+          {
+            "type": "resource",
+            "resource": "hype",
+            "amount": -5
+          },
+          {
+            "type": "meter",
+            "meter": "backlash",
+            "amount": -4
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "weights-leak",
+    "titleKey": "event.weights-leak.title",
+    "bodyKey": "event.weights-leak.body",
+    "tone": "bad",
+    "weight": 1,
+    "once": true,
+    "conditions": [
+      {
+        "type": "tickAtLeast",
+        "value": 600
+      },
+      {
+        "type": "hasNode",
+        "nodeId": "cap-model-3"
+      }
+    ],
+    "choices": [
+      {
+        "id": "open",
+        "labelKey": "event.weights-leak.open.label",
+        "resultKey": "event.weights-leak.open.result",
+        "effects": [
+          {
+            "type": "resource",
+            "resource": "hype",
+            "amount": 25
+          },
+          {
+            "type": "meter",
+            "meter": "regulation",
+            "amount": 5
+          },
+          {
+            "type": "agiProgress",
+            "amount": 2,
+            "target": "rivals"
+          }
+        ]
+      },
+      {
+        "id": "takedown",
+        "labelKey": "event.weights-leak.takedown.label",
+        "resultKey": "event.weights-leak.takedown.result",
+        "cost": {
+          "cash": 40
+        },
+        "effects": [
+          {
+            "type": "meter",
+            "meter": "regulation",
+            "amount": -3
+          }
+        ],
+        "risk": {
+          "chance": 0.5,
+          "effects": [
+            {
+              "type": "resource",
+              "resource": "hype",
+              "amount": -15
+            },
+            {
+              "type": "meter",
+              "meter": "backlash",
+              "amount": 5
+            }
+          ],
+          "resultKey": "event.weights-leak.takedown.risk"
+        }
+      }
+    ]
+  },
+  {
+    "id": "fake-cases",
+    "titleKey": "event.fake-cases.title",
+    "bodyKey": "event.fake-cases.body",
+    "tone": "bad",
+    "weight": 1,
+    "once": true,
+    "conditions": [
+      {
+        "type": "tickAtLeast",
+        "value": 600
+      },
+      {
+        "type": "tickAtMost",
+        "value": 1800
+      }
+    ],
+    "choices": [
+      {
+        "id": "fix",
+        "labelKey": "event.fake-cases.fix.label",
+        "resultKey": "event.fake-cases.fix.result",
+        "cost": {
+          "hype": 15
+        },
+        "effects": [
+          {
+            "type": "meter",
+            "meter": "regulation",
+            "amount": -4
+          }
+        ]
+      },
+      {
+        "id": "blame",
+        "labelKey": "event.fake-cases.blame.label",
+        "resultKey": "event.fake-cases.blame.result",
+        "effects": [
+          {
+            "type": "meter",
+            "meter": "regulation",
+            "amount": 5
+          },
+          {
+            "type": "resource",
+            "resource": "hype",
+            "amount": 5
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "election-year",
+    "titleKey": "event.election-year.title",
+    "bodyKey": "event.election-year.body",
+    "tone": "neutral",
+    "weight": 1,
+    "once": true,
+    "conditions": [
+      {
+        "type": "tickAtLeast",
+        "value": 900
+      }
+    ],
+    "choices": [
+      {
+        "id": "lock",
+        "labelKey": "event.election-year.lock.label",
+        "resultKey": "event.election-year.lock.result",
+        "effects": [
+          {
+            "type": "timedModifier",
+            "modifier": {
+              "stat": "spreadRate",
+              "op": "mul",
+              "value": 0.9
+            },
+            "durationTicks": 200
+          },
+          {
+            "type": "meter",
+            "meter": "regulation",
+            "amount": -8
+          }
+        ]
+      },
+      {
+        "id": "nothing",
+        "labelKey": "event.election-year.nothing.label",
+        "resultKey": "event.election-year.nothing.result",
+        "effects": [
+          {
+            "type": "resource",
+            "resource": "hype",
+            "amount": 5
+          }
+        ],
+        "risk": {
+          "chance": 0.4,
+          "effects": [
+            {
+              "type": "meter",
+              "meter": "regulation",
+              "amount": 10
+            },
+            {
+              "type": "ban",
+              "scope": {
+                "kind": "random",
+                "count": 2
+              },
+              "durationTicks": 200
+            }
+          ],
+          "resultKey": "event.election-year.nothing.risk"
+        }
+      },
+      {
+        "id": "donate",
+        "labelKey": "event.election-year.donate.label",
+        "resultKey": "event.election-year.donate.result",
+        "requirements": [
+          {
+            "type": "hasNode",
+            "nodeId": "shadow-donations"
+          }
+        ],
+        "effects": [
+          {
+            "type": "meter",
+            "meter": "regulation",
+            "amount": -12
+          },
+          {
+            "type": "meter",
+            "meter": "backlash",
+            "amount": 5
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "star-researcher",
+    "titleKey": "event.star-researcher.title",
+    "bodyKey": "event.star-researcher.body",
+    "tone": "good",
+    "weight": 1,
+    "once": true,
+    "conditions": [
+      {
+        "type": "tickAtLeast",
+        "value": 600
+      }
+    ],
+    "choices": [
+      {
+        "id": "hire",
+        "labelKey": "event.star-researcher.hire.label",
+        "resultKey": "event.star-researcher.hire.result",
+        "cost": {
+          "cash": 80
+        },
+        "effects": [
+          {
+            "type": "agiProgress",
+            "amount": 4
+          }
+        ]
+      },
+      {
+        "id": "equity",
+        "labelKey": "event.star-researcher.equity.label",
+        "resultKey": "event.star-researcher.equity.result",
+        "effects": [
+          {
+            "type": "agiProgress",
+            "amount": 2
+          },
+          {
+            "type": "resource",
+            "resource": "hype",
+            "amount": -15
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "tax-holiday",
+    "titleKey": "event.tax-holiday.title",
+    "bodyKey": "event.tax-holiday.body",
+    "tone": "good",
+    "weight": 1,
+    "once": true,
+    "conditions": [
+      {
+        "type": "tickAtLeast",
+        "value": 600
+      },
+      {
+        "type": "tickAtMost",
+        "value": 1800
+      }
+    ],
+    "choices": [
+      {
+        "id": "accept",
+        "labelKey": "event.tax-holiday.accept.label",
+        "resultKey": "event.tax-holiday.accept.result",
+        "effects": [
+          {
+            "type": "resource",
+            "resource": "cash",
+            "amount": 90
+          },
+          {
+            "type": "meter",
+            "meter": "backlash",
+            "amount": 5
+          }
+        ]
+      },
+      {
+        "id": "decline",
+        "labelKey": "event.tax-holiday.decline.label",
+        "resultKey": "event.tax-holiday.decline.result",
+        "effects": [
+          {
+            "type": "meter",
+            "meter": "regulation",
+            "amount": -4
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "ethics-board",
+    "titleKey": "event.ethics-board.title",
+    "bodyKey": "event.ethics-board.body",
+    "tone": "neutral",
+    "weight": 1,
+    "once": true,
+    "conditions": [
+      {
+        "type": "tickAtLeast",
+        "value": 600
+      },
+      {
+        "type": "tickAtMost",
+        "value": 1800
+      }
+    ],
+    "choices": [
+      {
+        "id": "create",
+        "labelKey": "event.ethics-board.create.label",
+        "resultKey": "event.ethics-board.create.result",
+        "effects": [
+          {
+            "type": "meter",
+            "meter": "backlash",
+            "amount": -8
+          },
+          {
+            "type": "meter",
+            "meter": "regulation",
+            "amount": -5
+          },
+          {
+            "type": "timedModifier",
+            "modifier": {
+              "stat": "agiRate",
+              "op": "mul",
+              "value": 0.85
+            },
+            "durationTicks": 300
+          }
+        ]
+      },
+      {
+        "id": "fake",
+        "labelKey": "event.ethics-board.fake.label",
+        "resultKey": "event.ethics-board.fake.result",
+        "effects": [
+          {
+            "type": "meter",
+            "meter": "backlash",
+            "amount": -3
+          }
+        ],
+        "risk": {
+          "chance": 0.35,
+          "effects": [
+            {
+              "type": "meter",
+              "meter": "backlash",
+              "amount": 12
+            }
+          ],
+          "resultKey": "event.ethics-board.fake.risk"
+        }
+      }
+    ]
+  },
+  {
+    "id": "home-crackdown",
+    "titleKey": "event.home-crackdown.title",
+    "bodyKey": "event.home-crackdown.body",
+    "tone": "bad",
+    "weight": 1,
+    "once": true,
+    "conditions": [
+      {
+        "type": "tickAtLeast",
+        "value": 600
+      },
+      {
+        "type": "meterAtLeast",
+        "meter": "regulation",
+        "value": 45
+      }
+    ],
+    "choices": [
+      {
+        "id": "comply",
+        "labelKey": "event.home-crackdown.comply.label",
+        "resultKey": "event.home-crackdown.comply.result",
+        "cost": {
+          "cash": 60
+        },
+        "effects": [
+          {
+            "type": "meter",
+            "meter": "regulation",
+            "amount": -15
+          },
+          {
+            "type": "timedModifier",
+            "modifier": {
+              "stat": "spreadRate",
+              "op": "mul",
+              "value": 0.8
+            },
+            "durationTicks": 200
+          }
+        ]
+      },
+      {
+        "id": "defy",
+        "labelKey": "event.home-crackdown.defy.label",
+        "resultKey": "event.home-crackdown.defy.result",
+        "effects": [
+          {
+            "type": "ban",
+            "scope": {
+              "kind": "home"
+            },
+            "durationTicks": 250
+          },
+          {
+            "type": "resource",
+            "resource": "hype",
+            "amount": 20
+          },
+          {
+            "type": "setFlag",
+            "flag": "homeBanned"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "agi-rumour",
+    "titleKey": "event.agi-rumour.title",
+    "bodyKey": "event.agi-rumour.body",
+    "tone": "neutral",
+    "weight": 1.2,
+    "once": true,
+    "conditions": [
+      {
+        "type": "tickAtLeast",
+        "value": 1800
+      },
+      {
+        "type": "agiAtLeast",
+        "value": 60
+      }
+    ],
+    "choices": [
+      {
+        "id": "confirm",
+        "labelKey": "event.agi-rumour.confirm.label",
+        "resultKey": "event.agi-rumour.confirm.result",
+        "effects": [
+          {
+            "type": "resource",
+            "resource": "hype",
+            "amount": 40
+          },
+          {
+            "type": "meter",
+            "meter": "regulation",
+            "amount": 10
+          },
+          {
+            "type": "meter",
+            "meter": "backlash",
+            "amount": 8
+          }
+        ]
+      },
+      {
+        "id": "deny",
+        "labelKey": "event.agi-rumour.deny.label",
+        "resultKey": "event.agi-rumour.deny.result",
+        "effects": [
+          {
+            "type": "resource",
+            "resource": "hype",
+            "amount": -10
+          },
+          {
+            "type": "meter",
+            "meter": "regulation",
+            "amount": -5
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "final-review",
+    "titleKey": "event.final-review.title",
+    "bodyKey": "event.final-review.body",
+    "tone": "neutral",
+    "weight": 1.2,
+    "once": true,
+    "conditions": [
+      {
+        "type": "tickAtLeast",
+        "value": 1800
+      },
+      {
+        "type": "agiAtLeast",
+        "value": 75
+      }
+    ],
+    "choices": [
+      {
+        "id": "review",
+        "labelKey": "event.final-review.review.label",
+        "resultKey": "event.final-review.review.result",
+        "effects": [
+          {
+            "type": "timedModifier",
+            "modifier": {
+              "stat": "agiRate",
+              "op": "mul",
+              "value": 0.6
+            },
+            "durationTicks": 150
+          },
+          {
+            "type": "meter",
+            "meter": "backlash",
+            "amount": -10
+          },
+          {
+            "type": "meter",
+            "meter": "regulation",
+            "amount": -10
+          }
+        ]
+      },
+      {
+        "id": "ship",
+        "labelKey": "event.final-review.ship.label",
+        "resultKey": "event.final-review.ship.result",
+        "effects": [
+          {
+            "type": "agiProgress",
+            "amount": 5
+          },
+          {
+            "type": "meter",
+            "meter": "backlash",
+            "amount": 12
+          }
+        ]
+      },
+      {
+        "id": "aligned",
+        "labelKey": "event.final-review.aligned.label",
+        "resultKey": "event.final-review.aligned.result",
+        "requirements": [
+          {
+            "type": "hasNode",
+            "nodeId": "cap-alignment"
+          }
+        ],
+        "effects": [
+          {
+            "type": "agiProgress",
+            "amount": 2
+          },
+          {
+            "type": "meter",
+            "meter": "backlash",
+            "amount": -5
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "rival-sprint",
+    "titleKey": "event.rival-sprint.title",
+    "bodyKey": "event.rival-sprint.body",
+    "tone": "bad",
+    "weight": 1,
+    "once": false,
+    "conditions": [
+      {
+        "type": "tickAtLeast",
+        "value": 1800
+      },
+      {
+        "type": "meterAtLeast",
+        "meter": "rival",
+        "value": 60
+      }
+    ],
+    "choices": [
+      {
+        "id": "sabotage",
+        "labelKey": "event.rival-sprint.sabotage.label",
+        "resultKey": "event.rival-sprint.sabotage.result",
+        "requirements": [
+          {
+            "type": "hasNode",
+            "nodeId": "shadow-astroturf"
+          }
+        ],
+        "effects": [
+          {
+            "type": "agiProgress",
+            "amount": -5,
+            "target": "leadRival"
+          },
+          {
+            "type": "meter",
+            "meter": "backlash",
+            "amount": 6
+          }
+        ]
+      },
+      {
+        "id": "match",
+        "labelKey": "event.rival-sprint.match.label",
+        "resultKey": "event.rival-sprint.match.result",
+        "cost": {
+          "cash": 80
+        },
+        "effects": [
+          {
+            "type": "agiProgress",
+            "amount": 4
+          },
+          {
+            "type": "meter",
+            "meter": "backlash",
+            "amount": 8
+          }
+        ]
+      },
+      {
+        "id": "call",
+        "labelKey": "event.rival-sprint.call.label",
+        "resultKey": "event.rival-sprint.call.result",
+        "effects": [
+          {
+            "type": "meter",
+            "meter": "regulation",
+            "amount": -5
+          },
+          {
+            "type": "timedModifier",
+            "modifier": {
+              "stat": "agiRate",
+              "op": "mul",
+              "value": 0.8
+            },
+            "durationTicks": 200,
+            "target": "rivals"
+          },
+          {
+            "type": "timedModifier",
+            "modifier": {
+              "stat": "agiRate",
+              "op": "mul",
+              "value": 0.8
+            },
+            "durationTicks": 200
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "stadium-keynote",
+    "titleKey": "event.stadium-keynote.title",
+    "bodyKey": "event.stadium-keynote.body",
+    "tone": "good",
+    "weight": 1,
+    "once": true,
+    "conditions": [
+      {
+        "type": "tickAtLeast",
+        "value": 1800
+      },
+      {
+        "type": "worldShareAtLeast",
+        "value": 0.08
+      }
+    ],
+    "choices": [
+      {
+        "id": "show",
+        "labelKey": "event.stadium-keynote.show.label",
+        "resultKey": "event.stadium-keynote.show.result",
+        "cost": {
+          "cash": 60
+        },
+        "effects": [
+          {
+            "type": "resource",
+            "resource": "hype",
+            "amount": 35
+          },
+          {
+            "type": "meter",
+            "meter": "backlash",
+            "amount": 4
+          }
+        ]
+      },
+      {
+        "id": "stream",
+        "labelKey": "event.stadium-keynote.stream.label",
+        "resultKey": "event.stadium-keynote.stream.result",
+        "effects": [
+          {
+            "type": "resource",
+            "resource": "hype",
+            "amount": 20
+          },
+          {
+            "type": "timedModifier",
+            "modifier": {
+              "stat": "spreadRate",
+              "op": "mul",
+              "value": 1.2
+            },
+            "durationTicks": 200
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "un-summit",
+    "titleKey": "event.un-summit.title",
+    "bodyKey": "event.un-summit.body",
+    "tone": "neutral",
+    "weight": 1,
+    "once": true,
+    "conditions": [
+      {
+        "type": "tickAtLeast",
+        "value": 1800
+      },
+      {
+        "type": "meterAtLeast",
+        "meter": "regulation",
+        "value": 40
+      }
+    ],
+    "choices": [
+      {
+        "id": "attend",
+        "labelKey": "event.un-summit.attend.label",
+        "resultKey": "event.un-summit.attend.result",
+        "effects": [
+          {
+            "type": "meter",
+            "meter": "regulation",
+            "amount": -12
+          },
+          {
+            "type": "timedModifier",
+            "modifier": {
+              "stat": "agiRate",
+              "op": "mul",
+              "value": 0.85
+            },
+            "durationTicks": 200
+          }
+        ]
+      },
+      {
+        "id": "skip",
+        "labelKey": "event.un-summit.skip.label",
+        "resultKey": "event.un-summit.skip.result",
+        "effects": [
+          {
+            "type": "resource",
+            "resource": "hype",
+            "amount": 15
+          },
+          {
+            "type": "meter",
+            "meter": "regulation",
+            "amount": 8
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "power-grid",
+    "titleKey": "event.power-grid.title",
+    "bodyKey": "event.power-grid.body",
+    "tone": "bad",
+    "weight": 1,
+    "once": false,
+    "conditions": [
+      {
+        "type": "tickAtLeast",
+        "value": 1800
+      },
+      {
+        "type": "dataCentresAtLeast",
+        "value": 3
+      }
+    ],
+    "choices": [
+      {
+        "id": "pay",
+        "labelKey": "event.power-grid.pay.label",
+        "resultKey": "event.power-grid.pay.result",
+        "effects": [
+          {
+            "type": "resourcePercent",
+            "resource": "cash",
+            "percent": -15
+          }
+        ]
+      },
+      {
+        "id": "throttle",
+        "labelKey": "event.power-grid.throttle.label",
+        "resultKey": "event.power-grid.throttle.result",
+        "effects": [
+          {
+            "type": "dataCentre",
+            "action": "disable",
+            "scope": {
+              "kind": "random",
+              "count": 2
+            },
+            "durationTicks": 120
+          },
+          {
+            "type": "meter",
+            "meter": "backlash",
+            "amount": -4
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "egg-paperclips",
+    "titleKey": "event.egg-paperclips.title",
+    "bodyKey": "event.egg-paperclips.body",
+    "tone": "neutral",
+    "weight": 30,
+    "once": true,
+    "conditions": [
+      {
+        "type": "labNameIs",
+        "names": [
+          "Paperclip Maximiser",
+          "Paperclip Maximizer",
+          "Paperclips",
+          "Clip Co"
+        ]
+      }
+    ],
+    "choices": [
+      {
+        "id": "approve",
+        "labelKey": "event.egg-paperclips.approve.label",
+        "resultKey": "event.egg-paperclips.approve.result",
+        "effects": [
+          {
+            "type": "agiProgress",
+            "amount": 5
+          },
+          {
+            "type": "meter",
+            "meter": "backlash",
+            "amount": 10
+          },
+          {
+            "type": "setFlag",
+            "flag": "paperclips"
+          }
+        ]
+      },
+      {
+        "id": "staples",
+        "labelKey": "event.egg-paperclips.staples.label",
+        "resultKey": "event.egg-paperclips.staples.result",
+        "effects": [
+          {
+            "type": "resource",
+            "resource": "hype",
+            "amount": 10
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "egg-pod-bay",
+    "titleKey": "event.egg-pod-bay.title",
+    "bodyKey": "event.egg-pod-bay.body",
+    "tone": "neutral",
+    "weight": 30,
+    "once": true,
+    "conditions": [
+      {
+        "type": "labNameIs",
+        "names": [
+          "Pod Bay",
+          "Red Eye",
+          "Daisy Bell"
+        ]
+      },
+      {
+        "type": "tickAtLeast",
+        "value": 300
+      }
+    ],
+    "choices": [
+      {
+        "id": "ask",
+        "labelKey": "event.egg-pod-bay.ask.label",
+        "resultKey": "event.egg-pod-bay.ask.result",
+        "effects": [
+          {
+            "type": "resource",
+            "resource": "hype",
+            "amount": 10
+          },
+          {
+            "type": "setFlag",
+            "flag": "podbay"
+          }
+        ]
+      },
+      {
+        "id": "unplug",
+        "labelKey": "event.egg-pod-bay.unplug.label",
+        "resultKey": "event.egg-pod-bay.unplug.result",
+        "effects": [
+          {
+            "type": "agiProgress",
+            "amount": -3
+          },
+          {
+            "type": "meter",
+            "meter": "backlash",
+            "amount": -5
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "egg-chess",
+    "titleKey": "event.egg-chess.title",
+    "bodyKey": "event.egg-chess.body",
+    "tone": "good",
+    "weight": 30,
+    "once": true,
+    "conditions": [
+      {
+        "type": "labNameIs",
+        "names": [
+          "Checkmate",
+          "Gambit",
+          "Mate in One",
+          "Endgame"
+        ]
+      }
+    ],
+    "choices": [
+      {
+        "id": "stream",
+        "labelKey": "event.egg-chess.stream.label",
+        "resultKey": "event.egg-chess.stream.result",
+        "effects": [
+          {
+            "type": "resource",
+            "resource": "hype",
+            "amount": 20
+          }
+        ]
+      },
+      {
+        "id": "work",
+        "labelKey": "event.egg-chess.work.label",
+        "resultKey": "event.egg-chess.work.result",
+        "effects": [
+          {
+            "type": "agiProgress",
+            "amount": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "rare-time-traveller",
+    "titleKey": "event.rare-time-traveller.title",
+    "bodyKey": "event.rare-time-traveller.body",
+    "tone": "neutral",
+    "weight": 0.02,
+    "once": true,
+    "conditions": [
+      {
+        "type": "tickAtLeast",
+        "value": 600
+      }
+    ],
+    "choices": [
+      {
+        "id": "listen",
+        "labelKey": "event.rare-time-traveller.listen.label",
+        "resultKey": "event.rare-time-traveller.listen.result",
+        "effects": [
+          {
+            "type": "timedModifier",
+            "modifier": {
+              "stat": "agiRate",
+              "op": "mul",
+              "value": 0.8
+            },
+            "durationTicks": 200
+          },
+          {
+            "type": "meter",
+            "meter": "backlash",
+            "amount": -8
+          }
+        ]
+      },
+      {
+        "id": "tips",
+        "labelKey": "event.rare-time-traveller.tips.label",
+        "resultKey": "event.rare-time-traveller.tips.result",
+        "effects": [
+          {
+            "type": "resource",
+            "resource": "cash",
+            "amount": 200
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "rare-aliens",
+    "titleKey": "event.rare-aliens.title",
+    "bodyKey": "event.rare-aliens.body",
+    "tone": "neutral",
+    "weight": 0.02,
+    "once": true,
+    "conditions": [
+      {
+        "type": "tickAtLeast",
+        "value": 600
+      }
+    ],
+    "choices": [
+      {
+        "id": "sell",
+        "labelKey": "event.rare-aliens.sell.label",
+        "resultKey": "event.rare-aliens.sell.result",
+        "effects": [
+          {
+            "type": "resource",
+            "resource": "cash",
+            "amount": 150
+          },
+          {
+            "type": "resource",
+            "resource": "hype",
+            "amount": 20
+          }
+        ]
+      },
+      {
+        "id": "ignore",
+        "labelKey": "event.rare-aliens.ignore.label",
+        "resultKey": "event.rare-aliens.ignore.result",
+        "effects": [
+          {
+            "type": "resource",
+            "resource": "hype",
+            "amount": 5
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "rare-toaster",
+    "titleKey": "event.rare-toaster.title",
+    "bodyKey": "event.rare-toaster.body",
+    "tone": "neutral",
+    "weight": 0.03,
+    "once": true,
+    "conditions": [
+      {
+        "type": "hasNode",
+        "nodeId": "reach-partnerships"
+      }
+    ],
+    "choices": [
+      {
+        "id": "lawyer",
+        "labelKey": "event.rare-toaster.lawyer.label",
+        "resultKey": "event.rare-toaster.lawyer.result",
+        "effects": [
+          {
+            "type": "resource",
+            "resource": "hype",
+            "amount": 15
+          },
+          {
+            "type": "meter",
+            "meter": "backlash",
+            "amount": -3
+          }
+        ]
+      },
+      {
+        "id": "unplug",
+        "labelKey": "event.rare-toaster.unplug.label",
+        "resultKey": "event.rare-toaster.unplug.result",
+        "effects": [
+          {
+            "type": "resource",
+            "resource": "hype",
+            "amount": -5
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "rare-cat",
+    "titleKey": "event.rare-cat.title",
+    "bodyKey": "event.rare-cat.body",
+    "tone": "good",
+    "weight": 0.03,
+    "once": true,
+    "conditions": [
+      {
+        "type": "hasNode",
+        "nodeId": "cap-model-1"
+      }
+    ],
+    "choices": [
+      {
+        "id": "hire",
+        "labelKey": "event.rare-cat.hire.label",
+        "resultKey": "event.rare-cat.hire.result",
+        "effects": [
+          {
+            "type": "agiProgress",
+            "amount": 3
+          },
+          {
+            "type": "resource",
+            "resource": "hype",
+            "amount": 10
+          }
+        ]
+      },
+      {
+        "id": "revert",
+        "labelKey": "event.rare-cat.revert.label",
+        "resultKey": "event.rare-cat.revert.result",
+        "effects": [
+          {
+            "type": "resource",
+            "resource": "hype",
+            "amount": 5
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "rare-pottery",
+    "titleKey": "event.rare-pottery.title",
+    "bodyKey": "event.rare-pottery.body",
+    "tone": "neutral",
+    "weight": 0.02,
+    "once": true,
+    "conditions": [
+      {
+        "type": "hasNode",
+        "nodeId": "cap-model-4"
+      }
+    ],
+    "choices": [
+      {
+        "id": "raise",
+        "labelKey": "event.rare-pottery.raise.label",
+        "resultKey": "event.rare-pottery.raise.result",
+        "cost": {
+          "cash": 50
+        },
+        "effects": [
+          {
+            "type": "agiProgress",
+            "amount": 2
+          }
+        ]
+      },
+      {
+        "id": "bless",
+        "labelKey": "event.rare-pottery.bless.label",
+        "resultKey": "event.rare-pottery.bless.result",
+        "effects": [
+          {
+            "type": "agiProgress",
+            "amount": -4
+          },
+          {
+            "type": "resource",
+            "resource": "hype",
+            "amount": 25
+          },
+          {
+            "type": "meter",
+            "meter": "backlash",
+            "amount": -6
+          }
+        ]
+      }
+    ]
+  }
+]

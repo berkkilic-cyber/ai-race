@@ -1,0 +1,934 @@
+[
+  {
+    "id": "cap-model-1",
+    "tree": "capability",
+    "nameKey": "node.cap-model-1.name",
+    "descKey": "node.cap-model-1.desc",
+    "cost": 8,
+    "requires": [],
+    "row": 1,
+    "col": 2,
+    "modifiers": [
+      {
+        "stat": "spreadRate",
+        "op": "mul",
+        "value": 1.05
+      }
+    ],
+    "capabilityLevel": 1
+  },
+  {
+    "id": "cap-gpu-lease",
+    "tree": "capability",
+    "nameKey": "node.cap-gpu-lease.name",
+    "descKey": "node.cap-gpu-lease.desc",
+    "cost": 18,
+    "cashCost": 20,
+    "requires": [
+      "cap-model-1"
+    ],
+    "row": 2,
+    "col": 1,
+    "modifiers": [
+      {
+        "stat": "computeCapacity",
+        "op": "mul",
+        "value": 1.15
+      }
+    ],
+    "onBuy": [
+      {
+        "type": "compute",
+        "amount": 3
+      }
+    ]
+  },
+  {
+    "id": "cap-model-2",
+    "tree": "capability",
+    "nameKey": "node.cap-model-2.name",
+    "descKey": "node.cap-model-2.desc",
+    "cost": 25,
+    "requires": [
+      "cap-model-1"
+    ],
+    "row": 2,
+    "col": 2,
+    "modifiers": [
+      {
+        "stat": "agiRate",
+        "op": "mul",
+        "value": 1.05
+      }
+    ],
+    "capabilityLevel": 2
+  },
+  {
+    "id": "cap-safety-team",
+    "tree": "capability",
+    "nameKey": "node.cap-safety-team.name",
+    "descKey": "node.cap-safety-team.desc",
+    "cost": 20,
+    "requires": [
+      "cap-model-1"
+    ],
+    "row": 2,
+    "col": 3,
+    "modifiers": [
+      {
+        "stat": "backlashGain",
+        "op": "mul",
+        "value": 0.85
+      }
+    ]
+  },
+  {
+    "id": "cap-gpu-megadeal",
+    "tree": "capability",
+    "nameKey": "node.cap-gpu-megadeal.name",
+    "descKey": "node.cap-gpu-megadeal.desc",
+    "cost": 45,
+    "cashCost": 60,
+    "requires": [
+      "cap-gpu-lease"
+    ],
+    "row": 3,
+    "col": 1,
+    "modifiers": [
+      {
+        "stat": "computeCapacity",
+        "op": "mul",
+        "value": 1.25
+      },
+      {
+        "stat": "dataCentreCost",
+        "op": "mul",
+        "value": 0.9
+      }
+    ],
+    "onBuy": [
+      {
+        "type": "compute",
+        "amount": 6
+      }
+    ]
+  },
+  {
+    "id": "cap-model-3",
+    "tree": "capability",
+    "nameKey": "node.cap-model-3.name",
+    "descKey": "node.cap-model-3.desc",
+    "cost": 55,
+    "requires": [
+      "cap-model-2",
+      "cap-gpu-lease"
+    ],
+    "row": 3,
+    "col": 2,
+    "modifiers": [
+      {
+        "stat": "agiRate",
+        "op": "mul",
+        "value": 1.1
+      },
+      {
+        "stat": "backlashGain",
+        "op": "mul",
+        "value": 1.05
+      }
+    ],
+    "capabilityLevel": 3
+  },
+  {
+    "id": "cap-interpretability",
+    "tree": "capability",
+    "nameKey": "node.cap-interpretability.name",
+    "descKey": "node.cap-interpretability.desc",
+    "cost": 40,
+    "requires": [
+      "cap-safety-team"
+    ],
+    "row": 3,
+    "col": 3,
+    "modifiers": [
+      {
+        "stat": "backlashGain",
+        "op": "mul",
+        "value": 0.85
+      },
+      {
+        "stat": "regulationGain",
+        "op": "mul",
+        "value": 0.9
+      }
+    ]
+  },
+  {
+    "id": "cap-own-chips",
+    "tree": "capability",
+    "nameKey": "node.cap-own-chips.name",
+    "descKey": "node.cap-own-chips.desc",
+    "cost": 90,
+    "cashCost": 150,
+    "requires": [
+      "cap-gpu-megadeal"
+    ],
+    "row": 4,
+    "col": 1,
+    "modifiers": [
+      {
+        "stat": "computeCapacity",
+        "op": "mul",
+        "value": 1.4
+      },
+      {
+        "stat": "dataCentreUpkeep",
+        "op": "mul",
+        "value": 0.85
+      }
+    ]
+  },
+  {
+    "id": "cap-model-4",
+    "tree": "capability",
+    "nameKey": "node.cap-model-4.name",
+    "descKey": "node.cap-model-4.desc",
+    "cost": 95,
+    "requires": [
+      "cap-model-3"
+    ],
+    "row": 4,
+    "col": 2,
+    "modifiers": [
+      {
+        "stat": "agiRate",
+        "op": "mul",
+        "value": 1.15
+      },
+      {
+        "stat": "backlashGain",
+        "op": "mul",
+        "value": 1.1
+      }
+    ],
+    "capabilityLevel": 4
+  },
+  {
+    "id": "cap-alignment",
+    "tree": "capability",
+    "nameKey": "node.cap-alignment.name",
+    "descKey": "node.cap-alignment.desc",
+    "cost": 80,
+    "requires": [
+      "cap-interpretability",
+      "cap-model-3"
+    ],
+    "row": 4,
+    "col": 3,
+    "modifiers": [
+      {
+        "stat": "backlashGain",
+        "op": "mul",
+        "value": 0.8
+      },
+      {
+        "stat": "agiRate",
+        "op": "mul",
+        "value": 1.05
+      }
+    ]
+  },
+  {
+    "id": "cap-robotics",
+    "tree": "capability",
+    "nameKey": "node.cap-robotics.name",
+    "descKey": "node.cap-robotics.desc",
+    "cost": 130,
+    "cashCost": 200,
+    "requires": [
+      "cap-own-chips",
+      "cap-model-4"
+    ],
+    "row": 5,
+    "col": 1,
+    "modifiers": [
+      {
+        "stat": "cashIncome",
+        "op": "mul",
+        "value": 1.3
+      },
+      {
+        "stat": "spreadRate",
+        "op": "mul",
+        "value": 1.1
+      },
+      {
+        "stat": "backlashGain",
+        "op": "mul",
+        "value": 1.15
+      }
+    ]
+  },
+  {
+    "id": "cap-model-5",
+    "tree": "capability",
+    "nameKey": "node.cap-model-5.name",
+    "descKey": "node.cap-model-5.desc",
+    "cost": 150,
+    "requires": [
+      "cap-model-4",
+      "cap-gpu-megadeal"
+    ],
+    "row": 5,
+    "col": 2,
+    "modifiers": [
+      {
+        "stat": "agiRate",
+        "op": "mul",
+        "value": 1.25
+      },
+      {
+        "stat": "backlashGain",
+        "op": "mul",
+        "value": 1.15
+      }
+    ],
+    "capabilityLevel": 5
+  },
+  {
+    "id": "reach-app",
+    "tree": "reach",
+    "nameKey": "node.reach-app.name",
+    "descKey": "node.reach-app.desc",
+    "cost": 8,
+    "requires": [],
+    "row": 1,
+    "col": 2,
+    "modifiers": [
+      {
+        "stat": "spreadRate",
+        "op": "mul",
+        "value": 1.15
+      },
+      {
+        "stat": "hypeIncome",
+        "op": "mul",
+        "value": 1.1
+      }
+    ]
+  },
+  {
+    "id": "reach-api",
+    "tree": "reach",
+    "nameKey": "node.reach-api.name",
+    "descKey": "node.reach-api.desc",
+    "cost": 20,
+    "requires": [
+      "reach-app"
+    ],
+    "row": 2,
+    "col": 1,
+    "modifiers": [
+      {
+        "stat": "cashIncome",
+        "op": "mul",
+        "value": 1.2
+      }
+    ]
+  },
+  {
+    "id": "reach-social",
+    "tree": "reach",
+    "nameKey": "node.reach-social.name",
+    "descKey": "node.reach-social.desc",
+    "cost": 18,
+    "requires": [
+      "reach-app"
+    ],
+    "row": 2,
+    "col": 2,
+    "modifiers": [
+      {
+        "stat": "hypeIncome",
+        "op": "mul",
+        "value": 1.2
+      },
+      {
+        "stat": "seedChance",
+        "op": "mul",
+        "value": 1.1
+      }
+    ]
+  },
+  {
+    "id": "reach-loc-spanish",
+    "tree": "reach",
+    "nameKey": "node.reach-loc-spanish.name",
+    "descKey": "node.reach-loc-spanish.desc",
+    "cost": 18,
+    "cashCost": 15,
+    "requires": [
+      "reach-app"
+    ],
+    "row": 2,
+    "col": 3,
+    "modifiers": [
+      {
+        "stat": "spreadRate",
+        "op": "mul",
+        "value": 1.4,
+        "regionTag": "spanish"
+      },
+      {
+        "stat": "seedChance",
+        "op": "mul",
+        "value": 1.2,
+        "regionTag": "spanish"
+      }
+    ]
+  },
+  {
+    "id": "reach-enterprise",
+    "tree": "reach",
+    "nameKey": "node.reach-enterprise.name",
+    "descKey": "node.reach-enterprise.desc",
+    "cost": 45,
+    "requires": [
+      "reach-api"
+    ],
+    "row": 3,
+    "col": 1,
+    "modifiers": [
+      {
+        "stat": "cashIncome",
+        "op": "mul",
+        "value": 1.3
+      }
+    ]
+  },
+  {
+    "id": "reach-media",
+    "tree": "reach",
+    "nameKey": "node.reach-media.name",
+    "descKey": "node.reach-media.desc",
+    "cost": 40,
+    "cashCost": 30,
+    "requires": [
+      "reach-social"
+    ],
+    "row": 3,
+    "col": 2,
+    "modifiers": [
+      {
+        "stat": "hypeIncome",
+        "op": "mul",
+        "value": 1.15
+      },
+      {
+        "stat": "backlashGain",
+        "op": "mul",
+        "value": 0.9
+      }
+    ]
+  },
+  {
+    "id": "reach-loc-asia",
+    "tree": "reach",
+    "nameKey": "node.reach-loc-asia.name",
+    "descKey": "node.reach-loc-asia.desc",
+    "cost": 45,
+    "cashCost": 30,
+    "requires": [
+      "reach-loc-spanish"
+    ],
+    "row": 3,
+    "col": 3,
+    "modifiers": [
+      {
+        "stat": "spreadRate",
+        "op": "mul",
+        "value": 1.3,
+        "regionTag": "asia"
+      },
+      {
+        "stat": "seedChance",
+        "op": "mul",
+        "value": 1.2,
+        "regionTag": "asia"
+      },
+      {
+        "stat": "spreadRate",
+        "op": "mul",
+        "value": 1.25,
+        "regionTag": "africa"
+      }
+    ]
+  },
+  {
+    "id": "reach-partnerships",
+    "tree": "reach",
+    "nameKey": "node.reach-partnerships.name",
+    "descKey": "node.reach-partnerships.desc",
+    "cost": 75,
+    "cashCost": 60,
+    "requires": [
+      "reach-enterprise"
+    ],
+    "row": 4,
+    "col": 1,
+    "modifiers": [
+      {
+        "stat": "launchCost",
+        "op": "mul",
+        "value": 0.7
+      },
+      {
+        "stat": "seedChance",
+        "op": "mul",
+        "value": 1.25
+      }
+    ]
+  },
+  {
+    "id": "reach-pr",
+    "tree": "reach",
+    "nameKey": "node.reach-pr.name",
+    "descKey": "node.reach-pr.desc",
+    "cost": 70,
+    "cashCost": 40,
+    "requires": [
+      "reach-media"
+    ],
+    "row": 4,
+    "col": 2,
+    "modifiers": [
+      {
+        "stat": "backlashGain",
+        "op": "mul",
+        "value": 0.8
+      }
+    ]
+  },
+  {
+    "id": "reach-compliance",
+    "tree": "reach",
+    "nameKey": "node.reach-compliance.name",
+    "descKey": "node.reach-compliance.desc",
+    "cost": 70,
+    "cashCost": 50,
+    "requires": [
+      "reach-loc-asia"
+    ],
+    "row": 4,
+    "col": 3,
+    "modifiers": [
+      {
+        "stat": "regulationGain",
+        "op": "mul",
+        "value": 0.9
+      },
+      {
+        "stat": "regulationGain",
+        "op": "mul",
+        "value": 0.7,
+        "regionTag": "eu"
+      }
+    ]
+  },
+  {
+    "id": "reach-government",
+    "tree": "reach",
+    "nameKey": "node.reach-government.name",
+    "descKey": "node.reach-government.desc",
+    "cost": 130,
+    "cashCost": 100,
+    "requires": [
+      "reach-partnerships",
+      "reach-pr"
+    ],
+    "row": 5,
+    "col": 1,
+    "modifiers": [
+      {
+        "stat": "regulationGain",
+        "op": "mul",
+        "value": 0.8
+      },
+      {
+        "stat": "cashIncome",
+        "op": "mul",
+        "value": 1.2
+      },
+      {
+        "stat": "backlashGain",
+        "op": "mul",
+        "value": 1.05
+      }
+    ]
+  },
+  {
+    "id": "reach-superapp",
+    "tree": "reach",
+    "nameKey": "node.reach-superapp.name",
+    "descKey": "node.reach-superapp.desc",
+    "cost": 150,
+    "requires": [
+      "reach-pr",
+      "reach-partnerships"
+    ],
+    "row": 5,
+    "col": 2,
+    "modifiers": [
+      {
+        "stat": "spreadRate",
+        "op": "mul",
+        "value": 1.3
+      },
+      {
+        "stat": "seedChance",
+        "op": "mul",
+        "value": 1.3
+      },
+      {
+        "stat": "hypeIncome",
+        "op": "mul",
+        "value": 1.15
+      }
+    ]
+  },
+  {
+    "id": "shadow-benchmarks",
+    "tree": "shadow",
+    "nameKey": "node.shadow-benchmarks.name",
+    "descKey": "node.shadow-benchmarks.desc",
+    "cost": 8,
+    "requires": [],
+    "row": 1,
+    "col": 2,
+    "modifiers": [
+      {
+        "stat": "hypeIncome",
+        "op": "mul",
+        "value": 1.3
+      },
+      {
+        "stat": "riskChance",
+        "op": "mul",
+        "value": 1.1
+      }
+    ]
+  },
+  {
+    "id": "shadow-lobbying",
+    "tree": "shadow",
+    "nameKey": "node.shadow-lobbying.name",
+    "descKey": "node.shadow-lobbying.desc",
+    "cost": 22,
+    "cashCost": 30,
+    "requires": [
+      "shadow-benchmarks"
+    ],
+    "row": 2,
+    "col": 1,
+    "modifiers": [
+      {
+        "stat": "regulationGain",
+        "op": "mul",
+        "value": 0.8
+      }
+    ]
+  },
+  {
+    "id": "shadow-astroturf",
+    "tree": "shadow",
+    "nameKey": "node.shadow-astroturf.name",
+    "descKey": "node.shadow-astroturf.desc",
+    "cost": 20,
+    "cashCost": 20,
+    "requires": [
+      "shadow-benchmarks"
+    ],
+    "row": 2,
+    "col": 2,
+    "modifiers": [
+      {
+        "stat": "backlashGain",
+        "op": "mul",
+        "value": 0.85
+      },
+      {
+        "stat": "riskChance",
+        "op": "mul",
+        "value": 1.15
+      }
+    ]
+  },
+  {
+    "id": "shadow-poaching",
+    "tree": "shadow",
+    "nameKey": "node.shadow-poaching.name",
+    "descKey": "node.shadow-poaching.desc",
+    "cost": 22,
+    "cashCost": 40,
+    "requires": [
+      "shadow-benchmarks"
+    ],
+    "row": 2,
+    "col": 3,
+    "modifiers": [
+      {
+        "stat": "riskChance",
+        "op": "mul",
+        "value": 1.05
+      }
+    ],
+    "onBuy": [
+      {
+        "type": "agiProgress",
+        "amount": -3,
+        "target": "leadRival"
+      },
+      {
+        "type": "timedModifier",
+        "modifier": {
+          "stat": "agiRate",
+          "op": "mul",
+          "value": 0.8
+        },
+        "durationTicks": 300,
+        "target": "rivals"
+      }
+    ]
+  },
+  {
+    "id": "shadow-donations",
+    "tree": "shadow",
+    "nameKey": "node.shadow-donations.name",
+    "descKey": "node.shadow-donations.desc",
+    "cost": 50,
+    "cashCost": 60,
+    "requires": [
+      "shadow-lobbying"
+    ],
+    "row": 3,
+    "col": 1,
+    "modifiers": [
+      {
+        "stat": "regulationGain",
+        "op": "mul",
+        "value": 0.75
+      },
+      {
+        "stat": "riskChance",
+        "op": "mul",
+        "value": 1.2
+      }
+    ]
+  },
+  {
+    "id": "shadow-demos",
+    "tree": "shadow",
+    "nameKey": "node.shadow-demos.name",
+    "descKey": "node.shadow-demos.desc",
+    "cost": 45,
+    "requires": [
+      "shadow-astroturf"
+    ],
+    "row": 3,
+    "col": 2,
+    "modifiers": [
+      {
+        "stat": "hypeIncome",
+        "op": "mul",
+        "value": 1.25
+      },
+      {
+        "stat": "spreadRate",
+        "op": "mul",
+        "value": 1.1
+      },
+      {
+        "stat": "riskChance",
+        "op": "mul",
+        "value": 1.15
+      }
+    ]
+  },
+  {
+    "id": "shadow-nda",
+    "tree": "shadow",
+    "nameKey": "node.shadow-nda.name",
+    "descKey": "node.shadow-nda.desc",
+    "cost": 40,
+    "cashCost": 30,
+    "requires": [
+      "shadow-poaching"
+    ],
+    "row": 3,
+    "col": 3,
+    "modifiers": [
+      {
+        "stat": "riskChance",
+        "op": "mul",
+        "value": 0.8
+      }
+    ],
+    "onBuy": [
+      {
+        "type": "meter",
+        "meter": "backlash",
+        "amount": 4
+      }
+    ]
+  },
+  {
+    "id": "shadow-revolving-door",
+    "tree": "shadow",
+    "nameKey": "node.shadow-revolving-door.name",
+    "descKey": "node.shadow-revolving-door.desc",
+    "cost": 80,
+    "cashCost": 80,
+    "requires": [
+      "shadow-donations"
+    ],
+    "row": 4,
+    "col": 1,
+    "modifiers": [
+      {
+        "stat": "banDuration",
+        "op": "mul",
+        "value": 0.7
+      },
+      {
+        "stat": "regulationGain",
+        "op": "mul",
+        "value": 0.85
+      }
+    ],
+    "onBuy": [
+      {
+        "type": "meter",
+        "meter": "backlash",
+        "amount": 5
+      }
+    ]
+  },
+  {
+    "id": "shadow-bot-farm",
+    "tree": "shadow",
+    "nameKey": "node.shadow-bot-farm.name",
+    "descKey": "node.shadow-bot-farm.desc",
+    "cost": 85,
+    "cashCost": 50,
+    "requires": [
+      "shadow-demos",
+      "shadow-astroturf"
+    ],
+    "row": 4,
+    "col": 2,
+    "modifiers": [
+      {
+        "stat": "spreadRate",
+        "op": "mul",
+        "value": 1.25
+      },
+      {
+        "stat": "seedChance",
+        "op": "mul",
+        "value": 1.2
+      },
+      {
+        "stat": "riskChance",
+        "op": "mul",
+        "value": 1.25
+      }
+    ]
+  },
+  {
+    "id": "shadow-ma-team",
+    "tree": "shadow",
+    "nameKey": "node.shadow-ma-team.name",
+    "descKey": "node.shadow-ma-team.desc",
+    "cost": 75,
+    "cashCost": 80,
+    "requires": [
+      "shadow-nda"
+    ],
+    "row": 4,
+    "col": 3,
+    "modifiers": [
+      {
+        "stat": "acquireCost",
+        "op": "mul",
+        "value": 0.9
+      }
+    ],
+    "grantsFlags": [
+      "canAcquire"
+    ]
+  },
+  {
+    "id": "shadow-capture",
+    "tree": "shadow",
+    "nameKey": "node.shadow-capture.name",
+    "descKey": "node.shadow-capture.desc",
+    "cost": 140,
+    "cashCost": 150,
+    "requires": [
+      "shadow-revolving-door"
+    ],
+    "row": 5,
+    "col": 1,
+    "modifiers": [
+      {
+        "stat": "regulationGain",
+        "op": "mul",
+        "value": 0.6
+      },
+      {
+        "stat": "riskChance",
+        "op": "mul",
+        "value": 1.3
+      }
+    ],
+    "onBuy": [
+      {
+        "type": "meter",
+        "meter": "backlash",
+        "amount": 10
+      }
+    ]
+  },
+  {
+    "id": "shadow-hostile",
+    "tree": "shadow",
+    "nameKey": "node.shadow-hostile.name",
+    "descKey": "node.shadow-hostile.desc",
+    "cost": 120,
+    "cashCost": 100,
+    "requires": [
+      "shadow-ma-team"
+    ],
+    "row": 5,
+    "col": 3,
+    "modifiers": [
+      {
+        "stat": "acquireCost",
+        "op": "mul",
+        "value": 0.7
+      }
+    ],
+    "onBuy": [
+      {
+        "type": "agiProgress",
+        "amount": -5,
+        "target": "leadRival"
+      },
+      {
+        "type": "meter",
+        "meter": "backlash",
+        "amount": 8
+      }
+    ]
+  }
+]
