@@ -1,6 +1,19 @@
 # UI conventions
 
-Target: phone, portrait, one-handed. Must also run in a browser (`npm run web`) at 390×844 for testing. Placeholder art only in milestone 1: flat shapes, no images.
+Target: phone, **landscape** (decided after the first build: the world map is wide, and a later desktop version is landscape too). Design and test at 844×390; the app is locked to landscape on devices. A narrow portrait window on web must stay usable but need not be polished. Placeholder art only in milestone 1: flat shapes, no images.
+
+## Landscape layout
+
+"Wide" means width > height and width ≥ 600 (`useLayoutMode()` returns `'wide' | 'narrow'`). In wide mode:
+
+- **Left rail** (about 56 wide, inside the left safe area): the tabs (Map, Trees, News) stacked vertically.
+- **Top strip** (about 40 high): lab name and day, then Hype, Cash, Compute and Model tier as compact inline pills, then the three meters as compact inline bars, then the speed control at the right.
+- **Main area:** everything else. The map is full-bleed and by default shows the whole world fitted to the area. Trees and News replace the main area.
+- **Ticker:** a slim strip (about 28 high) along the bottom of the main area.
+- **Sheet:** the shared `Sheet` is a right-hand side panel in wide mode (width about 360, full height of the main area, slides in from the right, its content scrolls). The map stays visible and usable beside it. In narrow mode it remains a bottom sheet.
+- **ModalCard:** centred, up to about 640 wide, at most the screen height minus margins, content scrolls if needed. Event cards use two columns in wide mode: text on the left, choices on the right.
+
+Vertical space is scarce (390 minus safe areas), so nothing important may need vertical scrolling of the whole screen; panels scroll internally.
 
 ## Routes (expo-router)
 
@@ -13,7 +26,7 @@ Target: phone, portrait, one-handed. Must also run in a browser (`npm run web`) 
 | `/game/news` | `app/game/news.tsx` | News log tab |
 | `/end` | `app/end.tsx` | Ending: result, score, run summary, play again |
 
-Shell layout, top to bottom: **TopBar** (lab name, day counter, speed control: pause / 1x / 2x / 3x) → **ResourceRow** (Hype, Cash with income per day, Compute, Model tier) → **MeterRow** (Regulation, Backlash, Rival as labelled bars; a bar pulses above 75) → tab content → **Ticker** (latest headline, tap opens News) → **TabBar** (Map, Trees, News). The event card is a modal over everything and cannot be dismissed without choosing.
+Shell layout in narrow mode, top to bottom: **TopBar** (lab name, day counter, speed control: pause / 1x / 2x / 3x) → **ResourceRow** (Hype, Cash with income per day, Compute, Model tier) → **MeterRow** (Regulation, Backlash, Rival as labelled bars; a bar pulses above 75) → tab content → **Ticker** (latest headline, tap opens News) → **TabBar** (Map, Trees, News). The event card is a modal over everything and cannot be dismissed without choosing.
 
 ## Code layout
 
