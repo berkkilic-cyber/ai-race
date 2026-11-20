@@ -1,7 +1,7 @@
 /** Channels: the ways the lab spreads from one region to the next. */
 import { Circle, Path, Rect } from 'react-native-svg';
 
-import { spark } from '../shapes';
+import { arrowHead, spark } from '../shapes';
 import type { GlyphProps } from '../types';
 
 /** Ocean: a small ship riding the waves. */
@@ -45,9 +45,11 @@ export function Strict({ a }: GlyphProps) {
 export function Viral({ c, a }: GlyphProps) {
   return (
     <>
-      <Circle cx={5} cy={12} r={2.25} fill={c} stroke="none" />
-      <Path d="M7 12h3.5M10.5 12C13 12 14 6 18 6M10.5 12C13 12 14 18 18 18M10.5 12H18" />
-      <Path d="M16.5 3.75 19 6l-2.5 2.25M16.5 9.75 19 12l-2.5 2.25M16.5 15.75 19 18l-2.5 2.25" stroke={a} />
+      <Circle cx={4.25} cy={12} r={2.25} fill={c} stroke="none" />
+      <Path d="M6.5 12h4M10.5 12 19 4.5M10.5 12h10M10.5 12l8.5 7.5" />
+      <Path d={arrowHead(19.5, 4.1, -41.4, 3.25)} stroke={a} />
+      <Path d={arrowHead(21, 12, 0, 3.25)} stroke={a} />
+      <Path d={arrowHead(19.5, 19.9, 41.4, 3.25)} stroke={a} />
     </>
   );
 }

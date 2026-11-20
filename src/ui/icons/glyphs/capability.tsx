@@ -8,12 +8,13 @@ import { spark } from '../shapes';
 import type { GlyphProps } from '../types';
 
 /** Gen 1, Autocomplete Deluxe: a text box with a typed line, a caret, a ghost completion and a sparkle. */
-export function Model1({ a }: GlyphProps) {
+export function Model1({ a, w }: GlyphProps) {
   return (
     <>
-      <Path d="M15 9.5H4.5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h15a2 2 0 0 0 2-2v-3" />
-      <Path d="M6 14.5h3.5M12 12v5M15 14.5h.01M18 14.5h.01" />
-      <Path d={spark(19, 6, 3.5)} fill={a} stroke="none" />
+      <Rect x={2.5} y={9.5} width={19} height={10} rx={2} />
+      <Path d="M5.5 14.5h4M12 12v5" />
+      <Path d="M14.75 14.5h.01M18 14.5h.01" stroke={a} strokeWidth={w * 1.3} />
+      <Path d={spark(19, 4.5, 3.25)} fill={a} stroke="none" />
     </>
   );
 }

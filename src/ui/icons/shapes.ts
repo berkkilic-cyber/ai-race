@@ -45,3 +45,13 @@ export function arc(cx: number, cy: number, r: number, fromDeg: number, toDeg: n
   const [x1, y1] = polar(cx, cy, r, fromDeg + sweep);
   return `M${f(x0)} ${f(y0)}A${f(r)} ${f(r)} 0 ${sweep > 180 ? 1 : 0} 1 ${f(x1)} ${f(y1)}`;
 }
+
+/**
+ * An open arrowhead (two strokes) whose tip is at (x, y), pointing along `deg`
+ * (0° right, clockwise). `len` is the length of each barb.
+ */
+export function arrowHead(x: number, y: number, deg: number, len = 3, spread = 40): string {
+  const [x0, y0] = polar(x, y, len, deg + 180 - spread);
+  const [x1, y1] = polar(x, y, len, deg + 180 + spread);
+  return `M${f(x0)} ${f(y0)}L${f(x)} ${f(y)}L${f(x1)} ${f(y1)}`;
+}

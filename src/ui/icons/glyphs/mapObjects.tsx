@@ -3,14 +3,14 @@ import { Circle, Path, Rect } from 'react-native-svg';
 
 import type { GlyphProps } from '../types';
 
-/** A shipping crate stencilled with a chip. */
+/** A shipping crate with a graphics card stencilled on its side. */
 export function GpuCrate({ a }: GlyphProps) {
   return (
     <>
-      <Rect x={3} y={5} width={18} height={15.5} rx={1.5} />
-      <Path d="M3 9h18" />
-      <Rect x={9.75} y={12} width={4.5} height={4.5} rx={0.75} fill={a} stroke={a} />
-      <Path d="M11 12v-1.5M13 12v-1.5M11 16.5V18M13 16.5V18M9.75 13.25h-1.5M9.75 15.25h-1.5M14.25 13.25h1.5M14.25 15.25h1.5" stroke={a} />
+      <Rect x={2.5} y={5.5} width={19} height={15} rx={1.5} />
+      <Path d="M2.5 9.5h19" />
+      <Circle cx={8.75} cy={15} r={2.5} stroke={a} />
+      <Circle cx={15.25} cy={15} r={2.5} stroke={a} />
     </>
   );
 }
@@ -28,31 +28,32 @@ export function Rack1({ a }: GlyphProps) {
   );
 }
 
-/** A hall: a row of three cabinets under one roof. */
+/** A hall: one building with two cabinets inside. */
 export function Rack2({ a }: GlyphProps) {
   return (
     <>
-      <Path d="M2 20.5h20M3 20.5V9l9-5 9 5v11.5" />
-      <Path d="M6 20.5V11.5h3v9M10.5 20.5V11.5h3v9M15 20.5V11.5h3v9" />
-      <Circle cx={7.5} cy={14} r={0.9} fill={a} stroke="none" />
-      <Circle cx={12} cy={14} r={0.9} fill={a} stroke="none" />
-      <Circle cx={16.5} cy={14} r={0.9} fill={a} stroke="none" />
+      <Path d="M1.5 20.5h21M3 20.5V10l9-5.5 9 5.5v10.5" />
+      <Rect x={6.5} y={12} width={4} height={8.5} rx={0.75} />
+      <Rect x={13.5} y={12} width={4} height={8.5} rx={0.75} />
+      <Circle cx={8.5} cy={14.75} r={0.95} fill={a} stroke="none" />
+      <Circle cx={15.5} cy={14.75} r={0.95} fill={a} stroke="none" />
     </>
   );
 }
 
-/** A campus: two halls of cabinets and a mast. */
+/** A campus: two halls side by side and a mast. */
 export function Rack3({ a }: GlyphProps) {
   return (
     <>
-      <Path d="M1.5 20.5h21" />
-      <Path d="M2.5 20.5V11l5-2.75 5 2.75v9.5" />
-      <Path d="M5.25 20.5V14h1.5v6.5M8.25 20.5V14h1.5v6.5" />
-      <Path d="M12.5 20.5V14l4.5-2.5 4.5 2.5v6.5" />
-      <Path d="M15.25 20.5V16.5h1.5v4M18.25 20.5V16.5h1.5v4" />
-      <Path d="M17 11.5V5" />
-      <Path d="M14.5 4.5a3.5 3.5 0 0 1 5 0" stroke={a} />
-      <Circle cx={17} cy={4.25} r={1} fill={a} stroke="none" />
+      <Path d="M1 20.5h22" />
+      <Path d="M2 20.5V13l4.75-3 4.75 3v7.5" />
+      <Path d="M12.5 20.5V12l4.75-3L22 12v8.5" />
+      <Rect x={5.25} y={15} width={3} height={5.5} rx={0.5} />
+      <Rect x={15.75} y={14} width={3} height={6.5} rx={0.5} />
+      <Path d="M17.25 9V4.5" />
+      <Path d="M14.75 4a3.5 3.5 0 0 1 5 0" stroke={a} />
+      <Circle cx={17.25} cy={4.25} r={1} fill={a} stroke="none" />
+      <Circle cx={6.75} cy={12.75} r={0.9} fill={a} stroke="none" />
     </>
   );
 }
@@ -85,14 +86,13 @@ export function Lobbyist({ a }: GlyphProps) {
   );
 }
 
-/** A wave over a cable on the sea floor. */
+/** Waves on top, a cable along the sea floor with one repeater. */
 export function UnderseaCable({ c, a }: GlyphProps) {
   return (
     <>
-      <Path d="M2.5 7.5c1.6 0 1.6-1.75 3.2-1.75S7.3 7.5 8.9 7.5s1.6-1.75 3.2-1.75 1.6 1.75 3.2 1.75 1.6-1.75 3.2-1.75 1.6 1.75 3 1.75" />
-      <Path d="M2.5 17.5h19" stroke={a} />
-      <Rect x={6.5} y={15.5} width={4} height={4} rx={1} fill={c} stroke="none" />
-      <Rect x={13.5} y={15.5} width={4} height={4} rx={1} fill={c} stroke="none" />
+      <Path d="M2.5 6.5c1.6 0 1.6-1.75 3.2-1.75S7.3 6.5 8.9 6.5s1.6-1.75 3.2-1.75 1.6 1.75 3.2 1.75 1.6-1.75 3.2-1.75 1.6 1.75 3 1.75" />
+      <Path d="M2.5 18h19" stroke={a} />
+      <Rect x={9.25} y={15.5} width={5.5} height={5} rx={1.25} fill={c} stroke="none" />
     </>
   );
 }

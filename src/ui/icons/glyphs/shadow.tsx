@@ -1,7 +1,7 @@
 /** Shadow tree: the things a lab does when nobody is looking. Each is a small visual joke. */
 import { Circle, Path, Rect } from 'react-native-svg';
 
-import { arc, star } from '../shapes';
+import { arc, arrowHead, polar, star } from '../shapes';
 import type { GlyphProps } from '../types';
 
 /** Benchmark Tuning: a bar chart whose best bar has an extra block propped on top. */
@@ -88,14 +88,18 @@ export function Nda({ a }: GlyphProps) {
   );
 }
 
-/** Revolving Door: the drum seen from above, its wings and a turning arrow. */
-export function RevolvingDoor({ a }: GlyphProps) {
+/** Revolving Door: the drum seen from above, four wings inside, arrows showing it turn. */
+export function RevolvingDoor({ c, a }: GlyphProps) {
+  const [tx, ty] = polar(12, 12, 9, 330);
+  const [bx, by] = polar(12, 12, 9, 150);
   return (
     <>
-      <Path d={arc(12, 12, 8.5, 215, 325)} />
-      <Path d={arc(12, 12, 8.5, 35, 145)} />
-      <Path d="M5.5 8.25l13 7.5M8.25 18.5l7.5-13" stroke={a} />
-      <Path d="M17.75 3.6 19 5.05l-1.9.4M6.25 20.4 5 18.95l1.9-.4" />
+      <Path d={arc(12, 12, 9, 210, 330)} />
+      <Path d={arc(12, 12, 9, 30, 150)} />
+      <Path d={arrowHead(tx, ty, 60, 2.75)} />
+      <Path d={arrowHead(bx, by, 240, 2.75)} />
+      <Path d="M12 6v12M6 12h12" stroke={a} />
+      <Circle cx={12} cy={12} r={1.4} fill={c} stroke="none" />
     </>
   );
 }
