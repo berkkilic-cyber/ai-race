@@ -1,7 +1,7 @@
 import { createGame, type GameState, type NewsItem } from '@/engine';
 
 import { flashTone, freshNews } from '../hooks/useRegionFlashes';
-import { bannedKey, mixColor, parseSites, regionFills, sitesKey } from '../map/mapColors';
+import { bannedKey, bucketOwners, mixColor, newPresences, parseSites, regionDotColors, regionFills, sitesKey } from '../map/mapColors';
 import { createHitTester, parseRings } from '../map/hitTest';
 import { clampTranslate, centreOn, fitWorld, toMapPoint, toScreenPoint, zoomAbout, type Layout } from '../map/viewTransform';
 import { getPackEntry } from '../packs';
@@ -51,6 +51,46 @@ describe('map colours', () => {
       { key: 'player:dc1', regionId: 'canada', color: '#123456', level: 2, online: true, mine: true },
       { key: 'player:dc2', regionId: 'canada', color: '#123456', level: 1, online: false, mine: true },
     ]);
+  });
+});
+
+describe('dot matrix colours', () => {
+  it('bucketOwners lights round(share x buckets) buckets per lab, biggest share first, at least one when present', () => {
+    expect(bucketOwners([], 4)).toEqual([null, null, null, null]);
+    expect(bucketOwners([{ id: 'a', share: 0.5 }], 4)).toEqual(['a', 'a', null, null]);
+    expect(bucketOwners([{ id: 'a', share: 0.01 }], 10)).toEqual(['a', ...Array(9).fill(null)]);
+    expect(bucketOwners([{ id: 'small', share: 0.2 }, { id: 'big', share: 0.6 }], 10)).toEqual(['big', 'big', 'big', 'big', 'big', 'big', 'small', 'small', null, null]);
+    // Too tiny to show.
+    expect(bucketOwners([{ id: 'a', share: 0.0001 }], 4)).toEqual([null, null, null, null]);
+  });
+
+  it('bucketOwners never hands out more buckets than exist', () => {
+    const owners = bucketOwners([{ id: 'a', share: 0.62 }, { id: 'b', share: 0.36 }, { id: 'c', share: 0.02 }], 12);
+    expect(owners).toHaveLength(12);
+    expect(owners.filter((o) => o === 'c')).toHaveLength(1);
+    expect(owners.filter((o) => o === null)).toHaveLength(0);
+  });
+
+  it('regionDotColors: unlit dots rest, banned regions drop to dark, colour strings change only with the share', () => {
+    const s = game();
+    const colorOf = (id: string) => (id === 'player' ? '#aaaaaa' : '#bbbbbb');
+    const base = regionDotColors(s, ids, 12, colorOf);
+    expect(base['india'].split(',')).toEqual(Array(12).fill(colors.dotRest));
+    expect(base['canada'].split(',')[0]).toBe('#aaaaaa');
+    // A tiny change in adoption that crosses no bucket threshold keeps the same string.
+    const a = s.labs.player.adoption.canada ?? 0;
+    const nudged: GameState = { ...s, labs: { ...s.labs, player: { ...s.labs.player, adoption: { ...s.labs.player.adoption, canada: a + 0.0001 } } } };
+    expect(regionDotColors(nudged, ids, 12, colorOf)['canada']).toBe(base['canada']);
+    const banned: GameState = { ...s, labs: { ...s.labs, player: { ...s.labs.player, bans: { india: -1 } } } };
+    expect(regionDotColors(banned, ids, 12, colorOf)['india'].split(',')).toEqual(Array(12).fill(colors.dotBanned));
+  });
+
+  it('newPresences lists labs that gained a foothold since the previous state', () => {
+    const s = game();
+    const next: GameState = { ...s, labs: { ...s.labs, player: { ...s.labs.player, adoption: { ...s.labs.player.adoption, usa: 0.01 } } } };
+    expect(newPresences(s, next)).toEqual([{ labId: 'player', regionId: 'usa' }]);
+    expect(newPresences(next, next)).toEqual([]);
+    expect(newPresences(null, next)).toEqual([]);
   });
 });
 

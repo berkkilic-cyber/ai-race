@@ -1,7 +1,10 @@
 import { isBanned, type DataCentre, type GameState, type LabId, type RegionId } from '@/engine';
 
+import { mixColor } from '../color';
 import { labColor } from '../i18n';
 import { colors } from '../theme';
+
+export { mixColor };
 
 /** Total adoption below which a region counts as untouched. */
 const UNTOUCHED = 0.0005;
@@ -10,24 +13,6 @@ const MIN_STRENGTH = 0.28;
 const MAX_STRENGTH = 0.95;
 /** Fill strength is rounded to this many steps so tiny changes do not re-render paths. */
 const STEPS = 32;
-
-function parseHex(hex: string): [number, number, number] {
-  let h = hex.replace('#', '');
-  if (h.length === 3) h = h.split('').map((c) => c + c).join('');
-  const n = parseInt(h.slice(0, 6), 16);
-  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
-}
-
-function toHex(n: number): string {
-  return Math.round(Math.max(0, Math.min(255, n))).toString(16).padStart(2, '0');
-}
-
-/** Linear blend from colour a (t = 0) to colour b (t = 1). */
-export function mixColor(a: string, b: string, t: number): string {
-  const ca = parseHex(a);
-  const cb = parseHex(b);
-  return `#${toHex(ca[0] + (cb[0] - ca[0]) * t)}${toHex(ca[1] + (cb[1] - ca[1]) * t)}${toHex(ca[2] + (cb[2] - ca[2]) * t)}`;
-}
 
 export interface RegionPresence {
   leader: LabId | null;
@@ -108,4 +93,80 @@ export function parseSites(key: string, playerId: LabId, colorOf: (labId: LabId)
     const [labId, dcId, regionId, level, on] = part.split(',');
     return { key: `${labId}:${dcId}`, regionId, color: colorOf(labId), level: Number(level), online: on === '1', mine: labId === playerId };
   });
+}
+
+/** Adoption below which a lab lights no dots in a region. */
+export const DOT_LIT_MIN = 0.0005;
+
+/**
+ * Which lab lights each dot bucket of a region (index 0 is nearest the marker point).
+ * Each lab lights round(share x buckets) buckets, at least one once it is present; the
+ * biggest share sits at the centre and the others follow outward. Pure.
+ */
+export function bucketOwners(shares: readonly { id: LabId; share: number }[], buckets: number): (LabId | null)[] {
+  const present = shares.filter((s) => s.share >= DOT_LIT_MIN).sort((a, b) => b.share - a.share || (a.id < b.id ? -1 : 1));
+  const counts = present.map((s) => Math.max(1, Math.round(Math.min(1, s.share) * buckets)));
+  // Never more buckets than there are: take the excess from the largest counts.
+  let excess = counts.reduce((a, b) => a + b, 0) - buckets;
+  while (excess > 0) {
+    let largest = 0;
+    for (let i = 1; i < counts.length; i++) if (counts[i] > counts[largest]) largest = i;
+    if (counts[largest] <= 1) break;
+    counts[largest]--;
+    excess--;
+  }
+  const out: (LabId | null)[] = [];
+  present.forEach((s, i) => {
+    for (let k = 0; k < counts[i] && out.length < buckets; k++) out.push(s.id);
+  });
+  while (out.length < buckets) out.push(null);
+  return out;
+}
+
+/**
+ * Dot colours per region as one comma-joined string of `buckets` colours, so a
+ * shallow-compared selector only hands new props to regions whose colours changed.
+ * Unlit dots rest in dotRest, or drop to dotBanned (with the player's own) where the player is banned.
+ */
+export function regionDotColors(
+  state: GameState,
+  regionIds: readonly RegionId[],
+  buckets: number,
+  colorOf: (labId: LabId) => string,
+): Record<RegionId, string> {
+  const player = state.labs[state.playerLabId];
+  const out: Record<RegionId, string> = {};
+  for (const regionId of regionIds) {
+    const shares: { id: LabId; share: number }[] = [];
+    for (const id of state.labOrder) {
+      const share = state.labs[id].adoption[regionId] ?? 0;
+      if (share > 0) shares.push({ id, share });
+    }
+    const banned = isBanned(state, player.id, regionId);
+    const rest = banned ? colors.dotBanned : colors.dotRest;
+    out[regionId] = bucketOwners(shares, buckets)
+      .map((id) => (id === null || (banned && id === player.id) ? rest : colorOf(id)))
+      .join(',');
+  }
+  return out;
+}
+
+export interface Presence {
+  labId: LabId;
+  regionId: RegionId;
+}
+
+/** Labs that gained a foothold (adoption from zero to above zero) between two states. Pure. */
+export function newPresences(prev: GameState | null, next: GameState | null): Presence[] {
+  if (!prev || !next || prev === next || prev.seed !== next.seed || prev.labs === next.labs) return [];
+  const out: Presence[] = [];
+  for (const labId of next.labOrder) {
+    const before = prev.labs[labId]?.adoption;
+    const after = next.labs[labId].adoption;
+    if (!before || before === after) continue;
+    for (const regionId of Object.keys(after)) {
+      if ((after[regionId] ?? 0) > 0 && !((before[regionId] ?? 0) > 0)) out.push({ labId, regionId });
+    }
+  }
+  return out;
 }

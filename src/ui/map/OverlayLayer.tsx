@@ -1,11 +1,11 @@
 import { memo } from 'react';
-import { G, Path } from 'react-native-svg';
+import { G, Path, Rect, Text as SvgText } from 'react-native-svg';
 
 import type { MapGeometry } from '@/content/packs/ai-lab/geometry';
 
-import { useRegionFlashes } from '../hooks/useRegionFlashes';
+import { t } from '../i18n';
 import { useGameStore } from '../store/game';
-import { colors } from '../theme';
+import { colors, fonts } from '../theme';
 import { bannedKey } from './mapColors';
 
 export interface OverlayLayerProps {
@@ -13,26 +13,40 @@ export interface OverlayLayerProps {
   selected: string | null;
 }
 
-/** Drawn above all regions so outlines are not covered by neighbours: news flashes, bans, selection. */
+/** Stamp size in map units. */
+const STAMP_W = 46;
+const STAMP_H = 15;
+
+/** A rotated "BANNED" stamp over a region where the player is banned. */
+const BanStamp = memo(function BanStamp({ x, y, label }: { x: number; y: number; label: string }) {
+  return (
+    <G transform={`translate(${x} ${y}) rotate(-12)`}>
+      <Rect x={-STAMP_W / 2} y={-STAMP_H / 2} width={STAMP_W} height={STAMP_H} fill={colors.newsPaper} fillOpacity={0.85} stroke={colors.alarm} strokeWidth={1.4} />
+      <Rect x={-STAMP_W / 2 + 1.6} y={-STAMP_H / 2 + 1.6} width={STAMP_W - 3.2} height={STAMP_H - 3.2} fill="none" stroke={colors.alarm} strokeWidth={0.4} />
+      <SvgText x={0} y={3.9} fontSize={11} fontFamily={fonts.newsHeavy} letterSpacing={1} textAnchor="middle" fill={colors.alarm}>
+        {label}
+      </SvgText>
+    </G>
+  );
+});
+
+/**
+ * Drawn above the dots: a thin outline of the selected region's shape and a stamp over
+ * every region where the player is banned.
+ */
 export const OverlayLayer = memo(function OverlayLayer({ geometry, selected }: OverlayLayerProps) {
   const banned = useGameStore((s) => (s.state ? bannedKey(s.state) : ''));
-  const flashes = useRegionFlashes();
   const bannedIds = banned ? banned.split('|') : [];
+  const label = t('ui.map.banned').toUpperCase();
   return (
     <G pointerEvents="none">
-      {Object.entries(flashes).map(([id, tone]) =>
-        geometry.regions[id] ? (
-          <Path key={`f-${id}`} d={geometry.regions[id].d} fill={tone === 'bad' ? colors.bad : colors.good} fillOpacity={0.55} />
-        ) : null,
-      )}
-      {bannedIds.map((id) =>
-        geometry.regions[id] ? (
-          <Path key={`b-${id}`} d={geometry.regions[id].d} fill="none" stroke={colors.bad} strokeWidth={2} strokeDasharray="4 2" strokeLinejoin="round" />
-        ) : null,
-      )}
       {selected && geometry.regions[selected] ? (
-        <Path d={geometry.regions[selected].d} fill="none" stroke={colors.text} strokeWidth={1.6} strokeLinejoin="round" />
+        <Path d={geometry.regions[selected].d} fill="none" stroke={colors.text} strokeWidth={0.7} strokeLinejoin="round" strokeOpacity={0.85} testID="map-selection" />
       ) : null}
+      {bannedIds.map((id) => {
+        const region = geometry.regions[id];
+        return region ? <BanStamp key={`b-${id}`} x={region.centroid[0]} y={region.centroid[1]} label={label} /> : null;
+      })}
     </G>
   );
 });

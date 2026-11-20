@@ -5,12 +5,21 @@
  * Input:  world-atlas/countries-110m.json, src/content/packs/ai-lab/regions.json
  *         and the no-id country names in src/content/packs/ai-lab/map.json.
  * Output: src/content/packs/ai-lab/geometry.json
- *         { version, width, height, viewBox, regions: { [id]: { d, centroid, bbox, area } } }
+ *         { version, width, height, viewBox, dots: { pitch, buckets },
+ *           regions: { [id]: { d, centroid, bbox, area, dotCount, dots: string[] } } }
  *
  * Countries are merged per region on the topology (so shared borders vanish),
  * simplified, projected with Natural Earth and written with one decimal.
  * Antarctica (polygons of the polar `far-south` region south of 60°S) is
  * flattened into a thin strip at the bottom so it does not dominate the map.
+ *
+ * Dot matrix: every point of a regular grid (DOT_PITCH map units) that falls inside a
+ * region becomes one of that region's dots. A region's dots are ordered outward from its
+ * marker point (distance plus a little deterministic noise, so growth spreads rather than
+ * forming perfect circles) and split into DOT_BUCKETS equal groups, each written as one
+ * path in grid units ("M12 34h0M13 34h0..."; the renderer scales by the pitch and draws
+ * each zero-length segment with round caps). Tiny regions get at least MIN_DOTS dots
+ * (the free grid points nearest to their marker).
  *
  * Usage: node scripts/map/build-geometry.js [--check]
  *   --check  exit 1 if geometry.json is missing or out of date instead of writing it.
@@ -45,6 +54,14 @@ const POLAR_REGION = 'far-south';
 const CENTROID_HINTS = {
   nordics: [16, 61],
 };
+/** Dot grid spacing in map units (about 2.8 px at the 788x322 whole-world view). */
+const DOT_PITCH = 4;
+/** Paths per region: dots light bucket by bucket. */
+const DOT_BUCKETS = 12;
+/** Every region gets at least this many dots. */
+const MIN_DOTS = 3;
+/** Noise added to each dot's distance from the marker, in pitches. */
+const DOT_NOISE = 1.6;
 /** Decimals kept in the output. */
 const DIGITS = 1;
 
@@ -111,6 +128,99 @@ function markerPoint(rings, centroid) {
   }
   if (insideRings(rings, centroid[0], centroid[1]) && edgeDistance(rings, centroid[0], centroid[1]) >= bestDist * 0.5) return centroid;
   return best;
+}
+
+/** Rings ([[x, y], ...]) of the M/L/Z path data written by d3-geo. */
+function pathRings(d) {
+  const rings = [];
+  for (const part of d.split(/M/).filter(Boolean)) {
+    const ring = part
+      .replace(/Z/g, '')
+      .split('L')
+      .map((p) => p.split(',').map(Number))
+      .filter((p) => p.length === 2 && p.every(Number.isFinite));
+    if (ring.length >= 3) rings.push(ring);
+  }
+  return rings;
+}
+
+/** Deterministic 0..1 noise for a grid cell. */
+function cellNoise(gx, gy) {
+  let h = (gx * 374761393 + gy * 668265263) | 0;
+  h = Math.imul(h ^ (h >>> 13), 1274126177);
+  h ^= h >>> 16;
+  return (h >>> 0) / 4294967296;
+}
+
+/**
+ * Dot buckets per region. Grid point (gx, gy) sits at ((gx + 0.5) * pitch, (gy + 0.5) * pitch).
+ * Each grid point belongs to at most one region (the first whose rings contain it).
+ */
+function buildDots(regionsOut, width, height) {
+  const cols = Math.floor(width / DOT_PITCH);
+  const rows = Math.floor(height / DOT_PITCH);
+  const owner = new Map();
+  const cells = {};
+  const shapes = Object.entries(regionsOut).map(([id, r]) => ({ id, r, rings: pathRings(r.d) }));
+  for (const { id } of shapes) cells[id] = [];
+  for (let gy = 0; gy < rows; gy++) {
+    const y = (gy + 0.5) * DOT_PITCH;
+    for (let gx = 0; gx < cols; gx++) {
+      const x = (gx + 0.5) * DOT_PITCH;
+      for (const { id, r, rings } of shapes) {
+        const [x0, y0, x1, y1] = r.bbox;
+        if (x < x0 || x > x1 || y < y0 || y > y1) continue;
+        if (!insideRings(rings, x, y)) continue;
+        owner.set(gy * cols + gx, id);
+        cells[id].push([gx, gy]);
+        break;
+      }
+    }
+  }
+  // Tiny regions: take the free grid points nearest to the marker.
+  for (const { id, r } of shapes) {
+    if (cells[id].length >= MIN_DOTS) continue;
+    const [mx, my] = r.centroid;
+    const cx = Math.floor(mx / DOT_PITCH);
+    const cy = Math.floor(my / DOT_PITCH);
+    const near = [];
+    for (let dy = -3; dy <= 3; dy++) {
+      for (let dx = -3; dx <= 3; dx++) {
+        const gx = cx + dx;
+        const gy = cy + dy;
+        if (gx < 0 || gy < 0 || gx >= cols || gy >= rows || owner.has(gy * cols + gx)) continue;
+        near.push([gx, gy, Math.hypot((gx + 0.5) * DOT_PITCH - mx, (gy + 0.5) * DOT_PITCH - my)]);
+      }
+    }
+    near.sort((a, b) => a[2] - b[2] || a[1] - b[1] || a[0] - b[0]);
+    for (const [gx, gy] of near.slice(0, MIN_DOTS - cells[id].length)) {
+      owner.set(gy * cols + gx, id);
+      cells[id].push([gx, gy]);
+    }
+  }
+  const out = {};
+  for (const { id, r } of shapes) {
+    const [mx, my] = r.centroid;
+    const ranked = cells[id]
+      .map(([gx, gy]) => {
+        const dist = Math.hypot((gx + 0.5) * DOT_PITCH - mx, (gy + 0.5) * DOT_PITCH - my) / DOT_PITCH;
+        return { gx, gy, key: dist + cellNoise(gx, gy) * DOT_NOISE };
+      })
+      .sort((a, b) => a.key - b.key || a.gy - b.gy || a.gx - b.gx);
+    const buckets = [];
+    for (let b = 0; b < DOT_BUCKETS; b++) {
+      const from = Math.round((b * ranked.length) / DOT_BUCKETS);
+      const to = Math.round(((b + 1) * ranked.length) / DOT_BUCKETS);
+      buckets.push(
+        ranked
+          .slice(from, to)
+          .map((p) => `M${p.gx} ${p.gy}h0`)
+          .join(''),
+      );
+    }
+    out[id] = { dotCount: ranked.length, dots: buckets };
+  }
+  return out;
 }
 
 function meanLatitude(polygon) {
@@ -238,11 +348,15 @@ async function build() {
     };
   }
 
+  const dots = buildDots(out, WIDTH, height);
+  for (const id of Object.keys(out)) Object.assign(out[id], dots[id]);
+
   return {
-    version: 1,
+    version: 2,
     width: WIDTH,
     height,
     viewBox: [0, 0, WIDTH, height],
+    dots: { pitch: DOT_PITCH, buckets: DOT_BUCKETS },
     regions: out,
   };
 }
@@ -261,7 +375,12 @@ async function main() {
     return;
   }
   fs.writeFileSync(OUT_FILE, text);
-  console.log(`Wrote ${path.relative(ROOT, OUT_FILE)} (${(Buffer.byteLength(text) / 1024).toFixed(1)} KB, ${Object.keys(geometry.regions).length} regions)`);
+  const counts = Object.values(geometry.regions).map((r) => r.dotCount);
+  const total = counts.reduce((a, b) => a + b, 0);
+  console.log(
+    `Wrote ${path.relative(ROOT, OUT_FILE)} (${(Buffer.byteLength(text) / 1024).toFixed(1)} KB, ${counts.length} regions, ${total} dots, ` +
+      `${Math.min(...counts)}..${Math.max(...counts)} per region)`,
+  );
 }
 
 main().catch((err) => {

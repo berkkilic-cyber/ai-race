@@ -1,17 +1,19 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Platform, StyleSheet, View, type HostInstance, type LayoutChangeEvent } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, View, type HostInstance, type LayoutChangeEvent } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import Svg from 'react-native-svg';
 
 import type { MapGeometry } from '@/content/packs/ai-lab/geometry';
 
-import { Button } from '../components/Button';
 import { t } from '../i18n';
-import { colors, spacing } from '../theme';
+import { colors, radius, spacing, touch, voice } from '../theme';
+import { asDotGeometry } from './dotGeometry';
+import { DotLayer } from './DotLayer';
 import { OverlayLayer } from './OverlayLayer';
 import { createHitTester } from './hitTest';
 import { RegionLayer } from './RegionLayer';
+import { RippleLayer } from './RippleLayer';
 import { SitesLayer } from './SitesLayer';
 import { centreOn, clampScale, clampTranslate, fit, fitWorld, toMapPoint, zoomAbout, type Layout } from './viewTransform';
 
@@ -42,14 +44,34 @@ const SMALL_REGION_AREA = 150;
 const HIT_RADIUS = 7;
 const WHEEL_STEP = 0.0015;
 const BUTTON_ZOOM = 1.6;
+const CONTROL = 34;
+const CONTROL_SLOP = (touch - CONTROL) / 2;
+
+/** A quiet round map control (zoom in, out, reset) with a full 44-point touch area. */
+function MapControl({ glyph, onPress, label, testID }: { glyph: string; onPress: () => void; label: string; testID?: string }) {
+  return (
+    <Pressable
+      onPress={onPress}
+      hitSlop={CONTROL_SLOP}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      testID={testID}
+      style={({ pressed }) => [styles.ctrl, pressed && styles.ctrlPressed]}
+    >
+      <Text style={styles.ctrlGlyph}>{glyph}</Text>
+    </Pressable>
+  );
+}
 
 /**
- * The living world map: region fills, overlays and data centre dots in one SVG,
+ * The living world map: the dot matrix (or region fills for a pack without dots), data
+ * centres, overlays and launch ripples in one SVG,
  * moved by a view transform. Pan and pinch on touch, drag and wheel on web,
  * double tap or the reset button to return to the default view.
  */
 export function WorldMap({ geometry, selected, onSelect, focusRegion, defaultScale, defaultView = 'focus', insetRight = 0, controls = 'topRight' }: WorldMapProps) {
   const regionIds = useMemo(() => Object.keys(geometry.regions), [geometry]);
+  const dots = useMemo(() => asDotGeometry(geometry), [geometry]);
   const hitTester = useMemo(() => createHitTester(geometry, SMALL_REGION_AREA, HIT_RADIUS), [geometry]);
   const [size, setSize] = useState({ w: 0, h: 0 });
   const layout = useSharedValue<Layout>({ cw: 1, ch: 1, mw: geometry.width, mh: geometry.height });
@@ -218,18 +240,19 @@ export function WorldMap({ geometry, selected, onSelect, focusRegion, defaultSca
           {size.w > 0 ? (
             <Animated.View style={[styles.fill, animatedStyle]}>
               <Svg width={size.w} height={size.h} viewBox={`0 0 ${vw} ${vh}`} preserveAspectRatio="xMidYMid meet">
-                <RegionLayer geometry={geometry} regionIds={regionIds} />
-                <OverlayLayer geometry={geometry} selected={selected} />
+                {dots ? <DotLayer geometry={dots} regionIds={regionIds} selected={selected} /> : <RegionLayer geometry={geometry} regionIds={regionIds} />}
                 <SitesLayer geometry={geometry} />
+                <OverlayLayer geometry={geometry} selected={selected} />
+                <RippleLayer geometry={geometry} />
               </Svg>
             </Animated.View>
           ) : null}
         </View>
       </GestureDetector>
       <View style={[styles.controls, controls === 'bottomLeft' ? styles.bottomLeft : styles.topRight]} pointerEvents="box-none">
-        <Button label="+" compact onPress={() => zoomBy(BUTTON_ZOOM)} accessibilityLabel={t('ui.map.zoomIn')} style={styles.ctrl} />
-        <Button label="−" compact onPress={() => zoomBy(1 / BUTTON_ZOOM)} accessibilityLabel={t('ui.map.zoomOut')} style={styles.ctrl} />
-        <Button label="⟲" compact onPress={resetView} accessibilityLabel={t('ui.map.reset')} style={styles.ctrl} testID="map-reset" />
+        <MapControl glyph="+" onPress={() => zoomBy(BUTTON_ZOOM)} label={t('ui.map.zoomIn')} />
+        <MapControl glyph="−" onPress={() => zoomBy(1 / BUTTON_ZOOM)} label={t('ui.map.zoomOut')} />
+        <MapControl glyph="↺" onPress={resetView} label={t('ui.map.reset')} testID="map-reset" />
       </View>
     </View>
   );
@@ -239,8 +262,19 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg, overflow: 'hidden' },
   container: { flex: 1, overflow: 'hidden' },
   fill: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
-  controls: { position: 'absolute', gap: spacing.s },
-  topRight: { right: spacing.s, top: spacing.s },
-  bottomLeft: { left: spacing.s, bottom: spacing.s },
-  ctrl: { width: 44, height: 44, paddingHorizontal: 0, opacity: 0.9 },
+  controls: { position: 'absolute', gap: spacing.s + 2 },
+  topRight: { right: spacing.m, top: spacing.m },
+  bottomLeft: { left: spacing.m, bottom: spacing.m },
+  ctrl: {
+    width: CONTROL,
+    height: CONTROL,
+    borderRadius: radius.pill,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  ctrlPressed: { backgroundColor: colors.raised, transform: [{ scale: 0.92 }] },
+  ctrlGlyph: { ...voice.calmNumber, color: colors.text, fontSize: 18, lineHeight: 21 },
 });
