@@ -1,8 +1,10 @@
+import { useIsFocused } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import type { TreeId } from '@/engine';
 
+import { AmbientGate } from '../motion/ambient';
 import { useGameStore } from '../store/game';
 import { colors } from '../theme';
 import { HypeBalance } from './HypeBalance';
@@ -23,6 +25,7 @@ export function TreesScreen() {
   const hasRun = useGameStore((s) => s.state !== null);
   const dispatch = useGameStore((s) => s.dispatch);
   const wide = useWide();
+  const focused = useIsFocused();
   const [tree, setTree] = useState<TreeId>('capability');
   const [selected, setSelected] = useState<string | null>(null);
   const [justBought, setJustBought] = useState(false);
@@ -80,18 +83,21 @@ export function TreesScreen() {
 
   if (!hasRun) return null;
   return (
-    <View style={styles.root}>
-      <TreePicker selected={tree} onSelect={pickTree} compact={wide} right={wide ? <HypeBalance /> : null} />
-      <TreeGraph
-        tree={tree}
-        flash={flash}
-        onSelect={select}
-        horizontal={wide}
-        selected={selected}
-        insetRight={wide && selected ? SIDE_PANEL_WIDTH : 0}
-      />
-      <NodeSheet nodeId={selected} justBought={justBought} onClose={close} onBuy={buy} />
-    </View>
+    // Buyable-node glows stop while another tab is showing.
+    <AmbientGate active={focused}>
+      <View style={styles.root}>
+        <TreePicker selected={tree} onSelect={pickTree} compact={wide} right={wide ? <HypeBalance /> : null} />
+        <TreeGraph
+          tree={tree}
+          flash={flash}
+          onSelect={select}
+          horizontal={wide}
+          selected={selected}
+          insetRight={wide && selected ? SIDE_PANEL_WIDTH : 0}
+        />
+        <NodeSheet nodeId={selected} justBought={justBought} onClose={close} onBuy={buy} />
+      </View>
+    </AmbientGate>
   );
 }
 

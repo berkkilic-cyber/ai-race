@@ -11,6 +11,7 @@ import {
   type GameState,
 } from '@/engine';
 
+import { logLifecycle } from '../diagnostics/log';
 import { setI18nContext } from '../i18n';
 import { DEFAULT_PACK_ID, getPackEntry } from '../packs';
 
@@ -61,6 +62,7 @@ export const useGameStore = create<GameStore>()((set, get) => ({
     const { pack } = getPackEntry(packId);
     const state = createGame(pack, { ...rest, seed });
     set({ packId, pack, state, speed: 1, eventResult: null });
+    logLifecycle('run started', { seed, founder: rest.founderId, home: rest.homeRegion });
   },
 
   dispatch(action) {
@@ -72,6 +74,7 @@ export const useGameStore = create<GameStore>()((set, get) => ({
     const last = result.state.lastEventResult;
     const eventResult = action.type === 'resolveEvent' ? (last?.resultKey ? last : null) : get().eventResult;
     set({ state: result.state, eventResult });
+    logAction(action, result.state);
     return { ok: true };
   },
 
@@ -94,6 +97,23 @@ export const useGameStore = create<GameStore>()((set, get) => ({
     set({ state: null, eventResult: null, speed: 1 });
   },
 }));
+
+/** Lifecycle lines for the actions worth knowing about when reading a crash log. */
+function logAction(action: Action, state: GameState): void {
+  const day = state.tick + 1;
+  if (action.type === 'buyNode') logLifecycle('node bought', { node: action.nodeId, day });
+  else if (action.type === 'buildDataCentre') logLifecycle('data centre built', { region: action.regionId, day });
+  else if (action.type === 'resolveEvent') logLifecycle('event resolved', { choice: action.choiceId, day });
+}
+
+// Lifecycle lines for what the tick changes: an event appearing and the run ending.
+useGameStore.subscribe((s, prev) => {
+  const next = s.state;
+  const before = prev.state;
+  if (!next || next === before) return;
+  if (next.pendingEvent && next.pendingEvent.eventId !== before?.pendingEvent?.eventId) logLifecycle('event shown', { event: next.pendingEvent.eventId, day: next.tick + 1 });
+  if (next.status === 'ended' && before?.status !== 'ended') logLifecycle('run ended', { ending: next.ending?.endingId, day: next.tick + 1 });
+});
 
 // Keep t() able to resolve lab ids in news params to the current labs.
 useGameStore.subscribe((s, prev) => {

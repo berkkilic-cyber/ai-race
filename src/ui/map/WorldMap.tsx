@@ -100,7 +100,8 @@ export function WorldMap({ geometry, selected, onSelect, focusRegion, defaultSca
   const onLayout = useCallback(
     (e: LayoutChangeEvent) => {
       const { width, height } = e.nativeEvent.layout;
-      if (width === size.w && height === size.h) return;
+      // Ignore the zero-sized first layout: the view maths needs a real size.
+      if (!(width > 0 && height > 0) || (width === size.w && height === size.h)) return;
       const first = size.w === 0;
       setSize({ w: width, h: height });
       const l: Layout = { cw: width, ch: height, mw: geometry.width, mh: geometry.height, insetRight };

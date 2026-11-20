@@ -13,13 +13,25 @@ export function useLoopRunning(): boolean {
   );
 }
 
-function useAppActive(): boolean {
+/** False while the app is in the background. */
+export function useAppActive(): boolean {
   const [active, setActive] = useState(AppState.currentState !== 'background');
   useEffect(() => {
     const sub = AppState.addEventListener('change', (next) => setActive(next !== 'background'));
     return () => sub.remove();
   }, []);
   return active;
+}
+
+/**
+ * True while ambient (looping) animation should run in the shell: the app is in the
+ * foreground and the run is in progress and not paused (an event card counts as
+ * running, so its live dot blinks).
+ */
+export function useAmbientShouldRun(): boolean {
+  const active = useAppActive();
+  const live = useGameStore((s) => s.state !== null && s.state.status === 'running' && (s.speed > 0 || s.state.pendingEvent !== null || s.eventResult !== null));
+  return active && live;
 }
 
 /**

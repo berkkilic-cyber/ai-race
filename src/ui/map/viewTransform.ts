@@ -3,7 +3,17 @@
  * a view transform (translate t, then scale s around the container centre c)
  * moves it: screen = c + t + s * (p - c). All functions are worklets so the
  * gesture callbacks can call them on the UI thread.
+ *
+ * Every function returns finite numbers whatever it is given (a zero-sized container
+ * before the first layout, a pinch reporting scale 0 or NaN): a NaN reaching a native
+ * transform or SVG attribute can crash the app.
  */
+
+/** n when finite, else the fallback. */
+function finite(n: number, fallback: number): number {
+  'worklet';
+  return Number.isFinite(n) ? n : fallback;
+}
 export interface Layout {
   /** Container size. */
   cw: number;
@@ -30,12 +40,14 @@ export const MAX_SCALE = 8;
 /** Map units -> untransformed container points. */
 export function fit(layout: Layout): { k: number; ox: number; oy: number } {
   'worklet';
-  const k = Math.min(layout.cw / layout.mw, layout.ch / layout.mh);
-  return { k, ox: (layout.cw - layout.mw * k) / 2, oy: (layout.ch - layout.mh * k) / 2 };
+  const raw = Math.min(layout.cw / layout.mw, layout.ch / layout.mh);
+  const k = Number.isFinite(raw) && raw > 0 ? raw : 1;
+  return { k, ox: finite((layout.cw - layout.mw * k) / 2, 0), oy: finite((layout.ch - layout.mh * k) / 2, 0) };
 }
 
 export function clampScale(s: number): number {
   'worklet';
+  if (!Number.isFinite(s)) return MIN_SCALE;
   return Math.min(MAX_SCALE, Math.max(MIN_SCALE, s));
 }
 
@@ -49,8 +61,8 @@ export function clampTranslate(layout: Layout, s: number, tx: number, ty: number
     // Content edges after transform: c + t + s*(o - c) and c + t + s*(o + len - c).
     const hi = -c - s * (o - c); // left edge at 0
     const lo = size - c - s * (o + len - c); // right (bottom) edge at the visible size
-    if (lo > hi) return (lo + hi) / 2;
-    return Math.min(hi, Math.max(lo, t));
+    if (lo > hi) return finite((lo + hi) / 2, 0);
+    return finite(Math.min(hi, Math.max(lo, finite(t, 0))), 0);
   };
   return [axis(tx, cx, visibleWidth(layout), ox, layout.mw * k), axis(ty, cy, layout.ch, oy, layout.mh * k)];
 }
@@ -60,8 +72,8 @@ export function zoomAbout(layout: Layout, s0: number, s1: number, tx: number, ty
   'worklet';
   const cx = layout.cw / 2;
   const cy = layout.ch / 2;
-  const r = s1 / s0;
-  return [fx - cx - r * (fx - cx - tx), fy - cy - r * (fy - cy - ty)];
+  const r = s0 > 0 && Number.isFinite(s1 / s0) ? s1 / s0 : 1;
+  return [finite(fx - cx - r * (fx - cx - tx), tx), finite(fy - cy - r * (fy - cy - ty), ty)];
 }
 
 /**
@@ -102,7 +114,8 @@ export function toMapPoint(layout: Layout, s: number, tx: number, ty: number, px
   const { k, ox, oy } = fit(layout);
   const cx = layout.cw / 2;
   const cy = layout.ch / 2;
-  const qx = cx + (px - cx - tx) / s;
-  const qy = cy + (py - cy - ty) / s;
-  return [(qx - ox) / k, (qy - oy) / k];
+  const ss = s > 0 && Number.isFinite(s) ? s : 1;
+  const qx = cx + (px - cx - tx) / ss;
+  const qy = cy + (py - cy - ty) / ss;
+  return [finite((qx - ox) / k, 0), finite((qy - oy) / k, 0)];
 }

@@ -5,8 +5,9 @@ import Animated from 'react-native-reanimated';
 import { ToastHost } from '@/ui/achievements';
 import { useComposure } from '@/ui/composure';
 import { EventModal } from '@/ui/events';
-import { useEndNavigation, useGameLoop } from '@/ui/hooks';
+import { useAmbientShouldRun, useEndNavigation, useGameLoop } from '@/ui/hooks';
 import { t } from '@/ui/i18n';
+import { AmbientProvider } from '@/ui/motion/ambient';
 import { ComposureStage, useTremble } from '@/ui/shell/ComposureStage';
 import { GameHeader } from '@/ui/shell/GameHeader';
 import { useShellStyles } from '@/ui/shell/shellStyles';
@@ -22,6 +23,9 @@ import { TreesTabBadge } from '@/ui/trees';
  * Narrow (portrait): top bar, resources and meters, content, ticker, bottom tab bar.
  * The arrangement lives in src/ui/shell (GameHeader, TickerDock, useShellStyles); the main
  * area carries the composure overlays (ComposureStage) and the shell trembles at level 3.
+ * Ambient (looping) animation runs on one shared clock (AmbientProvider) that stops while
+ * paused, after the run and in the background. The event card and toasts are in-tree
+ * overlays above the shell (theme `layer`), never native Modals.
  * Safe areas: no SafeAreaView here. useShellStyles places the rail and the main column from
  * the insets (useInsets), once. TabList uses asChild so expo-router does not wrap it in its
  * own SafeAreaView (which added the left inset a second time inside the rail); it stays a
@@ -30,6 +34,16 @@ import { TreesTabBadge } from '@/ui/trees';
 export default function GameLayout() {
   useGameLoop();
   useEndNavigation();
+  const ambient = useAmbientShouldRun();
+  return (
+    <AmbientProvider running={ambient}>
+      <GameShell />
+    </AmbientProvider>
+  );
+}
+
+/** Everything inside the ambient clock (the tremble reads it). */
+function GameShell() {
   const shell = useShellStyles();
   const { level } = useComposure();
   const tremble = useTremble(level);

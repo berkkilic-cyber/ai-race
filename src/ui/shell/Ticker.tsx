@@ -19,6 +19,7 @@ import type { NewsItem } from '@/engine';
 import { TICKER_SPEED, useComposure, useComposureProgress } from '../composure';
 import { useWide } from '../events/useWide';
 import { useInsets } from '../hooks/useInsets';
+import { useAmbientRunning } from '../motion/ambient';
 import { t } from '../i18n';
 import { newsText } from '../news/newsText';
 import { useUnreadCount } from '../news/useNews';
@@ -60,6 +61,8 @@ export function Ticker() {
   const wide = useWide();
   const insets = useInsets();
   const reduced = useReducedMotion();
+  // The crawl holds still while ambient motion is stopped (paused, background, run over).
+  const moving = useAmbientRunning() !== false;
   const { level } = useComposure();
   const progress = useComposureProgress();
   const items = useMemo(() => news.slice(-RECENT).reverse(), [news]);
@@ -79,12 +82,17 @@ export function Ticker() {
   }, [latest, enter]);
 
   useEffect(() => {
+    if (!moving) {
+      cancelAnimation(offset);
+      return;
+    }
     cancelAnimation(offset);
     offset.set(0);
     if (!geo.crawl || !latest) return;
     const full = (segment / speed) * 1000;
     offset.set(withDelay(HOLD_MS, withRepeat(withSequence(withTiming(-segment, { duration: full, easing: Easing.linear }), withTiming(0, { duration: 0 })), -1)));
-  }, [latest, segment, speed, geo.crawl, offset]);
+    return () => cancelAnimation(offset);
+  }, [latest, segment, speed, geo.crawl, offset, moving]);
 
   const enterStyle = useAnimatedStyle(() => ({
     opacity: enter.get(),

@@ -7,6 +7,7 @@ import { t } from '../i18n';
 import { useGameStore } from '../store/game';
 import { colors, fonts } from '../theme';
 import { bannedKey } from './mapColors';
+import { allFinite, isDrawablePath } from './svgSafe';
 
 export interface OverlayLayerProps {
   geometry: MapGeometry;
@@ -40,12 +41,12 @@ export const OverlayLayer = memo(function OverlayLayer({ geometry, selected }: O
   const label = t('ui.map.banned').toUpperCase();
   return (
     <G pointerEvents="none">
-      {selected && geometry.regions[selected] ? (
+      {selected && geometry.regions[selected] && isDrawablePath(geometry.regions[selected].d) ? (
         <Path d={geometry.regions[selected].d} fill="none" stroke={colors.text} strokeWidth={0.7} strokeLinejoin="round" strokeOpacity={0.85} testID="map-selection" />
       ) : null}
       {bannedIds.map((id) => {
         const region = geometry.regions[id];
-        return region ? <BanStamp key={`b-${id}`} x={region.centroid[0]} y={region.centroid[1]} label={label} /> : null;
+        return region && allFinite(region.centroid[0], region.centroid[1]) ? <BanStamp key={`b-${id}`} x={region.centroid[0]} y={region.centroid[1]} label={label} /> : null;
       })}
     </G>
   );

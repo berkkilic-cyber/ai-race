@@ -173,6 +173,22 @@ export const layout = {
   speedButton: 32,
 } as const;
 
+/**
+ * Stacking order of the in-tree overlays at the root of a screen (zIndex and Android
+ * elevation). Higher draws above lower: sheets live inside the shell; the tutorial dims
+ * the shell; toasts sit above that; the event card covers everything; the error screen
+ * covers the event card.
+ */
+export const layer = {
+  sheet: 10,
+  tutorial: 30,
+  toast: 40,
+  event: 50,
+  /** Tutorial captions that explain the event card sit over it. */
+  tutorialOverEvent: 60,
+  error: 100,
+} as const;
+
 /** Minimum touch target (points). */
 export const touch = 44;
 
@@ -233,5 +249,5 @@ export const motion = {
   composure: 600,
 } as const;
 
-export const theme = { name: themeName, colors, spacing, radius, type, layout, touch, tabular, voice, fonts, motion, player: colors.player } as const;
+export const theme = { name: themeName, colors, spacing, radius, type, layout, layer, touch, tabular, voice, fonts, motion, player: colors.player } as const;
 export type Theme = typeof theme;

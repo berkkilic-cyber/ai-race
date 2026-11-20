@@ -101,5 +101,9 @@
   "engine.news.rivalEntered": "{lab} enters the race in {region}.",
   "engine.news.dataCentreUnpaid": "A data centre of {lab} in {region} went dark over unpaid bills.",
   "engine.news.launched": "{lab} launched in {region}.",
-  "engine.news.achievement": "Achievement: {achievement}"
+  "engine.news.achievement": "Achievement: {achievement}",
+  "ui.error.title": "Something broke",
+  "ui.error.body": "The game hit an error and stopped this screen. Restart to begin again from the start screen.",
+  "ui.error.stack": "Where it happened",
+  "ui.error.restart": "Restart"
 }

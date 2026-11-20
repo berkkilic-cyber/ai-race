@@ -1,4 +1,4 @@
-export { useGameLoop, useLoopRunning, BASE_TICK_MS } from './useGameLoop';
+export { useGameLoop, useLoopRunning, useAppActive, useAmbientShouldRun, BASE_TICK_MS } from './useGameLoop';
 export {
   useDispatch,
   useGameState,

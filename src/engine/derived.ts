@@ -3,7 +3,7 @@ import type { BalanceConfig } from './balance';
 import type { EngineContext } from './context';
 import { labModifierTable, statMultiplier, type ModifierTable } from './modifiers';
 import type { DataCentre, GameState, LabState, RegionId } from './types';
-import { cachedUsers } from './workspace';
+import { cachedUsers } from './usersCache';
 import { INFINITY, floor, max, min, pow } from './natives';
 
 export function isOnline(dataCentre: DataCentre, tick: number): boolean {

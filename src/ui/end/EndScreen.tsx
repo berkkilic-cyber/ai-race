@@ -7,7 +7,7 @@ import type { GameState, NewsItem } from '@/engine';
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
 import { Meter } from '../components/Meter';
-import { fmtPct, fmtUsers } from '../format';
+import { fmtInt, fmtPct, fmtUsers } from '../format';
 import { usePackEntry } from '../hooks/useGame';
 import { useInsets } from '../hooks/useInsets';
 import { labName, readableLabColor, regionName, t } from '../i18n';
@@ -122,7 +122,7 @@ function EndView({ state }: { state: GameState }) {
     <Card style={styles.scoreCard}>
       <Text style={styles.scoreLabel}>{t('ui.end.scoreLabel')}</Text>
       <Text style={styles.score} testID="end-score">
-        {score.toLocaleString('en-US')}
+        {fmtInt(score)}
       </Text>
       <Text style={styles.labLine} numberOfLines={2}>
         {t('ui.end.labLine', { name: labName(player), founder: founder ? t(founder.nameKey) : '', region: regionName(player.homeRegion) })}
@@ -138,7 +138,7 @@ function EndView({ state }: { state: GameState }) {
         </Text>
       </View>
       <Text style={styles.scoreCompact} testID="end-score">
-        {score.toLocaleString('en-US')}
+        {fmtInt(score)}
       </Text>
     </View>
   );
@@ -146,7 +146,7 @@ function EndView({ state }: { state: GameState }) {
     <>
         <Section title={t('ui.end.stats')}>
           <View style={styles.grid}>
-            <Stat label={t('ui.end.stat.days')} value={stats.days.toLocaleString('en-US')} />
+            <Stat label={t('ui.end.stat.days')} value={fmtInt(stats.days)} />
             <Stat label={t('ui.end.stat.peakShare')} value={fmtPct(stats.peakWorldShare)} />
             <Stat label={t('ui.end.stat.users')} value={fmtUsers(stats.users)} />
             <Stat label={t('ui.end.stat.tier')} value={t('ui.resource.tier', { tier: stats.tier })} />

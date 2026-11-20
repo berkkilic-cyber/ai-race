@@ -146,6 +146,11 @@ export function readableLabColor(lab: Pick<LabState, 'color' | 'controller'>, us
   return out;
 }
 
+/** Entries in the readable-colour cache (one per lab colour and use); for leak tests. */
+export function readableColorCacheSize(): number {
+  return readableCache.size;
+}
+
 /** Lab flags without engine internals. */
 export function visibleFlags(lab: Pick<LabState, 'flags'>): string[] {
   return lab.flags.filter((f) => !f.startsWith(INTERNAL_FLAG));

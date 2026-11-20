@@ -3,7 +3,7 @@ import { adoptionIn, freeShare } from './derived';
 import { labModifierTable, statMultiplier } from './modifiers';
 import { ENGINE_NEWS_KEYS, pushNews } from './news';
 import type { GameState, LabState, RegionId } from './types';
-import { markAdoptionChanged } from './workspace';
+import { markAdoptionChanged } from './usersCache';
 import { max, min, round } from './natives';
 
 /** Sets adoption, removing the entry when it falls below `minAdoption`. */

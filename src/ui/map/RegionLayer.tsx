@@ -7,6 +7,7 @@ import type { MapGeometry } from '@/content/packs/ai-lab/geometry';
 import { useGameStore } from '../store/game';
 import { colors } from '../theme';
 import { regionFills } from './mapColors';
+import { isDrawablePath } from './svgSafe';
 
 interface RegionPathProps {
   d: string;
@@ -15,6 +16,7 @@ interface RegionPathProps {
 
 /** One region. Memoised: re-renders only when its fill changes. */
 const RegionPath = memo(function RegionPath({ d, fill }: RegionPathProps) {
+  if (!isDrawablePath(d)) return null;
   return <Path d={d} fill={fill} stroke={colors.bg} strokeWidth={0.7} strokeLinejoin="round" />;
 });
 

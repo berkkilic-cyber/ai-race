@@ -1,9 +1,12 @@
 import { useCallback, useState } from 'react';
-import { Modal, StyleSheet, View } from 'react-native';
+import { StyleSheet } from 'react-native';
+import Animated, { FadeIn } from 'react-native-reanimated';
+
+import { Overlay } from '../components/Overlay';
 
 import { useInsets } from '../hooks/useInsets';
 import { useGameStore } from '../store/game';
-import { colors, spacing } from '../theme';
+import { colors, layer, spacing } from '../theme';
 import { diffSnapshots, snapshotPlayer, type StatDelta } from './deltas';
 import { EventCard } from './EventCard';
 import { tapHaptic } from './haptics';
@@ -18,6 +21,10 @@ interface Changes {
 /**
  * Event host, mounted once in the game shell: the pending event card, then the
  * result of the choice with what changed. The run stays paused until Continue.
+ * An in-tree overlay above the shell, its sheets and toasts (theme `layer.event`), never a
+ * native Modal: on iOS a Modal without a landscape orientation, presented in this
+ * landscape-only app, raises an uncaught native exception and the app closes.
+ * Android back is swallowed: the card cannot be dismissed without choosing.
  */
 export function EventModal() {
   // While the run ticks there is nothing to show: only subscribe to the state while an event is pending.
@@ -62,17 +69,18 @@ export function EventModal() {
   }
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={() => undefined} statusBarTranslucent>
+    <Overlay visible={visible} layer={layer.event} testID="event-overlay">
       {/* The scrim covers the whole screen; the card stays inside the safe area (clear of a notch or Dynamic Island). */}
-      <View
+      <Animated.View
+        entering={FadeIn.duration(160)}
         style={[
           styles.scrim,
           { paddingTop: insets.top + spacing.l, paddingBottom: insets.bottom + spacing.l, paddingLeft: insets.left + spacing.l, paddingRight: insets.right + spacing.l },
         ]}
       >
         {content}
-      </View>
-    </Modal>
+      </Animated.View>
+    </Overlay>
   );
 }
 

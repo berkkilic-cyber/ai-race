@@ -1,22 +1,11 @@
 import { useEffect, type ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import Animated, {
-  Easing,
-  SlideInLeft,
-  SlideOutLeft,
-  cancelAnimation,
-  interpolate,
-  useAnimatedStyle,
-  useReducedMotion,
-  useSharedValue,
-  withRepeat,
-  withSequence,
-  withTiming,
-} from 'react-native-reanimated';
+import Animated, { Easing, SlideInLeft, SlideOutLeft, interpolate, useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
 
 import { dangerKey, useComposure, useComposureProgress, type ComposureLevel } from '../composure';
 import { useMeters } from '../hooks/useGame';
 import { t } from '../i18n';
+import { useAmbientClock, useAmbientRunning, wave } from '../motion/ambient';
 import { colors, spacing, voice } from '../theme';
 
 /** Height of the BREAKING band at composure 3. */
@@ -47,17 +36,11 @@ function BreakingBand() {
 export function ComposureStage({ children }: { children: ReactNode }) {
   const { level } = useComposure();
   const progress = useComposureProgress();
-  const reduced = useReducedMotion();
-  const pulse = useSharedValue(1);
-
-  useEffect(() => {
-    cancelAnimation(pulse);
-    pulse.set(1);
-    if (level === 3 && !reduced) pulse.set(withRepeat(withTiming(0.3, { duration: 700, easing: Easing.inOut(Easing.quad) }), -1, true));
-  }, [level, reduced, pulse]);
+  // At level 3 the frame pulses on the shell's shared ambient clock.
+  const clock = useAmbientClock(level === 3);
 
   const tintStyle = useAnimatedStyle(() => ({ opacity: interpolate(progress.get(), [1, 2, 3], [0, 0.035, 0.055], 'clamp') }));
-  const frameStyle = useAnimatedStyle(() => ({ opacity: interpolate(progress.get(), [1, 2], [0, 1], 'clamp') * pulse.get() }));
+  const frameStyle = useAnimatedStyle(() => ({ opacity: interpolate(progress.get(), [1, 2], [0, 1], 'clamp') * (clock ? 1 - 0.7 * wave(clock.get(), 1.4) : 1) }));
 
   return (
     <View style={styles.stage}>
@@ -82,10 +65,12 @@ const TREMBLE_STEP_MS = 40;
  */
 export function useTremble(level: ComposureLevel) {
   const reduced = useReducedMotion();
+  // Only while ambient motion runs (not paused, app in the foreground).
+  const running = useAmbientRunning() !== false;
   const x = useSharedValue(0);
   const y = useSharedValue(0);
   useEffect(() => {
-    if (level < 3 || reduced) return;
+    if (level < 3 || reduced || !running) return;
     let timer: ReturnType<typeof setTimeout>;
     const shake = () => {
       x.set(withSequence(...TREMBLE_X.map((v) => withTiming(v, { duration: TREMBLE_STEP_MS }))));
@@ -98,7 +83,7 @@ export function useTremble(level: ComposureLevel) {
       x.set(0);
       y.set(0);
     };
-  }, [level, reduced, x, y]);
+  }, [level, reduced, running, x, y]);
   return useAnimatedStyle(() => ({ transform: [{ translateX: x.get() }, { translateY: y.get() }] }));
 }
 

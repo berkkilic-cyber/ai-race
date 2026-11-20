@@ -35,6 +35,22 @@ export function fmtCompact(n: number): string {
   return `${sign}${trim(a, 1)}`;
 }
 
+/**
+ * Whole number with thousands separators: 1234567 -> "1,234,567". Plain string work
+ * instead of toLocaleString/Intl, whose support differs between JS engines.
+ */
+export function fmtInt(n: number): string {
+  if (!Number.isFinite(n)) return '0';
+  const sign = n < 0 ? '-' : '';
+  const digits = String(Math.round(Math.abs(n)));
+  let out = '';
+  for (let i = 0; i < digits.length; i++) {
+    if (i > 0 && (digits.length - i) % 3 === 0) out += ',';
+    out += digits[i];
+  }
+  return sign + out;
+}
+
 /** Users are in millions: 0.5 -> "500K", 12 -> "12M", 1400 -> "1.4B". */
 export function fmtUsers(millions: number): string {
   return fmtCompact(millions * 1e6);

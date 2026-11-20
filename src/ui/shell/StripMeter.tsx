@@ -1,6 +1,7 @@
-import { useEffect } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import Animated, { Easing, FadeIn, cancelAnimation, useAnimatedStyle, useReducedMotion, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
+import Animated, { FadeIn, useAnimatedStyle } from 'react-native-reanimated';
+
+import { useAmbientClock, wave } from '../motion/ambient';
 
 import { colors, spacing, voice } from '../theme';
 
@@ -24,19 +25,9 @@ export interface StripMeterProps {
 export function StripMeter({ label, value, color, pulseAbove = 75, tag, testID }: StripMeterProps) {
   const pct = Math.max(0, Math.min(100, value));
   const pulsing = pct > pulseAbove;
-  const reduced = useReducedMotion();
-  const opacity = useSharedValue(1);
-
-  useEffect(() => {
-    if (pulsing && !reduced) {
-      opacity.set(withRepeat(withTiming(0.35, { duration: 450, easing: Easing.inOut(Easing.quad) }), -1, true));
-    } else {
-      cancelAnimation(opacity);
-      opacity.set(1);
-    }
-  }, [pulsing, reduced, opacity]);
-
-  const fillStyle = useAnimatedStyle(() => ({ opacity: opacity.get() }));
+  // Pulses on the shell's shared ambient clock (still when paused or with reduced motion).
+  const clock = useAmbientClock(pulsing);
+  const fillStyle = useAnimatedStyle(() => ({ opacity: clock ? 1 - 0.65 * wave(clock.get(), 0.9) : 1 }));
 
   return (
     <View

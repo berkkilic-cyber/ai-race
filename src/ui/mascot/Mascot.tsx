@@ -1,9 +1,10 @@
 import { memo, useEffect, useState } from 'react';
 import { View } from 'react-native';
-import Animated, { Easing, cancelAnimation, useAnimatedStyle, useReducedMotion, useSharedValue, withRepeat, withSequence, withSpring, withTiming } from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 import Svg, { Circle, Ellipse, G, Path, Rect } from 'react-native-svg';
 
 import { t } from '../i18n';
+import { shakeAt, useAmbientClock, useAmbientRunning, wave } from '../motion/ambient';
 import { colors } from '../theme';
 import type { MascotMood } from './mood';
 
@@ -126,32 +127,26 @@ function Face({ mood, blink }: { mood: MascotMood; blink: boolean }) {
  */
 export const Mascot = memo(function Mascot({ mood, size = 28, blinks = true, testID }: MascotProps) {
   const reduced = useReducedMotion();
-  const blink = useBlink(blinks && DOT_EYES.has(mood));
+  // Blinks while ambient motion runs (always outside the game shell).
+  const ambientRunning = useAmbientRunning();
+  const blink = useBlink(blinks && DOT_EYES.has(mood) && ambientRunning !== false);
   const pop = useSharedValue(1);
-  const shake = useSharedValue(0);
-  const breathe = useSharedValue(1);
+  // Shake (panicking) and breath (asleep) come from the shell's shared ambient clock.
+  const panicking = mood === 'panicking';
+  const asleep = mood === 'asleep';
+  const clock = useAmbientClock((panicking || asleep) && !reduced);
 
   useEffect(() => {
     if (reduced) return;
     pop.set(withSequence(withTiming(0.86, { duration: 90 }), withSpring(1, { damping: 9, stiffness: 260 })));
   }, [mood, reduced, pop]);
 
-  useEffect(() => {
-    cancelAnimation(shake);
-    cancelAnimation(breathe);
-    shake.set(0);
-    breathe.set(1);
-    if (reduced) return;
-    if (mood === 'panicking') {
-      shake.set(withRepeat(withSequence(withTiming(-1.2, { duration: 60 }), withTiming(1.2, { duration: 60 }), withTiming(0, { duration: 60 }), withTiming(0, { duration: 700 })), -1));
-    } else if (mood === 'asleep') {
-      breathe.set(withRepeat(withTiming(0.94, { duration: 1400, easing: Easing.inOut(Easing.sin) }), -1, true));
-    }
-  }, [mood, reduced, shake, breathe]);
-
-  const style = useAnimatedStyle(() => ({
-    transform: [{ translateX: shake.get() }, { scale: pop.get() }, { scaleY: breathe.get() }],
-  }));
+  const style = useAnimatedStyle(() => {
+    const t = clock ? clock.get() : 0;
+    return {
+      transform: [{ translateX: panicking ? shakeAt(t, 0.88, 1.2, 0.06) : 0 }, { scale: pop.get() }, { scaleY: asleep ? 1 - 0.06 * wave(t, 2.8) : 1 }],
+    };
+  });
 
   return (
     <View accessibilityRole="image" accessibilityLabel={t('ui.mascot.label', { mood: t(`ui.mascot.mood.${mood}`) })} testID={testID}>

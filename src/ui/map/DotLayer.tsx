@@ -11,6 +11,7 @@ import { useGameStore } from '../store/game';
 import { colors } from '../theme';
 import { drawableDots, type DotMapGeometry } from './dotGeometry';
 import { regionDotColors } from './mapColors';
+import { isDrawablePath } from './svgSafe';
 import { countRender } from './renderStats';
 
 const AnimatedG = Animated.createAnimatedComponent(G);
@@ -62,9 +63,8 @@ const RegionDots = memo(function RegionDots({ buckets, colorKey, selected, flash
   const size = selected ? DOT_SIZE_SELECTED : DOT_SIZE;
   return (
     <AnimatedG animatedProps={animatedProps}>
-      {buckets.map((d, i) => (
-        <Bucket key={i} d={d} color={list[i] ?? colors.dotRest} size={size} />
-      ))}
+      {/* Some buckets of small regions are empty: native SVG must never get an empty path. */}
+      {buckets.map((d, i) => (isDrawablePath(d) ? <Bucket key={i} d={d} color={list[i] ?? colors.dotRest} size={size} /> : null))}
     </AnimatedG>
   );
 });

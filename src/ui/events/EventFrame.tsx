@@ -1,10 +1,11 @@
 import { useEffect, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
-import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withRepeat, withSequence, withSpring, withTiming } from 'react-native-reanimated';
+import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 
 import type { NewsTone } from '@/engine';
 
 import { useInsets } from '../hooks/useInsets';
+import { useAmbientClock, wave } from '../motion/ambient';
 import { colors, spacing, voice } from '../theme';
 import { isWide } from './useWide';
 
@@ -51,7 +52,6 @@ export function EventFrame({ tone, label, meta, live, children, aside, footer, t
   const reduced = useReducedMotion();
   const drop = useSharedValue(0);
   const fade = useSharedValue(0);
-  const blink = useSharedValue(1);
 
   useEffect(() => {
     fade.set(withTiming(1, { duration: reduced ? 200 : 140 }));
@@ -59,9 +59,8 @@ export function EventFrame({ tone, label, meta, live, children, aside, footer, t
     else drop.set(1);
   }, [drop, fade, reduced]);
 
-  useEffect(() => {
-    if (live && !reduced) blink.set(withRepeat(withTiming(0.15, { duration: 520, easing: Easing.inOut(Easing.quad) }), -1, true));
-  }, [live, reduced, blink]);
+  // The live dot blinks on the shell's shared ambient clock.
+  const clock = useAmbientClock(!!live);
 
   const cardStyle = useAnimatedStyle(() => {
     const v = drop.get();
@@ -70,7 +69,7 @@ export function EventFrame({ tone, label, meta, live, children, aside, footer, t
       transform: [{ translateY: (1 - v) * -46 }, { rotate: `${(1 - v) * ENTRY_TILT}deg` }, { scale: 1 + (1 - v) * 0.08 }],
     };
   });
-  const dotStyle = useAnimatedStyle(() => ({ opacity: blink.get() }));
+  const dotStyle = useAnimatedStyle(() => ({ opacity: clock ? 1 - 0.85 * wave(clock.get(), 1.04) : 1 }));
 
   const masthead = (
     <View style={styles.masthead}>

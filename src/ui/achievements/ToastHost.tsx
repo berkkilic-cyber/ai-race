@@ -7,7 +7,7 @@ import { useWide } from '../events/useWide';
 import { useInsets } from '../hooks/useInsets';
 import { wideShellLayout } from '../shell/shellLayout';
 import { useGameStore } from '../store/game';
-import { colors, radius, spacing, type, voice } from '../theme';
+import { colors, layer, radius, spacing, type, voice } from '../theme';
 import { currentToast, dismissToast, EMPTY_QUEUE, enqueueToasts, newAchievementIds, type Toast, type ToastQueue } from './queue';
 
 /** How long a toast stays up. */
@@ -99,7 +99,8 @@ function hostFrame(wide: boolean, width: number, height: number, insets: ReturnT
 }
 
 const styles = StyleSheet.create({
-  host: { position: 'absolute', alignItems: 'center' },
+  // Above the shell and the tutorial dim, below the event card (and hidden while one is up).
+  host: { position: 'absolute', alignItems: 'center', zIndex: layer.toast, elevation: layer.toast },
   toast: { width: '100%', maxWidth: 440, borderRadius: radius.l, borderWidth: 2, backgroundColor: colors.raised },
   normal: { borderColor: colors.player },
   secret: { borderColor: colors.info, borderStyle: 'dashed', backgroundColor: colors.surface },

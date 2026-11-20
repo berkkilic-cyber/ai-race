@@ -17,6 +17,14 @@ module.exports = defineConfig([
     ignores: ['dist/*', 'web-build/*', '.expo/*', 'node_modules/*', 'coverage/*'],
   },
   {
+    // No import cycles anywhere in src: they warn on native ("Require cycle") and can leave
+    // a module half-initialised when it is first used.
+    files: ['src/**/*.{ts,tsx,js,jsx}', 'app/**/*.{ts,tsx,js,jsx}'],
+    rules: {
+      'import/no-cycle': ['error', { ignoreExternal: true }],
+    },
+  },
+  {
     // The engine is pure, deterministic TypeScript and imports nothing outside src/engine.
     files: ['src/engine/**/*.{ts,tsx,js,jsx}'],
     rules: {

@@ -1,6 +1,7 @@
-import { useEffect } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import Animated, { cancelAnimation, Easing, useAnimatedStyle, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
+import Animated, { useAnimatedStyle } from 'react-native-reanimated';
+
+import { useAmbientClock, wave } from '../motion/ambient';
 
 import { colors, radius, spacing, tabular, type } from '../theme';
 
@@ -17,18 +18,9 @@ export interface MeterProps {
 export function Meter({ label, value, color = colors.bad, pulseAbove = 75, testID }: MeterProps) {
   const pct = Math.max(0, Math.min(100, value));
   const pulsing = pct > pulseAbove;
-  const opacity = useSharedValue(1);
-
-  useEffect(() => {
-    if (pulsing) {
-      opacity.set(withRepeat(withTiming(0.35, { duration: 450, easing: Easing.inOut(Easing.quad) }), -1, true));
-    } else {
-      cancelAnimation(opacity);
-      opacity.set(1);
-    }
-  }, [pulsing, opacity]);
-
-  const fillStyle = useAnimatedStyle(() => ({ opacity: opacity.get() }));
+  // Pulses on the shell's shared ambient clock (still when paused or with reduced motion).
+  const clock = useAmbientClock(pulsing);
+  const fillStyle = useAnimatedStyle(() => ({ opacity: clock ? 1 - 0.65 * wave(clock.get(), 0.9) : 1 }));
 
   return (
     <View

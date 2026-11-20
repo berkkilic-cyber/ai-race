@@ -1,5 +1,5 @@
 import { memo, useEffect, useState } from 'react';
-import Animated, { Easing, useAnimatedProps, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
+import Animated, { Easing, cancelAnimation, useAnimatedProps, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 import { Circle, G } from 'react-native-svg';
 
 import type { MapGeometry } from '@/content/packs/ai-lab/geometry';
@@ -7,6 +7,7 @@ import type { MapGeometry } from '@/content/packs/ai-lab/geometry';
 import { readableLabColor } from '../i18n';
 import { useGameStore } from '../store/game';
 import { newPresences } from './mapColors';
+import { allFinite, nonNegative, unitInterval } from './svgSafe';
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
@@ -26,9 +27,16 @@ const Ring = memo(function Ring({ x, y, color }: Omit<Ripple, 'id'>) {
   const p = useSharedValue(0);
   useEffect(() => {
     p.set(withTiming(1, { duration: RIPPLE_MS, easing: Easing.out(Easing.cubic) }));
+    return () => cancelAnimation(p);
   }, [p]);
-  const outer = useAnimatedProps(() => ({ r: 2 + p.get() * RIPPLE_RADIUS, strokeOpacity: 0.9 * (1 - p.get()), strokeWidth: 1.6 * (1 - p.get()) + 0.3 }));
-  const inner = useAnimatedProps(() => ({ r: 1 + p.get() * RIPPLE_RADIUS * 0.55, strokeOpacity: 0.7 * (1 - p.get()) }));
+  const outer = useAnimatedProps(() => {
+    const v = unitInterval(p.get());
+    return { r: nonNegative(2 + v * RIPPLE_RADIUS), strokeOpacity: 0.9 * (1 - v), strokeWidth: 1.6 * (1 - v) + 0.3 };
+  });
+  const inner = useAnimatedProps(() => {
+    const v = unitInterval(p.get());
+    return { r: nonNegative(1 + v * RIPPLE_RADIUS * 0.55), strokeOpacity: 0.7 * (1 - v) };
+  });
   return (
     <G>
       <AnimatedCircle cx={x} cy={y} fill="none" stroke={color} animatedProps={outer} />
@@ -52,7 +60,7 @@ export const RippleLayer = memo(function RippleLayer({ geometry }: { geometry: M
       const added: Ripple[] = [];
       for (const { labId, regionId } of fresh) {
         const region = geometry.regions[regionId];
-        if (region) added.push({ id: next++, x: region.centroid[0], y: region.centroid[1], color: readableLabColor(state.labs[labId]) });
+        if (region && allFinite(region.centroid[0], region.centroid[1])) added.push({ id: next++, x: region.centroid[0], y: region.centroid[1], color: readableLabColor(state.labs[labId]) });
       }
       if (added.length === 0) return;
       setRipples((current) => [...current, ...added].slice(-MAX_RIPPLES));

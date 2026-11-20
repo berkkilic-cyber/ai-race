@@ -1,4 +1,4 @@
-import { fmtCash, fmtCompact, fmtDay, fmtPct, fmtUsers, toPips } from '../format';
+import { fmtCash, fmtCompact, fmtDay, fmtInt, fmtPct, fmtUsers, toPips } from '../format';
 
 describe('format', () => {
   it('fmtCash shows millions, billions and trillions', () => {
@@ -46,5 +46,16 @@ describe('format', () => {
     expect(toPips(0)).toBe(1);
     expect(toPips(0.5)).toBe(3);
     expect(toPips(1)).toBe(5);
+  });
+});
+
+describe('fmtInt', () => {
+  it('groups thousands without Intl', () => {
+    expect(fmtInt(0)).toBe('0');
+    expect(fmtInt(999)).toBe('999');
+    expect(fmtInt(1000)).toBe('1,000');
+    expect(fmtInt(1234567)).toBe('1,234,567');
+    expect(fmtInt(-4321.6)).toBe('-4,322');
+    expect(fmtInt(Number.NaN)).toBe('0');
   });
 });

@@ -8,6 +8,7 @@ import type { EngineContext } from './context';
 import { isBannedAt } from './derived';
 import type { GameState, LabState } from './types';
 import { max, min } from './natives';
+import { clearAdoptionChanged, isAdoptionChanged, setCachedUsers } from './usersCache';
 
 export interface LabArrays {
   adoption: Float64Array;
@@ -17,24 +18,6 @@ export interface LabArrays {
   source?: Record<string, number>;
   /** What `source` holds per region (0 = missing), so storeWorkspace only touches changed entries. */
   stored: Float64Array;
-}
-
-/**
- * Adoption records changed outside the tick's lab phase since they were last synced
- * (setAdoption marks them). Lets a reused workspace skip reloading unchanged labs.
- */
-const changedRecords = new WeakSet<Record<string, number>>();
-
-/** Users (millions) of each adoption record as of the last storeWorkspace, valid while the record is unchanged. */
-const usersCache = new WeakMap<Record<string, number>, number>();
-
-export function markAdoptionChanged(record: Record<string, number>): void {
-  changedRecords.add(record);
-}
-
-/** Users of an adoption record if known since its last change (see storeWorkspace), else undefined. */
-export function cachedUsers(record: Record<string, number>): number | undefined {
-  return changedRecords.has(record) ? undefined : usersCache.get(record);
 }
 
 export interface Workspace {
@@ -61,7 +44,7 @@ function emptyWorkspace(state: GameState, regionCount: number): Workspace {
 }
 
 function loadLab(lab: LabState, arrays: LabArrays, context: EngineContext, tick: number): void {
-  if (arrays.source !== lab.adoption || changedRecords.has(lab.adoption)) {
+  if (arrays.source !== lab.adoption || isAdoptionChanged(lab.adoption)) {
     arrays.adoption.fill(0);
     for (const regionId in lab.adoption) {
       const index = context.regionIndex.get(regionId);
@@ -69,7 +52,7 @@ function loadLab(lab: LabState, arrays: LabArrays, context: EngineContext, tick:
     }
     arrays.source = lab.adoption;
     arrays.stored.set(arrays.adoption);
-    changedRecords.delete(lab.adoption);
+    clearAdoptionChanged(lab.adoption);
   }
   arrays.banned.fill(0);
   for (const regionId in lab.bans) {
@@ -104,7 +87,7 @@ export function storeWorkspace(state: GameState, context: EngineContext, ws: Wor
     if (!arrays) continue;
     const record = state.labs[id].adoption;
     // When the record is the one last synced and nobody touched it, only changed entries are written.
-    const synced = arrays.source === record && !changedRecords.has(record);
+    const synced = arrays.source === record && !isAdoptionChanged(record);
     for (let i = 0; i < regions.length; i++) {
       const value = arrays.adoption[i] >= minAdoption ? min(1, arrays.adoption[i]) : 0;
       if (synced && value === arrays.stored[i]) continue;
@@ -115,8 +98,8 @@ export function storeWorkspace(state: GameState, context: EngineContext, ws: Wor
     }
     if (!synced) arrays.stored.set(arrays.adoption.map((v) => (v >= minAdoption ? min(1, v) : 0)));
     arrays.source = record;
-    changedRecords.delete(record);
-    usersCache.set(record, usersFromArrays(arrays, context));
+    clearAdoptionChanged(record);
+    setCachedUsers(record, usersFromArrays(arrays, context));
   }
 }
 

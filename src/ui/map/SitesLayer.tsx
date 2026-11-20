@@ -1,13 +1,15 @@
-import { memo, useEffect, useMemo } from 'react';
-import Animated, { Easing, useAnimatedProps, useReducedMotion, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
+import { memo, useMemo } from 'react';
+import Animated, { useAnimatedProps } from 'react-native-reanimated';
 import { G, Line, Rect } from 'react-native-svg';
 
 import type { MapGeometry } from '@/content/packs/ai-lab/geometry';
 
 import { readableLabColor } from '../i18n';
+import { useAmbientClock, wave } from '../motion/ambient';
 import { useGameStore } from '../store/game';
 import { colors } from '../theme';
 import { parseSites, sitesKey, type SiteMarker } from './mapColors';
+import { allFinite, nonNegative, unitInterval } from './svgSafe';
 
 const AnimatedG = Animated.createAnimatedComponent(G);
 
@@ -41,7 +43,6 @@ export const SitesLayer = memo(function SitesLayer({ geometry }: { geometry: Map
   const key = useGameStore((s) => (s.state ? sitesKey(s.state) : ''));
   const playerId = useGameStore((s) => s.state?.playerLabId ?? '');
   const pack = useGameStore((s) => s.pack);
-  const reduced = useReducedMotion();
 
   const served = useMemo(() => {
     const byId = new Map(pack.regions.map((r) => [r.id, r]));
@@ -52,7 +53,7 @@ export const SitesLayer = memo(function SitesLayer({ geometry }: { geometry: Map
       const targets = region.neighbors
         .map((id) => ({ id, pop: byId.get(id)?.population ?? 0, at: geometry.regions[id]?.centroid }))
         .filter((n): n is { id: string; pop: number; at: [number, number] } => {
-          if (!n.at) return false;
+          if (!n.at || !allFinite(n.at[0], n.at[1], from[0], from[1])) return false;
           const d = Math.hypot(n.at[0] - from[0], n.at[1] - from[1]);
           // No zero-length lines: with a round cap native draws them as stray dots.
           return d > MIN_LINE_LENGTH && d <= MAX_LINE_LENGTH;
@@ -77,27 +78,24 @@ export const SitesLayer = memo(function SitesLayer({ geometry }: { geometry: Map
       const n = perRegion.get(site.regionId) ?? 0;
       perRegion.set(site.regionId, n + 1);
       const [dx, dy] = offset(n);
+      const h = nonNegative((site.mine ? 2.3 : 1.8) + site.level * 0.2);
+      // A site that would get an invalid coordinate or size is skipped, never drawn.
+      if (!allFinite(region.centroid[0] + dx, region.centroid[1] + dy) || h <= 0) continue;
       out.push({
         ...site,
         x: region.centroid[0] + dx,
         y: region.centroid[1] + dy,
-        h: (site.mine ? 2.3 : 1.8) + site.level * 0.2,
+        h,
         lines: site.online && n === 0 ? (served.get(site.regionId) ?? []) : [],
       });
     }
     return out;
   }, [key, playerId, geometry, served]);
 
-  const pulse = useSharedValue(0.5);
-  useEffect(() => {
-    if (reduced) {
-      pulse.set(0.5);
-      return;
-    }
-    pulse.set(withRepeat(withTiming(1, { duration: 1300, easing: Easing.inOut(Easing.quad) }), -1, true));
-  }, [pulse, reduced]);
-  const glowProps = useAnimatedProps(() => ({ opacity: 0.12 + pulse.get() * 0.28 }));
-  const lineProps = useAnimatedProps(() => ({ opacity: 0.3 + pulse.get() * 0.45 }));
+  // Two animated groups for all sites, driven by the shell's shared ambient clock.
+  const clock = useAmbientClock(placed.length > 0);
+  const glowProps = useAnimatedProps(() => ({ opacity: unitInterval(0.12 + (clock ? 0.5 + 0.5 * wave(clock.get(), 2.6) : 0.5) * 0.28) }));
+  const lineProps = useAnimatedProps(() => ({ opacity: unitInterval(0.3 + (clock ? 0.5 + 0.5 * wave(clock.get(), 2.6) : 0.5) * 0.45) }));
 
   if (placed.length === 0) return null;
   return (

@@ -1,17 +1,10 @@
 import { memo, useEffect } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import Animated, {
-  cancelAnimation,
-  Easing,
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withSequence,
-  withTiming,
-} from 'react-native-reanimated';
+import Animated, { Easing, useAnimatedStyle, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
 
 import { fmtCash, fmtCompact } from '../format';
 import { t } from '../i18n';
+import { useAmbientClock, wave } from '../motion/ambient';
 import { colors, radius, spacing, tabular, type } from '../theme';
 import { CheckGlyph, LockGlyph } from './Glyphs';
 import type { TileRect } from './layout';
@@ -37,25 +30,17 @@ export function priceText(hype: number, cash: number): string {
 }
 
 function NodeTileImpl({ nodeId, name, status, costHype, costCash, accent, rect, flashKey, onPress }: NodeTileProps) {
-  const pulse = useSharedValue(0);
   const flash = useSharedValue(0);
   const buyable = status === 'buyable';
-
-  useEffect(() => {
-    if (buyable) {
-      pulse.set(withRepeat(withTiming(1, { duration: 900, easing: Easing.inOut(Easing.quad) }), -1, true));
-    } else {
-      cancelAnimation(pulse);
-      pulse.set(0);
-    }
-  }, [buyable, pulse]);
+  // The glow breathes on the shell's shared ambient clock (still off screen, paused or with reduced motion).
+  const clock = useAmbientClock(buyable);
 
   useEffect(() => {
     if (flashKey === 0) return;
     flash.set(withSequence(withTiming(1, { duration: 140 }), withTiming(0, { duration: 900, easing: Easing.out(Easing.quad) })));
   }, [flashKey, flash]);
 
-  const glowStyle = useAnimatedStyle(() => ({ opacity: 0.15 + pulse.get() * 0.65 }));
+  const glowStyle = useAnimatedStyle(() => ({ opacity: 0.15 + (clock ? wave(clock.get(), 1.8) : 0.5) * 0.65 }));
   const flashStyle = useAnimatedStyle(() => ({
     opacity: flash.get() * 0.9,
     transform: [{ scale: 1 + flash.get() * 0.12 }],
