@@ -119,13 +119,8 @@ function Face({ mood, blink, ink }: { mood: MascotMood; blink: boolean; ink: str
   }
 }
 
-/** Datum ticks around the blueprint node: N, E, S, W. */
-const DATUM = [
-  [16, 0.8, 16, 4.2],
-  [27.8, 16, 31.2, 16],
-  [16, 27.8, 16, 31.2],
-  [0.8, 16, 4.2, 16],
-] as const;
+/** Pin rows of the blueprint chip (y of each pin on both sides). */
+const PINS = [10.5, 16, 21.5] as const;
 
 /** Wobbly sticker outline for candy (an original blob, not a circle). */
 const BLOB = 'M15 3.4C19.4 2.4 22.2 4.4 25 5.9C28.9 8 29.9 12.2 29.1 16.8C28.2 22.6 24.4 28.6 16.4 28.7C8.6 28.8 3.1 24.2 3.2 16.4C3.3 10.8 6 4.9 15 3.4Z';
@@ -133,7 +128,7 @@ const BLOB = 'M15 3.4C19.4 2.4 22.2 4.4 25 5.9C28.9 8 29.9 12.2 29.1 16.8C28.2 2
 /**
  * Body and face placement per theme (shape.mascot):
  * - square: a soft rounded square in the accent (paper, night);
- * - node: a signal-yellow diagram node with datum ticks, like a drafting reference mark (blueprint);
+ * - node: a signal-yellow schematic chip with pin stubs and a pin-1 notch, the same symbol as the tree tiles (blueprint);
  * - sign: a warning-triangle face (hazard);
  * - blob: a magenta sticker blob with an ink outline and a flat shadow (candy).
  */
@@ -142,11 +137,15 @@ function Body({ mood, blink }: { mood: MascotMood; blink: boolean }) {
     case 'node':
       return (
         <G>
-          {DATUM.map(([x1, y1, x2, y2], i) => (
-            <Line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke={colors.outline} strokeWidth={1.4} />
+          {PINS.map((y) => (
+            <G key={y}>
+              <Line x1={1.2} y1={y} x2={6.5} y2={y} stroke={colors.outline} strokeWidth={1.5} />
+              <Line x1={25.5} y1={y} x2={30.8} y2={y} stroke={colors.outline} strokeWidth={1.5} />
+            </G>
           ))}
-          <Circle cx={16} cy={16} r={11.2} fill={colors.player} stroke={colors.outline} strokeWidth={1.2} />
-          <G transform="translate(3.2 3.4) scale(0.8)">
+          <Rect x={6} y={4.5} width={20} height={23} fill={colors.player} stroke={colors.outline} strokeWidth={1.2} />
+          <Path d="M13.2 4.5A2.8 2.8 0 0 0 18.8 4.5" fill="none" stroke={colors.onPlayer} strokeWidth={1.2} />
+          <G transform="translate(5.6 7.4) scale(0.65)">
             <Face mood={mood} blink={blink} ink={colors.onPlayer} />
           </G>
         </G>
