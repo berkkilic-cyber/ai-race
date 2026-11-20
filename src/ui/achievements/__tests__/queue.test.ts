@@ -1,6 +1,6 @@
 import type { AchievementDef } from '@/engine';
 
-import { sortAchievements } from '../AchievementsSheet';
+import { sortAchievements } from '../sort';
 import { currentToast, dismissToast, EMPTY_QUEUE, enqueueToasts, newAchievementIds } from '../queue';
 
 describe('newAchievementIds', () => {
