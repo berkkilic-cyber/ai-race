@@ -2,6 +2,7 @@ import { TabList, TabSlot, TabTrigger, Tabs } from 'expo-router/ui';
 import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { ToastHost } from '@/ui/achievements';
 import { EventModal } from '@/ui/events';
 import { useEndNavigation, useGameLoop } from '@/ui/hooks';
 import { t } from '@/ui/i18n';
@@ -39,6 +40,7 @@ export default function GameLayout() {
         </TabList>
       </Tabs>
       <EventModal />
+      <ToastHost />
     </SafeAreaView>
   );
 }
