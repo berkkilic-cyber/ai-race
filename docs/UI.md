@@ -29,7 +29,8 @@ src/ui/trees/, events/, news/, start/, end/   one folder per feature
 ```
 
 - Screens read state through the store and engine selectors and change it only by `dispatch(action)`. No game rules in UI code: costs, availability and failure reasons come from `canApply`, `getNodeCost` and the other selectors.
-- All text through `t()`. UI-only labels (button captions, tab names) live in the pack strings under `ui.*`; add the keys you need to `src/content/packs/ai-lab/strings/en.json` and register the prefix so content validation accepts them.
+- All text through `t()`. Theme-neutral captions (button labels, tab names, failure reasons) live in `src/ui/strings/en.json` under `ui.*`. Theme words come from the pack under `term.*` (`term.hype`, `term.cash`, `term.compute`, `term.capability`, `term.regulation`, `term.backlash`, `term.rival`, `term.dataCentre`, `term.tree.capability`, `term.tree.reach`, `term.tree.shadow`, `term.users`). `t()` looks in the pack first, then in the UI strings.
+- The player's colour is a UI decision (`theme.player`); rivals use their `LabState.color`. Use the `labColor(lab)` helper. Ignore lab flags starting with `$` (engine internals).
 - Game loop: one tick every `500 / speed` ms; stopped when speed is 0, an event is pending, the run has ended, or the app is in the background. When `state.status === 'ended'`, navigate to `/end`.
 - Colours and sizes only from `theme.ts`. Minimum touch target 44×44. Respect safe areas.
 
