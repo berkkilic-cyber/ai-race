@@ -1,0 +1,54 @@
+[
+  {
+    "id": "overfit",
+    "nameKey": "rival.overfit.name",
+    "color": "#4FC3F7",
+    "homeRegion": "usa",
+    "personality": {
+      "capability": 0.7,
+      "reach": 0.3,
+      "shadow": 0.4,
+      "expansion": 0.7
+    },
+    "entryTick": 0
+  },
+  {
+    "id": "gruendlich",
+    "nameKey": "rival.gruendlich.name",
+    "color": "#66BB6A",
+    "homeRegion": "germany",
+    "personality": {
+      "capability": 0.4,
+      "reach": 0.7,
+      "shadow": 0.1,
+      "expansion": 0.4
+    },
+    "entryTick": 240
+  },
+  {
+    "id": "lanterns",
+    "nameKey": "rival.lanterns.name",
+    "color": "#F06292",
+    "homeRegion": "china",
+    "personality": {
+      "capability": 0.6,
+      "reach": 0.4,
+      "shadow": 0.3,
+      "expansion": 0.6
+    },
+    "entryTick": 300
+  },
+  {
+    "id": "canopy",
+    "nameKey": "rival.canopy.name",
+    "color": "#B388FF",
+    "homeRegion": "brazil",
+    "personality": {
+      "capability": 0.3,
+      "reach": 0.4,
+      "shadow": 0.8,
+      "expansion": 0.6
+    },
+    "entryTick": 600
+  }
+]

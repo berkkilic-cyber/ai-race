@@ -1,0 +1,65 @@
+import type { ReactNode } from 'react';
+import { Modal, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import { layoutModeFor } from '../hooks/useLayoutMode';
+import { colors, layout, radius, spacing, type } from '../theme';
+
+export interface ModalCardProps {
+  visible: boolean;
+  title?: string;
+  /** Colours the top edge: good, bad or neutral. */
+  tone?: 'good' | 'bad' | 'neutral';
+  children?: ReactNode;
+  /** Called on Android back; omit to make the card impossible to dismiss without choosing. */
+  onRequestClose?: () => void;
+  testID?: string;
+}
+
+const TONE = { good: colors.good, bad: colors.bad, neutral: colors.info } as const;
+
+/**
+ * A centred card over everything, on a dark scrim. Its content scrolls inside the card.
+ * Wide (landscape): up to layout.modalMaxWidth wide and at most the screen height minus
+ * the safe areas and a margin. Narrow: up to 480 wide and 90% of the height.
+ */
+export function ModalCard({ visible, title, tone = 'neutral', children, onRequestClose, testID }: ModalCardProps) {
+  const { width, height } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  const wide = layoutModeFor(width, height) === 'wide';
+  const scrimInsets = wide
+    ? { paddingTop: insets.top + spacing.m, paddingBottom: insets.bottom + spacing.m, paddingLeft: insets.left + spacing.l, paddingRight: insets.right + spacing.l }
+    : null;
+  const cardSize = wide ? { maxWidth: layout.modalMaxWidth, maxHeight: Math.max(0, height - insets.top - insets.bottom - 2 * spacing.m) } : null;
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onRequestClose ?? (() => undefined)} statusBarTranslucent supportedOrientations={['portrait', 'landscape']}>
+      <View style={[styles.scrim, scrimInsets]}>
+        <View style={[styles.card, cardSize, { borderTopColor: TONE[tone] }]} testID={testID}>
+          <ScrollView contentContainerStyle={[styles.content, wide && styles.contentWide]}>
+            {title ? <Text style={styles.title}>{title}</Text> : null}
+            {children}
+          </ScrollView>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+const styles = StyleSheet.create({
+  scrim: { flex: 1, backgroundColor: colors.scrim, justifyContent: 'center', padding: spacing.l },
+  card: {
+    maxHeight: '90%',
+    width: '100%',
+    maxWidth: 480,
+    alignSelf: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: radius.l,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderTopWidth: 4,
+    overflow: 'hidden',
+  },
+  content: { padding: spacing.xl, gap: spacing.m },
+  contentWide: { padding: spacing.l, gap: spacing.s },
+  title: { color: colors.text, fontSize: type.xl, fontWeight: '800' },
+});

@@ -1,0 +1,169 @@
+[
+  {
+    "id": "agi-paperclips",
+    "kind": "win",
+    "trigger": "agi",
+    "titleKey": "ending.agi-paperclips.title",
+    "bodyKey": "ending.agi-paperclips.body",
+    "conditions": [
+      {
+        "type": "labNameIs",
+        "names": [
+          "Paperclip Maximiser",
+          "Paperclip Maximizer",
+          "Paperclips",
+          "Clip Co"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "agi-reckless",
+    "kind": "win",
+    "trigger": "agi",
+    "titleKey": "ending.agi-reckless.title",
+    "bodyKey": "ending.agi-reckless.body",
+    "conditions": [
+      {
+        "type": "lacksNode",
+        "nodeId": "cap-safety-team"
+      }
+    ]
+  },
+  {
+    "id": "agi-aligned",
+    "kind": "win",
+    "trigger": "agi",
+    "titleKey": "ending.agi-aligned.title",
+    "bodyKey": "ending.agi-aligned.body",
+    "conditions": [
+      {
+        "type": "hasNode",
+        "nodeId": "cap-alignment"
+      }
+    ]
+  },
+  {
+    "id": "agi",
+    "kind": "win",
+    "trigger": "agi",
+    "titleKey": "ending.agi.title",
+    "bodyKey": "ending.agi.body"
+  },
+  {
+    "id": "dependence",
+    "kind": "win",
+    "trigger": "dependence",
+    "titleKey": "ending.dependence.title",
+    "bodyKey": "ending.dependence.body"
+  },
+  {
+    "id": "monopoly-hostile",
+    "kind": "win",
+    "trigger": "monopoly",
+    "titleKey": "ending.monopoly-hostile.title",
+    "bodyKey": "ending.monopoly-hostile.body",
+    "conditions": [
+      {
+        "type": "hasNode",
+        "nodeId": "shadow-hostile"
+      }
+    ]
+  },
+  {
+    "id": "monopoly",
+    "kind": "win",
+    "trigger": "monopoly",
+    "titleKey": "ending.monopoly.title",
+    "bodyKey": "ending.monopoly.body"
+  },
+  {
+    "id": "banned-home",
+    "kind": "lose",
+    "trigger": "banned",
+    "titleKey": "ending.banned-home.title",
+    "bodyKey": "ending.banned-home.body",
+    "conditions": [
+      {
+        "type": "bannedIn",
+        "scope": {
+          "kind": "home"
+        }
+      }
+    ]
+  },
+  {
+    "id": "banned-home-defiant",
+    "kind": "lose",
+    "trigger": "banned",
+    "titleKey": "ending.banned-home.title",
+    "bodyKey": "ending.banned-home.body",
+    "conditions": [
+      {
+        "type": "hasFlag",
+        "flag": "homeBanned"
+      }
+    ]
+  },
+  {
+    "id": "banned-captured",
+    "kind": "lose",
+    "trigger": "banned",
+    "titleKey": "ending.banned-captured.title",
+    "bodyKey": "ending.banned-captured.body",
+    "conditions": [
+      {
+        "type": "nodesInTreeAtLeast",
+        "tree": "shadow",
+        "value": 8
+      }
+    ]
+  },
+  {
+    "id": "banned",
+    "kind": "lose",
+    "trigger": "banned",
+    "titleKey": "ending.banned.title",
+    "bodyKey": "ending.banned.body"
+  },
+  {
+    "id": "revolt-robots",
+    "kind": "lose",
+    "trigger": "revolt",
+    "titleKey": "ending.revolt-robots.title",
+    "bodyKey": "ending.revolt-robots.body",
+    "conditions": [
+      {
+        "type": "hasNode",
+        "nodeId": "cap-robotics"
+      }
+    ]
+  },
+  {
+    "id": "revolt",
+    "kind": "lose",
+    "trigger": "revolt",
+    "titleKey": "ending.revolt.title",
+    "bodyKey": "ending.revolt.body"
+  },
+  {
+    "id": "rival-agi-close",
+    "kind": "lose",
+    "trigger": "rivalAgi",
+    "titleKey": "ending.rival-agi-close.title",
+    "bodyKey": "ending.rival-agi-close.body",
+    "conditions": [
+      {
+        "type": "agiAtLeast",
+        "value": 85
+      }
+    ]
+  },
+  {
+    "id": "rival-agi",
+    "kind": "lose",
+    "trigger": "rivalAgi",
+    "titleKey": "ending.rival-agi.title",
+    "bodyKey": "ending.rival-agi.body"
+  }
+]

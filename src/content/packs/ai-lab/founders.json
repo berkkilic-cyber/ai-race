@@ -1,0 +1,44 @@
+[
+  {
+    "id": "researcher",
+    "nameKey": "founder.researcher.name",
+    "descKey": "founder.researcher.desc",
+    "startHype": 22,
+    "startCash": 70,
+    "modifiers": [
+      {
+        "stat": "agiRate",
+        "op": "mul",
+        "value": 1.25
+      }
+    ]
+  },
+  {
+    "id": "hustler",
+    "nameKey": "founder.hustler.name",
+    "descKey": "founder.hustler.desc",
+    "startHype": 20,
+    "startCash": 140,
+    "modifiers": [
+      {
+        "stat": "spreadRate",
+        "op": "mul",
+        "value": 1.12
+      }
+    ]
+  },
+  {
+    "id": "insider",
+    "nameKey": "founder.insider.name",
+    "descKey": "founder.insider.desc",
+    "startHype": 16,
+    "startCash": 160,
+    "modifiers": [
+      {
+        "stat": "regulationGain",
+        "op": "mul",
+        "value": 0.75
+      }
+    ]
+  }
+]
