@@ -37,7 +37,7 @@ function BreakingBand() {
 /** Tint strength per composure level (1, 2, 3): blueprint floods red at the end. */
 const TINT: Record<typeof shape.composure, [number, number, number]> = {
   classic: [0, 0.035, 0.055],
-  redline: [0, 0.05, 0.3],
+  redline: [0, 0.06, 0.55],
   tape: [0, 0.04, 0.07],
   drain: [0, 0, 0.04],
 };

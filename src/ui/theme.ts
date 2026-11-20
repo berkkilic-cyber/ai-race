@@ -2,8 +2,8 @@
  * Colours, type, shape, spacing, radius and motion. The only place UI colours are defined.
  *
  * Five themes with identical token names ("calm lab, loud world", docs/DESIGN.md), chosen
- * at build time by EXPO_PUBLIC_THEME: `paper` (default, retired pending the product
- * owner's choice), `night`, `blueprint`, `hazard` and `candy`. A theme is a palette, a
+ * at build time by EXPO_PUBLIC_THEME: `blueprint` (the default), `hazard`, `candy`, and the
+ * retired `paper` and `night`. A theme is a palette, a
  * shape language (corners, line weights, shadows, panel and tile decoration, how the
  * composure system shows) and a type pairing. Components stay shared: they read these
  * tokens instead of branching on the theme name.
@@ -215,7 +215,7 @@ const blueprint: Palette = {
   outline: '#E6F3FF',
   shadow: '#062C86',
   mark: '#FF3B3B',
-  drain: '#B3122A',
+  drain: '#E8231A',
   chrome: '#0B3CA6',
 };
 
@@ -433,9 +433,12 @@ export const shapes: Record<ThemeName, Shape> = {
 
 const KNOWN = new Set<string>(THEME_NAMES);
 
-/** Resolves EXPO_PUBLIC_THEME; anything unknown is `paper`. */
+/** The build theme when EXPO_PUBLIC_THEME is unset or unknown (docs/DESIGN.md says why). */
+export const DEFAULT_THEME: ThemeName = 'blueprint';
+
+/** Resolves EXPO_PUBLIC_THEME; anything unknown is the default. */
 export function resolveThemeName(value: string | undefined): ThemeName {
-  return value && KNOWN.has(value) ? (value as ThemeName) : 'paper';
+  return value && KNOWN.has(value) ? (value as ThemeName) : DEFAULT_THEME;
 }
 
 /** Chosen at build time: Expo inlines EXPO_PUBLIC_* variables into the bundle. */

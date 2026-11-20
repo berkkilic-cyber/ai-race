@@ -57,7 +57,7 @@ const styles = StyleSheet.create({
   tabWide: { height: layout.railItemHeight, alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center' },
   labelBoxWide: { maxWidth: layout.railWidth - 6, flexShrink: 0 },
   pressed: { opacity: 0.6 },
-  label: { ...voice.calmHeading, color: colors.dim, fontSize: shape.panel === 'ticks' ? 10 : shape.panel === 'clip' ? type.m - 1 : shape.panel === 'sticker' ? type.s : type.s + 1, letterSpacing: shape.panel === 'plain' ? voice.calmHeading.letterSpacing : 0, lineHeight: type.s + 5, textAlign: 'center' },
+  label: { ...voice.calmHeading, color: colors.dim, fontSize: shape.panel === 'ticks' ? 10 : shape.panel === 'clip' ? type.m - 2 : shape.panel === 'sticker' ? type.s - 1 : type.s + 1, letterSpacing: shape.panel === 'plain' ? voice.calmHeading.letterSpacing : 0, lineHeight: type.s + 5, textAlign: 'center' },
   focused: { color: shape.panel === 'clip' || shape.panel === 'sticker' ? colors.onPlayer : colors.text },
   box: { paddingHorizontal: shape.panel === 'ticks' ? 3 : 5, paddingVertical: 3, borderRadius: radius.pill, borderWidth: shape.hairline, borderColor: colors.transparent },
   boxFocused:
@@ -65,7 +65,7 @@ const styles = StyleSheet.create({
       ? { borderColor: colors.border, backgroundColor: colors.surface }
       : shape.panel === 'clip'
         ? { backgroundColor: colors.player, borderColor: colors.player }
-        : { backgroundColor: colors.player, borderColor: colors.outline, borderWidth: shape.outline, paddingHorizontal: 4, ...flatShadow(2) },
+        : { backgroundColor: colors.player, borderColor: colors.outline, borderWidth: shape.outline, paddingHorizontal: 2, ...flatShadow(2) },
   markWide: { position: 'absolute', left: 0, top: 16, bottom: 16, width: 3, backgroundColor: colors.player },
   markNarrow: { position: 'absolute', bottom: 4, width: 18, height: 2, backgroundColor: colors.player },
   badge: { position: 'absolute', top: -8, left: '100%', marginLeft: 2 },

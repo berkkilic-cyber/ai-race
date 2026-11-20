@@ -65,7 +65,8 @@ const styles = StyleSheet.create({
   wrap: { flex: 1, minWidth: 0, justifyContent: 'center', gap: 3 },
   // The tagged meter takes the tag's natural width; the others share what is left.
   wrapTagged: { flexGrow: 0, flexShrink: 0, flexBasis: 'auto' },
-  label: { ...voice.calmLabel, color: colors.dim, fontSize: 9.5, lineHeight: 11 },
+  // Wide capitals faces (mono, tracked) drop their tracking here so "Regulation" fits a narrow meter.
+  label: { ...voice.calmLabel, color: colors.dim, fontSize: shape.panel === 'ticks' ? 8.5 : 9.5, lineHeight: 11, letterSpacing: Math.min(voice.calmLabel.letterSpacing ?? 0, 0.3) },
   tag: { alignSelf: 'flex-start', backgroundColor: colors.newsInk, paddingHorizontal: 4, height: 13, justifyContent: 'center', transform: [{ rotate: '-1.5deg' }] },
   tagText: { ...voice.loudKicker, fontSize: 10.5, lineHeight: 12, letterSpacing: 0.8, color: colors.newsPaper },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },

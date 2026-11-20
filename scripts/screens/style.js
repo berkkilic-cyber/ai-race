@@ -33,7 +33,7 @@ const DIST = path.join(ROOT, 'dist');
 const OUT = path.resolve(process.argv[2] || path.join(ROOT, 'docs', 'screenshots', 'style'));
 const { spawnSync } = require('node:child_process');
 
-let THEME = process.env.THEME || 'paper';
+let THEME = process.env.THEME || 'blueprint';
 const THEMES = (process.env.THEMES || '').split(',').map((s) => s.trim()).filter(Boolean);
 /** Screens stacked into comparison sheets in theme mode. */
 const COMPARE = ['map-midgame', 'event-card'];

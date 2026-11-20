@@ -77,7 +77,7 @@ function NodeTileImpl({ nodeId, name, status, costHype, costCash, accent, rect, 
         ]}
       >
         {shape.tile === 'plate' ? <Rivets color={owned ? colors.onPlayer : colors.border} /> : null}
-        <Text style={[styles.name, { color: fg }]} numberOfLines={2}>
+        <Text style={[styles.name, styles.nameRoom, { color: fg }]} numberOfLines={2}>
           {name}
         </Text>
         {owned ? (
@@ -156,6 +156,8 @@ const styles = StyleSheet.create({
       : shape.tile === 'plate'
         ? { ...voice.calmHeading, fontSize: 14, lineHeight: 15, letterSpacing: 0 }
         : { ...voice.bodyStrong, fontSize: type.xs, lineHeight: 14 },
+  // Keeps the name clear of the corner badge (owned check, lock).
+  nameRoom: { paddingRight: 12 },
   corner: {
     position: 'absolute',
     top: -6,

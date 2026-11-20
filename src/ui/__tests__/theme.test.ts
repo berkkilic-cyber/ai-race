@@ -6,7 +6,7 @@ import { contrast, distinctFrom, ensureContrast, hueDistance, hueOf, mixColor, r
 import { themeFontSources } from '../fonts';
 import { LAB_CONTRAST, readableLabColor } from '../i18n';
 import { getPackEntry } from '../packs';
-import { colors, darkThemes, palettes, resolveThemeName, shapes, THEME_NAMES, themeFontFaces, voice, type Palette, type ThemeName } from '../theme';
+import { colors, darkThemes, DEFAULT_THEME, palettes, resolveThemeName, shapes, THEME_NAMES, themeFontFaces, voice, type Palette, type ThemeName } from '../theme';
 
 const ROOT = path.join(__dirname, '..', '..', '..');
 
@@ -28,13 +28,13 @@ describe('themes', () => {
     expect(Object.keys(shapes[name]).sort()).toEqual(Object.keys(shapes.paper).sort());
   });
 
-  it('EXPO_PUBLIC_THEME picks a known theme only when asked; paper is the default', () => {
+  it('EXPO_PUBLIC_THEME picks a known theme only when asked; blueprint is the default', () => {
     for (const name of THEME_NAMES) expect(resolveThemeName(name)).toBe(name);
-    expect(resolveThemeName('paper')).toBe('paper');
-    expect(resolveThemeName(undefined)).toBe('paper');
-    expect(resolveThemeName('neon')).toBe('paper');
+    expect(DEFAULT_THEME).toBe('blueprint');
+    expect(resolveThemeName(undefined)).toBe('blueprint');
+    expect(resolveThemeName('neon')).toBe('blueprint');
     // Tests run without the variable.
-    expect(colors).toBe(palettes.paper);
+    expect(colors).toBe(palettes.blueprint);
   });
 
   it.each(Object.entries(palettes))('%s: text tokens reach 4.5:1 on bg and surface', (_name, p: Palette) => {
@@ -70,6 +70,19 @@ describe('themes', () => {
     }
   });
 
+  it.each([undefined, 'neon'])('with EXPO_PUBLIC_THEME=%s the default theme\'s faces are loaded', (value) => {
+    const before = process.env.EXPO_PUBLIC_THEME;
+    if (value === undefined) delete process.env.EXPO_PUBLIC_THEME;
+    else process.env.EXPO_PUBLIC_THEME = value;
+    try {
+      const used = [...new Set(Object.values(themeFontFaces[DEFAULT_THEME]).filter(Boolean))].sort();
+      expect(Object.keys(themeFontSources()).sort()).toEqual(used);
+    } finally {
+      if (before === undefined) delete process.env.EXPO_PUBLIC_THEME;
+      else process.env.EXPO_PUBLIC_THEME = before;
+    }
+  });
+
   it('new themes leave the retired look behind: no cream ground, no orange accent, no serif headings', () => {
     for (const name of ['blueprint', 'hazard', 'candy'] as const) {
       const hue = hueOf(palettes[name].player);
@@ -83,8 +96,8 @@ describe('themes', () => {
     expect(voice.loudHeadline.textTransform).toBe('uppercase');
     expect(voice.loudKicker.textTransform).toBe('uppercase');
     expect(voice.calmNumber.fontVariant).toContain('tabular-nums');
-    expect(voice.calmHeading.fontFamily).toContain('Fraunces');
-    expect(voice.loudHeadline.fontFamily).toContain('BarlowCondensed');
+    expect(voice.calmHeading.fontFamily).toContain(themeFontFaces[DEFAULT_THEME].heading);
+    expect(voice.loudHeadline.fontFamily).toContain(themeFontFaces[DEFAULT_THEME].newsHeavy);
   });
 });
 

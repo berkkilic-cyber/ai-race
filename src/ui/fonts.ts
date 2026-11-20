@@ -12,16 +12,7 @@ type FontSources = Record<string, number>;
  * Keep the names in step with `themeFontFaces` in theme.ts (a test checks it).
  */
 export function themeFontSources(): FontSources {
-  if (process.env.EXPO_PUBLIC_THEME === 'blueprint') {
-    return {
-      B612Mono_400Regular: require('@expo-google-fonts/b612-mono/400Regular').B612Mono_400Regular,
-      B612Mono_700Bold: require('@expo-google-fonts/b612-mono/700Bold').B612Mono_700Bold,
-      HankenGrotesk_400Regular: require('@expo-google-fonts/hanken-grotesk/400Regular').HankenGrotesk_400Regular,
-      HankenGrotesk_600SemiBold: require('@expo-google-fonts/hanken-grotesk/600SemiBold').HankenGrotesk_600SemiBold,
-      SofiaSansExtraCondensed_700Bold: require('@expo-google-fonts/sofia-sans-extra-condensed/700Bold').SofiaSansExtraCondensed_700Bold,
-      SofiaSansExtraCondensed_800ExtraBold: require('@expo-google-fonts/sofia-sans-extra-condensed/800ExtraBold').SofiaSansExtraCondensed_800ExtraBold,
-    };
-  } else if (process.env.EXPO_PUBLIC_THEME === 'hazard') {
+  if (process.env.EXPO_PUBLIC_THEME === 'hazard') {
     return {
       BigShoulders_700Bold: require('@expo-google-fonts/big-shoulders/700Bold').BigShoulders_700Bold,
       BigShoulders_900Black: require('@expo-google-fonts/big-shoulders/900Black').BigShoulders_900Black,
@@ -37,13 +28,23 @@ export function themeFontSources(): FontSources {
       Fredoka_700Bold: require('@expo-google-fonts/fredoka/700Bold').Fredoka_700Bold,
       Anton_400Regular: require('@expo-google-fonts/anton/400Regular').Anton_400Regular,
     };
-  } else {
-    // paper and night share one pairing.
+  } else if (process.env.EXPO_PUBLIC_THEME === 'paper' || process.env.EXPO_PUBLIC_THEME === 'night') {
+    // The retired pair share one pairing.
     return {
-    Fraunces_500Medium: require('@expo-google-fonts/fraunces/500Medium').Fraunces_500Medium,
-    Fraunces_600SemiBold: require('@expo-google-fonts/fraunces/600SemiBold').Fraunces_600SemiBold,
-    BarlowCondensed_700Bold: require('@expo-google-fonts/barlow-condensed/700Bold').BarlowCondensed_700Bold,
-    BarlowCondensed_800ExtraBold: require('@expo-google-fonts/barlow-condensed/800ExtraBold').BarlowCondensed_800ExtraBold,
+      Fraunces_500Medium: require('@expo-google-fonts/fraunces/500Medium').Fraunces_500Medium,
+      Fraunces_600SemiBold: require('@expo-google-fonts/fraunces/600SemiBold').Fraunces_600SemiBold,
+      BarlowCondensed_700Bold: require('@expo-google-fonts/barlow-condensed/700Bold').BarlowCondensed_700Bold,
+      BarlowCondensed_800ExtraBold: require('@expo-google-fonts/barlow-condensed/800ExtraBold').BarlowCondensed_800ExtraBold,
+    };
+  } else {
+    // blueprint: the default, also when EXPO_PUBLIC_THEME is unset or unknown (resolveThemeName).
+    return {
+      B612Mono_400Regular: require('@expo-google-fonts/b612-mono/400Regular').B612Mono_400Regular,
+      B612Mono_700Bold: require('@expo-google-fonts/b612-mono/700Bold').B612Mono_700Bold,
+      HankenGrotesk_400Regular: require('@expo-google-fonts/hanken-grotesk/400Regular').HankenGrotesk_400Regular,
+      HankenGrotesk_600SemiBold: require('@expo-google-fonts/hanken-grotesk/600SemiBold').HankenGrotesk_600SemiBold,
+      SofiaSansExtraCondensed_700Bold: require('@expo-google-fonts/sofia-sans-extra-condensed/700Bold').SofiaSansExtraCondensed_700Bold,
+      SofiaSansExtraCondensed_800ExtraBold: require('@expo-google-fonts/sofia-sans-extra-condensed/800ExtraBold').SofiaSansExtraCondensed_800ExtraBold,
     };
   }
 }

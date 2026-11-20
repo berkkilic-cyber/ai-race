@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react';
 import { StyleSheet, Text, View, useWindowDimensions, type ViewStyle } from 'react-native';
-import Animated, { interpolateColor, useAnimatedStyle } from 'react-native-reanimated';
+import Animated, { interpolate, interpolateColor, useAnimatedStyle } from 'react-native-reanimated';
 
+import { mixColor } from '../color';
 import { CountingNumber } from '../components/CountingNumber';
 import { dangerKey, useComposure, useComposureProgress } from '../composure';
 import { fmtCash, fmtCompact, fmtDay, fmtPerDay } from '../format';
@@ -25,6 +26,9 @@ const ROOM_FOR_INCOME = 880;
 /** Hazard: the strip stands on a thin band of warning stripes. */
 const TAPE = 4;
 const sticker = shape.panel === 'sticker';
+
+/** Candy composure: the strip's stickers lose their colour as the meters rise (level 0..3). */
+const STICKER_DRAIN = [colors.surface, colors.surface, mixColor(colors.surface, colors.drain, 0.55), colors.drain];
 
 const fmtTier = (tier: number) => t('ui.resource.tier', { tier: Math.round(tier) });
 
@@ -59,6 +63,18 @@ export function TopStrip({ right }: { right?: ReactNode }) {
     };
   });
 
+  // Candy: the two stickers come loose and grey as the run goes wrong (opposite tilts).
+  const stickerA = useAnimatedStyle(() => {
+    if (!sticker) return {};
+    const p = progress.get();
+    return { backgroundColor: interpolateColor(p, [0, 1, 2, 3], STICKER_DRAIN), transform: [{ rotate: `${interpolate(p, [0, 1, 2, 3], [0, 0, -1.2, -2.6], 'clamp')}deg` }] };
+  });
+  const stickerB = useAnimatedStyle(() => {
+    if (!sticker) return {};
+    const p = progress.get();
+    return { backgroundColor: interpolateColor(p, [0, 1, 2, 3], STICKER_DRAIN), transform: [{ rotate: `${interpolate(p, [0, 1, 2, 3], [0, 0.4, 1.4, 3], 'clamp')}deg` }] };
+  });
+
   return (
     <View style={styles.strip}>
       <View style={[styles.brand, styles.brandBox]}>
@@ -74,7 +90,8 @@ export function TopStrip({ right }: { right?: ReactNode }) {
         {shape.panel === 'ticks' ? <PanelDeco /> : null}
       </View>
       <View style={styles.rule} />
-      <View style={[styles.stats, styles.group]} ref={resourcesRef}>
+      <Animated.View style={[styles.statsBox, styles.group, stickerA]}>
+        <View style={styles.stats} ref={resourcesRef}>
         <Stat label={t('term.hype')} target="shell.hype" testID="res-hype" a11y={fmtCompact(r.hype)}>
           <CountingNumber value={r.hype} format={fmtCompact} notable={Math.max(2, Math.abs(r.hypePerDay) * 3)} style={styles.value} />
         </Stat>
@@ -94,13 +111,16 @@ export function TopStrip({ right }: { right?: ReactNode }) {
         <Stat label={t('term.capability')} target="shell.tier" testID="res-tier" a11y={fmtTier(r.tier)}>
           <CountingNumber value={r.tier} format={fmtTier} style={[styles.value, styles.tier]} color={colors.playerText} />
         </Stat>
-      </View>
+        </View>
+      </Animated.View>
       <View style={styles.rule} />
-      <View style={[styles.meters, styles.group]} ref={metersRef}>
+      <Animated.View style={[styles.metersBox, styles.group, stickerB]}>
+        <View style={styles.meters} ref={metersRef}>
         <StripMeter label={t('term.regulation')} value={m.regulation} color={colors.info} tag={tagFor('regulation')} testID="meter-regulation" />
         <StripMeter label={t('term.backlash')} value={m.backlash} color={colors.alarm} tag={tagFor('backlash')} testID="meter-backlash" />
         <StripMeter label={t('term.rival')} value={m.rival} color={colors.amber} tag={tagFor('rival')} testID="meter-rival" />
-      </View>
+        </View>
+      </Animated.View>
       {right}
       {shape.composure === 'tape' ? <Stripes height={TAPE} stripe={5} style={styles.tape} /> : null}
       <Animated.View style={[styles.composureRule, ruleStyle]} pointerEvents="none" testID="composure-rule" />
@@ -150,7 +170,9 @@ const styles = StyleSheet.create({
   tier: { color: colors.playerText },
   sub: { ...voice.body, fontSize: 10, fontVariant: ['tabular-nums'] },
   // The lab name gives way before the meters do.
-  meters: { flex: 1, minWidth: 3 * METER_MIN + 2 * spacing.s, flexDirection: 'row', gap: spacing.s + 2 },
+  statsBox: { justifyContent: 'center', flexShrink: 0 },
+  metersBox: { flex: 1, minWidth: 3 * METER_MIN + 2 * spacing.s, justifyContent: 'center' },
+  meters: { flexDirection: 'row', gap: spacing.s + 2 },
   tape: { position: 'absolute', left: 0, right: 0, bottom: 0 },
   composureRule: { position: 'absolute', left: 0, right: 0, bottom: shape.composure === 'tape' ? TAPE : 0 },
 });
