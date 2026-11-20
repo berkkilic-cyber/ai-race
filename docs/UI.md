@@ -15,6 +15,8 @@ Target: phone, **landscape** (decided after the first build: the world map is wi
 
 Vertical space is scarce (390 minus safe areas), so nothing important may need vertical scrolling of the whole screen; panels scroll internally.
 
+**Safe areas.** Insets come from one hook, `useInsets()` (src/ui/hooks), and are applied explicitly; there are no nested `SafeAreaView`s. The wide shell is computed in one place, `wideShellLayout()` (src/ui/shell/shellLayout.ts): rail width = left inset + 56 (its background runs under the inset, its tabs sit inside it), the main column starts at the rail's right edge and ends at the right inset (iOS reports the side inset on both sides in landscape), and the ticker band reaches the bottom edge with its text above the bottom inset. Start, end, the side panel, ModalCard, the event card and toasts all keep their content inside the insets. To check on web, add `?insets=top,right,bottom,left` to the URL (debug only), e.g. `?insets=0,59,21,59` at 859×396 for an iPhone with a Dynamic Island in landscape; `scripts/screens/native.js` takes the screenshots in docs/screenshots/native.
+
 ## Routes (expo-router)
 
 | Route | File | Purpose |
