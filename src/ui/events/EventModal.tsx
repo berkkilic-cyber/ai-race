@@ -1,68 +1,71 @@
-import { StyleSheet, Text } from 'react-native';
+import { useCallback, useState } from 'react';
+import { Modal, StyleSheet, View } from 'react-native';
 
-import { canApply, type EventChoiceDef } from '@/engine';
-
-import { Button } from '../components/Button';
-import { ModalCard } from '../components/ModalCard';
-import { fmtCash, fmtCompact } from '../format';
-import { failureText, t } from '../i18n';
 import { useGameStore } from '../store/game';
-import { colors, type } from '../theme';
+import { colors, spacing } from '../theme';
+import { diffSnapshots, snapshotPlayer, type StatDelta } from './deltas';
+import { EventCard } from './EventCard';
+import { tapHaptic } from './haptics';
+import { ResultView } from './ResultView';
 
-function costText(choice: EventChoiceDef): string {
-  const parts: string[] = [];
-  if (choice.cost?.hype) parts.push(`${fmtCompact(choice.cost.hype)} ${t('term.hype')}`);
-  if (choice.cost?.cash) parts.push(fmtCash(choice.cost.cash));
-  return parts.length ? parts.join(' + ') : t('ui.event.free');
+interface Changes {
+  eventId: string;
+  choiceId: string;
+  deltas: StatDelta[];
 }
 
 /**
- * Placeholder event card host: shows the pending event with its choices, then the
- * result text with Continue. Cannot be dismissed without choosing.
+ * Event host, mounted once in the game shell: the pending event card, then the
+ * result of the choice with what changed. The run stays paused until Continue.
  */
 export function EventModal() {
-  // While the run is ticking there is nothing to show, so subscribe to the state only when an event is pending or a result is up.
-  const state = useGameStore((s) => (s.state && (s.state.pendingEvent || s.eventResult) ? s.state : null));
-  const pack = useGameStore((s) => s.pack);
-  const dispatch = useGameStore((s) => s.dispatch);
+  // While the run ticks there is nothing to show: only subscribe to the state while an event is pending.
+  const pendingState = useGameStore((s) => (s.state?.pendingEvent && s.state.pendingEvent.labId === s.state.playerLabId ? s.state : null));
   const result = useGameStore((s) => s.eventResult);
+  const playerLabId = useGameStore((s) => s.state?.playerLabId ?? null);
+  const pack = useGameStore((s) => s.pack);
   const dismiss = useGameStore((s) => s.dismissEventResult);
+  const [changes, setChanges] = useState<Changes | null>(null);
 
-  const pending = state?.pendingEvent && state.pendingEvent.labId === state.playerLabId ? state.pendingEvent : null;
-  const event = pending ? pack.events.find((e) => e.id === pending.eventId) : result ? pack.events.find((e) => e.id === result.eventId) : undefined;
-  if (!state || !event || (!pending && !result)) return <ModalCard visible={false} />;
+  const choose = useCallback((choiceId: string) => {
+    const store = useGameStore.getState();
+    const before = store.state;
+    if (!before?.pendingEvent) return;
+    const eventId = before.pendingEvent.eventId;
+    tapHaptic();
+    if (!store.dispatch({ type: 'resolveEvent', labId: before.playerLabId, choiceId }).ok) return;
+    const after = useGameStore.getState();
+    if (!after.state) return;
+    setChanges({ eventId, choiceId, deltas: diffSnapshots(snapshotPlayer(before, after.pack), snapshotPlayer(after.state, after.pack)) });
+    // The store only keeps a result when the choice has text; keep the run paused on the result view anyway.
+    const last = after.state.lastEventResult;
+    if (!after.eventResult && last && after.state.status === 'running') useGameStore.setState({ eventResult: last });
+  }, []);
 
-  if (pending) {
-    return (
-      <ModalCard visible title={t(event.titleKey)} tone={event.tone} testID="event-card">
-        <Text style={styles.body}>{t(event.bodyKey, { lab: state.playerLabId })}</Text>
-        {event.choices.map((choice) => {
-          const check = canApply(state, pack, { type: 'resolveEvent', labId: state.playerLabId, choiceId: choice.id });
-          const cost = costText(choice);
-          return (
-            <Button
-              key={choice.id}
-              label={t(choice.labelKey)}
-              variant={check.ok ? 'primary' : 'secondary'}
-              disabled={!check.ok}
-              sublabel={check.ok ? cost : `${cost} · ${failureText(check.reason)}`}
-              onPress={() => dispatch({ type: 'resolveEvent', labId: state.playerLabId, choiceId: choice.id })}
-              testID={`event-choice-${choice.id}`}
-            />
-          );
-        })}
-      </ModalCard>
-    );
+  const onContinue = useCallback(() => {
+    setChanges(null);
+    dismiss();
+  }, [dismiss]);
+
+  const pendingEvent = pendingState?.pendingEvent ? pack.events.find((e) => e.id === pendingState.pendingEvent?.eventId) : undefined;
+  const resultEvent = !pendingEvent && result ? pack.events.find((e) => e.id === result.eventId) : undefined;
+  const visible = !!pendingEvent || !!resultEvent;
+
+  let content = null;
+  if (pendingEvent && pendingState) {
+    content = <EventCard key={`card-${pendingEvent.id}`} event={pendingEvent} state={pendingState} pack={pack} onChoose={choose} />;
+  } else if (resultEvent && result && playerLabId) {
+    const deltas = changes && changes.eventId === result.eventId && changes.choiceId === result.choiceId ? changes.deltas : null;
+    content = <ResultView key={`result-${result.eventId}`} event={resultEvent} result={result} playerLabId={playerLabId} deltas={deltas} onContinue={onContinue} />;
   }
 
   return (
-    <ModalCard visible title={t(event.titleKey)} tone={result?.riskFired ? 'bad' : event.tone} testID="event-result">
-      {result?.resultKey ? <Text style={styles.body}>{t(result.resultKey, { lab: state.playerLabId })}</Text> : null}
-      <Button label={t('ui.event.continue')} variant="primary" onPress={dismiss} testID="event-continue" />
-    </ModalCard>
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={() => undefined} statusBarTranslucent>
+      <View style={styles.scrim}>{content}</View>
+    </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  body: { color: colors.text, fontSize: type.m, lineHeight: 22 },
+  scrim: { flex: 1, backgroundColor: colors.scrim, justifyContent: 'center', padding: spacing.l },
 });
