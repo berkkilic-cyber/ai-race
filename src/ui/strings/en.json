@@ -69,6 +69,7 @@
   "ui.composure.breaking": "Breaking",
   "ui.composure.band": "{danger}: {meter} at {pct}%",
   "ui.ticker.kicker": "Live",
+  "ui.ticker.empty": "No headlines yet. The world has not noticed you.",
   "ui.map.banned": "Banned",
   "ui.mascot.label": "Your model: {mood}",
   "ui.mascot.mood.calm": "calm",

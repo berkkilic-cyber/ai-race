@@ -1,16 +1,17 @@
 import type { ReactNode } from 'react';
 import { StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import Animated, { interpolateColor, useAnimatedStyle } from 'react-native-reanimated';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { CountingNumber } from '../components/CountingNumber';
 import { dangerKey, useComposure, useComposureProgress } from '../composure';
 import { fmtCash, fmtCompact, fmtDay, fmtPerDay } from '../format';
 import { useMeters, useResources } from '../hooks/useGame';
+import { useInsets } from '../hooks/useInsets';
 import { labName, t } from '../i18n';
 import { Mascot, useMascotMood } from '../mascot';
 import { useGameStore } from '../store/game';
 import { colors, layout, spacing, voice } from '../theme';
+import { wideShellLayout } from './shellLayout';
 import { StripMeter } from './StripMeter';
 
 /** Smallest meter width that still shows a full label like "Regulation" at the strip's label size. */
@@ -35,9 +36,9 @@ export function TopStrip({ right }: { right?: ReactNode }) {
   const mood = useMascotMood();
   const composure = useComposure();
   const progress = useComposureProgress();
-  const { width } = useWindowDimensions();
-  const insets = useSafeAreaInsets();
-  const stripWidth = width - insets.left - insets.right - layout.railWidth;
+  const { width, height } = useWindowDimensions();
+  const insets = useInsets();
+  const { stripWidth } = wideShellLayout(width, height, insets);
   const income = r.cashPerDay;
   const incomeText = stripWidth >= ROOM_FOR_INCOME ? fmtPerDay(`${income >= 0 ? '+' : ''}${fmtCash(income)}`) : undefined;
   const tagFor = (key: 'regulation' | 'backlash' | 'rival') => (composure.level >= 2 && composure.driver === key ? t(dangerKey(key)) : null);

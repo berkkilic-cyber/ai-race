@@ -1,7 +1,6 @@
 import { TabList, TabSlot, TabTrigger, Tabs } from 'expo-router/ui';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ToastHost } from '@/ui/achievements';
 import { useComposure } from '@/ui/composure';
@@ -23,6 +22,10 @@ import { TreesTabBadge } from '@/ui/trees';
  * Narrow (portrait): top bar, resources and meters, content, ticker, bottom tab bar.
  * The arrangement lives in src/ui/shell (GameHeader, TickerDock, useShellStyles); the main
  * area carries the composure overlays (ComposureStage) and the shell trembles at level 3.
+ * Safe areas: no SafeAreaView here. useShellStyles places the rail and the main column from
+ * the insets (useInsets), once. TabList uses asChild so expo-router does not wrap it in its
+ * own SafeAreaView (which added the left inset a second time inside the rail); it stays a
+ * direct child of Tabs as expo-router requires.
  */
 export default function GameLayout() {
   useGameLoop();
@@ -31,37 +34,41 @@ export default function GameLayout() {
   const { level } = useComposure();
   const tremble = useTremble(level);
   return (
-    <SafeAreaView style={styles.safe} edges={['top', 'bottom', 'left', 'right']}>
+    <View style={styles.root}>
       <Animated.View style={[styles.shell, tremble]}>
         <Tabs style={shell.tabs}>
-          <GameHeader />
-          <ComposureStage>
-            <TabSlot style={styles.slot} />
-          </ComposureStage>
-          <TickerDock>
-            <Ticker />
-          </TickerDock>
-          <TabList style={shell.tabBar}>
-            <TabTrigger name="index" href="/game" asChild>
-              <TabButton label={t('ui.tab.map')} />
-            </TabTrigger>
-            <TabTrigger name="trees" href="/game/trees" asChild>
-              <TabButton label={t('ui.tab.trees')} badge={<TreesTabBadge />} />
-            </TabTrigger>
-            <TabTrigger name="news" href="/game/news" asChild>
-              <TabButton label={t('ui.tab.news')} />
-            </TabTrigger>
+          <View style={shell.main}>
+            <GameHeader />
+            <ComposureStage>
+              <TabSlot style={styles.slot} />
+            </ComposureStage>
+            <TickerDock>
+              <Ticker />
+            </TickerDock>
+          </View>
+          <TabList asChild style={shell.tabBar}>
+            <View>
+              <TabTrigger name="index" href="/game" asChild>
+                <TabButton label={t('ui.tab.map')} />
+              </TabTrigger>
+              <TabTrigger name="trees" href="/game/trees" asChild>
+                <TabButton label={t('ui.tab.trees')} badge={<TreesTabBadge />} />
+              </TabTrigger>
+              <TabTrigger name="news" href="/game/news" asChild>
+                <TabButton label={t('ui.tab.news')} />
+              </TabTrigger>
+            </View>
           </TabList>
         </Tabs>
       </Animated.View>
       <EventModal />
       <ToastHost />
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.bg },
+  root: { flex: 1, backgroundColor: colors.bg },
   shell: { flex: 1 },
   slot: { flex: 1 },
 });

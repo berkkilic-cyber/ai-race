@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { t } from '../i18n';
 import { useWide } from '../events/useWide';
+import { useInsets } from '../hooks/useInsets';
+import { wideShellLayout } from '../shell/shellLayout';
 import { useGameStore } from '../store/game';
 import { colors, radius, spacing, type, voice } from '../theme';
 import { currentToast, dismissToast, EMPTY_QUEUE, enqueueToasts, newAchievementIds, type Toast, type ToastQueue } from './queue';
@@ -57,8 +58,9 @@ function AchievementToast({ toast, onDone, wide }: { toast: Toast; onDone: (key:
  * Waits while an event card or its result is up. Mount once in the game shell.
  */
 export function ToastHost() {
-  const insets = useSafeAreaInsets();
+  const insets = useInsets();
   const wide = useWide();
+  const { width, height } = useWindowDimensions();
   const [queue, setQueue] = useState<ToastQueue>(EMPTY_QUEUE);
   const blocked = useGameStore((s) => !!s.state?.pendingEvent || s.eventResult !== null);
 
@@ -82,16 +84,22 @@ export function ToastHost() {
   const current = currentToast(queue, blocked);
   if (!current) return null;
   return (
-    // Wide: a narrow card at the top centre, clear of the speed control at the top right.
-    <View style={[styles.host, wide && styles.hostWide, { top: insets.top + (wide ? spacing.xs : spacing.s) }]} pointerEvents="box-none">
+    // Wide: a narrow card at the top centre of the main column (right of the rail, left of
+    // the right inset), clear of the speed control at the top right.
+    <View style={[styles.host, hostFrame(wide, width, height, insets)]} pointerEvents="box-none">
       <AchievementToast key={current.key} toast={current} onDone={onDone} wide={wide} />
     </View>
   );
 }
 
+function hostFrame(wide: boolean, width: number, height: number, insets: ReturnType<typeof useInsets>) {
+  if (!wide) return { top: insets.top + spacing.s, left: insets.left + spacing.m, right: insets.right + spacing.m };
+  const main = wideShellLayout(width, height, insets).main;
+  return { top: insets.top + spacing.xs, left: main.left + spacing.s, right: main.right + spacing.s };
+}
+
 const styles = StyleSheet.create({
-  host: { position: 'absolute', left: spacing.m, right: spacing.m, alignItems: 'center' },
-  hostWide: { left: 0, right: 0 },
+  host: { position: 'absolute', alignItems: 'center' },
   toast: { width: '100%', maxWidth: 440, borderRadius: radius.l, borderWidth: 2, backgroundColor: colors.raised },
   normal: { borderColor: colors.player },
   secret: { borderColor: colors.info, borderStyle: 'dashed', backgroundColor: colors.surface },

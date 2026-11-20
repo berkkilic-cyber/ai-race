@@ -18,11 +18,13 @@ import type { NewsItem } from '@/engine';
 
 import { TICKER_SPEED, useComposure, useComposureProgress } from '../composure';
 import { useWide } from '../events/useWide';
+import { useInsets } from '../hooks/useInsets';
 import { t } from '../i18n';
 import { newsText } from '../news/newsText';
 import { useUnreadCount } from '../news/useNews';
 import { useGameStore } from '../store/game';
-import { colors, spacing, touch, voice } from '../theme';
+import { crawlGeometry } from './crawl';
+import { colors, layout, spacing, touch, voice } from '../theme';
 
 const TONE = { good: colors.good, bad: colors.alarm, neutral: colors.info } as const;
 /** Crawl speed at composure 0, in points per second (multiplied per level). */
@@ -40,12 +42,23 @@ const EMPTY: readonly NewsItem[] = [];
  * before the crawl resumes. The crawl speeds up with composure (1x to 2.2x), the type
  * gets heavier from level 2, and at level 3 the band turns red. Tap opens the News tab.
  * Reduced motion: no crawl, the newest headline sits still.
+ *
+ * Native-safe: the crawl track has an explicit width (MEASURE_WIDTH until the run is
+ * measured, then copies x run width), each headline is a single-line Text with explicit
+ * colour and line height that never shrinks, and the run is measured with onLayout (which
+ * fires again when fonts load or text changes). Until a usable measurement arrives (first
+ * frame, text not laid out, measurement failed) the crawl stays hidden and the newest
+ * headline is shown statically, truncated. Opacity is animated on the viewport-sized box,
+ * never on the wide track (iOS renders group opacity off screen, and a track several
+ * thousand points wide is past the texture limit). In wide mode the band reaches the
+ * bottom edge and the text sits above the bottom inset.
  */
 export function Ticker() {
   const router = useRouter();
   const news = useGameStore((s) => s.state?.news ?? EMPTY);
   const unread = useUnreadCount();
   const wide = useWide();
+  const insets = useInsets();
   const reduced = useReducedMotion();
   const { level } = useComposure();
   const progress = useComposureProgress();
@@ -56,6 +69,7 @@ export function Ticker() {
   const enter = useSharedValue(1);
   const offset = useSharedValue(0);
   const speed = BASE_SPEED * TICKER_SPEED[level];
+  const geo = crawlGeometry(segment, boxWidth, !!reduced);
 
   // A new headline slides up into place and the crawl starts over from it.
   useEffect(() => {
@@ -67,15 +81,16 @@ export function Ticker() {
   useEffect(() => {
     cancelAnimation(offset);
     offset.set(0);
-    if (reduced || segment <= 0 || !latest) return;
+    if (!geo.crawl || !latest) return;
     const full = (segment / speed) * 1000;
     offset.set(withDelay(HOLD_MS, withRepeat(withSequence(withTiming(-segment, { duration: full, easing: Easing.linear }), withTiming(0, { duration: 0 })), -1)));
-  }, [latest, segment, speed, reduced, offset]);
+  }, [latest, segment, speed, geo.crawl, offset]);
 
-  const trackStyle = useAnimatedStyle(() => ({
+  const enterStyle = useAnimatedStyle(() => ({
     opacity: enter.get(),
-    transform: [{ translateY: (1 - enter.get()) * 12 }, { translateX: offset.get() }],
+    transform: [{ translateY: (1 - enter.get()) * 12 }],
   }));
+  const trackStyle = useAnimatedStyle(() => ({ transform: [{ translateX: offset.get() }] }));
   const bandStyle = useAnimatedStyle(() => ({
     backgroundColor: interpolateColor(progress.get(), [2, 3], [colors.newsInk, colors.newsRed]),
   }));
@@ -84,13 +99,20 @@ export function Ticker() {
   }));
 
   const loud = level >= 2;
-  const copies = segment > 0 && boxWidth > 0 && !reduced ? Math.max(2, Math.ceil(boxWidth / segment) + 1) : 1;
   const latestText = latest ? newsText(latest) : '';
   const badge = unread > MAX_BADGE ? `${MAX_BADGE}+` : String(unread);
   const textStyle = [styles.text, loud && styles.textLoud];
+  const onSegmentLayout = (e: LayoutChangeEvent) => {
+    const w = e.nativeEvent.layout.width;
+    setSegment((prev) => (Math.abs(prev - w) < 0.5 ? prev : w));
+  };
+  const onBoxLayout = (e: LayoutChangeEvent) => {
+    const w = e.nativeEvent.layout.width;
+    setBoxWidth((prev) => (Math.abs(prev - w) < 0.5 ? prev : w));
+  };
 
   const run = (copy: number) => (
-    <View key={copy} style={styles.segment} onLayout={copy === 0 ? (e: LayoutChangeEvent) => setSegment(e.nativeEvent.layout.width) : undefined}>
+    <View key={copy} style={styles.segment} onLayout={copy === 0 ? onSegmentLayout : undefined}>
       {items.map((item, i) => (
         <Fragment key={`${item.tick}-${item.textKey}-${i}`}>
           <View style={[styles.mark, { backgroundColor: TONE[item.tone] }]} />
@@ -102,12 +124,13 @@ export function Ticker() {
     </View>
   );
 
+  const bottomPad = wide ? Math.max(0, insets.bottom) : 0;
   return (
     <Pressable
-      style={({ pressed }) => [styles.ticker, wide && styles.tickerWide, pressed && styles.pressed]}
+      style={({ pressed }) => [styles.ticker, wide && { minHeight: layout.tickerHeight, height: layout.tickerHeight + bottomPad, paddingBottom: bottomPad }, pressed && styles.pressed]}
       onPress={() => router.navigate('/game/news')}
       accessibilityRole="button"
-      accessibilityLabel={unread > 0 ? `${latestText}. ${t('ui.news.unread', { count: unread })}` : latestText}
+      accessibilityLabel={unread > 0 ? `${latestText}. ${t('ui.news.unread', { count: unread })}` : latestText || t('ui.ticker.empty')}
       testID="ticker"
     >
       <Animated.View style={[StyleSheet.absoluteFill, bandStyle]} />
@@ -116,8 +139,29 @@ export function Ticker() {
           {level >= 3 ? t('ui.composure.breaking') : t('ui.ticker.kicker')}
         </Text>
       </Animated.View>
-      <View style={styles.box} onLayout={(e: LayoutChangeEvent) => setBoxWidth(e.nativeEvent.layout.width)}>
-        <Animated.View style={[styles.track, trackStyle]}>{items.length > 0 ? Array.from({ length: copies }, (_, i) => run(i)) : null}</Animated.View>
+      <View style={styles.box} onLayout={onBoxLayout}>
+        <Animated.View style={[StyleSheet.absoluteFill, enterStyle]}>
+          {latest && !geo.crawl ? (
+            <View style={styles.still} testID="ticker-still">
+              <View style={[styles.mark, { backgroundColor: TONE[latest.tone] }]} />
+              <Text style={[textStyle, styles.stillText]} numberOfLines={1} ellipsizeMode="tail">
+                {latestText}
+              </Text>
+            </View>
+          ) : null}
+          {!latest ? (
+            <View style={styles.still}>
+              <Text style={[styles.text, styles.empty, styles.stillText]} numberOfLines={1} ellipsizeMode="tail">
+                {t('ui.ticker.empty')}
+              </Text>
+            </View>
+          ) : null}
+          {items.length > 0 && !reduced ? (
+            <Animated.View style={[styles.track, { width: geo.trackWidth, opacity: geo.crawl ? 1 : 0 }, trackStyle]} pointerEvents="none">
+              {Array.from({ length: geo.copies }, (_, i) => run(i))}
+            </Animated.View>
+          ) : null}
+        </Animated.View>
       </View>
       {unread > 0 ? (
         <View style={styles.badge} testID="ticker-unread">
@@ -128,9 +172,6 @@ export function Ticker() {
   );
 }
 
-/** Wide enough that a crawl never wraps while it is measured. */
-const TRACK_WIDTH = 20000;
-
 const styles = StyleSheet.create({
   ticker: {
     minHeight: touch,
@@ -138,17 +179,18 @@ const styles = StyleSheet.create({
     alignItems: 'stretch',
     overflow: 'hidden',
   },
-  /** Wide: a slim strip along the bottom of the main area; the whole strip is the tap target. */
-  tickerWide: { minHeight: 28, height: 28 },
   pressed: { opacity: 0.85 },
   kicker: { justifyContent: 'center', paddingHorizontal: spacing.s, minWidth: 48, alignItems: 'center' },
-  kickerText: { ...voice.loudKicker, fontSize: 13, lineHeight: 15, color: colors.newsPaper },
+  kickerText: { ...voice.loudKicker, fontSize: 13, lineHeight: 15, color: colors.newsPaper, includeFontPadding: false },
   box: { flex: 1, overflow: 'hidden' },
-  track: { position: 'absolute', left: 0, top: 0, bottom: 0, width: TRACK_WIDTH, flexDirection: 'row', alignItems: 'center' },
-  segment: { flexDirection: 'row', alignItems: 'center' },
-  mark: { width: 6, height: 6, marginLeft: spacing.m, marginRight: spacing.s },
-  text: { ...voice.loudBody, fontSize: 14, lineHeight: 17, color: colors.newsPaper },
+  still: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, flexDirection: 'row', alignItems: 'center', paddingRight: spacing.s },
+  stillText: { flexShrink: 1 },
+  empty: { color: colors.newsDim, marginLeft: spacing.m },
+  track: { position: 'absolute', left: 0, top: 0, bottom: 0, flexDirection: 'row', alignItems: 'center' },
+  segment: { flexDirection: 'row', alignItems: 'center', flexShrink: 0 },
+  mark: { width: 6, height: 6, marginLeft: spacing.m, marginRight: spacing.s, flexShrink: 0 },
+  text: { ...voice.loudBody, fontSize: 14, lineHeight: 17, color: colors.newsPaper, flexShrink: 0, includeFontPadding: false },
   textLoud: { fontFamily: voice.loudKicker.fontFamily, letterSpacing: 0.7 },
   badge: { alignSelf: 'center', minWidth: 22, height: 18, marginHorizontal: spacing.s, paddingHorizontal: 5, backgroundColor: colors.newsPaper, alignItems: 'center', justifyContent: 'center' },
-  badgeText: { ...voice.loudKicker, fontSize: 12, lineHeight: 14, letterSpacing: 0.3, color: colors.newsInk },
+  badgeText: { ...voice.loudKicker, fontSize: 12, lineHeight: 14, letterSpacing: 0.3, color: colors.newsInk, includeFontPadding: false },
 });
