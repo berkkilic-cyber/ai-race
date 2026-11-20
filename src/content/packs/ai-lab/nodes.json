@@ -39,7 +39,7 @@
     "onBuy": [
       {
         "type": "compute",
-        "amount": 3
+        "amount": 5
       }
     ]
   },
@@ -109,7 +109,7 @@
     "onBuy": [
       {
         "type": "compute",
-        "amount": 6
+        "amount": 10
       }
     ]
   },
@@ -129,7 +129,7 @@
       {
         "stat": "agiRate",
         "op": "mul",
-        "value": 1.1
+        "value": 1.15
       },
       {
         "stat": "backlashGain",
@@ -203,7 +203,7 @@
       {
         "stat": "agiRate",
         "op": "mul",
-        "value": 1.15
+        "value": 1.2
       },
       {
         "stat": "backlashGain",
@@ -285,7 +285,7 @@
       {
         "stat": "agiRate",
         "op": "mul",
-        "value": 1.25
+        "value": 1.3
       },
       {
         "stat": "backlashGain",
@@ -860,7 +860,7 @@
       {
         "stat": "acquireCost",
         "op": "mul",
-        "value": 0.9
+        "value": 0.75
       }
     ],
     "grantsFlags": [
@@ -915,7 +915,7 @@
       {
         "stat": "acquireCost",
         "op": "mul",
-        "value": 0.7
+        "value": 0.6
       }
     ],
     "onBuy": [

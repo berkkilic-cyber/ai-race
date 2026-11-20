@@ -16,17 +16,33 @@ import { dataCentreUpkeepOf } from './economy';
 import { choiceValue, nodeBaseValue } from './heuristics';
 import { labModifierTable, statMultiplier, type ModifierTable } from './modifiers';
 import { hashString, random, type RngHolder } from './rng';
-import type { Action, AiPersonality, ContentPack, GameState, LabState, NodeDef, RegionDef } from './types';
-import { floor, imul, max } from './natives';
+import type { Action, AiPersonality, ContentPack, GameState, LabState, NodeDef, RegionDef, TreeId } from './types';
+import { INFINITY, floor, imul, max, min } from './natives';
 
-/** How a bot plays: 'sensible' plans, 'random' takes random affordable actions, 'idle' only resolves events. */
-export type BotPolicy = 'sensible' | 'random' | 'idle';
+/**
+ * How a bot plays: 'sensible' plans, 'random' takes random affordable actions, 'idle' only resolves events.
+ * 'capability', 'reach' and 'shadow' plan like 'sensible' but favour one tree (and its win path).
+ */
+export type BotPolicy = 'sensible' | 'random' | 'idle' | 'capability' | 'reach' | 'shadow';
+
+/** Personalities of the tree-focused policies; they replace the lab's own personality. */
+const FOCUS_PERSONALITIES: Record<TreeId, AiPersonality> = {
+  capability: { capability: 1, reach: 0.6, shadow: 0.15, expansion: 0.6 },
+  reach: { capability: 0.25, reach: 1, shadow: 0.25, expansion: 1 },
+  shadow: { capability: 0.3, reach: 0.35, shadow: 1, expansion: 0.5 },
+};
+
+function focusOf(policy: BotPolicy): TreeId | undefined {
+  return policy === 'capability' || policy === 'reach' || policy === 'shadow' ? policy : undefined;
+}
 
 /** Personality used for a lab without one (the human seat when a bot plays it). */
-export const DEFAULT_PERSONALITY: AiPersonality = { capability: 1, reach: 0.8, shadow: 0.6, expansion: 0.6 };
+export const DEFAULT_PERSONALITY: AiPersonality = { capability: 1, reach: 0.8, shadow: 0.8, expansion: 0.6 };
 
 /** Meter level (0..100) above which a sensible bot starts playing cautiously. */
-const CAUTION_START = 55;
+const CAUTION_START = 50;
+/** Caution (0..1) above which a bot stops feeding a meter: no launches for regulation, no new compute for backlash. */
+const SELF_PRESERVATION = 0.4;
 /** Cash above this many times the next data centre's base price counts as spare. */
 const SURPLUS_CASH_FACTOR = 3;
 
@@ -40,13 +56,20 @@ interface Planner {
   context: EngineContext;
   lab: LabState;
   personality: AiPersonality;
+  /** Tree a focused policy favours. */
+  focus?: TreeId;
   mods: ModifierTable;
   budget: Budget;
   /** 0 when relaxed, rising to 1 as the worse meter fills up. */
   caution: number;
+  /** The same per meter. */
+  regulationCaution: number;
+  backlashCaution: number;
   rng: RngHolder;
   /** Nodes whose requirements are met and that are not owned yet. */
   buyable: NodeDef[];
+  /** Cash held back from other plans (the shadow policy saving for a buy-out). */
+  saving: number;
 }
 
 /** A generator derived from the state without advancing it, so choosing actions stays a pure read. */
@@ -91,20 +114,31 @@ function buyableNodes(lab: LabState, context: EngineContext): NodeDef[] {
   return context.pack.nodes.filter((node) => !owned.has(node.id) && node.requires.every((r) => owned.has(r)));
 }
 
-function reducesMeters(node: NodeDef): boolean {
-  return node.modifiers.some((m) => (m.stat === 'regulationGain' || m.stat === 'backlashGain') && (m.op === 'mul' ? m.value < 1 : m.value < 0));
+function reduces(node: NodeDef, stat: 'regulationGain' | 'backlashGain'): boolean {
+  return node.modifiers.some((m) => m.stat === stat && (m.op === 'mul' ? m.value < 1 : m.value < 0));
+}
+
+/** How urgently the lab wants this node for its meters (0 when it does not help a worrying meter). */
+function meterRelief(p: Planner, node: NodeDef): number {
+  return max(reduces(node, 'regulationGain') ? p.regulationCaution : 0, reduces(node, 'backlashGain') ? p.backlashCaution : 0);
 }
 
 function nodeScore(p: Planner, node: NodeDef, computeCap: number): number {
   let value = nodeBaseValue(node, p.lab);
   if (node.capabilityLevel !== undefined) {
-    value += 2 * node.capabilityLevel;
+    // The capability-focused policy races up the model tiers.
+    value += (p.focus === 'capability' ? 8 : 2) * node.capabilityLevel;
     if (node.capabilityLevel > computeCap + 1) value *= 0.6;
-    value *= 1 - 0.6 * p.caution;
+    value *= 1 - 0.8 * p.backlashCaution;
   }
-  if (reducesMeters(node)) value += 6 * p.caution;
+  // The shadow-focused policy heads for the buy-out tools: flags such as canAcquire and acquisition discounts.
+  if (p.focus === 'shadow' && ((node.grantsFlags?.length ?? 0) > 0 || node.modifiers.some((m) => m.stat === 'acquireCost'))) value += 10;
+  const relief = meterRelief(p, node);
+  value += 12 * relief;
+  // A node that calms a worrying meter is wanted whatever the lab's taste.
+  const weight = relief > 0 ? max(p.personality[node.tree], 0.8) : p.personality[node.tree];
   const price = nodePrice(p.lab, p.context, node, p.state.tick, p.mods);
-  return (p.personality[node.tree] * value) / (price.hype + price.cash * 0.3 + 1);
+  return (weight * value) / (price.hype + price.cash * 0.3 + 1);
 }
 
 function planNode(p: Planner, computeCap: number): Action | undefined {
@@ -147,10 +181,11 @@ function planCompute(p: Planner): Action | undefined {
   const hasCompute = p.lab.dataCentres.length > 0;
   const needed = computeForCapability(targetCapability(p), p.context.balance);
   const wanted = computeOf(p.lab, p.context, tick, p.mods) < needed;
-  // Spare cash also buys compute, which speeds up AGI progress, while backlash allows it.
   const surplus = p.budget.cash > SURPLUS_CASH_FACTOR * p.context.balance.dataCentreBaseCost * (1 + p.lab.dataCentres.length);
-  if (hasCompute && !wanted && !(surplus && p.caution === 0)) return undefined;
-  if (hasCompute && p.lab.backlash > 80) return undefined;
+  // Spare cash buys extra compute while meters allow; the capability policy keeps buying until self-preservation.
+  const surplusAllowed = p.focus === 'capability' ? p.backlashCaution <= SELF_PRESERVATION : p.caution === 0;
+  if (hasCompute && !wanted && !(surplus && surplusAllowed)) return undefined;
+  if (hasCompute && p.backlashCaution > SELF_PRESERVATION) return undefined;
   const options: { action: Action; price: number }[] = [];
   const region = bestBuildRegion(p);
   if (region) options.push({ action: { type: 'buildDataCentre', labId: p.lab.id, regionId: region.id }, price: dataCentrePrice(p.lab, p.context, region, tick, p.mods) });
@@ -169,11 +204,12 @@ function planCompute(p: Planner): Action | undefined {
 function launchValue(p: Planner, region: RegionDef): number {
   const free = freeShare(p.state, region.id);
   const market = region.population * (0.3 + region.wealth) * region.openness * free;
-  return (market * (1 - region.strictness * p.caution)) / launchPrice(p.lab, p.context, region, p.state.tick, p.mods);
+  return (market * (1 - region.strictness * p.regulationCaution)) / launchPrice(p.lab, p.context, region, p.state.tick, p.mods);
 }
 
 function planLaunch(p: Planner): Action | undefined {
-  if (random(p.rng) >= p.personality.expansion * 0.5) return undefined;
+  if (p.caution > SELF_PRESERVATION) return undefined;
+  if (p.focus !== 'reach' && random(p.rng) >= p.personality.expansion * 0.5) return undefined;
   let best: RegionDef | undefined;
   let bestValue = 0;
   for (const region of p.context.pack.regions) {
@@ -192,7 +228,9 @@ function planLaunch(p: Planner): Action | undefined {
 }
 
 function planAcquire(p: Planner): Action | undefined {
-  if (!hasLabFlag(p.lab, p.context, 'canAcquire')) return undefined;
+  // AI labs never buy each other: a rival that swallows the others grows into a giant that
+  // regulators then ban, handing the player a monopoly. Buying out rivals is the player's path.
+  if (p.lab.controller === 'ai' || !hasLabFlag(p.lab, p.context, 'canAcquire')) return undefined;
   let best: { target: LabState; price: number } | undefined;
   for (const id of p.state.labOrder) {
     const target = p.state.labs[id];
@@ -205,6 +243,17 @@ function planAcquire(p: Planner): Action | undefined {
   return { type: 'acquireRival', labId: p.lab.id, targetLabId: best.target.id };
 }
 
+/** The shadow policy saves its cash for buy-outs once it can acquire: only the cheapest rival's price minus what it has is spendable. */
+function saveForAcquisitions(p: Planner): void {
+  if (p.focus !== 'shadow' || !hasLabFlag(p.lab, p.context, 'canAcquire')) return;
+  let cheapest = INFINITY;
+  for (const id of p.state.labOrder) {
+    const target = p.state.labs[id];
+    if (id !== p.lab.id && target.active && target.controller !== 'human') cheapest = min(cheapest, acquirePrice(p.lab, target, p.context, p.state.tick, p.mods));
+  }
+  if (cheapest < INFINITY) p.saving = cheapest;
+}
+
 function planSensible(p: Planner): Action[] {
   const actions: Action[] = [];
   const limit = max(1, p.context.balance.aiActionsPerDecision);
@@ -212,6 +261,12 @@ function planSensible(p: Planner): Action[] {
     if (action && actions.length < limit) actions.push(action);
   };
   push(planAcquire(p));
+  saveForAcquisitions(p);
+  if (p.saving > 0) {
+    // Keep the savings out of the other plans' budget, then give back what is left.
+    const kept = min(p.budget.cash, p.saving);
+    p.budget.cash -= kept;
+  }
   push(planCompute(p));
   push(planNode(p, capabilityCapFor(computeOf(p.lab, p.context, p.state.tick, p.mods), p.context.balance)));
   push(planLaunch(p));
@@ -255,17 +310,25 @@ export function chooseActionsFor(state: GameState, context: EngineContext, labId
   const rng = localRng(state, labId);
   if (policy === 'random') return planRandom(state, context, lab, rng);
   const mods = labModifierTable(lab, context, state.tick);
-  const caution = max(0, (max(lab.regulation, lab.backlash) - CAUTION_START) / (100 - CAUTION_START));
+  const cautionOf = (meter: number): number => max(0, (meter - CAUTION_START) / (100 - CAUTION_START));
+  const regulationCaution = cautionOf(lab.regulation);
+  const backlashCaution = cautionOf(lab.backlash);
+  const caution = max(regulationCaution, backlashCaution);
+  const focus = focusOf(policy);
   const planner: Planner = {
     state,
     context,
     lab,
-    personality: lab.personality ?? DEFAULT_PERSONALITY,
+    personality: focus ? FOCUS_PERSONALITIES[focus] : (lab.personality ?? DEFAULT_PERSONALITY),
+    focus,
     mods,
     budget: { hype: lab.hype, cash: 0 },
     caution,
+    regulationCaution,
+    backlashCaution,
     rng,
     buyable: buyableNodes(lab, context),
+    saving: 0,
   };
   planner.budget.cash = lab.cash - cashReserve(planner);
   return planSensible(planner);

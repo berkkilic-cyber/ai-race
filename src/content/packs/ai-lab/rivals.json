@@ -34,9 +34,9 @@
       "capability": 0.6,
       "reach": 0.4,
       "shadow": 0.3,
-      "expansion": 0.8
+      "expansion": 0.6
     },
-    "entryTick": 120
+    "entryTick": 300
   },
   {
     "id": "canopy",

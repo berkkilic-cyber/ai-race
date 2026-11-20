@@ -15,6 +15,8 @@ export interface LabArrays {
   banned: Uint8Array;
   /** The record `adoption` was last synced with; undefined = never. */
   source?: Record<string, number>;
+  /** What `source` holds per region (0 = missing), so storeWorkspace only touches changed entries. */
+  stored: Float64Array;
 }
 
 /**
@@ -23,8 +25,16 @@ export interface LabArrays {
  */
 const changedRecords = new WeakSet<Record<string, number>>();
 
+/** Users (millions) of each adoption record as of the last storeWorkspace, valid while the record is unchanged. */
+const usersCache = new WeakMap<Record<string, number>, number>();
+
 export function markAdoptionChanged(record: Record<string, number>): void {
   changedRecords.add(record);
+}
+
+/** Users of an adoption record if known since its last change (see storeWorkspace), else undefined. */
+export function cachedUsers(record: Record<string, number>): number | undefined {
+  return changedRecords.has(record) ? undefined : usersCache.get(record);
 }
 
 export interface Workspace {
@@ -33,15 +43,21 @@ export interface Workspace {
   totals: Float64Array;
   /** Scratch: regions seeded during the current lab's update. */
   fresh: Uint8Array;
+  /** Scratch reused by each lab's spread step: the other labs' arrays and tick info. */
+  others: { arrays: LabArrays; info: unknown }[];
 }
 
 /** Workspaces reused across ticks of the same draft (headless runs). */
 const reuse = new WeakMap<GameState, Workspace>();
 
+function newLabArrays(regionCount: number): LabArrays {
+  return { adoption: new Float64Array(regionCount), banned: new Uint8Array(regionCount), stored: new Float64Array(regionCount) };
+}
+
 function emptyWorkspace(state: GameState, regionCount: number): Workspace {
   const labs = new Map<string, LabArrays>();
-  for (const id of state.labOrder) labs.set(id, { adoption: new Float64Array(regionCount), banned: new Uint8Array(regionCount) });
-  return { labs, totals: new Float64Array(regionCount), fresh: new Uint8Array(regionCount) };
+  for (const id of state.labOrder) labs.set(id, newLabArrays(regionCount));
+  return { labs, totals: new Float64Array(regionCount), fresh: new Uint8Array(regionCount), others: [] };
 }
 
 function loadLab(lab: LabState, arrays: LabArrays, context: EngineContext, tick: number): void {
@@ -52,6 +68,7 @@ function loadLab(lab: LabState, arrays: LabArrays, context: EngineContext, tick:
       if (index !== undefined) arrays.adoption[index] = lab.adoption[regionId];
     }
     arrays.source = lab.adoption;
+    arrays.stored.set(arrays.adoption);
     changedRecords.delete(lab.adoption);
   }
   arrays.banned.fill(0);
@@ -70,7 +87,7 @@ export function loadWorkspace(state: GameState, context: EngineContext): Workspa
   }
   ws.totals.fill(0);
   for (const id of state.labOrder) {
-    const arrays = ws.labs.get(id) ?? { adoption: new Float64Array(regionCount), banned: new Uint8Array(regionCount) };
+    const arrays = ws.labs.get(id) ?? newLabArrays(regionCount);
     ws.labs.set(id, arrays);
     loadLab(state.labs[id], arrays, context, state.tick);
     for (let i = 0; i < regionCount; i++) ws.totals[i] += arrays.adoption[i];
@@ -86,14 +103,20 @@ export function storeWorkspace(state: GameState, context: EngineContext, ws: Wor
     const arrays = ws.labs.get(id);
     if (!arrays) continue;
     const record = state.labs[id].adoption;
+    // When the record is the one last synced and nobody touched it, only changed entries are written.
+    const synced = arrays.source === record && !changedRecords.has(record);
     for (let i = 0; i < regions.length; i++) {
-      const value = arrays.adoption[i];
+      const value = arrays.adoption[i] >= minAdoption ? min(1, arrays.adoption[i]) : 0;
+      if (synced && value === arrays.stored[i]) continue;
       const regionId = regions[i].id;
-      if (value >= minAdoption) record[regionId] = min(1, value);
+      if (value > 0) record[regionId] = value;
       else if (record[regionId] !== undefined) delete record[regionId];
+      arrays.stored[i] = value;
     }
+    if (!synced) arrays.stored.set(arrays.adoption.map((v) => (v >= minAdoption ? min(1, v) : 0)));
     arrays.source = record;
     changedRecords.delete(record);
+    usersCache.set(record, usersFromArrays(arrays, context));
   }
 }
 

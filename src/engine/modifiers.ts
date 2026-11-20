@@ -109,3 +109,21 @@ export function expireTimedModifiers(lab: LabState, tick: number): void {
     lab.timedModifiers = lab.timedModifiers.filter((timed) => timed.untilTick > tick);
   }
 }
+
+const regionMultCache = new WeakMap<ModifierTable, { regions: readonly RegionDef[]; byStat: Partial<Record<Stat, Float64Array>> }>();
+
+/** statMultiplier of `stat` for every region (by index in `regions`), cached per modifier table. Read-only. */
+export function regionMultipliers(table: ModifierTable, stat: Stat, regions: readonly RegionDef[]): Float64Array {
+  let cached = regionMultCache.get(table);
+  if (!cached || cached.regions !== regions) {
+    cached = { regions, byStat: {} };
+    regionMultCache.set(table, cached);
+  }
+  let values = cached.byStat[stat];
+  if (!values) {
+    values = new Float64Array(regions.length);
+    for (let i = 0; i < regions.length; i++) values[i] = statMultiplier(table, stat, regions[i]);
+    cached.byStat[stat] = values;
+  }
+  return values;
+}

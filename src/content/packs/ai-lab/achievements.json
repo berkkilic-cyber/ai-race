@@ -104,6 +104,10 @@
       {
         "type": "agiAtLeast",
         "value": 100
+      },
+      {
+        "type": "endingKindIs",
+        "kind": "win"
       }
     ]
   },
@@ -133,8 +137,12 @@
     "checkAt": "end",
     "conditions": [
       {
+        "type": "endingKindIs",
+        "kind": "lose"
+      },
+      {
         "type": "tickAtMost",
-        "value": 300
+        "value": 1500
       }
     ]
   },
@@ -146,8 +154,10 @@
     "checkAt": "tick",
     "conditions": [
       {
-        "type": "hasFlag",
-        "flag": "homeBanned"
+        "type": "bannedIn",
+        "scope": {
+          "kind": "home"
+        }
       }
     ]
   },
@@ -180,8 +190,13 @@
         "value": 100
       },
       {
-        "type": "dataCentresAtMost",
+        "type": "statAtMost",
+        "stat": "dataCentresBuilt",
         "value": 0
+      },
+      {
+        "type": "endingKindIs",
+        "kind": "win"
       }
     ]
   },
@@ -199,6 +214,10 @@
       {
         "type": "lacksNode",
         "nodeId": "reach-app"
+      },
+      {
+        "type": "endingKindIs",
+        "kind": "win"
       }
     ]
   },
@@ -243,6 +262,10 @@
         "type": "resourceAtMost",
         "resource": "cash",
         "value": 5
+      },
+      {
+        "type": "endingKindIs",
+        "kind": "win"
       }
     ]
   }

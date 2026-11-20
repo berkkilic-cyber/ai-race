@@ -55,6 +55,8 @@ export interface BalanceConfig {
   dataCentreCountGrowth: number;
   /** Upgrade cost per current level. */
   dataCentreUpgradeCost: number;
+  /** Each data centre level already owned (all sites) raises upgrade costs by this fraction. */
+  dataCentreUpgradeGrowth: number;
   /** Highest data centre level. */
   maxDataCentreLevel: number;
   /** Data centres one lab may own in a region. */
@@ -75,6 +77,8 @@ export interface BalanceConfig {
   // ── Income ──
   /** Cash per million users per tick, × region wealth. */
   cashPerUser: number;
+  /** Cash every active lab earns per tick regardless of users (× cashIncome stat). */
+  cashBase: number;
   /** Hype every active lab earns per tick. */
   hypeBase: number;
   /** Hype per million new users this tick. */
@@ -87,6 +91,10 @@ export interface BalanceConfig {
   agiExponent: number;
   /** AGI speed-up per unit of compute. */
   agiComputeFactor: number;
+  /** AI labs' AGI progress per tick is multiplied by this (difficulty; 1 = same rules as the player). */
+  aiAgiFactor: number;
+  /** AGI speed-up is (1 + agiComputeFactor × compute^this); below 1 gives diminishing returns. */
+  agiComputeExponent: number;
 
   // ── Meters ──
   /** Regulation per million new users, × region strictness. */
@@ -101,6 +109,12 @@ export interface BalanceConfig {
   backlashPerDataCentreLevel: number;
   /** Backlash lost per tick. */
   backlashDecay: number;
+  /** Extra regulation lost per tick by AI labs (they get no event cards to relieve it). */
+  aiRegulationDecay: number;
+  /** Extra backlash lost per tick by AI labs. */
+  aiBacklashDecay: number;
+  /** AI labs' per-tick regulation and backlash gains are multiplied by this (1 = same as the player). */
+  aiMeterGainFactor: number;
 
   // ── Bans ──
   /** Regulation thresholds that trigger bans (ascending). */
@@ -123,6 +137,10 @@ export interface BalanceConfig {
   acquirePerAgi: number;
   /** Share of the target's adoption the buyer takes over. */
   acquireAdoptionShare: number;
+
+  // ── Nodes ──
+  /** Each node already owned raises the price of the next by this fraction. */
+  nodeCostGrowth: number;
 
   // ── Pacing ──
   /** AI labs decide every this many ticks. */
@@ -188,6 +206,7 @@ export const defaultBalance: BalanceConfig = {
   dataCentreBaseCost: 50,
   dataCentreCountGrowth: 0.4,
   dataCentreUpgradeCost: 35,
+  dataCentreUpgradeGrowth: 0,
   maxDataCentreLevel: 5,
   maxDataCentresPerRegion: 2,
   dataCentreUpkeep: 0.06,
@@ -198,12 +217,15 @@ export const defaultBalance: BalanceConfig = {
   launchCostPerMillion: 0.08,
 
   cashPerUser: 0.012,
+  cashBase: 0,
   hypeBase: 0.06,
   hypePerNewUser: 0.3,
 
   agiBase: 0.003,
   agiExponent: 1.5,
   agiComputeFactor: 0.01,
+  agiComputeExponent: 1,
+  aiAgiFactor: 1,
 
   regulationPerGrowth: 0.03,
   regulationPerShare: 0.2,
@@ -211,6 +233,9 @@ export const defaultBalance: BalanceConfig = {
   backlashPerCapability: 0.06,
   backlashPerDataCentreLevel: 0.002,
   backlashDecay: 0.01,
+  aiRegulationDecay: 0,
+  aiBacklashDecay: 0.01,
+  aiMeterGainFactor: 0.6,
 
   banThresholds: [25, 50, 75],
   banRegionsPerThreshold: 1,
@@ -222,6 +247,8 @@ export const defaultBalance: BalanceConfig = {
   acquirePerCompute: 8,
   acquirePerAgi: 15,
   acquireAdoptionShare: 0.6,
+
+  nodeCostGrowth: 0,
 
   aiDecisionInterval: 10,
   aiActionsPerDecision: 3,

@@ -127,7 +127,13 @@ export type Condition =
   | { type: 'founderIs'; founderId: string }
   /** Case-insensitive, trimmed match on the lab name (easter eggs). */
   | { type: 'labNameIs'; names: string[] }
-  | { type: 'endingIs'; endingId: string };
+  | { type: 'endingIs'; endingId: string }
+  /** True if the lab is currently banned in at least one scoped region ('random' and 'top' count as 'all'). */
+  | { type: 'bannedIn'; scope: RegionScope }
+  | { type: 'statAtLeast'; stat: keyof LabState['stats']; value: number }
+  | { type: 'statAtMost'; stat: keyof LabState['stats']; value: number }
+  /** True only once the run has ended with an ending of this kind. */
+  | { type: 'endingKindIs'; kind: 'win' | 'lose' };
 
 export interface NodeDef {
   id: NodeId;

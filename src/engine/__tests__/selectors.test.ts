@@ -1,8 +1,23 @@
-import { getCompute, getDataCentreCost, getLeadRival, getNodeCost, getUpgradeCost, getWorldShare } from '@/engine';
+import { getCompute, getDataCentreCost, getEndingParams, getLeadRival, getNodeCost, getUpgradeCost, getWorldShare } from '@/engine';
 import { edit, newGame, PLAYER } from '../__fixtures__/helpers';
 import { testPack } from '../__fixtures__/testPack';
 
 describe('selectors', () => {
+  it('getEndingParams names the player as {lab} and a winning rival as {rival}', () => {
+    const running = newGame(testPack);
+    expect(getEndingParams(running)).toEqual({});
+    const lost = edit(running, (s) => {
+      s.status = 'ended';
+      s.ending = { endingId: 'end_rival_agi', kind: 'lose', trigger: 'rivalAgi', tick: 5, score: 0, winnerLabId: 'alpha' };
+    });
+    expect(getEndingParams(lost)).toEqual({ lab: PLAYER, rival: 'alpha' });
+    const won = edit(running, (s) => {
+      s.status = 'ended';
+      s.ending = { endingId: 'end_agi', kind: 'win', trigger: 'agi', tick: 5, score: 1, winnerLabId: PLAYER };
+    });
+    expect(getEndingParams(won)).toEqual({ lab: PLAYER });
+  });
+
   it('getLeadRival returns the other active lab with the most AGI progress', () => {
     const state = edit(newGame(testPack), (s) => {
       s.labs.beta.active = true;

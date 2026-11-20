@@ -85,6 +85,21 @@
     "bodyKey": "ending.banned-home.body",
     "conditions": [
       {
+        "type": "bannedIn",
+        "scope": {
+          "kind": "home"
+        }
+      }
+    ]
+  },
+  {
+    "id": "banned-home-defiant",
+    "kind": "lose",
+    "trigger": "banned",
+    "titleKey": "ending.banned-home.title",
+    "bodyKey": "ending.banned-home.body",
+    "conditions": [
+      {
         "type": "hasFlag",
         "flag": "homeBanned"
       }

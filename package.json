@@ -33,6 +33,7 @@
     "@types/react": "~19.3.0",
     "@types/topojson-client": "^3.1.5",
     "d3-geo": "^3.1.2",
+    "esbuild": "^0.28.2",
     "eslint": "^9.39.5",
     "eslint-config-expo": "~58.0.4",
     "jest": "^30.5.2",
@@ -52,7 +53,10 @@
     "lint": "expo lint",
     "test": "jest",
     "test:engine": "jest src/engine",
-    "build:map": "node scripts/map/build-geometry.js"
+    "build:map": "node scripts/map/build-geometry.js",
+    "balance": "esbuild scripts/balance/main.ts --bundle --platform=node --format=esm --alias:@=./src --log-level=warning --outfile=node_modules/.cache/balance/main.mjs && node node_modules/.cache/balance/main.mjs",
+    "balance:trace": "esbuild scripts/balance/trace.ts --bundle --platform=node --format=esm --alias:@=./src --log-level=warning --outfile=node_modules/.cache/balance/trace.mjs && node node_modules/.cache/balance/trace.mjs",
+    "balance:reach": "esbuild scripts/balance/reachability.ts --bundle --platform=node --format=esm --alias:@=./src --log-level=warning --outfile=node_modules/.cache/balance/reach.mjs && node node_modules/.cache/balance/reach.mjs"
   },
   "private": true
 }

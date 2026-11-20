@@ -1,5 +1,5 @@
 import type { EngineContext } from './context';
-import { computeOf, usersOf } from './derived';
+import { computeOf, totalDataCentreLevels, usersOf } from './derived';
 import { labModifierTable, statMultiplier, type ModifierTable } from './modifiers';
 import type { DataCentre, LabState, NodeDef, RegionDef } from './types';
 
@@ -9,7 +9,8 @@ export interface Price {
 }
 
 export function nodePrice(lab: LabState, context: EngineContext, node: NodeDef, tick: number, mods?: ModifierTable): Price {
-  const mult = statMultiplier((mods ?? labModifierTable(lab, context, tick)), 'nodeCost');
+  const growth = 1 + context.balance.nodeCostGrowth * lab.ownedNodes.length;
+  const mult = statMultiplier((mods ?? labModifierTable(lab, context, tick)), 'nodeCost') * growth;
   return { hype: node.cost * mult, cash: (node.cashCost ?? 0) * mult };
 }
 
@@ -20,7 +21,8 @@ export function dataCentrePrice(lab: LabState, context: EngineContext, region: R
 }
 
 export function upgradePrice(lab: LabState, context: EngineContext, dataCentre: DataCentre, tick: number, mods?: ModifierTable): number {
-  const base = context.balance.dataCentreUpgradeCost * dataCentre.level;
+  const { dataCentreUpgradeCost, dataCentreUpgradeGrowth } = context.balance;
+  const base = dataCentreUpgradeCost * dataCentre.level * (1 + dataCentreUpgradeGrowth * totalDataCentreLevels(lab));
   return base * statMultiplier((mods ?? labModifierTable(lab, context, tick)), 'dataCentreCost', context.regions.get(dataCentre.regionId));
 }
 

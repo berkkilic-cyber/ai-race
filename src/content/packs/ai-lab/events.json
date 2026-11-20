@@ -989,7 +989,7 @@
           },
           {
             "type": "compute",
-            "amount": 8
+            "amount": 10
           }
         ]
       },

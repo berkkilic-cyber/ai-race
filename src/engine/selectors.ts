@@ -105,3 +105,15 @@ export function checkConditions(state: GameState, pack: ContentPack, labId: stri
 export function getLeadRival(state: GameState, pack: ContentPack, labId: string): string | undefined {
   return leadRivalOf(state, getContext(pack), labId)?.id;
 }
+
+/**
+ * Params for the ending's title and body text: {lab} is the player's lab id and,
+ * when another lab won (rivalAgi), {rival} is the winner's id. Empty before the run ends.
+ */
+export function getEndingParams(state: GameState): Record<string, string> {
+  if (!state.ending) return {};
+  const params: Record<string, string> = { lab: state.playerLabId };
+  const winner = state.ending.winnerLabId;
+  if (winner !== undefined && winner !== state.playerLabId) params.rival = winner;
+  return params;
+}

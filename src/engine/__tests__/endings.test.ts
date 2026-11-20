@@ -105,4 +105,22 @@ describe('achievements', () => {
     const state = endAfterOneTick(editLab(newGame(withEndingAch), PLAYER, (l) => (l.regulation = 100)), withEndingAch);
     expect(state.achievements).toEqual(['banned_ach']);
   });
+
+  it("'end' achievements can test the kind of ending with endingKindIs", () => {
+    const kindAch = (kind: 'win' | 'lose') => ({ id: `${kind}_ach`, nameKey: 'n', descKey: 'd', secret: false, checkAt: 'end' as const, conditions: [{ type: 'endingKindIs' as const, kind }] });
+    const withKinds = { ...pack, achievements: [kindAch('win'), kindAch('lose')] };
+    const lost = endAfterOneTick(editLab(newGame(withKinds), PLAYER, (l) => (l.regulation = 100)), withKinds);
+    expect(lost.achievements).toEqual(['lose_ach']);
+    const won = endAfterOneTick(editLab(newGame(withKinds), PLAYER, (l) => (l.agiProgress = 100)), withKinds);
+    expect(won.achievements).toEqual(['win_ach']);
+  });
+
+  it('a banned ending variant can react to any ban at home with bannedIn', () => {
+    const variant = { id: 'end_banned_home', kind: 'lose' as const, trigger: 'banned' as const, titleKey: 't', bodyKey: 'b', conditions: [{ type: 'bannedIn' as const, scope: { kind: 'home' as const } }] };
+    const withVariant = { ...pack, endings: [variant, ...pack.endings] };
+    const homeBanned = endAfterOneTick(editLab(newGame(withVariant), PLAYER, (l) => { l.regulation = 100; l.bans = { north: 500 }; }), withVariant);
+    expect(homeBanned.ending?.endingId).toBe('end_banned_home');
+    const elsewhere = endAfterOneTick(editLab(newGame(withVariant), PLAYER, (l) => { l.regulation = 100; l.bans = { west: 500 }; }), withVariant);
+    expect(elsewhere.ending?.endingId).toBe('end_banned');
+  });
 });

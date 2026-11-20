@@ -12,6 +12,7 @@ import type {
 } from '@/engine/types';
 
 import achievements from './achievements.json';
+import balance from './balance.json';
 import endings from './endings.json';
 import events from './events.json';
 import founders from './founders.json';
@@ -38,7 +39,7 @@ export const aiLabPack: ContentPack = {
   rivals: rivals as RivalDef[],
   endings: endings as unknown as EndingDef[],
   achievements: achievements as unknown as AchievementDef[],
-  balance: {},
+  balance,
   strings: { en: en as Record<string, string> },
 };
 

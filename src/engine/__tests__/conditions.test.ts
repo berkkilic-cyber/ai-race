@@ -94,6 +94,59 @@ describe('conditions', () => {
     expect(holds(ended, { type: 'endingIs', endingId: 'end_agi' })).toBe(true);
   });
 
+  describe('bannedIn', () => {
+    const banned = edit(state, (s) => {
+      s.labs[PLAYER].bans = { west: 150, south: 50 }; // south expired at tick 100
+    });
+    it.each<[Condition, boolean]>([
+      [{ type: 'bannedIn', scope: { kind: 'region', id: 'west' } }, true],
+      [{ type: 'bannedIn', scope: { kind: 'region', id: 'south' } }, false],
+      [{ type: 'bannedIn', scope: { kind: 'home' } }, false],
+      [{ type: 'bannedIn', scope: { kind: 'all' } }, true],
+      [{ type: 'bannedIn', scope: { kind: 'random', count: 3 } }, true],
+      [{ type: 'bannedIn', scope: { kind: 'top', count: 1 } }, true],
+    ])('%j → %s', (condition, expected) => {
+      expect(holds(banned, condition)).toBe(expected);
+    });
+
+    it('sees a permanent ban at home and matches tags', () => {
+      const home = editLab(state, PLAYER, (lab) => {
+        lab.bans = { north: -1 };
+      });
+      expect(holds(home, { type: 'bannedIn', scope: { kind: 'home' } })).toBe(true);
+      const northTags = testPack.regions.find((r) => r.id === 'north')!.tags;
+      const otherTag = testPack.regions.flatMap((r) => r.tags).find((t) => !northTags.includes(t))!;
+      expect(holds(home, { type: 'bannedIn', scope: { kind: 'tag', tag: northTags[0] } })).toBe(true);
+      expect(holds(home, { type: 'bannedIn', scope: { kind: 'tag', tag: otherTag } })).toBe(false);
+    });
+
+    it('is false with no bans', () => {
+      expect(holds(state, { type: 'bannedIn', scope: { kind: 'all' } })).toBe(false);
+    });
+  });
+
+  it('statAtLeast and statAtMost read the lab stats', () => {
+    const withStats = editLab(state, PLAYER, (lab) => {
+      lab.stats.dataCentresBuilt = 2;
+      lab.stats.nodesBought = 0;
+    });
+    expect(holds(withStats, { type: 'statAtLeast', stat: 'dataCentresBuilt', value: 2 })).toBe(true);
+    expect(holds(withStats, { type: 'statAtLeast', stat: 'dataCentresBuilt', value: 3 })).toBe(false);
+    expect(holds(withStats, { type: 'statAtMost', stat: 'nodesBought', value: 0 })).toBe(true);
+    expect(holds(withStats, { type: 'statAtMost', stat: 'dataCentresBuilt', value: 1 })).toBe(false);
+  });
+
+  it('endingKindIs holds only once the run has ended with that kind', () => {
+    expect(holds(state, { type: 'endingKindIs', kind: 'win' })).toBe(false);
+    expect(holds(state, { type: 'endingKindIs', kind: 'lose' })).toBe(false);
+    const won = edit(state, (s) => {
+      s.status = 'ended';
+      s.ending = { endingId: 'end_agi', kind: 'win', trigger: 'agi', tick: 100, score: 1 };
+    });
+    expect(holds(won, { type: 'endingKindIs', kind: 'win' })).toBe(true);
+    expect(holds(won, { type: 'endingKindIs', kind: 'lose' })).toBe(false);
+  });
+
   it("meter 'rival' with no active rival is 0", () => {
     const alone = edit(state, (s) => {
       s.labs.alpha.active = false;

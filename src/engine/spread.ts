@@ -1,5 +1,5 @@
 import type { EngineContext } from './context';
-import { statMultiplier, type ModifierTable } from './modifiers';
+import { regionMultipliers, statMultiplier, type ModifierTable } from './modifiers';
 import { random } from './rng';
 import type { GameState, LabState, RegionDef } from './types';
 import { freeShareAt, setAdoptionAt, type LabArrays, type Workspace } from './workspace';
@@ -12,6 +12,8 @@ export interface LabTickInfo {
   capability: number;
   /** Appeal before the regional spreadRate multiplier. */
   baseAppeal: number;
+  /** spreadRate multiplier per region index (shared, read-only). */
+  spreadMult: Float64Array;
 }
 
 /** New users gained by a lab this tick. */
@@ -20,6 +22,11 @@ export interface GrowthTally {
   total: number;
   /** Σ new users × region strictness × regional regulationGain multiplier. */
   strictWeighted: number;
+}
+
+/** The spreadRate multiplier of every region (by index), cached per modifier table. */
+export function spreadMultipliersOf(mods: ModifierTable, context: EngineContext): Float64Array {
+  return regionMultipliers(mods, 'spreadRate', context.pack.regions);
 }
 
 /** (1 + appealPerCapability × capability) × (1 − backlash / backlashAppealDivisor), without the spreadRate stat. */
@@ -43,27 +50,29 @@ interface SpreadRun {
   info: LabTickInfo;
   infos: ReadonlyMap<string, LabTickInfo>;
   tally: GrowthTally;
+  /** Other labs with arrays: their info (undefined when inactive, i.e. appeal 0). */
+  others: { arrays: LabArrays; info: LabTickInfo | undefined }[];
+  /** regulationGain and seedChance multipliers per region. */
+  regulationMult: Float64Array;
+  seedMult: Float64Array;
 }
 
-function tallyGrowth(run: SpreadRun, region: RegionDef, adoptionGained: number): void {
+function tallyGrowth(run: SpreadRun, index: number, region: RegionDef, adoptionGained: number): void {
   if (adoptionGained <= 0) return;
   const users = adoptionGained * region.population;
   run.tally.total += users;
-  run.tally.strictWeighted += users * region.strictness * statMultiplier(run.info.mods, 'regulationGain', region);
+  run.tally.strictWeighted += users * region.strictness * run.regulationMult[index];
 }
 
 /** In a full region a more appealing lab slowly takes share from less appealing ones. Returns adoption gained. */
-function stealShare(run: SpreadRun, index: number, region: RegionDef, appeal: number): number {
-  const { state, context, ws, arrays } = run;
+function stealShare(run: SpreadRun, index: number, appeal: number): number {
+  const { context, ws, arrays } = run;
   if (appeal <= 0) return 0;
   let gained = 0;
-  for (const otherId of state.labOrder) {
-    if (otherId === run.lab.id) continue;
-    const other = ws.labs.get(otherId);
-    const otherAdoption = other ? other.adoption[index] : 0;
-    if (!other || otherAdoption <= 0) continue;
-    const otherInfo = run.infos.get(otherId);
-    const otherAppeal = otherInfo && state.labs[otherId].active ? appealOf(otherInfo, region) : 0;
+  for (const { arrays: other, info: otherInfo } of run.others) {
+    const otherAdoption = other.adoption[index];
+    if (otherAdoption <= 0) continue;
+    const otherAppeal = otherInfo ? otherInfo.baseAppeal * otherInfo.spreadMult[index] : 0;
     if (otherAppeal >= appeal) continue;
     const taken = min(otherAdoption, context.balance.stealRate * arrays.adoption[index] * otherAdoption * (1 - otherAppeal / appeal));
     setAdoptionAt(ws, other, index, otherAdoption - taken, context.balance.minAdoption);
@@ -77,11 +86,11 @@ function stealShare(run: SpreadRun, index: number, region: RegionDef, appeal: nu
 function growIn(run: SpreadRun, index: number, region: RegionDef): number {
   const { context, ws, arrays } = run;
   const adoption = arrays.adoption[index];
-  const appeal = appealOf(run.info, region);
+  const appeal = run.info.baseAppeal * run.info.spreadMult[index];
   const free = freeShareAt(ws, index);
   const added = min(free, context.balance.baseSpread * appeal * region.openness * adoption * free);
   if (added > 0) setAdoptionAt(ws, arrays, index, adoption + added, context.balance.minAdoption);
-  const stolen = free - added < context.balance.stealFreeThreshold ? stealShare(run, index, region, appeal) : 0;
+  const stolen = free - added < context.balance.stealFreeThreshold ? stealShare(run, index, appeal) : 0;
   return added + stolen;
 }
 
@@ -92,13 +101,13 @@ function seedFrom(run: SpreadRun, index: number): void {
   for (const n of context.neighbourIndices[index]) {
     if (arrays.adoption[n] > 0 || arrays.banned[n]) continue;
     const neighbour = context.pack.regions[n];
-    const chance = seedChance * neighbour.openness * statMultiplier(run.info.mods, 'seedChance', neighbour);
+    const chance = seedChance * neighbour.openness * run.seedMult[n];
     if (random(state) >= chance) continue;
     const added = min(seedAmount, freeShareAt(ws, n));
     if (added < minAdoption) continue;
     setAdoptionAt(ws, arrays, n, added, minAdoption);
     ws.fresh[n] = 1;
-    tallyGrowth(run, neighbour, added);
+    tallyGrowth(run, n, neighbour, added);
   }
 }
 
@@ -118,9 +127,38 @@ export function spreadLab(
   const arrays = ws.labs.get(lab.id);
   const tally: GrowthTally = { total: 0, strictWeighted: 0 };
   if (!arrays) return tally;
-  const run: SpreadRun = { state, context, ws, lab, arrays, info, infos, tally };
-  const { banDecayRate, seedThreshold, minAdoption } = context.balance;
   const regions = context.pack.regions;
+  // Reuses the workspace's scratch list so the tick loop does not allocate.
+  const others = ws.others as SpreadRun['others'];
+  let count = 0;
+  for (const otherId of state.labOrder) {
+    const otherArrays = otherId === lab.id ? undefined : ws.labs.get(otherId);
+    if (!otherArrays) continue;
+    const info = state.labs[otherId].active ? infos.get(otherId) : undefined;
+    const slot = others[count];
+    if (slot) {
+      slot.arrays = otherArrays;
+      slot.info = info;
+    } else {
+      others.push({ arrays: otherArrays, info });
+    }
+    count++;
+  }
+  others.length = count;
+  const run: SpreadRun = {
+    state,
+    context,
+    ws,
+    lab,
+    arrays,
+    info,
+    infos,
+    tally,
+    others,
+    regulationMult: regionMultipliers(info.mods, 'regulationGain', regions),
+    seedMult: regionMultipliers(info.mods, 'seedChance', regions),
+  };
+  const { banDecayRate, seedThreshold, minAdoption } = context.balance;
   ws.fresh.fill(0);
   for (let i = 0; i < regions.length; i++) {
     if (arrays.adoption[i] <= 0 || ws.fresh[i]) continue;
@@ -128,7 +166,7 @@ export function spreadLab(
       setAdoptionAt(ws, arrays, i, arrays.adoption[i] * (1 - banDecayRate), minAdoption);
       continue;
     }
-    tallyGrowth(run, regions[i], growIn(run, i, regions[i]));
+    tallyGrowth(run, i, regions[i], growIn(run, i, regions[i]));
     if (arrays.adoption[i] >= seedThreshold) seedFrom(run, i);
   }
   return tally;

@@ -20,6 +20,7 @@ export {
   isBanned,
   checkConditions,
   getLeadRival,
+  getEndingParams,
 } from './selectors';
 export type { Price } from './costs';
 export { chooseAiActions, chooseEventChoice, DEFAULT_PERSONALITY, type BotPolicy } from './ai';
