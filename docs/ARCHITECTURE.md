@@ -44,6 +44,20 @@ checkConditions(state, pack, labId, conditions): boolean
 getEndingParams(state): Record<string, string>              // {lab} = player, {rival} = winning rival, for ending text
 getMoments(state, labId): MomentState[]                     // the lab's moments on the map now
 getMomentProgress(state, uid): number                       // 0..1 of the moment's lifetime used (1 once it is gone)
+getOwnedCapabilityLevel(state, pack, labId): number         // highest tier owned, whatever the compute
+getComputeRequired(pack, level): number                     // compute needed to run a tier
+getComputeShortfall(state, pack, labId): number             // compute missing for the highest owned tier (0 if none)
+getWinProgress(state, pack, labId): WinProgress             // { agi 0..1, dependence 0..1 (share ÷ threshold),
+                                                            //   monopoly: { remaining, total } rivals }
+getStandings(state, pack): StandingRow[]                    // one row per lab, by world share: status, share, users,
+                                                            // agi 0..1, tier / ownedTier, compute, data centres,
+                                                            // banned regions, home region
+getIncomeBreakdown(state, pack, labId): IncomeBreakdown     // { hype, cash }: { total, lines[] } per tick; sources
+                                                            // base, newUsers (last tick), perUser, modifiers, and one
+                                                            // upkeep line per online data centre (negative)
+getReachableRegions(state, pack, labId): RegionReach[]      // per region: present, reachable now (full-chance seeding),
+                                                            // from / via / channel of the best route, or blockedBy
+                                                            // barrier ids and unlockedBy { barrier: node ids }
 
 // AI and headless play
 chooseAiActions(state, pack, labId): Action[]               // also used for rivals
@@ -59,7 +73,8 @@ defaultBalance: BalanceConfig                               // src/engine/balanc
 - `step` does nothing when `status === 'ended'` or when `pendingEvent` is set.
 - 1,000 headless runs must finish in under 60 seconds.
 - News params: {lab} and {rival} are lab ids, {region} a region id, {achievement} an achievement id, {model} a node's name key (translate it), {tier} a number; the UI resolves them to names. The engine's own news keys are `ENGINE_NEWS_KEYS`; `validatePack` requires a string for each, and for the UI theme words `term.*` (`term.rival` labels the lead rival's AGI meter, `term.rivals` the rival labs themselves).
-- Every news item the engine emits has a `kind` (`ENGINE_NEWS_KINDS` maps each engine key): `launch` (a lab ships a new model tier; also carries `nodeId` and `tier`), `entry` (rival enters), `ban`, `elimination`, `acquisition`, `achievement`, `moment` (an expired threat), `headline` (pack headlines), `other` (region launches, unpaid data centres, content `news` effects).
+- Packs also define `stat.<Stat>.gain` / `stat.<Stat>.loss` for every `Stat` (required by `validatePack`, `{pct}` = size of the change, e.g. "Spreads {pct} faster") so the UI can describe modifiers in plain words, `barrier.*` / `channel.*` names for `getReachableRegions` ("blocked by Ocean: needs Enterprise Sales"), and optional background parody brands as `brand.<id>.name` / `brand.<id>.kind`.
+- Every news item the engine emits has a `kind` (`ENGINE_NEWS_KINDS` maps each engine key): `launch` (a lab ships a new model tier; also carries `nodeId` and `tier`), `entry` (a rival enters, or a lab first reaches a region through a channel: params `channel`, `from` and, for jumps, `via`), `ban`, `elimination`, `acquisition`, `achievement`, `moment` (an expired threat), `headline` (pack headlines), `other` (region launches, unpaid data centres, content `news` effects).
 
 ## Simulation rules
 
@@ -71,14 +86,17 @@ Each tick, for every active lab, in `labOrder`:
 2. **Effective capability** = the highest `capabilityLevel` among owned nodes, capped at `floor(compute / computePerCapabilityLevel)`. A lab with no capability node has level 0 and its starter product.
 3. **Spread.** In each region where the lab has adoption > 0 and is not banned:
    `growth = baseSpread × appeal × openness × adoption × free`, where `free = 1 − sum of all labs' adoption there` and `appeal = (1 + appealPerCapability × capability) × spreadRate modifier × (1 − backlash / 200)`. When `free` is near zero, a lab with higher appeal slowly takes share from labs with lower appeal (`stealRate`).
-4. **Seeding.** From each region with adoption ≥ `seedThreshold`, each neighbouring region where the lab is absent and not banned has a per-tick chance `seedChance × openness × seedChance modifier` to start at `seedAmount`. `launchInRegion` does the same on demand for Cash.
+4. **Seeding.** From each region with adoption ≥ `seedThreshold`, each neighbouring region where the lab is absent and not banned has a per-tick chance `seedChance × openness × seedChance modifier` to start at `seedAmount`. `launchInRegion` does the same on demand for Cash (launches ignore barriers).
+   **Barriers and channels.** A region may carry `barriers` (on seeding into it) and `linkBarriers` (on the link to a neighbour, listed on both sides, e.g. sea links); the ids come from `ContentPack.barriers`. Each barrier on the link or the target that the lab holds no channel for multiplies the chance by `barrierSeedFactor`. A lab holds the channels of its owned nodes (`NodeDef.channels`) and, while the flag is set, `channel:<id>` flags (a `setFlag` effect with `durationTicks` makes it timed). `ChannelDef.kind`: `clear` lifts the barriers in `clears` (default: the barrier with the channel's id); `jump` also seeds regions two links away (not neighbours) at × `viralSeedFactor`, barriers of both links and the target counting; `open` multiplies the holder's seed chance by `openSeedFactor` and every other active lab's appeal by (1 + `openRivalSpreadBonus`) per holder. The first time a lab reaches a region by a seed that a `clear` channel let through, or by a jump, one news item of kind `entry` is emitted (the channel's `entryTextKey`, else `engine.news.entry.channel`; params `lab`, `region`, `from`, `channel`, `via` for jumps; tone good for the player, neutral for rivals; internal flag `$entered:<region>`). `open` alone never names a route.
 5. **Income.** `cash += (cashBase + Σ users × wealth × cashPerUser) × cashIncome modifier − upkeep`. Upkeep is data centre levels × region `powerCost` × `dataCentreUpkeep`. Cash never goes below zero: when upkeep cannot be paid, the costliest data centre goes offline for `unpaidOfflineTicks`. `hype += hypeBase + hypePerNewUser × new users this tick`, times the `hypeIncome` modifier.
 6. **AGI progress** `+= agiBase × capability^agiExponent × (1 + agiComputeFactor × compute^agiComputeExponent) × agiRate modifier`, times `aiAgiFactor` for AI labs (a difficulty knob). An exponent below 1 gives compute diminishing returns, so a lab that hoards data centres cannot run away with AGI.
 7. **Regulation** rises with growth in strict regions: `Σ new users × strictness × regulationPerGrowth`, plus `regulationPerShare × world share`, times the `regulationGain` modifier. **Backlash** rises with capability and footprint: `backlashPerCapability × capability × world share + backlashPerDataCentreLevel × total levels`, times the `backlashGain` modifier. Both have a small natural decay and clamp to 0..100. AI labs get no event cards to relieve their meters, so for them both gains are multiplied by `aiMeterGainFactor` and they lose an extra `aiRegulationDecay` / `aiBacklashDecay` per tick.
 8. **Bans.** Each time a lab's regulation crosses 25, 50 and 75, the strictest regions where it is present ban it for `banDuration` ticks (adoption there decays while banned). A news item with `regionId` is emitted so the map can flash.
 9. **Elimination.** Regulation ≥ 100 → eliminated `banned`. Backlash ≥ 100 → eliminated `revolt`. An eliminated lab's adoption decays to zero over a few ticks.
 
-10. **Model launches.** When a lab's effective capability (rule 2, after the compute cap) reaches a tier it has never run this run, one news item of kind `launch` is emitted: `engine.news.launch.player` (tone good) or `engine.news.launch.rival` (tone bad), params `lab`, `model` (name key of the owned node providing the tier) and `tier`, with `nodeId`, `tier`, `labId` and the lab's home `regionId`. Internal flags `$launched:<tier>` make it once per tier per lab, even if compute later drops and recovers; a jump of several tiers announces only the top one.
+Timed flags (`setFlag` with `durationTicks`) are removed when `tick` reaches `LabState.flagTimers[flag]`; a timed flag never shortens a permanent one. `LabState.newUsersLastTick` keeps the last tick's growth for `getIncomeBreakdown`.
+
+10. **Model launches.** When a lab's effective capability (rule 2, after the compute cap) reaches a tier it has never run this run, one news item of kind `launch` is emitted: `engine.news.launch.player` (tone good) or `engine.news.launch.rival` (tone bad), params `lab`, `model` (name key of the owned node providing the tier) and `tier`, with `nodeId`, `tier`, `labId` and the lab's home `regionId`. Internal flags `$launched:<tier>` make it once per tier per lab, even if compute later drops and recovers; a jump of several tiers announces only the top one. Rival launches use `engine.news.launch.rival` or its numbered variants `engine.news.launch.rival.2`, `.3`, ... (counted in the pack's first locale), picked by (lab's index in `labOrder` + tier) mod (variants + 1), so no random draw is spent.
 
 Then, once per tick:
 

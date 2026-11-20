@@ -88,6 +88,25 @@ describe('model launch news', () => {
       },
     ]);
   });
+
+  it('picks numbered rival variants deterministically by lab and tier when the pack has them', () => {
+    const base = { ...testPack, events: [], headlines: [] };
+    const rivals = {
+      ...base,
+      strings: { en: { ...base.strings.en, [`${ENGINE_NEWS_KEYS.launchRival}.2`]: 'Two', [`${ENGINE_NEWS_KEYS.launchRival}.3`]: 'Three' } },
+    };
+    let state = editLab(newGame(rivals), 'alpha', (lab) => {
+      lab.ownedNodes = ['c1'];
+      lab.dataCentres = [{ id: 'adc', regionId: 'east', level: 1 }];
+    });
+    state = step(state, rivals);
+    // alpha is second in lab order (1) and launches tier 1: (1 + 1) % 3 = 2, the third text.
+    expect(launches(state).find((n) => n.labId === 'alpha')?.textKey).toBe(`${ENGINE_NEWS_KEYS.launchRival}.3`);
+    expect(launches(state).find((n) => n.labId === 'alpha')).toEqual(launches(step(editLab(newGame(rivals), 'alpha', (lab) => {
+      lab.ownedNodes = ['c1'];
+      lab.dataCentres = [{ id: 'adc', regionId: 'east', level: 1 }];
+    }), rivals)).find((n) => n.labId === 'alpha'));
+  });
 });
 
 describe('news kinds', () => {

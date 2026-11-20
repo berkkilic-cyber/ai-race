@@ -133,6 +133,27 @@ describe('validatePack', () => {
     expectProblem(problemsOf((p) => { p.strings.en['brand.x.slogan'] = 'Hi'; }), /brand keys are brand.<id>.name or brand.<id>.kind/);
   });
 
+  it('checks barriers, link barriers, channels and channel flags', () => {
+    const usa = (p: ContentPack) => p.regions.find((r) => r.id === 'usa')!;
+    expectProblem(problemsOf((p) => { usa(p).barriers = ['moat']; }), /regions\[usa\]: unknown barrier "moat"/);
+    expectProblem(problemsOf((p) => { usa(p).linkBarriers = { canada: ['ocean'] }; }), /link barriers to "canada" are not listed the same way back/);
+    expectProblem(problemsOf((p) => { usa(p).linkBarriers = { japan: ['ocean'] }; }), /not a neighbour/);
+    expectProblem(problemsOf((p) => { p.nodes[0].channels = ['teleport']; }), /unknown channel "teleport"/);
+    expectProblem(problemsOf((p) => { p.channels![0].kind = 'jump'; p.channels![0].clears = ['ocean']; }), /only 'clear' channels have clears/);
+    expectProblem(problemsOf((p) => { p.channels!.find((c) => c.kind === 'clear')!.clears = ['moat']; }), /clears unknown barrier "moat"/);
+    expectProblem(
+      problemsOf((p) => { p.events[0].choices[0].effects.push({ type: 'setFlag', flag: 'channel:teleport', durationTicks: 10 }); }),
+      /names an unknown channel/,
+    );
+    expectProblem(problemsOf((p) => { p.barriers![0].id = 'Ocean Wide'; }), /barriers/);
+  });
+
+  it('requires a gain and a loss phrase for every stat and allows {pct}', () => {
+    expectProblem(problemsOf((p) => { delete p.strings.en['stat.spreadRate.gain']; }), /missing key "stat\.spreadRate\.gain"/);
+    expectProblem(problemsOf((p) => { delete p.strings.en['stat.banDuration.loss']; }), /missing key "stat\.banDuration\.loss"/);
+    expect(problemsOf((p) => { p.strings.en['stat.spreadRate.gain'] = 'Spreads {pct} faster'; })).toEqual([]);
+  });
+
   it('catches a trigger without a default ending, and a default before its variants', () => {
     expectProblem(problemsOf((p) => { p.endings = p.endings.filter((e) => e.id !== 'revolt'); }), /"revolt" has no default/);
     expectProblem(

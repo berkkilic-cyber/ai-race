@@ -1,4 +1,4 @@
-import { bitCount, clearerOf, NO_CHANNELS, type ChannelSet } from './channels';
+import { bitCount, clearerOf, type ChannelSet } from './channels';
 import type { EngineContext } from './context';
 import { INTERNAL_FLAG_PREFIX } from './meters';
 import { ENGINE_NEWS_KEYS, pushNews } from './news';
