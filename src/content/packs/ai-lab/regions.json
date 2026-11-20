@@ -1,0 +1,1048 @@
+[
+  {
+    "id": "usa",
+    "nameKey": "region.usa.name",
+    "countries": [
+      "840"
+    ],
+    "population": 340,
+    "wealth": 0.95,
+    "openness": 0.85,
+    "strictness": 0.35,
+    "powerCost": 0.45,
+    "neighbors": [
+      "canada",
+      "mexico",
+      "central-america",
+      "russia"
+    ],
+    "tags": [
+      "north-america",
+      "english",
+      "tech-hub"
+    ]
+  },
+  {
+    "id": "canada",
+    "nameKey": "region.canada.name",
+    "countries": [
+      "124"
+    ],
+    "population": 40,
+    "wealth": 0.85,
+    "openness": 0.75,
+    "strictness": 0.45,
+    "powerCost": 0.25,
+    "neighbors": [
+      "usa"
+    ],
+    "tags": [
+      "north-america",
+      "english",
+      "cheap-power"
+    ]
+  },
+  {
+    "id": "mexico",
+    "nameKey": "region.mexico.name",
+    "countries": [
+      "484"
+    ],
+    "population": 130,
+    "wealth": 0.45,
+    "openness": 0.6,
+    "strictness": 0.3,
+    "powerCost": 0.5,
+    "neighbors": [
+      "usa",
+      "central-america"
+    ],
+    "tags": [
+      "north-america",
+      "spanish"
+    ]
+  },
+  {
+    "id": "central-america",
+    "nameKey": "region.central-america.name",
+    "countries": [
+      "320",
+      "084",
+      "340",
+      "222",
+      "558",
+      "188",
+      "591",
+      "192",
+      "388",
+      "332",
+      "214",
+      "044",
+      "780",
+      "630"
+    ],
+    "population": 95,
+    "wealth": 0.35,
+    "openness": 0.5,
+    "strictness": 0.25,
+    "powerCost": 0.6,
+    "neighbors": [
+      "usa",
+      "mexico",
+      "andes"
+    ],
+    "tags": [
+      "north-america",
+      "spanish",
+      "island"
+    ]
+  },
+  {
+    "id": "brazil",
+    "nameKey": "region.brazil.name",
+    "countries": [
+      "076"
+    ],
+    "population": 215,
+    "wealth": 0.45,
+    "openness": 0.7,
+    "strictness": 0.35,
+    "powerCost": 0.35,
+    "neighbors": [
+      "andes",
+      "southern-cone",
+      "france"
+    ],
+    "tags": [
+      "south-america",
+      "cheap-power"
+    ]
+  },
+  {
+    "id": "andes",
+    "nameKey": "region.andes.name",
+    "countries": [
+      "170",
+      "862",
+      "218",
+      "328",
+      "740",
+      "604",
+      "068",
+      "152"
+    ],
+    "population": 165,
+    "wealth": 0.4,
+    "openness": 0.55,
+    "strictness": 0.3,
+    "powerCost": 0.4,
+    "neighbors": [
+      "central-america",
+      "brazil",
+      "southern-cone",
+      "france"
+    ],
+    "tags": [
+      "south-america",
+      "spanish"
+    ]
+  },
+  {
+    "id": "southern-cone",
+    "nameKey": "region.southern-cone.name",
+    "countries": [
+      "032",
+      "858",
+      "600"
+    ],
+    "population": 56,
+    "wealth": 0.5,
+    "openness": 0.6,
+    "strictness": 0.3,
+    "powerCost": 0.35,
+    "neighbors": [
+      "brazil",
+      "andes",
+      "far-south"
+    ],
+    "tags": [
+      "south-america",
+      "spanish"
+    ]
+  },
+  {
+    "id": "far-south",
+    "nameKey": "region.far-south.name",
+    "countries": [
+      "010",
+      "260",
+      "238"
+    ],
+    "population": 0.01,
+    "wealth": 0.2,
+    "openness": 0.3,
+    "strictness": 0.1,
+    "powerCost": 0.15,
+    "neighbors": [
+      "southern-cone",
+      "australia",
+      "pacific",
+      "southern-africa"
+    ],
+    "tags": [
+      "antarctica",
+      "island",
+      "cheap-power",
+      "remote"
+    ]
+  },
+  {
+    "id": "uk-ireland",
+    "nameKey": "region.uk-ireland.name",
+    "countries": [
+      "826",
+      "372"
+    ],
+    "population": 75,
+    "wealth": 0.85,
+    "openness": 0.75,
+    "strictness": 0.6,
+    "powerCost": 0.7,
+    "neighbors": [
+      "france",
+      "benelux",
+      "nordics"
+    ],
+    "tags": [
+      "europe",
+      "english",
+      "island",
+      "tech-hub"
+    ]
+  },
+  {
+    "id": "france",
+    "nameKey": "region.france.name",
+    "countries": [
+      "250"
+    ],
+    "population": 68,
+    "wealth": 0.8,
+    "openness": 0.6,
+    "strictness": 0.75,
+    "powerCost": 0.35,
+    "neighbors": [
+      "brazil",
+      "andes",
+      "uk-ireland",
+      "germany",
+      "benelux",
+      "iberia",
+      "italy",
+      "central-europe"
+    ],
+    "tags": [
+      "europe",
+      "eu",
+      "strict",
+      "cheap-power"
+    ]
+  },
+  {
+    "id": "germany",
+    "nameKey": "region.germany.name",
+    "countries": [
+      "276"
+    ],
+    "population": 84,
+    "wealth": 0.85,
+    "openness": 0.55,
+    "strictness": 0.8,
+    "powerCost": 0.8,
+    "neighbors": [
+      "france",
+      "benelux",
+      "nordics",
+      "central-europe",
+      "eastern-europe"
+    ],
+    "tags": [
+      "europe",
+      "eu",
+      "strict"
+    ]
+  },
+  {
+    "id": "benelux",
+    "nameKey": "region.benelux.name",
+    "countries": [
+      "056",
+      "528",
+      "442"
+    ],
+    "population": 30,
+    "wealth": 0.9,
+    "openness": 0.7,
+    "strictness": 0.75,
+    "powerCost": 0.7,
+    "neighbors": [
+      "uk-ireland",
+      "france",
+      "germany",
+      "nordics"
+    ],
+    "tags": [
+      "europe",
+      "eu",
+      "strict",
+      "tech-hub"
+    ]
+  },
+  {
+    "id": "iberia",
+    "nameKey": "region.iberia.name",
+    "countries": [
+      "724",
+      "620"
+    ],
+    "population": 58,
+    "wealth": 0.7,
+    "openness": 0.65,
+    "strictness": 0.65,
+    "powerCost": 0.5,
+    "neighbors": [
+      "france",
+      "north-africa"
+    ],
+    "tags": [
+      "europe",
+      "eu",
+      "spanish"
+    ]
+  },
+  {
+    "id": "italy",
+    "nameKey": "region.italy.name",
+    "countries": [
+      "380"
+    ],
+    "population": 59,
+    "wealth": 0.7,
+    "openness": 0.55,
+    "strictness": 0.7,
+    "powerCost": 0.75,
+    "neighbors": [
+      "france",
+      "central-europe",
+      "balkans",
+      "north-africa"
+    ],
+    "tags": [
+      "europe",
+      "eu"
+    ]
+  },
+  {
+    "id": "nordics",
+    "nameKey": "region.nordics.name",
+    "countries": [
+      "578",
+      "752",
+      "208",
+      "246",
+      "352",
+      "304"
+    ],
+    "population": 28,
+    "wealth": 0.95,
+    "openness": 0.8,
+    "strictness": 0.7,
+    "powerCost": 0.15,
+    "neighbors": [
+      "uk-ireland",
+      "germany",
+      "benelux",
+      "eastern-europe",
+      "russia"
+    ],
+    "tags": [
+      "europe",
+      "eu",
+      "cheap-power"
+    ]
+  },
+  {
+    "id": "central-europe",
+    "nameKey": "region.central-europe.name",
+    "countries": [
+      "756",
+      "040",
+      "203",
+      "703",
+      "348",
+      "705"
+    ],
+    "population": 46,
+    "wealth": 0.75,
+    "openness": 0.6,
+    "strictness": 0.7,
+    "powerCost": 0.55,
+    "neighbors": [
+      "france",
+      "germany",
+      "italy",
+      "eastern-europe",
+      "balkans"
+    ],
+    "tags": [
+      "europe",
+      "eu"
+    ]
+  },
+  {
+    "id": "eastern-europe",
+    "nameKey": "region.eastern-europe.name",
+    "countries": [
+      "616",
+      "440",
+      "428",
+      "233",
+      "112",
+      "804",
+      "498"
+    ],
+    "population": 92,
+    "wealth": 0.45,
+    "openness": 0.6,
+    "strictness": 0.5,
+    "powerCost": 0.5,
+    "neighbors": [
+      "germany",
+      "nordics",
+      "central-europe",
+      "balkans",
+      "russia"
+    ],
+    "tags": [
+      "europe"
+    ]
+  },
+  {
+    "id": "balkans",
+    "nameKey": "region.balkans.name",
+    "countries": [
+      "191",
+      "070",
+      "688",
+      "499",
+      "807",
+      "008",
+      "100",
+      "642",
+      "300",
+      "196"
+    ],
+    "population": 58,
+    "wealth": 0.5,
+    "openness": 0.55,
+    "strictness": 0.55,
+    "powerCost": 0.5,
+    "neighbors": [
+      "italy",
+      "central-europe",
+      "eastern-europe",
+      "turkiye",
+      "middle-east",
+      "north-africa"
+    ],
+    "tags": [
+      "europe",
+      "eu"
+    ]
+  },
+  {
+    "id": "turkiye",
+    "nameKey": "region.turkiye.name",
+    "countries": [
+      "792"
+    ],
+    "population": 86,
+    "wealth": 0.5,
+    "openness": 0.65,
+    "strictness": 0.45,
+    "powerCost": 0.5,
+    "neighbors": [
+      "balkans",
+      "middle-east",
+      "iran-caucasus"
+    ],
+    "tags": [
+      "europe",
+      "asia"
+    ]
+  },
+  {
+    "id": "russia",
+    "nameKey": "region.russia.name",
+    "countries": [
+      "643"
+    ],
+    "population": 144,
+    "wealth": 0.45,
+    "openness": 0.4,
+    "strictness": 0.85,
+    "powerCost": 0.2,
+    "neighbors": [
+      "usa",
+      "nordics",
+      "eastern-europe",
+      "iran-caucasus",
+      "central-asia",
+      "china",
+      "japan",
+      "korea"
+    ],
+    "tags": [
+      "europe",
+      "asia",
+      "petro",
+      "cheap-power",
+      "strict"
+    ]
+  },
+  {
+    "id": "middle-east",
+    "nameKey": "region.middle-east.name",
+    "countries": [
+      "376",
+      "275",
+      "422",
+      "400",
+      "760",
+      "368",
+      "682",
+      "784",
+      "634",
+      "414",
+      "512",
+      "887"
+    ],
+    "population": 192,
+    "wealth": 0.55,
+    "openness": 0.55,
+    "strictness": 0.55,
+    "powerCost": 0.1,
+    "neighbors": [
+      "balkans",
+      "turkiye",
+      "iran-caucasus",
+      "pakistan",
+      "north-africa",
+      "east-africa"
+    ],
+    "tags": [
+      "asia",
+      "petro",
+      "cheap-power"
+    ]
+  },
+  {
+    "id": "iran-caucasus",
+    "nameKey": "region.iran-caucasus.name",
+    "countries": [
+      "364",
+      "268",
+      "051",
+      "031"
+    ],
+    "population": 106,
+    "wealth": 0.35,
+    "openness": 0.4,
+    "strictness": 0.8,
+    "powerCost": 0.15,
+    "neighbors": [
+      "turkiye",
+      "russia",
+      "middle-east",
+      "central-asia",
+      "pakistan"
+    ],
+    "tags": [
+      "asia",
+      "petro",
+      "cheap-power",
+      "strict"
+    ]
+  },
+  {
+    "id": "central-asia",
+    "nameKey": "region.central-asia.name",
+    "countries": [
+      "398",
+      "860",
+      "795",
+      "417",
+      "762",
+      "004",
+      "496"
+    ],
+    "population": 125,
+    "wealth": 0.25,
+    "openness": 0.45,
+    "strictness": 0.6,
+    "powerCost": 0.25,
+    "neighbors": [
+      "russia",
+      "iran-caucasus",
+      "pakistan",
+      "china"
+    ],
+    "tags": [
+      "asia",
+      "cheap-power"
+    ]
+  },
+  {
+    "id": "india",
+    "nameKey": "region.india.name",
+    "countries": [
+      "356"
+    ],
+    "population": 1430,
+    "wealth": 0.25,
+    "openness": 0.8,
+    "strictness": 0.45,
+    "powerCost": 0.45,
+    "neighbors": [
+      "pakistan",
+      "bengal-himalaya",
+      "china",
+      "southeast-asia"
+    ],
+    "tags": [
+      "asia",
+      "english",
+      "tech-hub"
+    ]
+  },
+  {
+    "id": "pakistan",
+    "nameKey": "region.pakistan.name",
+    "countries": [
+      "586"
+    ],
+    "population": 240,
+    "wealth": 0.15,
+    "openness": 0.5,
+    "strictness": 0.55,
+    "powerCost": 0.5,
+    "neighbors": [
+      "middle-east",
+      "iran-caucasus",
+      "central-asia",
+      "india",
+      "china"
+    ],
+    "tags": [
+      "asia",
+      "english"
+    ]
+  },
+  {
+    "id": "bengal-himalaya",
+    "nameKey": "region.bengal-himalaya.name",
+    "countries": [
+      "050",
+      "524",
+      "064",
+      "144"
+    ],
+    "population": 225,
+    "wealth": 0.15,
+    "openness": 0.6,
+    "strictness": 0.4,
+    "powerCost": 0.5,
+    "neighbors": [
+      "india",
+      "china",
+      "southeast-asia"
+    ],
+    "tags": [
+      "asia"
+    ]
+  },
+  {
+    "id": "china",
+    "nameKey": "region.china.name",
+    "countries": [
+      "156"
+    ],
+    "population": 1410,
+    "wealth": 0.55,
+    "openness": 0.5,
+    "strictness": 0.95,
+    "powerCost": 0.35,
+    "neighbors": [
+      "russia",
+      "central-asia",
+      "india",
+      "pakistan",
+      "bengal-himalaya",
+      "japan",
+      "korea",
+      "taiwan",
+      "southeast-asia"
+    ],
+    "tags": [
+      "asia",
+      "tech-hub",
+      "strict"
+    ]
+  },
+  {
+    "id": "japan",
+    "nameKey": "region.japan.name",
+    "countries": [
+      "392"
+    ],
+    "population": 124,
+    "wealth": 0.85,
+    "openness": 0.6,
+    "strictness": 0.5,
+    "powerCost": 0.75,
+    "neighbors": [
+      "russia",
+      "china",
+      "korea",
+      "taiwan"
+    ],
+    "tags": [
+      "asia",
+      "island",
+      "tech-hub"
+    ]
+  },
+  {
+    "id": "korea",
+    "nameKey": "region.korea.name",
+    "countries": [
+      "410",
+      "408"
+    ],
+    "population": 78,
+    "wealth": 0.65,
+    "openness": 0.7,
+    "strictness": 0.6,
+    "powerCost": 0.6,
+    "neighbors": [
+      "russia",
+      "china",
+      "japan"
+    ],
+    "tags": [
+      "asia",
+      "tech-hub"
+    ]
+  },
+  {
+    "id": "taiwan",
+    "nameKey": "region.taiwan.name",
+    "countries": [
+      "158"
+    ],
+    "population": 23.5,
+    "wealth": 0.8,
+    "openness": 0.75,
+    "strictness": 0.4,
+    "powerCost": 0.6,
+    "neighbors": [
+      "china",
+      "japan",
+      "southeast-asia"
+    ],
+    "tags": [
+      "asia",
+      "island",
+      "tech-hub",
+      "chips"
+    ]
+  },
+  {
+    "id": "southeast-asia",
+    "nameKey": "region.southeast-asia.name",
+    "countries": [
+      "764",
+      "704",
+      "116",
+      "418",
+      "104",
+      "458",
+      "096",
+      "608",
+      "626"
+    ],
+    "population": 400,
+    "wealth": 0.35,
+    "openness": 0.7,
+    "strictness": 0.45,
+    "powerCost": 0.5,
+    "neighbors": [
+      "india",
+      "bengal-himalaya",
+      "china",
+      "taiwan",
+      "indonesia"
+    ],
+    "tags": [
+      "asia",
+      "island"
+    ]
+  },
+  {
+    "id": "indonesia",
+    "nameKey": "region.indonesia.name",
+    "countries": [
+      "360"
+    ],
+    "population": 278,
+    "wealth": 0.3,
+    "openness": 0.7,
+    "strictness": 0.45,
+    "powerCost": 0.45,
+    "neighbors": [
+      "southeast-asia",
+      "australia",
+      "pacific"
+    ],
+    "tags": [
+      "asia",
+      "island"
+    ]
+  },
+  {
+    "id": "australia",
+    "nameKey": "region.australia.name",
+    "countries": [
+      "036"
+    ],
+    "population": 27,
+    "wealth": 0.9,
+    "openness": 0.75,
+    "strictness": 0.55,
+    "powerCost": 0.5,
+    "neighbors": [
+      "far-south",
+      "indonesia",
+      "pacific"
+    ],
+    "tags": [
+      "oceania",
+      "english",
+      "island"
+    ]
+  },
+  {
+    "id": "pacific",
+    "nameKey": "region.pacific.name",
+    "countries": [
+      "554",
+      "598",
+      "242",
+      "548",
+      "090",
+      "540"
+    ],
+    "population": 17.5,
+    "wealth": 0.45,
+    "openness": 0.65,
+    "strictness": 0.45,
+    "powerCost": 0.6,
+    "neighbors": [
+      "far-south",
+      "indonesia",
+      "australia"
+    ],
+    "tags": [
+      "oceania",
+      "english",
+      "island"
+    ]
+  },
+  {
+    "id": "north-africa",
+    "nameKey": "region.north-africa.name",
+    "countries": [
+      "504",
+      "732",
+      "012",
+      "788",
+      "434",
+      "818"
+    ],
+    "population": 212,
+    "wealth": 0.3,
+    "openness": 0.5,
+    "strictness": 0.6,
+    "powerCost": 0.25,
+    "neighbors": [
+      "iberia",
+      "italy",
+      "balkans",
+      "middle-east",
+      "west-africa",
+      "central-africa",
+      "east-africa"
+    ],
+    "tags": [
+      "africa",
+      "petro",
+      "cheap-power"
+    ]
+  },
+  {
+    "id": "west-africa",
+    "nameKey": "region.west-africa.name",
+    "countries": [
+      "686",
+      "270",
+      "624",
+      "324",
+      "694",
+      "430",
+      "384",
+      "288",
+      "768",
+      "204",
+      "854",
+      "466",
+      "478",
+      "562"
+    ],
+    "population": 215,
+    "wealth": 0.12,
+    "openness": 0.55,
+    "strictness": 0.35,
+    "powerCost": 0.65,
+    "neighbors": [
+      "north-africa",
+      "nigeria",
+      "central-africa"
+    ],
+    "tags": [
+      "africa"
+    ]
+  },
+  {
+    "id": "nigeria",
+    "nameKey": "region.nigeria.name",
+    "countries": [
+      "566"
+    ],
+    "population": 225,
+    "wealth": 0.18,
+    "openness": 0.7,
+    "strictness": 0.4,
+    "powerCost": 0.6,
+    "neighbors": [
+      "west-africa",
+      "central-africa"
+    ],
+    "tags": [
+      "africa",
+      "english",
+      "petro"
+    ]
+  },
+  {
+    "id": "central-africa",
+    "nameKey": "region.central-africa.name",
+    "countries": [
+      "120",
+      "148",
+      "140",
+      "178",
+      "180",
+      "266",
+      "226",
+      "024"
+    ],
+    "population": 200,
+    "wealth": 0.12,
+    "openness": 0.45,
+    "strictness": 0.35,
+    "powerCost": 0.6,
+    "neighbors": [
+      "north-africa",
+      "west-africa",
+      "nigeria",
+      "east-africa",
+      "southern-africa"
+    ],
+    "tags": [
+      "africa",
+      "petro"
+    ]
+  },
+  {
+    "id": "east-africa",
+    "nameKey": "region.east-africa.name",
+    "countries": [
+      "231",
+      "232",
+      "262",
+      "706",
+      "404",
+      "800",
+      "646",
+      "108",
+      "834",
+      "729",
+      "728"
+    ],
+    "population": 405,
+    "wealth": 0.12,
+    "openness": 0.6,
+    "strictness": 0.4,
+    "powerCost": 0.55,
+    "neighbors": [
+      "middle-east",
+      "north-africa",
+      "central-africa",
+      "southern-africa"
+    ],
+    "tags": [
+      "africa",
+      "english"
+    ]
+  },
+  {
+    "id": "southern-africa",
+    "nameKey": "region.southern-africa.name",
+    "countries": [
+      "710",
+      "426",
+      "748",
+      "516",
+      "072",
+      "716",
+      "894",
+      "454",
+      "508",
+      "450"
+    ],
+    "population": 193,
+    "wealth": 0.3,
+    "openness": 0.6,
+    "strictness": 0.4,
+    "powerCost": 0.55,
+    "neighbors": [
+      "far-south",
+      "central-africa",
+      "east-africa"
+    ],
+    "tags": [
+      "africa",
+      "english"
+    ]
+  }
+]
