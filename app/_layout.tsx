@@ -1,18 +1,26 @@
 import { Stack } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
+import { useEffect } from 'react';
 import { StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { installDebugHandle } from '@/ui/debug';
-import { colors } from '@/ui/theme';
+import { useAppFonts } from '@/ui/fonts';
+import { colors, themeName } from '@/ui/theme';
 
 installDebugHandle();
+SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
 export default function RootLayout() {
+  const ready = useAppFonts();
+  useEffect(() => {
+    if (ready) SplashScreen.hideAsync().catch(() => undefined);
+  }, [ready]);
   return (
     <GestureHandlerRootView style={styles.root}>
-      <StatusBar style="light" />
-      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }} />
+      <StatusBar style={themeName === 'paper' ? 'dark' : 'light'} />
+      {ready ? <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }} /> : null}
     </GestureHandlerRootView>
   );
 }

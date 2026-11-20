@@ -5,7 +5,8 @@ import uiStrings from './strings/en.json';
 import eventsStrings from './strings/events.en.json';
 import startStrings from './strings/start.en.json';
 import treesStrings from './strings/trees.en.json';
-import { colors } from './theme';
+import { ensureContrast } from './color';
+import { colors, themeName } from './theme';
 
 export type Params = Record<string, string | number>;
 
@@ -121,6 +122,28 @@ export function regionName(id: RegionId): string {
 /** Map colour of a lab: the player uses the theme accent, rivals their own colour. */
 export function labColor(lab: Pick<LabState, 'color' | 'controller'>): string {
   return lab.controller === 'human' ? colors.player : lab.color;
+}
+
+/** Contrast a lab colour must reach on the theme's backgrounds: graphics (dots, swatches) or text. */
+export const LAB_CONTRAST = { graphic: 3, text: 4.5 } as const;
+
+const readableCache = new Map<string, string>();
+
+/**
+ * labColor, adjusted so it reads on this theme: rival colours from the pack that are too
+ * light for paper are darkened towards ink (too dark for night: lightened towards white).
+ * The pack keeps its colours; only the UI adjusts them.
+ */
+export function readableLabColor(lab: Pick<LabState, 'color' | 'controller'>, use: keyof typeof LAB_CONTRAST = 'graphic'): string {
+  const base = labColor(lab);
+  const key = `${base}|${use}`;
+  let out = readableCache.get(key);
+  if (out === undefined) {
+    const toward = themeName === 'night' ? colors.newsPaper : colors.text;
+    out = ensureContrast(base, [colors.bg, colors.surface], LAB_CONTRAST[use], toward);
+    readableCache.set(key, out);
+  }
+  return out;
 }
 
 /** Lab flags without engine internals. */
