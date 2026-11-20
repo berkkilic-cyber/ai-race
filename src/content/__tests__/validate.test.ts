@@ -31,6 +31,12 @@ describe('validatePack', () => {
     expectProblem(problemsOf((p) => { (p.nodes[0] as unknown as Record<string, unknown>).price = 3; }), /price/);
   });
 
+  it('catches unknown or invalid balance overrides', () => {
+    expectProblem(problemsOf((p) => { (p.balance as Record<string, number>).warpSpeed = 3; }), /balance: unknown key "warpSpeed"/);
+    expectProblem(problemsOf((p) => { (p.balance as Record<string, number>).banThresholds = 3; }), /"banThresholds" is not a number setting/);
+    expectProblem(problemsOf((p) => { p.balance.baseSpread = -1; }), /"baseSpread" must be a finite number >= 0/);
+  });
+
   it('catches duplicate ids', () => {
     expectProblem(problemsOf((p) => { p.nodes[1].id = p.nodes[0].id; }), /duplicate id "cap-model-1"/);
   });

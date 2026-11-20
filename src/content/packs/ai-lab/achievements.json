@@ -137,8 +137,12 @@
     "checkAt": "end",
     "conditions": [
       {
+        "type": "endingKindIs",
+        "kind": "lose"
+      },
+      {
         "type": "tickAtMost",
-        "value": 300
+        "value": 1500
       }
     ]
   },

@@ -20,7 +20,7 @@ describe('ai-lab content pack', () => {
   it('has the right identity', () => {
     expect(pack.id).toBe('ai-lab');
     expect(pack.version).toBe(1);
-    expect(pack.balance).toEqual({});
+    expect(Object.keys(pack.balance).length).toBeGreaterThan(0);
     expect(Object.keys(pack.strings)).toEqual(['en']);
   });
 

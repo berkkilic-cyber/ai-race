@@ -6,6 +6,7 @@
  */
 import { z } from 'zod';
 
+import { defaultBalance } from '@/engine/balance';
 import { ENGINE_NEWS_KEYS } from '@/engine/news';
 
 import type {
@@ -350,6 +351,13 @@ export function validatePack(pack: unknown): string[] {
 function checkIntegrity(pack: ContentPack): string[] {
   const problems: string[] = [];
   const err = (msg: string) => problems.push(msg);
+
+  // Balance overrides must name real BalanceConfig numbers.
+  for (const [k, v] of Object.entries(pack.balance)) {
+    if (!(k in defaultBalance)) err(`balance: unknown key "${k}"`);
+    else if (typeof defaultBalance[k as keyof typeof defaultBalance] !== 'number') err(`balance: "${k}" is not a number setting`);
+    else if (!Number.isFinite(v) || (v as number) < 0) err(`balance: "${k}" must be a finite number >= 0`);
+  }
 
   // Unique ids
   const collections: [string, { id: string }[]][] = [
