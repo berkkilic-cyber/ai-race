@@ -36,6 +36,7 @@
   "ui.region.offline": "Offline",
   "ui.region.close": "Close",
   "ui.region.free": "Unclaimed",
+  "ui.sheet.close": "Close",
   "ui.failure.gameEnded": "The run is over",
   "ui.failure.labInactive": "Your lab is out of the race",
   "ui.failure.unknownId": "Not available",

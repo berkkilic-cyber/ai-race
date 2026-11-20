@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
- * Takes UI screenshots of the exported web build at a phone viewport.
+ * Takes UI screenshots of the exported web build at a landscape phone viewport
+ * (844x390, the design size), plus one portrait (390x844) fallback shot.
  *
  *   npx expo export --platform web && node scripts/map/screenshots.js [outDir]
  *
@@ -20,6 +21,8 @@ const OUT = path.resolve(process.argv[2] || path.join(ROOT, 'docs', 'screenshots
 const PORT = Number(process.env.PORT || 8765);
 const SEED = Number(process.env.SEED || 7);
 const CHROME = process.env.CHROME || '/usr/bin/google-chrome';
+const WIDE = { width: 844, height: 390 };
+const NARROW = { width: 390, height: 844 };
 
 const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.ico': 'image/x-icon', '.ttf': 'font/ttf' };
 
@@ -50,7 +53,7 @@ async function main() {
   const browser = await puppeteer.launch({
     executablePath: CHROME,
     headless: true,
-    args: ['--no-sandbox', '--disable-gpu', '--window-size=390,844'],
+    args: ['--no-sandbox', '--disable-gpu', `--window-size=${WIDE.width},${WIDE.height}`],
   });
   const errors = [];
   try {
@@ -59,7 +62,7 @@ async function main() {
     page.on('console', (m) => {
       if (m.type() === 'error') errors.push(m.text());
     });
-    await page.setViewport({ width: 390, height: 844, deviceScaleFactor: 1 });
+    await page.setViewport({ ...WIDE, deviceScaleFactor: 1 });
     const base = `http://127.0.0.1:${PORT}`;
     const shot = async (name) => {
       await page.screenshot({ path: path.join(OUT, name) });
@@ -107,7 +110,8 @@ async function main() {
 
     // 4. An event card, then its result.
     await game(() => window.__game.store.getState().setSpeed(0));
-    const closeBtn = await page.$('[aria-label="close"]');
+    // Wide mode: the side panel's close button; narrow mode: the scrim.
+    const closeBtn = (await page.$('[data-testid="region-sheet"] [aria-label="Close"]')) ?? (await page.$('[aria-label="close"]'));
     if (closeBtn) await closeBtn.click();
     for (let i = 0; i < 20; i++) {
       await advance(400, { bot: true, stopAtEvent: true });
@@ -147,6 +151,14 @@ async function main() {
     await page.waitForFunction(() => location.pathname === '/end', { timeout: 10000 });
     await sleep(800);
     await shot('09-end.png');
+
+    // 7. Portrait fallback: a fresh run at a narrow window (proves the narrow shell still renders).
+    await page.setViewport({ ...NARROW, deviceScaleFactor: 1 });
+    await page.goto(`${base}/?autostart=1&debug=1&seed=${SEED}`, { waitUntil: 'networkidle0' });
+    await page.waitForFunction(() => location.pathname === '/game' && !!window.__game);
+    await advance(300, { bot: true });
+    await sleep(1500);
+    await shot('10-narrow-fallback.png');
   } finally {
     await browser.close();
     await new Promise((r) => server.close(r));

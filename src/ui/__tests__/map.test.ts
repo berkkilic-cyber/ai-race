@@ -3,7 +3,7 @@ import { createGame, type GameState, type NewsItem } from '@/engine';
 import { flashTone, freshNews } from '../hooks/useRegionFlashes';
 import { bannedKey, mixColor, parseSites, regionFills, sitesKey } from '../map/mapColors';
 import { createHitTester, parseRings } from '../map/hitTest';
-import { clampTranslate, centreOn, toMapPoint, zoomAbout, type Layout } from '../map/viewTransform';
+import { clampTranslate, centreOn, fitWorld, toMapPoint, toScreenPoint, zoomAbout, type Layout } from '../map/viewTransform';
 import { getPackEntry } from '../packs';
 import { colors } from '../theme';
 
@@ -104,6 +104,57 @@ describe('view transform', () => {
     const [tx, ty] = centreOn(layout, 4, 500, 234);
     expect(tx).toBeCloseTo(0);
     expect(ty).toBeCloseTo(0);
+  });
+});
+
+describe('view transform in a wide (landscape) main area', () => {
+  // 844x390 minus the rail, top strip and ticker.
+  const wide: Layout = { cw: 788, ch: 322, mw: 1000, mh: 468 };
+
+  it('fitWorld shows the whole world inside the area, touching it on one axis', () => {
+    const [s, tx, ty] = fitWorld(wide);
+    const [x0, y0] = toScreenPoint(wide, s, tx, ty, 0, 0);
+    const [x1, y1] = toScreenPoint(wide, s, tx, ty, wide.mw, wide.mh);
+    expect(x0).toBeGreaterThanOrEqual(0);
+    expect(y0).toBeGreaterThanOrEqual(0);
+    expect(x1).toBeLessThanOrEqual(wide.cw);
+    expect(y1).toBeLessThanOrEqual(wide.ch);
+    // Height-limited here: it fills the height and is centred horizontally.
+    expect(y0).toBeCloseTo(0);
+    expect(y1).toBeCloseTo(wide.ch);
+    expect(x0).toBeCloseTo(wide.cw - x1);
+  });
+
+  it('fitWorld ignores an open panel', () => {
+    expect(fitWorld({ ...wide, insetRight: 360 })).toEqual(fitWorld(wide));
+  });
+
+  it('centreOn with a panel centres the point in the uncovered part when there is room', () => {
+    const panel: Layout = { ...wide, insetRight: 360 };
+    const visibleCentre = (wide.cw - 360) / 2;
+    // Mid-map point at the whole-world zoom.
+    const [tx, ty] = centreOn(panel, 1, 500, 234);
+    expect(toScreenPoint(panel, 1, tx, ty, 500, 234)[0]).toBeCloseTo(visibleCentre);
+    // Zoomed in, a point far east still lands in the middle of the uncovered part.
+    const [tx2, ty2] = centreOn(panel, 3, 800, 200);
+    const [sx, sy] = toScreenPoint(panel, 3, tx2, ty2, 800, 200);
+    expect(sx).toBeCloseTo(visibleCentre);
+    expect(sy).toBeCloseTo(wide.ch / 2);
+  });
+
+  it('centreOn with a panel keeps a point at the map edge out from under the panel', () => {
+    const panel: Layout = { ...wide, insetRight: 360 };
+    const [tx, ty] = centreOn(panel, 1, 990, 200);
+    const [sx] = toScreenPoint(panel, 1, tx, ty, 990, 200);
+    expect(sx).toBeLessThanOrEqual(wide.cw - 360);
+    // The map still covers the uncovered part (no empty gap on the left).
+    expect(toScreenPoint(panel, 1, tx, ty, 0, 0)[0]).toBeLessThanOrEqual(0);
+  });
+
+  it('clampTranslate without a panel recentres a world view panned for the panel', () => {
+    const panel: Layout = { ...wide, insetRight: 360 };
+    const [tx, ty] = centreOn(panel, 1, 900, 200);
+    expect(clampTranslate(wide, 1, tx, ty)).toEqual(fitWorld(wide).slice(1));
   });
 });
 

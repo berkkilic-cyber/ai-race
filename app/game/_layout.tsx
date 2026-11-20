@@ -1,34 +1,38 @@
 import { TabList, TabSlot, TabTrigger, Tabs } from 'expo-router/ui';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ToastHost } from '@/ui/achievements';
 import { EventModal } from '@/ui/events';
 import { useEndNavigation, useGameLoop } from '@/ui/hooks';
 import { t } from '@/ui/i18n';
-import { MeterRow } from '@/ui/shell/MeterRow';
-import { ResourceRow } from '@/ui/shell/ResourceRow';
+import { GameHeader } from '@/ui/shell/GameHeader';
+import { useShellStyles } from '@/ui/shell/shellStyles';
 import { TabButton } from '@/ui/shell/TabButton';
 import { Ticker } from '@/ui/shell/Ticker';
-import { TopBar } from '@/ui/shell/TopBar';
+import { TickerDock } from '@/ui/shell/TickerDock';
 import { colors } from '@/ui/theme';
 import { TreesTabBadge } from '@/ui/trees';
 
-/** Game shell: top bar, resources, meters, tab content, ticker, tab bar, event modal, game loop. */
+/**
+ * Game shell: header, tab content, ticker, tabs, event modal, game loop.
+ * Wide (landscape): left tab rail, one top strip, ticker strip under the content.
+ * Narrow (portrait): top bar, resources and meters, content, ticker, bottom tab bar.
+ * The arrangement lives in src/ui/shell (GameHeader, TickerDock, useShellStyles).
+ */
 export default function GameLayout() {
   useGameLoop();
   useEndNavigation();
+  const shell = useShellStyles();
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom', 'left', 'right']}>
-      <Tabs style={styles.tabs}>
-        <View style={styles.header}>
-          <TopBar />
-          <ResourceRow />
-          <MeterRow />
-        </View>
+      <Tabs style={shell.tabs}>
+        <GameHeader />
         <TabSlot style={styles.slot} />
-        <Ticker />
-        <TabList style={styles.tabBar}>
+        <TickerDock>
+          <Ticker />
+        </TickerDock>
+        <TabList style={shell.tabBar}>
           <TabTrigger name="index" href="/game" asChild>
             <TabButton label={t('ui.tab.map')} />
           </TabTrigger>
@@ -48,8 +52,5 @@ export default function GameLayout() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
-  tabs: { flex: 1 },
-  header: { backgroundColor: colors.bg, borderBottomWidth: 1, borderColor: colors.border },
   slot: { flex: 1 },
-  tabBar: { flexDirection: 'row', backgroundColor: colors.surface, borderTopWidth: 1, borderColor: colors.border },
 });
