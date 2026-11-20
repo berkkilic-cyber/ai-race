@@ -20,7 +20,7 @@ Tone: fictional labs, fictional people, obvious parody. **Never use real company
 - **Currencies:** Hype (from users and headlines; buys tree nodes) and Cash (from products; buys data centres, launches, deals). Compute is a level raised by building data centres and getting GPUs; it caps model capability.
 - **Data centres:** built in a region with Cash; location matters (power cost, strictness, local opposition); events can hit them.
 - **Trees, about 12 nodes each:** Capability (models, GPUs, own chips, robotics: faster adoption and AGI, more backlash), Reach (products, media, partnerships, government deals: new regions, less backlash, costs Cash), Shadow (fake benchmarks, lobbying, politics, poaching: slows regulation and rivals, scandal risk).
-- **Wins:** AGI first; world dependence; monopoly (every rival bought out or eliminated).
+- **Wins:** AGI first; world dependence (40% of the world population using your models); monopoly (every rival bought out or eliminated).
 - **Losses:** banned worldwide; public revolt; a rival reaches AGI first.
 - **Easter eggs:** secret lab names with a perk or headline, very rare event cards, secret achievements, parody nods to AI history and sci-fi. At least 10. None needed to win, none explained in the game.
 
