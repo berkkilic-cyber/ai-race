@@ -6,6 +6,7 @@ import { StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { installDebugHandle } from '@/ui/debug';
+import { InsetsEmulator } from '@/ui/hooks/useInsets';
 import { useAppFonts } from '@/ui/fonts';
 import { colors, themeName } from '@/ui/theme';
 
@@ -20,7 +21,7 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={styles.root}>
       <StatusBar style={themeName === 'paper' ? 'dark' : 'light'} />
-      {ready ? <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }} /> : null}
+      <InsetsEmulator>{ready ? <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }} /> : null}</InsetsEmulator>
     </GestureHandlerRootView>
   );
 }

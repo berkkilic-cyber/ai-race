@@ -13,3 +13,5 @@ export {
 export { useRegionFlashes, FLASH_MS, type FlashTone } from './useRegionFlashes';
 export { useEndNavigation } from './useEndNavigation';
 export { useLayoutMode, layoutModeFor, type LayoutMode } from './useLayoutMode';
+export { useInsets, parseInsetsParam, InsetsEmulator, ZERO_INSETS, type Insets } from './useInsets';
+export { useKeyboardVisible, dismissKeyboardOnTap } from './useKeyboardVisible';
