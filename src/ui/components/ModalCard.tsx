@@ -4,7 +4,7 @@ import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { useInsets } from '../hooks/useInsets';
 import { layoutModeFor } from '../hooks/useLayoutMode';
-import { colors, layer, layout, radius, spacing, type, voice } from '../theme';
+import { colors, flatShadow, layer, layout, radius, shape, spacing, type, voice } from '../theme';
 import { Overlay } from './Overlay';
 
 export interface ModalCardProps {
@@ -58,10 +58,11 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     backgroundColor: colors.surface,
     borderRadius: radius.l,
-    borderWidth: 1,
-    borderColor: colors.border,
+    borderWidth: shape.panel === 'plain' ? 1 : shape.outline,
+    borderColor: shape.panel === 'sticker' ? colors.outline : colors.border,
     borderTopWidth: 4,
     overflow: 'hidden',
+    ...flatShadow(),
   },
   content: { padding: spacing.xl, gap: spacing.m },
   contentWide: { padding: spacing.l, gap: spacing.s },

@@ -22,5 +22,5 @@ export function GameHeader() {
 }
 
 const styles = StyleSheet.create({
-  header: { backgroundColor: colors.bg, borderBottomWidth: StyleSheet.hairlineWidth, borderColor: colors.border },
+  header: { backgroundColor: colors.chrome, borderBottomWidth: StyleSheet.hairlineWidth, borderColor: colors.border },
 });

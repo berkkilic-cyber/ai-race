@@ -284,7 +284,7 @@ export function WorldMap({ geometry, selected, onSelect, focusRegion, defaultSca
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.bg, overflow: 'hidden' },
+  root: { flex: 1, backgroundColor: colors.transparent, overflow: 'hidden' },
   container: { flex: 1, overflow: 'hidden' },
   fill: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
   controls: { position: 'absolute', gap: spacing.s + 2 },

@@ -6,7 +6,7 @@ import { getIncome } from '@/engine';
 import { fmtCompact, fmtPerDay } from '../format';
 import { t } from '../i18n';
 import { useGameStore } from '../store/game';
-import { colors, radius, spacing, tabular, type } from '../theme';
+import { colors, flatShadow, radius, shape, spacing, tabular, type, voice } from '../theme';
 
 /** Current Hype and Hype per day, compact. Re-renders only when the shown figures change. */
 export function HypeBalance() {
@@ -35,11 +35,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: spacing.s,
     borderRadius: radius.s,
-    borderWidth: 1,
-    borderColor: colors.border,
+    borderWidth: shape.panel === 'plain' ? 1 : shape.outline,
+    borderColor: shape.panel === 'sticker' ? colors.outline : colors.border,
     backgroundColor: colors.surface,
+    ...flatShadow(2),
   },
-  label: { color: colors.dim, fontSize: type.xs },
-  value: { color: colors.info, fontSize: type.m, fontWeight: '800', lineHeight: 18, ...tabular },
-  sub: { color: colors.dim, fontSize: type.xs, ...tabular },
+  label: { ...voice.calmLabel, color: colors.dim, fontSize: type.xs },
+  value: { ...(shape.panel === 'plain' ? { fontWeight: '800' as const } : voice.calmNumber), color: colors.info, fontSize: type.m, lineHeight: 18, ...tabular },
+  sub: { ...voice.body, color: colors.dim, fontSize: type.xs, ...tabular },
 });

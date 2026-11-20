@@ -84,7 +84,7 @@ function GameShell() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.bg },
+  root: { flex: 1, backgroundColor: colors.chrome },
   shell: { flex: 1 },
   slot: { flex: 1 },
 });

@@ -7,7 +7,7 @@ import { getNodeCost, type TreeId } from '@/engine';
 
 import { t } from '../i18n';
 import { useGameStore } from '../store/game';
-import { colors, spacing } from '../theme';
+import { colors, shape, spacing } from '../theme';
 import { TREE_ACCENT } from './accent';
 import { layoutTree, type TreeEdge } from './layout';
 import { NodeTile } from './NodeTile';
@@ -118,7 +118,7 @@ function TreeGraphImpl({ tree, flash, onSelect, horizontal, selected, insetRight
             fill="none"
             stroke={tone === 'dim' ? colors.border : accent}
             strokeOpacity={tone === 'ready' ? 0.45 : 1}
-            strokeWidth={tone === 'lit' ? 2.5 : 1.5}
+            strokeWidth={(tone === 'lit' ? 2.5 : 1.5) * EDGE_WEIGHT}
             strokeDasharray={tone === 'ready' ? DASH_READY : undefined}
             strokeLinejoin="round"
           />
@@ -175,6 +175,9 @@ function TreeGraphImpl({ tree, flash, onSelect, horizontal, selected, insetRight
 }
 
 export const TreeGraph = memo(TreeGraphImpl);
+
+/** Connector weight follows the theme's line weight (hairline drawing to thick sticker outlines). */
+const EDGE_WEIGHT = shape.tile === 'schematic' ? 0.6 : shape.tile === 'sticker' ? 1.4 : 1;
 
 const styles = StyleSheet.create({
   root: { flex: 1 },

@@ -3,12 +3,13 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View, type ScrollViewInstance } from 'react-native';
 
 import { Button } from '../components/Button';
+import { Ground } from '../components/Deco';
 import { usePackEntry } from '../hooks/useGame';
 import { useInsets } from '../hooks/useInsets';
 import { dismissKeyboardOnTap, useKeyboardVisible } from '../hooks/useKeyboardVisible';
 import { regionName, t } from '../i18n';
 import { useGameStore } from '../store/game';
-import { colors, spacing } from '../theme';
+import { colors, shape, spacing } from '../theme';
 import { FounderStep } from './FounderStep';
 import { HowToSheet } from './HowToSheet';
 import { defaultHomeRegion, missingText, randomLabName, validateLabName } from './logic';
@@ -147,6 +148,7 @@ export function StartScreen() {
   // height); a tap on the background dismisses the keyboard.
   return (
     <View style={styles.safe} {...dismissKeyboardOnTap}>
+      <Ground />
       <View style={[styles.inset, { paddingTop: insets.top, paddingRight: insets.right, paddingBottom: insets.bottom, paddingLeft: insets.left }]}>
         <KeyboardAvoidingView style={styles.avoid} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} enabled={Platform.OS !== 'web'}>
           {wide ? (
@@ -224,8 +226,9 @@ const styles = StyleSheet.create({
     gap: spacing.l,
     paddingHorizontal: spacing.xl,
     paddingVertical: spacing.s,
-    borderTopWidth: 1,
+    borderTopWidth: shape.hairline,
     borderColor: colors.border,
+    backgroundColor: colors.chrome,
   },
   side: { width: 200, flexDirection: 'row' },
   sideRight: { justifyContent: 'flex-end' },

@@ -2,10 +2,11 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 
-import { contrast, ensureContrast, mixColor } from '../color';
+import { contrast, distinctFrom, ensureContrast, hueDistance, hueOf, mixColor, readableOn, rotateHue } from '../color';
+import { themeFontSources } from '../fonts';
 import { LAB_CONTRAST, readableLabColor } from '../i18n';
 import { getPackEntry } from '../packs';
-import { colors, palettes, resolveThemeName, voice, type Palette } from '../theme';
+import { colors, darkThemes, palettes, resolveThemeName, shapes, THEME_NAMES, themeFontFaces, voice, type Palette, type ThemeName } from '../theme';
 
 const ROOT = path.join(__dirname, '..', '..', '..');
 
@@ -22,12 +23,13 @@ function files(dir: string): string[] {
 }
 
 describe('themes', () => {
-  it('both palettes have identical token names', () => {
-    expect(Object.keys(palettes.night).sort()).toEqual(Object.keys(palettes.paper).sort());
+  it.each(THEME_NAMES)('%s has the same token names as paper', (name) => {
+    expect(Object.keys(palettes[name]).sort()).toEqual(Object.keys(palettes.paper).sort());
+    expect(Object.keys(shapes[name]).sort()).toEqual(Object.keys(shapes.paper).sort());
   });
 
-  it('EXPO_PUBLIC_THEME picks night only when asked; paper is the default', () => {
-    expect(resolveThemeName('night')).toBe('night');
+  it('EXPO_PUBLIC_THEME picks a known theme only when asked; paper is the default', () => {
+    for (const name of THEME_NAMES) expect(resolveThemeName(name)).toBe(name);
     expect(resolveThemeName('paper')).toBe('paper');
     expect(resolveThemeName(undefined)).toBe('paper');
     expect(resolveThemeName('neon')).toBe('paper');
@@ -55,6 +57,28 @@ describe('themes', () => {
     expect(contrast(p.onPlayer, p.player)).toBeGreaterThanOrEqual(3);
   });
 
+  it.each(THEME_NAMES)('%s: every bundled face of the theme is loaded, and nothing else', (name) => {
+    const before = process.env.EXPO_PUBLIC_THEME;
+    process.env.EXPO_PUBLIC_THEME = name;
+    try {
+      const loaded = Object.keys(themeFontSources()).sort();
+      const used = [...new Set(Object.values(themeFontFaces[name]).filter(Boolean))].sort();
+      expect(loaded).toEqual(used);
+    } finally {
+      if (before === undefined) delete process.env.EXPO_PUBLIC_THEME;
+      else process.env.EXPO_PUBLIC_THEME = before;
+    }
+  });
+
+  it('new themes leave the retired look behind: no cream ground, no orange accent, no serif headings', () => {
+    for (const name of ['blueprint', 'hazard', 'candy'] as const) {
+      const hue = hueOf(palettes[name].player);
+      expect(hue === null || hueDistance(hue, 20) > 25).toBe(true);
+      expect(Object.values(themeFontFaces[name]).some((f) => f.startsWith('Fraunces'))).toBe(false);
+      expect(palettes[name].bg).not.toBe(palettes.paper.bg);
+    }
+  });
+
   it('text presets carry the two voices', () => {
     expect(voice.loudHeadline.textTransform).toBe('uppercase');
     expect(voice.loudKicker.textTransform).toBe('uppercase');
@@ -77,6 +101,35 @@ describe('colour helpers', () => {
     expect(contrast(fixed, '#F4EFE6')).toBeGreaterThanOrEqual(4.5);
     expect(fixed).not.toBe('#1D1B18');
     expect(mixColor('#000000', '#ffffff', 0.5)).toBe('#808080');
+  });
+
+  it('rotateHue and distinctFrom move colours around the wheel', () => {
+    expect(hueOf(rotateHue('#FF0000', 120))).toBeCloseTo(120, 0);
+    expect(rotateHue('#808080', 90)).toBe('#808080');
+    const moved = distinctFrom('#F06292', '#FF2E93', 45);
+    expect(hueDistance(hueOf(moved)!, hueOf('#FF2E93')!)).toBeGreaterThanOrEqual(44.5);
+    expect(distinctFrom('#4FC3F7', '#FF2E93', 45)).toBe('#4FC3F7');
+  });
+
+  it.each(THEME_NAMES)('%s: rival colours read, stay apart from the player and from each other', (name: ThemeName) => {
+    const p = palettes[name];
+    const s = shapes[name];
+    const toward = darkThemes[name] ? p.newsPaper : p.text;
+    const { pack } = getPackEntry();
+    const rivals = pack.rivals.map((r) => readableOn(r.color, p, LAB_CONTRAST.graphic, toward, { rival: true, minHue: s.rivalHue, lift: s.rivalLift }));
+    const player = readableOn(p.player, p, LAB_CONTRAST.graphic, toward, { rival: false, minHue: 0, lift: 0 });
+    expect(player).toBe(p.player);
+    for (const c of [...rivals, player]) {
+      expect(contrast(c, p.bg)).toBeGreaterThanOrEqual(LAB_CONTRAST.graphic);
+      expect(contrast(c, p.surface)).toBeGreaterThanOrEqual(LAB_CONTRAST.graphic);
+      // Lit dots stand out from resting ones.
+      expect(contrast(c, p.dotRest)).toBeGreaterThanOrEqual(1.6);
+    }
+    const hp = hueOf(player)!;
+    // Lifting and the contrast step can drift the hue a few degrees after the rotation.
+    if (s.rivalHue > 0) for (const c of rivals) expect(hueDistance(hueOf(c)!, hp)).toBeGreaterThanOrEqual(s.rivalHue - 5);
+    for (let i = 0; i < rivals.length; i++)
+      for (let j = i + 1; j < rivals.length; j++) expect(hueDistance(hueOf(rivals[i])!, hueOf(rivals[j])!)).toBeGreaterThanOrEqual(20);
   });
 
   it('readableLabColor makes every rival colour read on the current theme', () => {

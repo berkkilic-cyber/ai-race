@@ -6,8 +6,8 @@ import eventsStrings from './strings/events.en.json';
 import startStrings from './strings/start.en.json';
 import treesStrings from './strings/trees.en.json';
 import tutorialStrings from './strings/tutorial.en.json';
-import { ensureContrast } from './color';
-import { colors, themeName } from './theme';
+import { readableOn } from './color';
+import { colors, isDark, shape } from './theme';
 
 export type Params = Record<string, string | number>;
 
@@ -131,17 +131,18 @@ export const LAB_CONTRAST = { graphic: 3, text: 4.5 } as const;
 const readableCache = new Map<string, string>();
 
 /**
- * labColor, adjusted so it reads on this theme: rival colours from the pack that are too
- * light for paper are darkened towards ink (too dark for night: lightened towards white).
- * The pack keeps its colours; only the UI adjusts them.
+ * labColor, adjusted so it reads on this theme (color.ts readableOn): rivals move away
+ * from the player's hue and, on themes that ask for it, lift to light tints; colours too
+ * light for a light ground are darkened towards ink (too dark for a dark one: lightened
+ * towards white). The pack keeps its colours; only the UI adjusts them.
  */
 export function readableLabColor(lab: Pick<LabState, 'color' | 'controller'>, use: keyof typeof LAB_CONTRAST = 'graphic'): string {
   const base = labColor(lab);
   const key = `${base}|${use}`;
   let out = readableCache.get(key);
   if (out === undefined) {
-    const toward = themeName === 'night' ? colors.newsPaper : colors.text;
-    out = ensureContrast(base, [colors.bg, colors.surface], LAB_CONTRAST[use], toward);
+    const toward = isDark ? colors.newsPaper : colors.text;
+    out = readableOn(base, colors, LAB_CONTRAST[use], toward, { rival: lab.controller !== 'human', minHue: shape.rivalHue, lift: shape.rivalLift });
     readableCache.set(key, out);
   }
   return out;

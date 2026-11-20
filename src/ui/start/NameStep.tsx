@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { Keyboard, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Keyboard, StyleSheet, Text, TextInput, View, type ViewStyle } from 'react-native';
 
 import { Button } from '../components/Button';
+import { PanelDeco, Stripes } from '../components/Deco';
 import { t } from '../i18n';
 import { Mascot } from '../mascot';
-import { colors, radius, spacing, tabular, touch, type, voice } from '../theme';
+import { colors, flatShadow, radius, shape, spacing, tabular, touch, type, voice } from '../theme';
 import { MAX_LAB_NAME, missingText } from './logic';
 
 export interface NameStepProps {
@@ -31,9 +32,14 @@ export function NameStep({ name, onName, onDice, onHowTo, onSubmit, wide, compac
       {compact ? null : (
         <View style={[styles.hero, wide && styles.pane]}>
           <Mascot mood={name.trim() ? 'pleased' : 'calm'} size={64} />
-          <Text style={styles.title} accessibilityRole="header">
-            {t('ui.start.gameTitle')}
-          </Text>
+          <View style={styles.titleBox}>
+            {shape.panel === 'clip' ? <Stripes height={8} stripe={9} /> : null}
+            <Text style={styles.title} accessibilityRole="header">
+              {t('ui.start.gameTitle')}
+            </Text>
+            {shape.panel === 'clip' ? <Stripes height={8} stripe={9} flip /> : null}
+            {shape.panel === 'ticks' ? <PanelDeco /> : null}
+          </View>
           <Text style={styles.tagline}>{t('ui.start.tagline')}</Text>
         </View>
       )}
@@ -92,8 +98,20 @@ const styles = StyleSheet.create({
   pane: { flex: 1 },
   right: { gap: spacing.l },
   hero: { gap: spacing.s, alignItems: 'center', paddingVertical: spacing.l },
-  title: { ...voice.calmHeading, color: colors.text, fontSize: type.display + 12, lineHeight: type.display + 18, letterSpacing: -1.5, marginTop: spacing.s },
-  tagline: { color: colors.dim, fontSize: type.m, textAlign: 'center', lineHeight: 22, maxWidth: 300 },
+  // The title per shape: a drawing's title block (blueprint), between warning stripes (hazard), a tilted sticker (candy).
+  titleBox: (shape.panel === 'ticks'
+    ? { borderWidth: shape.hairline, borderColor: colors.border, paddingHorizontal: spacing.l, marginTop: spacing.s }
+    : shape.panel === 'sticker'
+      ? { backgroundColor: colors.raised, borderWidth: shape.outline, borderColor: colors.outline, borderRadius: radius.l, paddingHorizontal: spacing.l, marginTop: spacing.s, transform: [{ rotate: '-3deg' }], ...flatShadow(5) }
+      : { marginTop: spacing.s }) as ViewStyle,
+  title: {
+    ...voice.calmHeading,
+    color: colors.text,
+    fontSize: shape.panel === 'clip' ? type.display + 30 : type.display + 12,
+    lineHeight: shape.panel === 'clip' ? type.display + 30 : type.display + 18,
+    letterSpacing: shape.panel === 'ticks' ? 2 : shape.panel === 'clip' ? 1 : -1.5,
+  },
+  tagline: { ...voice.body, color: colors.dim, fontSize: type.m, textAlign: 'center', lineHeight: 22, maxWidth: 300 },
   field: { gap: spacing.s },
   label: { ...voice.calmLabel, color: colors.dim, fontSize: type.xs },
   inputRow: { flexDirection: 'row', gap: spacing.s },
@@ -103,9 +121,9 @@ const styles = StyleSheet.create({
     minWidth: 0,
     minHeight: touch + 8,
     backgroundColor: colors.surface,
-    borderRadius: radius.s,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
+    borderRadius: shape.panel === 'sticker' ? radius.pill : radius.s,
+    borderWidth: shape.panel === 'plain' ? StyleSheet.hairlineWidth : shape.outline,
+    borderColor: shape.panel === 'sticker' ? colors.outline : colors.border,
     color: colors.text,
     ...voice.calmHeading,
     fontSize: type.l + 2,
@@ -114,7 +132,7 @@ const styles = StyleSheet.create({
   inputBad: { borderColor: colors.bad },
   dice: { width: touch + 8, minHeight: touch + 8, paddingHorizontal: 0 },
   metaRow: { flexDirection: 'row', justifyContent: 'space-between', gap: spacing.s },
-  meta: { color: colors.dim, fontSize: type.xs, ...tabular },
+  meta: { ...voice.calmNumber, color: colors.dim, fontSize: type.xs, ...tabular },
   error: { color: colors.bad, flexShrink: 1 },
   howTo: { alignSelf: 'center', paddingHorizontal: spacing.xl },
 });

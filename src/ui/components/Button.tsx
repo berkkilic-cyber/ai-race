@@ -1,6 +1,6 @@
-import { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import { Pressable, StyleSheet, Text, View, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';
 
-import { colors, radius, spacing, touch, type, voice } from '../theme';
+import { colors, flatShadow, radius, shape, spacing, touch, type, voice } from '../theme';
 
 /** primary: the accent, weighted; secondary: quiet outline; ghost: text on a hairline; danger: alarm; ink: the loud voice (tabloid black). */
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'ink';
@@ -37,12 +37,24 @@ const FG: Record<ButtonVariant, string> = {
   ink: colors.newsPaper,
 };
 
-/** Primary and ink buttons stand on a heavier lower edge that they press into. */
-const EDGE = 3;
+/** Primary and ink buttons stand on a heavier lower edge that they press into (theme depth). */
+const EDGE = shape.buttonEdge;
+/** Sticker themes lift buttons on a flat offset shadow instead and press them flat. */
+const LIFT = shape.shadow;
+
+/** Button label per shape language: mono capitals, heavy condensed capitals, rounded bold, system bold. */
+const LABEL: TextStyle =
+  shape.panel === 'ticks'
+    ? { ...voice.calmHeading, fontSize: type.s, letterSpacing: 1 }
+    : shape.panel === 'clip'
+      ? { ...voice.calmHeading, fontSize: type.l, letterSpacing: 1 }
+      : shape.panel === 'sticker'
+        ? { ...voice.bodyStrong, fontSize: type.m + 1 }
+        : { fontSize: type.m, fontWeight: '700' };
 
 export function Button({ label, onPress, variant = 'secondary', disabled, sublabel, compact, selected, accessibilityLabel, testID, style }: ButtonProps) {
   const weighted = variant === 'primary' || variant === 'ink';
-  const fg = selected ? colors.bg : FG[variant];
+  const fg = selected ? colors.bg : disabled && shape.panel !== 'plain' ? colors.dim : FG[variant];
   return (
     <Pressable
       accessibilityRole="button"
@@ -58,11 +70,12 @@ export function Button({ label, onPress, variant = 'secondary', disabled, sublab
         variant === 'secondary' && styles.outline,
         variant === 'ghost' && styles.ghost,
         variant === 'ink' && styles.ink,
-        weighted && styles.weighted,
+        weighted && EDGE > 0 && styles.weighted,
         variant === 'primary' && styles.primaryEdge,
         variant === 'ink' && styles.inkEdge,
+        LIFT > 0 && variant !== 'ghost' && !disabled && styles.lifted,
         disabled && styles.disabled,
-        pressed && !disabled && (weighted ? styles.pressedWeighted : styles.pressed),
+        pressed && !disabled && (LIFT > 0 ? styles.pressedLifted : weighted && EDGE > 0 ? styles.pressedWeighted : styles.pressed),
         style,
       ]}
     >
@@ -84,26 +97,32 @@ const styles = StyleSheet.create({
   base: {
     minHeight: touch,
     minWidth: touch,
-    borderRadius: radius.s,
+    borderRadius: shape.panel === 'sticker' ? radius.pill : radius.s,
+    // Strong outlines on every button where the theme draws them (blueprint linework, hazard, candy ink).
+    borderWidth: shape.panel === 'plain' ? 0 : shape.outline,
+    borderColor: shape.panel === 'plain' ? colors.transparent : colors.outline,
     paddingHorizontal: spacing.l,
     paddingVertical: spacing.s,
     justifyContent: 'center',
     alignItems: 'center',
   },
   compact: { paddingHorizontal: spacing.s, paddingVertical: spacing.xs },
-  outline: { borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border },
-  ghost: { borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border },
+  outline: { borderWidth: shape.panel === 'plain' ? StyleSheet.hairlineWidth : shape.outline, borderColor: shape.panel === 'plain' ? colors.border : colors.outline },
+  ghost: { borderWidth: shape.hairline, borderColor: colors.border },
   ink: { borderRadius: radius.none },
   weighted: { borderBottomWidth: EDGE },
-  primaryEdge: { borderBottomColor: colors.playerDeep },
-  inkEdge: { borderBottomColor: colors.newsRed },
-  disabled: { opacity: 0.55 },
+  primaryEdge: shape.panel === 'plain' ? { borderBottomColor: colors.playerDeep } : { borderColor: shape.panel === 'sticker' ? colors.outline : colors.player, borderBottomColor: EDGE > 0 ? colors.playerDeep : shape.panel === 'sticker' ? colors.outline : colors.player },
+  lifted: flatShadow(LIFT),
+  pressedLifted: { transform: [{ translateX: LIFT }, { translateY: LIFT }], boxShadow: 'none' },
+  inkEdge: { borderColor: colors.newsInk, borderBottomColor: shape.composure === 'tape' ? colors.stripeA : colors.newsRed },
+  // Soft themes fade a disabled button; the others draw it as a dashed outline (no muddy half-tones).
+  disabled: shape.panel === 'plain' ? { opacity: 0.55 } : { backgroundColor: colors.transparent, borderStyle: 'dashed', borderColor: colors.dim, borderBottomColor: colors.dim, borderBottomWidth: shape.outline },
   pressed: { backgroundColor: colors.raised, transform: [{ translateY: 1 }] },
   pressedWeighted: { borderBottomWidth: 0, marginTop: EDGE, transform: [{ translateY: 0 }] },
   inner: { alignItems: 'center' },
-  label: { fontSize: type.m, fontWeight: '700' },
-  labelCompact: { fontSize: type.s },
+  label: LABEL,
+  labelCompact: { fontSize: (LABEL.fontSize ?? type.m) - 2 },
   labelInk: { ...voice.loudKicker, fontWeight: 'normal', fontSize: 19, lineHeight: 22, letterSpacing: 1.6 },
-  sub: { fontSize: type.xs, marginTop: 2, textAlign: 'center', opacity: 0.9 },
+  sub: { ...voice.body, fontSize: type.xs, marginTop: 2, textAlign: 'center', opacity: 0.9 },
   subDim: { color: colors.dim, opacity: 1 },
 });

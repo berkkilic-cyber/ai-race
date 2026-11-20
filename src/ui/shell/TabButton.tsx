@@ -3,7 +3,8 @@ import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { useLayoutMode } from '../hooks/useLayoutMode';
-import { colors, layout, spacing, touch, type, voice } from '../theme';
+import { PanelDeco } from '../components/Deco';
+import { colors, flatShadow, layout, radius, shape, spacing, touch, type, voice } from '../theme';
 import { useTutorialTarget } from '../tutorial/targets';
 
 export type TabButtonProps = TabTriggerSlotProps & {
@@ -36,8 +37,9 @@ export function TabButton({ label, badge, isFocused, targetId, ref: _ref, ...pro
       accessibilityState={{ selected: !!isFocused }}
     >
       <View style={StyleSheet.absoluteFill} pointerEvents="none" ref={tutorialRef} />
-      {isFocused ? <View style={wide ? styles.markWide : styles.markNarrow} /> : null}
-      <View style={wide ? styles.labelBoxWide : null}>
+      {isFocused && !BOXED ? <View style={wide ? styles.markWide : styles.markNarrow} /> : null}
+      <View style={[wide ? styles.labelBoxWide : null, BOXED && styles.box, BOXED && isFocused && styles.boxFocused]}>
+        {BOXED && isFocused && shape.panel === 'ticks' ? <PanelDeco /> : null}
         <Text style={[styles.label, isFocused && styles.focused]} numberOfLines={1} maxFontSizeMultiplier={1.2}>
           {label}
         </Text>
@@ -47,13 +49,23 @@ export function TabButton({ label, badge, isFocused, targetId, ref: _ref, ...pro
   );
 }
 
+/** Themes whose active tab is a box (title box, yellow plate, sticker) rather than a rule. */
+const BOXED = shape.panel !== 'plain';
+
 const styles = StyleSheet.create({
   tab: { flex: 1, minHeight: touch, alignItems: 'center', justifyContent: 'center', paddingVertical: spacing.s },
   tabWide: { height: layout.railItemHeight, alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center' },
   labelBoxWide: { maxWidth: layout.railWidth - 6, flexShrink: 0 },
   pressed: { opacity: 0.6 },
-  label: { ...voice.calmHeading, color: colors.dim, fontSize: type.s + 1, lineHeight: type.s + 5, textAlign: 'center' },
-  focused: { color: colors.text },
+  label: { ...voice.calmHeading, color: colors.dim, fontSize: shape.panel === 'ticks' ? 10 : shape.panel === 'clip' ? type.m - 1 : shape.panel === 'sticker' ? type.s : type.s + 1, letterSpacing: shape.panel === 'plain' ? voice.calmHeading.letterSpacing : 0, lineHeight: type.s + 5, textAlign: 'center' },
+  focused: { color: shape.panel === 'clip' || shape.panel === 'sticker' ? colors.onPlayer : colors.text },
+  box: { paddingHorizontal: shape.panel === 'ticks' ? 3 : 5, paddingVertical: 3, borderRadius: radius.pill, borderWidth: shape.hairline, borderColor: colors.transparent },
+  boxFocused:
+    shape.panel === 'ticks'
+      ? { borderColor: colors.border, backgroundColor: colors.surface }
+      : shape.panel === 'clip'
+        ? { backgroundColor: colors.player, borderColor: colors.player }
+        : { backgroundColor: colors.player, borderColor: colors.outline, borderWidth: shape.outline, paddingHorizontal: 4, ...flatShadow(2) },
   markWide: { position: 'absolute', left: 0, top: 16, bottom: 16, width: 3, backgroundColor: colors.player },
   markNarrow: { position: 'absolute', bottom: 4, width: 18, height: 2, backgroundColor: colors.player },
   badge: { position: 'absolute', top: -8, left: '100%', marginLeft: 2 },

@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { t } from '../i18n';
-import { colors, radius, spacing, type } from '../theme';
+import { colors, radius, spacing, type, voice } from '../theme';
 
 export interface StepIndicatorProps {
   /** Caption of each step. */
@@ -53,7 +53,7 @@ const styles = StyleSheet.create({
   item: { flex: 1, gap: spacing.xs, paddingVertical: spacing.xs },
   bar: { height: 4, borderRadius: radius.pill, backgroundColor: colors.raised },
   barOn: { backgroundColor: colors.player },
-  label: { color: colors.dim, fontSize: type.s },
-  labelCurrent: { color: colors.text, fontWeight: '700' },
+  label: { ...voice.body, color: colors.dim, fontSize: type.s },
+  labelCurrent: { ...voice.bodyStrong, color: colors.text },
   labelDone: { color: colors.playerText },
 });

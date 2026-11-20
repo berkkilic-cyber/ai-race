@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { StyleSheet, Text, View, useWindowDimensions, type ViewStyle } from 'react-native';
 import Animated, { interpolateColor, useAnimatedStyle } from 'react-native-reanimated';
 
 import { CountingNumber } from '../components/CountingNumber';
@@ -10,7 +10,8 @@ import { useInsets } from '../hooks/useInsets';
 import { labName, t } from '../i18n';
 import { Mascot, useMascotMood } from '../mascot';
 import { useGameStore } from '../store/game';
-import { colors, layout, spacing, voice } from '../theme';
+import { PanelDeco, Stripes } from '../components/Deco';
+import { colors, flatShadow, layout, radius, shape, spacing, voice } from '../theme';
 import { useTutorialTarget } from '../tutorial/targets';
 import { wideShellLayout } from './shellLayout';
 import { StripMeter } from './StripMeter';
@@ -20,6 +21,10 @@ const METER_MIN = 54;
 
 /** Below this strip width the cash income sub-label is dropped so nothing wraps or clips. */
 const ROOM_FOR_INCOME = 880;
+
+/** Hazard: the strip stands on a thin band of warning stripes. */
+const TAPE = 4;
+const sticker = shape.panel === 'sticker';
 
 const fmtTier = (tier: number) => t('ui.resource.tier', { tier: Math.round(tier) });
 
@@ -56,8 +61,8 @@ export function TopStrip({ right }: { right?: ReactNode }) {
 
   return (
     <View style={styles.strip}>
-      <View style={styles.brand}>
-        <Mascot mood={mood} size={26} testID="mascot" />
+      <View style={[styles.brand, styles.brandBox]}>
+        <Mascot mood={mood} size={shape.mascot === 'square' ? 26 : 28} testID="mascot" />
         <View style={styles.title}>
           <Text style={styles.name} numberOfLines={1}>
             {name}
@@ -66,9 +71,10 @@ export function TopStrip({ right }: { right?: ReactNode }) {
             {fmtDay(tick)}
           </Text>
         </View>
+        {shape.panel === 'ticks' ? <PanelDeco /> : null}
       </View>
       <View style={styles.rule} />
-      <View style={styles.stats} ref={resourcesRef}>
+      <View style={[styles.stats, styles.group]} ref={resourcesRef}>
         <Stat label={t('term.hype')} target="shell.hype" testID="res-hype" a11y={fmtCompact(r.hype)}>
           <CountingNumber value={r.hype} format={fmtCompact} notable={Math.max(2, Math.abs(r.hypePerDay) * 3)} style={styles.value} />
         </Stat>
@@ -90,12 +96,13 @@ export function TopStrip({ right }: { right?: ReactNode }) {
         </Stat>
       </View>
       <View style={styles.rule} />
-      <View style={styles.meters} ref={metersRef}>
+      <View style={[styles.meters, styles.group]} ref={metersRef}>
         <StripMeter label={t('term.regulation')} value={m.regulation} color={colors.info} tag={tagFor('regulation')} testID="meter-regulation" />
         <StripMeter label={t('term.backlash')} value={m.backlash} color={colors.alarm} tag={tagFor('backlash')} testID="meter-backlash" />
         <StripMeter label={t('term.rival')} value={m.rival} color={colors.amber} tag={tagFor('rival')} testID="meter-rival" />
       </View>
       {right}
+      {shape.composure === 'tape' ? <Stripes height={TAPE} stripe={5} style={styles.tape} /> : null}
       <Animated.View style={[styles.composureRule, ruleStyle]} pointerEvents="none" testID="composure-rule" />
     </View>
   );
@@ -121,21 +128,29 @@ const styles = StyleSheet.create({
     gap: 10,
     paddingLeft: spacing.s,
     paddingRight: spacing.s,
-    backgroundColor: colors.bg,
+    paddingBottom: shape.composure === 'tape' ? TAPE : 0,
+    backgroundColor: colors.chrome,
   },
   brand: { flexDirection: 'row', alignItems: 'center', gap: 7, flexShrink: 1, minWidth: 90, maxWidth: 196 },
+  // Blueprint: the lab sits in a drawing's title block.
+  brandBox: (shape.panel === 'ticks' ? { borderWidth: shape.hairline, borderColor: colors.border, paddingHorizontal: 6, paddingVertical: 2, marginVertical: 4, alignSelf: 'stretch' } : {}) as ViewStyle,
   title: { flexShrink: 1, minWidth: 0 },
-  name: { ...voice.calmHeading, color: colors.text, fontSize: 15, lineHeight: 18 },
-  day: { ...voice.calmLabel, color: colors.dim, lineHeight: 12, fontVariant: ['tabular-nums'] },
-  rule: { width: StyleSheet.hairlineWidth, alignSelf: 'stretch', marginVertical: 8, backgroundColor: colors.border },
-  stats: { flexDirection: 'row', gap: 10, flexShrink: 0 },
+  name: { ...voice.calmHeading, color: colors.text, fontSize: shape.capsHeadings ? (shape.panel === 'clip' ? 19 : 13) : 15, lineHeight: shape.panel === 'clip' ? 20 : 17 },
+  day: { ...voice.calmLabel, color: shape.panel === 'clip' ? colors.playerText : colors.dim, lineHeight: 12, fontVariant: ['tabular-nums'] },
+  rule: { width: shape.hairline, alignSelf: 'stretch', marginVertical: 8, backgroundColor: colors.border, opacity: sticker ? 0 : 1 },
+  stats: { flexDirection: 'row', gap: shape.panel === 'clip' ? 12 : 10, flexShrink: 0 },
+  // Candy: resources and meters are two stickers.
+  group: (sticker
+    ? { backgroundColor: colors.surface, borderWidth: shape.outline, borderColor: colors.outline, borderRadius: radius.s, paddingHorizontal: 10, paddingVertical: 1, marginVertical: 3, alignSelf: 'stretch', ...flatShadow(2) }
+    : {}) as ViewStyle,
   stat: { justifyContent: 'center', gap: 1 },
-  statLabel: { ...voice.calmLabel, color: colors.dim, fontSize: 9.5, lineHeight: 11, letterSpacing: 0.3 },
+  statLabel: { ...voice.calmLabel, color: colors.dim, fontSize: 9.5, lineHeight: 11, letterSpacing: voice.calmLabel.letterSpacing },
   valueRow: { flexDirection: 'row', alignItems: 'baseline', gap: spacing.xs },
-  value: { ...voice.calmNumber, color: colors.text, fontSize: 16, lineHeight: 19 },
+  value: { ...voice.calmNumber, color: colors.text, fontSize: shape.panel === 'clip' ? 19 : shape.panel === 'ticks' ? 15 : 16, lineHeight: shape.panel === 'clip' ? 20 : 19 },
   tier: { color: colors.playerText },
-  sub: { fontSize: 10, fontVariant: ['tabular-nums'] },
+  sub: { ...voice.body, fontSize: 10, fontVariant: ['tabular-nums'] },
   // The lab name gives way before the meters do.
   meters: { flex: 1, minWidth: 3 * METER_MIN + 2 * spacing.s, flexDirection: 'row', gap: spacing.s + 2 },
-  composureRule: { position: 'absolute', left: 0, right: 0, bottom: 0 },
+  tape: { position: 'absolute', left: 0, right: 0, bottom: 0 },
+  composureRule: { position: 'absolute', left: 0, right: 0, bottom: shape.composure === 'tape' ? TAPE : 0 },
 });

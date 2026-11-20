@@ -8,7 +8,17 @@
  *
  * Writes docs/screenshots/style/<theme>-<name>.png: map-calm, map-midgame, map-critical,
  * map-panel, event-card, event-result, trees, start, end. THEME only names the files: the
- * palette is baked into dist/ at export time. Serves dist/ in-process and drives headless
+ * palette is baked into dist/ at export time.
+ *
+ * Theme mode builds and captures several themes in one go, then composes comparison sheets:
+ *
+ *   THEMES=blueprint,hazard,candy SCALE=2 node scripts/screens/style.js
+ *
+ * For each theme it runs `npx expo export --platform web --clear` with EXPO_PUBLIC_THEME set,
+ * captures into docs/screenshots/themes/<theme>-<name>.png, and finally writes
+ * docs/screenshots/themes/compare-<name>.png (the themes stacked vertically, each labelled)
+ * for map-midgame and event-card. SKIP_BUILD=1 reuses the dist/ already there (one theme only).
+ * COMPARE_ONLY=1 only recomposes the comparison sheets from existing shots. Serves dist/ in-process and drives headless
  * Chrome through the `?debug=1` handle (window.__game); the server and browser are closed
  * before exiting. Env: CHROME (default /usr/bin/google-chrome), PORT (default 8767),
  * SEED (default 7), SCALE (device pixel ratio, default 1), MEASURE=0 to skip the render measurement.
@@ -21,7 +31,12 @@ const puppeteer = require('puppeteer-core');
 const ROOT = path.join(__dirname, '..', '..');
 const DIST = path.join(ROOT, 'dist');
 const OUT = path.resolve(process.argv[2] || path.join(ROOT, 'docs', 'screenshots', 'style'));
-const THEME = process.env.THEME || 'paper';
+const { spawnSync } = require('node:child_process');
+
+let THEME = process.env.THEME || 'paper';
+const THEMES = (process.env.THEMES || '').split(',').map((s) => s.trim()).filter(Boolean);
+/** Screens stacked into comparison sheets in theme mode. */
+const COMPARE = ['map-midgame', 'event-card'];
 const PORT = Number(process.env.PORT || 8767);
 const SEED = Number(process.env.SEED || 7);
 const CHROME = process.env.CHROME || '/usr/bin/google-chrome';
@@ -51,7 +66,7 @@ function serve() {
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-async function main() {
+async function capture(OUT) {
   if (!fs.existsSync(DIST)) throw new Error('dist/ not found: run `npx expo export --platform web` first');
   fs.mkdirSync(OUT, { recursive: true });
   const server = await serve();
@@ -84,7 +99,8 @@ async function main() {
       }, eventId);
     const clickRegion = async (regionId) => {
       const target = await game((regionId) => {
-        const svg = [...document.querySelectorAll('svg')].sort((a, b) => b.getBoundingClientRect().width - a.getBoundingClientRect().width)[0];
+        // The largest SVG with a viewBox is the map (theme grounds are plain full-size SVGs without one).
+        const svg = [...document.querySelectorAll('svg')].filter((s) => s.viewBox && s.viewBox.baseVal && s.viewBox.baseVal.width > 0).sort((a, b) => b.getBoundingClientRect().width - a.getBoundingClientRect().width)[0];
         const vb = svg.viewBox.baseVal;
         const r = svg.getBoundingClientRect();
         const k = Math.min(r.width / vb.width, r.height / vb.height);
@@ -218,6 +234,57 @@ async function main() {
     console.log('Page errors:');
     for (const e of [...new Set(errors)]) console.log(`  ${e}`);
   }
+}
+
+function build(theme) {
+  console.log(`building ${theme} ...`);
+  const r = spawnSync('npx', ['expo', 'export', '--platform', 'web', '--clear'], { cwd: ROOT, env: { ...process.env, EXPO_PUBLIC_THEME: theme }, stdio: ['ignore', 'ignore', 'inherit'] });
+  if (r.status !== 0) throw new Error(`expo export failed for ${theme}`);
+}
+
+/** Stacks one screen of every theme vertically with a small label on each, via headless Chrome. */
+async function compose(dir, themes) {
+  const browser = await puppeteer.launch({ executablePath: CHROME, headless: true, args: ['--no-sandbox', '--disable-gpu'] });
+  try {
+    const page = await browser.newPage();
+    for (const name of COMPARE) {
+      const files = themes.map((th) => path.join(dir, `${th}-${name}.png`)).filter((f) => fs.existsSync(f));
+      if (!files.length) continue;
+      const rows = files
+        .map((f, i) => {
+          const data = fs.readFileSync(f).toString('base64');
+          return `<figure><img src="data:image/png;base64,${data}"><figcaption>${themes[i]}</figcaption></figure>`;
+        })
+        .join('');
+      const html = `<!doctype html><html><head><style>
+        body{margin:0;background:#202124;font:600 22px/1 ui-monospace,Menlo,monospace;}
+        figure{position:relative;margin:0 0 12px 0;width:${VIEW.width * SCALE}px;}
+        figure:last-child{margin-bottom:0}
+        img{display:block;width:${VIEW.width * SCALE}px;height:${VIEW.height * SCALE}px;}
+        figcaption{position:absolute;right:10px;bottom:10px;padding:5px 10px;background:#202124;color:#fff;letter-spacing:1px;text-transform:uppercase;}
+      </style></head><body>${rows}</body></html>`;
+      await page.setViewport({ width: VIEW.width * SCALE, height: 100, deviceScaleFactor: 1 });
+      await page.setContent(html, { waitUntil: 'load' });
+      const file = path.join(dir, `compare-${name}.png`);
+      await page.screenshot({ path: file, fullPage: true });
+      console.log(`saved ${path.relative(ROOT, file)}`);
+    }
+  } finally {
+    await browser.close();
+  }
+}
+
+async function main() {
+  if (!THEMES.length) return capture(OUT);
+  const dir = path.resolve(process.argv[2] || path.join(ROOT, 'docs', 'screenshots', 'themes'));
+  if (process.env.COMPARE_ONLY !== '1') {
+    for (const th of THEMES) {
+      THEME = th;
+      if (process.env.SKIP_BUILD !== '1') build(th);
+      await capture(dir);
+    }
+  }
+  await compose(dir, THEMES);
 }
 
 main().catch((err) => {

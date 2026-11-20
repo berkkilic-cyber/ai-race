@@ -10,7 +10,7 @@ import { ErrorBoundary } from '@/ui/diagnostics/ErrorBoundary';
 import { installGlobalErrorHandlers } from '@/ui/diagnostics/log';
 import { InsetsEmulator } from '@/ui/hooks/useInsets';
 import { useAppFonts } from '@/ui/fonts';
-import { colors, themeName } from '@/ui/theme';
+import { colors, isDark } from '@/ui/theme';
 
 installGlobalErrorHandlers();
 installDebugHandle();
@@ -23,7 +23,7 @@ export default function RootLayout() {
   }, [ready]);
   return (
     <GestureHandlerRootView style={styles.root}>
-      <StatusBar style={themeName === 'paper' ? 'dark' : 'light'} />
+      <StatusBar style={isDark ? 'light' : 'dark'} />
       <InsetsEmulator>
         <ErrorBoundary>{ready ? <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }} /> : null}</ErrorBoundary>
       </InsetsEmulator>

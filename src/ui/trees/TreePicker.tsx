@@ -7,7 +7,7 @@ import type { TreeId } from '@/engine';
 import { t } from '../i18n';
 import { useGameStore } from '../store/game';
 import { useTutorialTarget } from '../tutorial/targets';
-import { colors, radius, spacing, tabular, touch, type } from '../theme';
+import { colors, flatShadow, radius, shape, spacing, tabular, touch, type, voice } from '../theme';
 import { TREE_ACCENT } from './accent';
 import { TREES } from './status';
 import { useBuyableByTree } from './useBuyableNodeCount';
@@ -89,18 +89,19 @@ const styles = StyleSheet.create({
   segment: {
     flex: 1,
     minHeight: touch + 8,
-    borderRadius: radius.s,
-    borderWidth: 1,
-    borderColor: colors.border,
+    borderRadius: shape.panel === 'sticker' ? radius.pill : radius.s,
+    borderWidth: shape.panel === 'plain' ? 1 : shape.outline,
+    borderColor: shape.panel === 'sticker' ? colors.outline : colors.border,
     backgroundColor: colors.surface,
+    ...flatShadow(2),
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: spacing.xs,
     overflow: 'hidden',
   },
-  bar: { position: 'absolute', top: 0, left: 0, right: 0, height: 3 },
-  name: { color: colors.dim, fontSize: type.s, fontWeight: '700' },
-  count: { color: colors.dim, fontSize: type.xs, ...tabular },
+  bar: { position: 'absolute', top: 0, left: 0, right: 0, height: shape.panel === 'clip' ? 5 : 3 },
+  name: { ...(shape.panel === 'plain' ? { fontWeight: '700' as const } : voice.calmHeading), color: colors.dim, fontSize: shape.panel === 'clip' ? type.l : type.s },
+  count: { ...voice.calmNumber, color: colors.dim, fontSize: type.xs, ...tabular },
   countActive: { color: colors.text },
   dot: { position: 'absolute', top: 7, right: 7, width: 7, height: 7, borderRadius: 4 },
 });
