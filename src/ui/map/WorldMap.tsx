@@ -13,7 +13,7 @@ import { OverlayLayer } from './OverlayLayer';
 import { createHitTester } from './hitTest';
 import { RegionLayer } from './RegionLayer';
 import { SitesLayer } from './SitesLayer';
-import { centreOn, clampScale, clampTranslate, fit, toMapPoint, zoomAbout, type Layout } from './viewTransform';
+import { centreOn, clampScale, clampTranslate, fit, fitWorld, toMapPoint, zoomAbout, type Layout } from './viewTransform';
 
 export interface WorldMapProps {
   geometry: MapGeometry;
@@ -21,8 +21,20 @@ export interface WorldMapProps {
   onSelect: (regionId: string) => void;
   /** Region the default view centres on (the player's home). */
   focusRegion?: string;
-  /** Zoom of the reset view. Default: just enough for the map to fill the container's height. */
+  /** Zoom of the reset view in 'focus' mode. Default: just enough for the map to fill the container's height. */
   defaultScale?: number;
+  /**
+   * Default (and reset) view: 'focus' zooms to fill the container and centres focusRegion;
+   * 'world' fits the whole world into the container. Default 'focus'.
+   */
+  defaultView?: 'focus' | 'world';
+  /**
+   * Width covered on the right by an overlay (the side panel). While it is non-zero and a
+   * region is selected, the map pans so the selection is centred in the uncovered part.
+   */
+  insetRight?: number;
+  /** Where the zoom buttons sit. Default 'topRight'. */
+  controls?: 'topRight' | 'bottomLeft';
 }
 
 /** Regions smaller than this (map units²) also take taps within HIT_RADIUS of their centroid. */
@@ -36,7 +48,7 @@ const BUTTON_ZOOM = 1.6;
  * moved by a view transform. Pan and pinch on touch, drag and wheel on web,
  * double tap or the reset button to return to the default view.
  */
-export function WorldMap({ geometry, selected, onSelect, focusRegion, defaultScale }: WorldMapProps) {
+export function WorldMap({ geometry, selected, onSelect, focusRegion, defaultScale, defaultView = 'focus', insetRight = 0, controls = 'topRight' }: WorldMapProps) {
   const regionIds = useMemo(() => Object.keys(geometry.regions), [geometry]);
   const hitTester = useMemo(() => createHitTester(geometry, SMALL_REGION_AREA, HIT_RADIUS), [geometry]);
   const [size, setSize] = useState({ w: 0, h: 0 });
@@ -52,6 +64,7 @@ export function WorldMap({ geometry, selected, onSelect, focusRegion, defaultSca
 
   const computeHome = useCallback(
     (l: Layout): [number, number, number] => {
+      if (defaultView === 'world') return fitWorld(l);
       const focus = focusRegion ? geometry.regions[focusRegion] : undefined;
       const { k } = fit(l);
       const s = clampScale(defaultScale ?? Math.max(l.cw / (l.mw * k), l.ch / (l.mh * k)));
@@ -59,7 +72,7 @@ export function WorldMap({ geometry, selected, onSelect, focusRegion, defaultSca
       const [x, y] = centreOn(l, s, focus.centroid[0], focus.centroid[1]);
       return [s, x, y];
     },
-    [focusRegion, geometry, defaultScale],
+    [focusRegion, geometry, defaultScale, defaultView],
   );
 
   const onLayout = useCallback(
@@ -68,7 +81,7 @@ export function WorldMap({ geometry, selected, onSelect, focusRegion, defaultSca
       if (width === size.w && height === size.h) return;
       const first = size.w === 0;
       setSize({ w: width, h: height });
-      const l: Layout = { cw: width, ch: height, mw: geometry.width, mh: geometry.height };
+      const l: Layout = { cw: width, ch: height, mw: geometry.width, mh: geometry.height, insetRight };
       layout.set(l);
       const h = computeHome(l);
       home.set(h);
@@ -82,15 +95,35 @@ export function WorldMap({ geometry, selected, onSelect, focusRegion, defaultSca
         ty.set(y);
       }
     },
-    [size, geometry, computeHome, layout, home, scale, tx, ty],
+    [size, geometry, computeHome, layout, home, scale, tx, ty, insetRight],
   );
 
+  // The side panel opened, closed or changed selection: keep the selection centred in the
+  // uncovered part of the map, or settle back into the full container.
+  const focusId = insetRight > 0 ? selected : null;
+  useEffect(() => {
+    if (size.w === 0) return;
+    const l: Layout = { ...layout.get(), insetRight };
+    layout.set(l);
+    const region = focusId ? geometry.regions[focusId] : undefined;
+    const [x, y] = region ? centreOn(l, scale.get(), region.centroid[0], region.centroid[1]) : clampTranslate(l, scale.get(), tx.get(), ty.get());
+    tx.set(withTiming(x));
+    ty.set(withTiming(y));
+  }, [insetRight, focusId, size, geometry, layout, scale, tx, ty]);
+
   const resetView = useCallback(() => {
-    const [s, x, y] = home.get();
+    const l = layout.get();
+    const region = focusId ? geometry.regions[focusId] : undefined;
+    // With the panel open, the reset view keeps the selection in sight beside it.
+    let [s, x, y] = home.get();
+    if (region && defaultView === 'world') {
+      s = 1;
+      [x, y] = centreOn(l, s, region.centroid[0], region.centroid[1]);
+    }
     scale.set(withTiming(s));
     tx.set(withTiming(x));
     ty.set(withTiming(y));
-  }, [home, scale, tx, ty]);
+  }, [home, scale, tx, ty, layout, focusId, geometry, defaultView]);
 
   const zoomBy = useCallback(
     (factor: number, fx?: number, fy?: number) => {
@@ -136,13 +169,9 @@ export function WorldMap({ geometry, selected, onSelect, focusRegion, defaultSca
     });
 
   const doubleTap = Gesture.Tap()
+    .runOnJS(true)
     .numberOfTaps(2)
-    .onEnd(() => {
-      const [s, x, y] = home.get();
-      scale.set(withTiming(s));
-      tx.set(withTiming(x));
-      ty.set(withTiming(y));
-    });
+    .onEnd(() => resetView());
 
   // Taps are hit-tested in JS (instead of onPress on each path) so a drag never selects a region.
   const select = useCallback(
@@ -197,7 +226,7 @@ export function WorldMap({ geometry, selected, onSelect, focusRegion, defaultSca
           ) : null}
         </View>
       </GestureDetector>
-      <View style={styles.controls} pointerEvents="box-none">
+      <View style={[styles.controls, controls === 'bottomLeft' ? styles.bottomLeft : styles.topRight]} pointerEvents="box-none">
         <Button label="+" compact onPress={() => zoomBy(BUTTON_ZOOM)} accessibilityLabel={t('ui.map.zoomIn')} style={styles.ctrl} />
         <Button label="−" compact onPress={() => zoomBy(1 / BUTTON_ZOOM)} accessibilityLabel={t('ui.map.zoomOut')} style={styles.ctrl} />
         <Button label="⟲" compact onPress={resetView} accessibilityLabel={t('ui.map.reset')} style={styles.ctrl} testID="map-reset" />
@@ -210,6 +239,8 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg, overflow: 'hidden' },
   container: { flex: 1, overflow: 'hidden' },
   fill: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
-  controls: { position: 'absolute', right: spacing.s, top: spacing.s, gap: spacing.s },
+  controls: { position: 'absolute', gap: spacing.s },
+  topRight: { right: spacing.s, top: spacing.s },
+  bottomLeft: { left: spacing.s, bottom: spacing.s },
   ctrl: { width: 44, height: 44, paddingHorizontal: 0, opacity: 0.9 },
 });
