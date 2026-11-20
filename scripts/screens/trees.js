@@ -105,7 +105,7 @@ async function main() {
         if (tab && tab.parentElement) tab.parentElement.style.display = 'none';
         const root = document.getElementById('root');
         if (root) Object.assign(root.style, { boxSizing: 'border-box', paddingLeft: '56px', paddingTop: '40px' });
-        document.body.style.background = '#0B1620';
+        document.body.style.background = root ? getComputedStyle(root.firstElementChild || root).backgroundColor : '';
         const sheet = document.querySelector('[data-testid="node-sheet"]');
         if (sheet) Object.assign(sheet.style, { left: 'auto', width: '360px', top: '0px', maxHeight: 'none', borderTopRightRadius: '0px', borderBottomLeftRadius: '16px' });
       });

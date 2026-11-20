@@ -87,20 +87,21 @@ async function main() {
     await advance(600, { bot: true });
     await sleep(1500);
     await shot('03-map-600.png');
-    // Tap the player's home region: its data centre dot (in the player colour) sits on it.
+    // Tap the player's home region at its marker point (map units -> screen through the SVG box).
     const home = await page.evaluate(() => {
       const s = window.__game.store.getState().state;
       return s.labs[s.playerLabId].homeRegion;
     });
-    const dot = await page.evaluate(() => {
-      const c = [...document.querySelectorAll('circle')].find((el) => (el.getAttribute('fill') || '').toLowerCase() === '#f2b544');
-      if (!c) return null;
-      const r = c.getBoundingClientRect();
-      return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
+    const geometry = JSON.parse(fs.readFileSync(path.join(ROOT, 'src/content/packs/ai-lab/geometry.json'), 'utf8'));
+    const box = await page.evaluate(() => {
+      const svg = [...document.querySelectorAll('svg')].sort((a, b) => b.getBoundingClientRect().width - a.getBoundingClientRect().width)[0];
+      const r = svg.getBoundingClientRect();
+      const vb = svg.viewBox.baseVal;
+      return { x: r.x, y: r.y, width: r.width, height: r.height, vw: vb.width, vh: vb.height };
     });
-    const svg = await page.$('svg');
-    const box = await svg.boundingBox();
-    const target = dot ?? { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+    const k = Math.min(box.width / box.vw, box.height / box.vh);
+    const [cx, cy] = geometry.regions[home].centroid;
+    const target = { x: box.x + (box.width - box.vw * k) / 2 + cx * k - 6, y: box.y + (box.height - box.vh * k) / 2 + cy * k - 6 };
     await page.mouse.click(target.x + 6, target.y + 6);
     await sleep(800);
     console.log(`home region: ${home}`);
