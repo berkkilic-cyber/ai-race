@@ -10,7 +10,7 @@ import { maybeAddHeadline, maybeDrawEvent } from './events';
 import { applyProgressAndMeters, applyThresholdBans, checkElimination } from './meters';
 import { expireTimedModifiers, labModifierTable } from './modifiers';
 import { ENGINE_NEWS_KEYS, pushNews } from './news';
-import { baseAppealOf, decayEliminated, spreadLab, type LabTickInfo } from './spread';
+import { baseAppealOf, decayEliminated, spreadLab, spreadMultipliersOf, type LabTickInfo } from './spread';
 import type { ContentPack, GameState, LabState } from './types';
 import { loadWorkspace, storeWorkspace, usersFromArrays, type Workspace } from './workspace';
 import { max, min, round } from './natives';
@@ -51,7 +51,7 @@ function tickInfo(lab: LabState, context: EngineContext, tick: number): LabTickI
   const mods = labModifierTable(lab, context, tick);
   const compute = computeOf(lab, context, tick, mods);
   const capability = min(ownedCapability(lab, context), cachedCapabilityCap(compute, context));
-  return { mods, compute, capability, baseAppeal: baseAppealOf(lab, capability, context) };
+  return { mods, compute, capability, baseAppeal: baseAppealOf(lab, capability, context), spreadMult: spreadMultipliersOf(mods, context) };
 }
 
 /** Rules 3 to 9 for one active lab (compute and capability are in `info`). */

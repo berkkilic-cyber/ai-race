@@ -13,6 +13,11 @@ export interface HeadlessOptions {
   policy: BotPolicy;
   /** Stop after this many ticks even without an ending. */
   maxTicks: number;
+  /**
+   * Called after every tick with the live state (for balance scripts that record a run).
+   * The state is the engine's working draft: read it, never change it.
+   */
+  onTick?: (state: GameState) => void;
 }
 
 /** Lets the player-seat bot act: resolves a pending event, and plays every aiDecisionInterval ticks. */
@@ -35,6 +40,7 @@ export function runHeadless(pack: ContentPack, setup: GameSetup, opts: HeadlessO
       if (state.pendingEvent) break;
     }
     stepInPlace(state, context);
+    opts.onTick?.(state);
   }
   return state;
 }

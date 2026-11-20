@@ -1,6 +1,6 @@
 import type { EngineContext } from './context';
 import { isBannedAt, isOnline } from './derived';
-import { statMultiplier, type ModifierTable } from './modifiers';
+import { regionMultipliers, statMultiplier, type ModifierTable } from './modifiers';
 import { ENGINE_NEWS_KEYS, pushNews } from './news';
 import type { GrowthTally, LabTickInfo } from './spread';
 import type { DataCentre, GameState, LabState, RegionDef } from './types';
@@ -11,9 +11,9 @@ function regionCashIncome(region: RegionDef, adoption: number, mods: ModifierTab
   return adoption * region.population * region.wealth * context.balance.cashPerUser * statMultiplier(mods, 'cashIncome', region);
 }
 
-/** Gross cash income per tick from users in unbanned regions. */
+/** Gross cash income per tick: cashBase plus users in unbanned regions. */
 export function cashIncomeOf(state: GameState, context: EngineContext, lab: LabState, mods: ModifierTable): number {
-  let income = 0;
+  let income = baseCashOf(context, mods);
   for (const regionId in lab.adoption) {
     const region = context.regions.get(regionId);
     if (region && !isBannedAt(lab, regionId, state.tick)) income += regionCashIncome(region, lab.adoption[regionId], mods, context);
@@ -21,12 +21,19 @@ export function cashIncomeOf(state: GameState, context: EngineContext, lab: LabS
   return income;
 }
 
+/** The flat cashBase income, × the untagged cashIncome multiplier. */
+export function baseCashOf(context: EngineContext, mods: ModifierTable): number {
+  return context.balance.cashBase * statMultiplier(mods, 'cashIncome');
+}
+
 /** cashIncomeOf from the tick's adoption arrays. */
 function cashIncomeFromArrays(arrays: LabArrays, context: EngineContext, mods: ModifierTable): number {
   const regions = context.pack.regions;
+  const mult = regionMultipliers(mods, 'cashIncome', regions);
+  const perUser = context.balance.cashPerUser;
   let income = 0;
   for (let i = 0; i < regions.length; i++) {
-    if (arrays.adoption[i] > 0 && !arrays.banned[i]) income += regionCashIncome(regions[i], arrays.adoption[i], mods, context);
+    if (arrays.adoption[i] > 0 && !arrays.banned[i]) income += arrays.adoption[i] * regions[i].population * regions[i].wealth * perUser * mult[i];
   }
   return income;
 }
@@ -71,7 +78,7 @@ export function applyIncome(
   info: LabTickInfo,
   growth: GrowthTally,
 ): void {
-  const income = cashIncomeFromArrays(arrays, context, info.mods);
+  const income = cashIncomeFromArrays(arrays, context, info.mods) + baseCashOf(context, info.mods);
   let upkeep = upkeepOf(state, context, lab, info.mods);
   while (lab.cash + income - upkeep < 0) {
     const dc = costliestOnline(state, context, lab, info.mods);

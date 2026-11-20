@@ -3,6 +3,7 @@ import type { BalanceConfig } from './balance';
 import type { EngineContext } from './context';
 import { labModifierTable, statMultiplier, type ModifierTable } from './modifiers';
 import type { DataCentre, GameState, LabState, RegionId } from './types';
+import { cachedUsers } from './workspace';
 import { INFINITY, floor, max, min, pow } from './natives';
 
 export function isOnline(dataCentre: DataCentre, tick: number): boolean {
@@ -90,6 +91,8 @@ export function capabilityOf(lab: LabState, context: EngineContext, tick: number
 
 /** Users in millions. */
 export function usersOf(lab: LabState, context: EngineContext): number {
+  const cached = cachedUsers(lab.adoption);
+  if (cached !== undefined) return cached;
   let users = 0;
   for (const regionId in lab.adoption) users += lab.adoption[regionId] * (context.regions.get(regionId)?.population ?? 0);
   return users;
@@ -99,9 +102,20 @@ export function worldShareOf(lab: LabState, context: EngineContext): number {
   return context.worldPopulation > 0 ? usersOf(lab, context) / context.worldPopulation : 0;
 }
 
+const grantedFlagsCache = new WeakMap<LabState['ownedNodes'], { context: EngineContext; count: number; flags: ReadonlySet<string> }>();
+
+/** Flags granted by owned nodes (cached like ownedCapability: the engine only appends to ownedNodes). */
+function grantedFlags(lab: LabState, context: EngineContext): ReadonlySet<string> {
+  const cached = grantedFlagsCache.get(lab.ownedNodes);
+  if (cached && cached.context === context && cached.count === lab.ownedNodes.length) return cached.flags;
+  const flags = new Set<string>();
+  for (const nodeId of lab.ownedNodes) for (const flag of context.nodes.get(nodeId)?.grantsFlags ?? []) flags.add(flag);
+  grantedFlagsCache.set(lab.ownedNodes, { context, count: lab.ownedNodes.length, flags });
+  return flags;
+}
+
 export function hasLabFlag(lab: LabState, context: EngineContext, flag: string): boolean {
-  if (lab.flags.includes(flag)) return true;
-  return lab.ownedNodes.some((nodeId) => context.nodes.get(nodeId)?.grantsFlags?.includes(flag) ?? false);
+  return lab.flags.includes(flag) || grantedFlags(lab, context).has(flag);
 }
 
 export function totalDataCentreLevels(lab: LabState, onlineAt?: number): number {

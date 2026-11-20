@@ -1,7 +1,7 @@
 import { runHeadless, summarizeRun, type BotPolicy, type EndingTrigger } from '@/engine';
 import { testPack, testSetup } from '../__fixtures__/testPack';
 
-const POLICIES: BotPolicy[] = ['sensible', 'random', 'idle'];
+const POLICIES: BotPolicy[] = ['sensible', 'random', 'idle', 'capability', 'reach', 'shadow'];
 
 describe('runHeadless', () => {
   it.each(POLICIES)('terminates for policy %s across 20 seeds', (policy) => {
@@ -9,6 +9,21 @@ describe('runHeadless', () => {
       const state = runHeadless(testPack, { ...testSetup, seed }, { policy, maxTicks: 6000 });
       expect(state.pendingEvent).toBeNull();
       expect(state.status === 'ended' || state.tick === 6000).toBe(true);
+    }
+  });
+
+  it('onTick sees every tick once, after it is stepped', () => {
+    const seen: number[] = [];
+    const state = runHeadless(testPack, testSetup, { policy: 'idle', maxTicks: 30, onTick: (s) => seen.push(s.tick) });
+    expect(seen).toEqual(Array.from({ length: 30 }, (_, i) => i + 1));
+    expect(state.tick).toBe(30);
+  });
+
+  it('a tree-focused policy buys from its own tree first', () => {
+    for (const tree of ['capability', 'reach', 'shadow'] as const) {
+      const state = runHeadless(testPack, testSetup, { policy: tree, maxTicks: 300 });
+      const first = testPack.nodes.find((n) => n.id === state.labs.player.ownedNodes[0]);
+      expect({ tree, first: first?.tree }).toEqual({ tree, first: tree });
     }
   });
 

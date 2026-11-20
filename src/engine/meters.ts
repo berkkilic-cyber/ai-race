@@ -24,9 +24,10 @@ export function banThresholdFlag(threshold: number): string {
 }
 
 export function agiGainOf(context: EngineContext, info: LabTickInfo): number {
-  const { agiBase, agiExponent, agiComputeFactor } = context.balance;
+  const { agiBase, agiExponent, agiComputeFactor, agiComputeExponent } = context.balance;
   if (info.capability <= 0) return 0;
-  return agiBase * pow(info.capability, agiExponent) * (1 + info.compute * agiComputeFactor) * statMultiplier(info.mods, 'agiRate');
+  const computeBoost = 1 + agiComputeFactor * (agiComputeExponent === 1 ? info.compute : pow(info.compute, agiComputeExponent));
+  return agiBase * pow(info.capability, agiExponent) * computeBoost * statMultiplier(info.mods, 'agiRate');
 }
 
 export function regulationGainOf(context: EngineContext, share: number, info: LabTickInfo, growth: GrowthTally): number {
@@ -42,10 +43,13 @@ export function backlashGainOf(context: EngineContext, lab: LabState, share: num
 
 /** AGI progress, regulation and backlash for one tick; `share` is the lab's world share after spread. */
 export function applyProgressAndMeters(context: EngineContext, lab: LabState, info: LabTickInfo, growth: GrowthTally, share: number): void {
-  const { regulationDecay, backlashDecay } = context.balance;
-  lab.agiProgress = clamp(lab.agiProgress + agiGainOf(context, info), 0, 100);
-  lab.regulation = clamp(lab.regulation + regulationGainOf(context, share, info, growth) - regulationDecay, 0, 100);
-  lab.backlash = clamp(lab.backlash + backlashGainOf(context, lab, share, info) - backlashDecay, 0, 100);
+  const { regulationDecay, backlashDecay, aiRegulationDecay, aiBacklashDecay, aiMeterGainFactor } = context.balance;
+  // AI labs get no event cards to relieve their meters, so they gain less and lose more.
+  const ai = lab.controller === 'ai';
+  const gainFactor = ai ? aiMeterGainFactor : 1;
+  lab.agiProgress = clamp(lab.agiProgress + agiGainOf(context, info) * (ai ? context.balance.aiAgiFactor : 1), 0, 100);
+  lab.regulation = clamp(lab.regulation + regulationGainOf(context, share, info, growth) * gainFactor - regulationDecay - (ai ? aiRegulationDecay : 0), 0, 100);
+  lab.backlash = clamp(lab.backlash + backlashGainOf(context, lab, share, info) * gainFactor - backlashDecay - (ai ? aiBacklashDecay : 0), 0, 100);
 }
 
 function strictestPresentRegions(state: GameState, context: EngineContext, lab: LabState, count: number, arrays?: LabArrays): string[] {
