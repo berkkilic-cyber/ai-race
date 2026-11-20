@@ -41,6 +41,7 @@ getAcquirePrice(state, pack, labId, targetLabId): number
 getModifierTotal(state, pack, labId, stat, regionId?): number
 isBanned(state, labId, regionId): boolean
 checkConditions(state, pack, labId, conditions): boolean
+getEndingParams(state): Record<string, string>              // {lab} = player, {rival} = winning rival, for ending text
 
 // AI and headless play
 chooseAiActions(state, pack, labId): Action[]               // also used for rivals
@@ -52,6 +53,7 @@ defaultBalance: BalanceConfig                               // src/engine/balanc
 - Deterministic: all randomness comes from a seeded PRNG whose state is `GameState.rng`. Same seed and same actions give the same run.
 - `step` does nothing when `status === 'ended'` or when `pendingEvent` is set.
 - 1,000 headless runs must finish in under 60 seconds.
+- News params: {lab} and {rival} are lab ids, {region} a region id, {achievement} an achievement id; the UI resolves them to names. The engine's own news keys are `ENGINE_NEWS_KEYS`; `validatePack` requires a string for each, and for the UI theme words `term.*`.
 
 ## Simulation rules
 

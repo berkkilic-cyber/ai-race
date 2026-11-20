@@ -6,6 +6,8 @@
  */
 import { z } from 'zod';
 
+import { ENGINE_NEWS_KEYS } from '@/engine/news';
+
 import type {
   AchievementDef,
   Condition,
@@ -104,6 +106,7 @@ const effectSchema = z.discriminatedUnion('type', [
 
 const tick = z.number().int().min(0);
 const meterOrRival = z.enum(['regulation', 'backlash', 'rival']);
+const labStat = z.enum(['nodesBought', 'eventsResolved', 'dataCentresBuilt', 'peakWorldShare', 'cashEarned', 'hypeEarned']);
 const conditionSchema = z.discriminatedUnion('type', [
   z.strictObject({ type: z.literal('tickAtLeast'), value: tick }),
   z.strictObject({ type: z.literal('tickAtMost'), value: tick }),
@@ -125,6 +128,10 @@ const conditionSchema = z.discriminatedUnion('type', [
   z.strictObject({ type: z.literal('founderIs'), founderId: id }),
   z.strictObject({ type: z.literal('labNameIs'), names: z.array(z.string().trim().min(1)).min(1) }),
   z.strictObject({ type: z.literal('endingIs'), endingId: id }),
+  z.strictObject({ type: z.literal('bannedIn'), scope: scopeSchema }),
+  z.strictObject({ type: z.literal('statAtLeast'), stat: labStat, value: z.number().min(0) }),
+  z.strictObject({ type: z.literal('statAtMost'), stat: labStat, value: z.number().min(0) }),
+  z.strictObject({ type: z.literal('endingKindIs'), kind: z.enum(['win', 'lose']) }),
 ]);
 
 const regionSchema = z.strictObject({
@@ -267,8 +274,30 @@ export type SchemaMatchesContract = [
 
 // ───────────────────────────── Text rules ─────────────────────────────
 
-/** Placeholders the UI knows how to fill. */
-export const ALLOWED_PLACEHOLDERS = ['lab', 'rival', 'region', 'amount'];
+/** Placeholders the UI knows how to fill. {achievement} is an achievement id (engine achievement news). */
+export const ALLOWED_PLACEHOLDERS = ['lab', 'rival', 'region', 'amount', 'achievement'];
+
+/** Theme words the shared UI reads from every pack. */
+export const REQUIRED_TERM_KEYS = [
+  'term.hype',
+  'term.cash',
+  'term.compute',
+  'term.capability',
+  'term.regulation',
+  'term.backlash',
+  'term.rival',
+  'term.dataCentre',
+  'term.tree.capability',
+  'term.tree.reach',
+  'term.tree.shadow',
+  'term.users',
+] as const;
+
+/** Keys every pack must define although no pack data references them: engine news and UI theme words. */
+export const REQUIRED_KEYS: readonly string[] = [...Object.values(ENGINE_NEWS_KEYS), ...REQUIRED_TERM_KEYS];
+
+/** Prefixes of keys read by the engine or the UI rather than by pack data; never reported as unused. */
+const EXTERNAL_KEY_PREFIXES = ['term.', 'engine.news.'];
 
 /** Maximum length per kind of string key (by suffix / prefix). */
 const LENGTH_LIMITS: { test: (k: string) => boolean; max: number; what: string }[] = [
@@ -361,7 +390,7 @@ function checkIntegrity(pack: ContentPack): string[] {
     }
     if (c.type === 'founderIs' && !founderIds.has(c.founderId)) err(`${where}: unknown founder "${c.founderId}"`);
     if (c.type === 'endingIs' && !endingIds.has(c.endingId)) err(`${where}: unknown ending "${c.endingId}"`);
-    if (c.type === 'presentInRegion') checkScope(c.scope, where);
+    if (c.type === 'presentInRegion' || c.type === 'bannedIn') checkScope(c.scope, where);
   };
   const checkEffect = (e: Effect, where: string) => {
     if ('scope' in e) checkScope(e.scope, where);
@@ -507,10 +536,12 @@ function checkIntegrity(pack: ContentPack): string[] {
     markKey(a.descKey);
   }
 
+  for (const k of REQUIRED_KEYS) used.add(k);
+
   for (const [locale, table] of Object.entries(pack.strings)) {
     for (const k of used) if (!(k in table)) err(`strings.${locale}: missing key "${k}"`);
     for (const [k, text] of Object.entries(table)) {
-      if (!used.has(k)) err(`strings.${locale}: unused key "${k}"`);
+      if (!used.has(k) && !EXTERNAL_KEY_PREFIXES.some((prefix) => k.startsWith(prefix))) err(`strings.${locale}: unused key "${k}"`);
       if (text.trim() === '') err(`strings.${locale}: "${k}" is empty`);
       for (const m of text.matchAll(/\{([^}]*)\}/g)) {
         if (!ALLOWED_PLACEHOLDERS.includes(m[1])) err(`strings.${locale}: "${k}" uses unknown placeholder {${m[1]}}`);
