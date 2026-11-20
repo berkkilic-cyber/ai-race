@@ -27,13 +27,13 @@ export function useShellStyles(): ShellStyles {
   const railHeight = height - insets.top - insets.bottom;
   return {
     tabs: wide.tabs,
-    tabBar: { ...wide.rail, paddingBottom: Math.max(0, railHeight - TAB_COUNT * layout.railItemHeight) },
+    tabBar: { ...wide.rail, paddingBottom: Math.max(0, railHeight - layout.stripHeight - TAB_COUNT * layout.railItemHeight) },
   };
 }
 
 const narrow = StyleSheet.create({
   tabs: { flex: 1 },
-  tabBar: { flexDirection: 'row', backgroundColor: colors.surface, borderTopWidth: 1, borderColor: colors.border },
+  tabBar: { flexDirection: 'row', backgroundColor: colors.bg, borderTopWidth: StyleSheet.hairlineWidth, borderColor: colors.border },
 });
 
 const wide = StyleSheet.create({
@@ -46,8 +46,9 @@ const wide = StyleSheet.create({
     width: layout.railWidth,
     flexDirection: 'column',
     justifyContent: 'flex-start',
-    backgroundColor: colors.surface,
-    borderRightWidth: 1,
+    paddingTop: layout.stripHeight,
+    backgroundColor: colors.bg,
+    borderRightWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border,
   },
 });

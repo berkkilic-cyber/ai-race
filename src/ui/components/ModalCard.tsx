@@ -3,7 +3,7 @@ import { Modal, ScrollView, StyleSheet, Text, View, useWindowDimensions } from '
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { layoutModeFor } from '../hooks/useLayoutMode';
-import { colors, layout, radius, spacing, type } from '../theme';
+import { colors, layout, radius, spacing, type, voice } from '../theme';
 
 export interface ModalCardProps {
   visible: boolean;
@@ -61,5 +61,5 @@ const styles = StyleSheet.create({
   },
   content: { padding: spacing.xl, gap: spacing.m },
   contentWide: { padding: spacing.l, gap: spacing.s },
-  title: { color: colors.text, fontSize: type.xl, fontWeight: '800' },
+  title: { ...voice.calmHeading, color: colors.text, fontSize: type.xl },
 });

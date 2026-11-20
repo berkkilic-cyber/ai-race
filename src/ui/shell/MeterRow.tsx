@@ -11,8 +11,8 @@ export function MeterRow() {
   return (
     <View style={styles.row}>
       <Meter label={t('term.regulation')} value={m.regulation} color={colors.info} testID="meter-regulation" />
-      <Meter label={t('term.backlash')} value={m.backlash} color={colors.bad} testID="meter-backlash" />
-      <Meter label={t('term.rival')} value={m.rival} color={colors.player} testID="meter-rival" />
+      <Meter label={t('term.backlash')} value={m.backlash} color={colors.alarm} testID="meter-backlash" />
+      <Meter label={t('term.rival')} value={m.rival} color={colors.amber} testID="meter-rival" />
     </View>
   );
 }

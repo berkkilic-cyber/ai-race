@@ -19,8 +19,6 @@ const styles = StyleSheet.create({
     height: layout.tickerHeight,
     justifyContent: 'center',
     overflow: 'hidden',
-    backgroundColor: colors.surface,
-    borderTopWidth: 1,
-    borderColor: colors.border,
+    backgroundColor: colors.newsInk,
   },
 });

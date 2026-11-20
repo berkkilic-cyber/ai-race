@@ -4,7 +4,7 @@ import Animated, { SlideInRight } from 'react-native-reanimated';
 
 import { layoutModeFor } from '../hooks/useLayoutMode';
 import { t } from '../i18n';
-import { colors, layout, radius, spacing, touch, type } from '../theme';
+import { colors, layout, radius, spacing, touch, type, voice } from '../theme';
 
 export interface SheetProps {
   visible: boolean;
@@ -96,15 +96,15 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     backgroundColor: colors.surface,
-    borderLeftWidth: 1,
+    borderLeftWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border,
   },
-  panelHeader: { paddingTop: spacing.xs, paddingBottom: spacing.xs, paddingRight: spacing.xs, borderBottomWidth: 1, borderColor: colors.border },
+  panelHeader: { paddingTop: spacing.xs, paddingBottom: spacing.xs, paddingRight: spacing.xs, borderBottomWidth: StyleSheet.hairlineWidth, borderColor: colors.border },
   scroll: { flex: 1 },
   panelContent: { padding: spacing.l, paddingTop: spacing.m, gap: spacing.m },
   handle: { alignSelf: 'center', width: 40, height: 4, borderRadius: 2, backgroundColor: colors.border, marginBottom: spacing.s },
   header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: spacing.l, gap: spacing.s },
-  title: { flex: 1, color: colors.text, fontSize: type.l, fontWeight: '700' },
+  title: { ...voice.calmHeading, flex: 1, color: colors.text, fontSize: type.l + 2 },
   content: { padding: spacing.l, paddingTop: spacing.s, gap: spacing.m },
   close: { width: touch, height: touch, alignItems: 'center', justifyContent: 'center' },
   closeLabel: { color: colors.text, fontSize: type.m, fontWeight: '700' },
