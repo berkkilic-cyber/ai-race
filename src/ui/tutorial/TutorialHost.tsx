@@ -12,6 +12,7 @@ import { Overlay } from '../components/Overlay';
 import { useInsets } from '../hooks/useInsets';
 import { useLayoutMode } from '../hooks/useLayoutMode';
 import { t } from '../i18n';
+import { requestMapFocus } from '../map/mapFocus';
 import { isDrawablePath } from '../map/svgSafe';
 import { Mascot, type MascotMood } from '../mascot';
 import { wideShellLayout } from '../shell/shellLayout';
@@ -217,6 +218,13 @@ export function TutorialHost() {
   }, [showing, store]);
   useEffect(() => () => store.getState().setShowing(false), [store]);
 
+  // "Tap your home region": first bring it into easy reach (the map zooms in only if it is small on screen).
+  // The step moves on as soon as the home panel is open, however it was opened.
+  const wantsHomeTap = v?.step === 'buildDc' && v.targets[0] === 'map.home';
+  useEffect(() => {
+    if (wantsHomeTap && game.home) requestMapFocus(game.home);
+  }, [wantsHomeTap, game.home]);
+
   const ids = useMemo(() => (v ? v.targets.map((spec) => resolveTarget(spec, game.rootId, game.home)) : []), [v, game.rootId, game.home, targetsVersion]); // eslint-disable-line react-hooks/exhaustive-deps
   const rects = useTargetRects(ids);
 
@@ -283,8 +291,11 @@ function CoachMark({ view: v, rects, home, side, onNext, onSkip }: CoachMarkProp
           </Svg>
         ) : null}
       </View>
+      {/* Touch blockers around the cut-out (or over everything): real native views that take the touch
+          (collapsable={false}: a transparent View is otherwise flattened away on native and blocks nothing).
+          Inside the cut-out nothing of the tutorial sits above the screen, so touches reach it. */}
       {blockers.map((b, i) => (
-        <View key={i} style={[styles.blocker, { left: b.x, top: b.y, width: b.width, height: b.height }]} />
+        <View key={i} collapsable={false} onStartShouldSetResponder={takeTouch} style={[styles.blocker, { left: b.x, top: b.y, width: b.width, height: b.height }]} testID="tutorial-blocker" />
       ))}
       <Animated.View entering={FadeIn.duration(180)} key={`${v.step}-${v.captionKey}`} style={[styles.card, { left: pos.left, top: pos.top, width: cardWidth }]} onLayout={onCardLayout} testID="tutorial-card">
         <View style={styles.cardRow}>
@@ -315,6 +326,8 @@ function CoachMark({ view: v, rects, home, side, onNext, onSkip }: CoachMarkProp
     </Overlay>
   );
 }
+
+const takeTouch = () => true;
 
 /** Small "?" that replays the tutorial: at the foot of the rail (wide) or above the ticker on the right (narrow). */
 function HelpButton() {
