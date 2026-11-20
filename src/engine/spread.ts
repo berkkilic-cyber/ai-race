@@ -1,9 +1,12 @@
+import { bitCount, clearerOf, NO_CHANNELS, type ChannelSet } from './channels';
 import type { EngineContext } from './context';
+import { INTERNAL_FLAG_PREFIX } from './meters';
+import { ENGINE_NEWS_KEYS, pushNews } from './news';
 import { regionMultipliers, statMultiplier, type ModifierTable } from './modifiers';
 import { random } from './rng';
 import type { GameState, LabState, RegionDef } from './types';
 import { freeShareAt, setAdoptionAt, type LabArrays, type Workspace } from './workspace';
-import { max, min } from './natives';
+import { max, min, pow } from './natives';
 
 /** Per-tick facts about a lab, computed once at the start of its update. */
 export interface LabTickInfo {
@@ -14,6 +17,8 @@ export interface LabTickInfo {
   baseAppeal: number;
   /** spreadRate multiplier per region index (shared, read-only). */
   spreadMult: Float64Array;
+  /** Spread channels the lab holds. */
+  channels: ChannelSet;
 }
 
 /** New users gained by a lab this tick. */
@@ -94,20 +99,79 @@ function growIn(run: SpreadRun, index: number, region: RegionDef): number {
   return added + stolen;
 }
 
-/** Each absent, unbanned neighbour of region `index` may be seeded. */
-function seedFrom(run: SpreadRun, index: number): void {
+const enteredFlagNames = new Map<string, string>();
+
+/** Internal flag recording that a lab has reached a region through a channel. */
+export function channelEntryFlag(regionId: string): string {
+  let flag = enteredFlagNames.get(regionId);
+  if (flag === undefined) {
+    flag = `${INTERNAL_FLAG_PREFIX}entered:${regionId}`;
+    enteredFlagNames.set(regionId, flag);
+  }
+  return flag;
+}
+
+/** One 'entry' news item the first time a lab reaches a region through a channel. */
+function announceEntry(run: SpreadRun, target: number, from: number, channel: string, via: number | undefined): void {
+  const { state, context, lab } = run;
+  const region = context.pack.regions[target];
+  const flag = channelEntryFlag(region.id);
+  if (lab.flags.includes(flag)) return;
+  lab.flags.push(flag);
+  const params: Record<string, string> = { lab: lab.id, region: region.id, from: context.pack.regions[from].id, channel };
+  if (via !== undefined) params.via = context.pack.regions[via].id;
+  pushNews(state, context, {
+    textKey: context.channels.get(channel)?.entryTextKey ?? ENGINE_NEWS_KEYS.channelEntry,
+    kind: 'entry',
+    tone: lab.id === state.playerLabId ? 'good' : 'neutral',
+    params,
+    regionId: region.id,
+    labId: lab.id,
+  });
+}
+
+/**
+ * Tries to seed region `n` from region `from` (directly or, for a 'jump' channel, `via` a
+ * neighbour). `linkMask` holds the barriers on the links crossed; the target's own barriers
+ * are added here. Each barrier the lab has no channel for multiplies the chance by
+ * barrierSeedFactor.
+ */
+function trySeed(run: SpreadRun, from: number, n: number, linkMask: number, factor: number, via: number | undefined): void {
   const { state, context, ws, arrays } = run;
-  const { seedChance, seedAmount, minAdoption } = context.balance;
-  for (const n of context.neighbourIndices[index]) {
+  const { seedChance, seedAmount, minAdoption, barrierSeedFactor } = context.balance;
+  const channels = run.info.channels;
+  const neighbour = context.pack.regions[n];
+  const mask = linkMask | context.regionBarrierMask[n];
+  const blocked = mask & ~channels.clearMask;
+  let chance = seedChance * neighbour.openness * run.seedMult[n] * factor;
+  if (blocked !== 0) chance *= pow(barrierSeedFactor, bitCount(blocked));
+  if (random(state) >= chance) return;
+  const added = min(seedAmount, freeShareAt(ws, n));
+  if (added < minAdoption) return;
+  setAdoptionAt(ws, arrays, n, added, minAdoption);
+  ws.fresh[n] = 1;
+  tallyGrowth(run, n, neighbour, added);
+  const channel = via !== undefined ? channels.jump : clearerOf(channels, mask & channels.clearMask);
+  if (channel !== undefined) announceEntry(run, n, from, channel, via);
+}
+
+/** Each absent, unbanned neighbour of region `index` may be seeded (and, with a 'jump' channel, regions two links away). */
+function seedFrom(run: SpreadRun, index: number): void {
+  const { context, arrays } = run;
+  const channels = run.info.channels;
+  const openFactor = channels.open ? context.balance.openSeedFactor : 1;
+  const neighbours = context.neighbourIndices[index];
+  const links = context.linkBarrierMask[index];
+  for (let k = 0; k < neighbours.length; k++) {
+    const n = neighbours[k];
     if (arrays.adoption[n] > 0 || arrays.banned[n]) continue;
-    const neighbour = context.pack.regions[n];
-    const chance = seedChance * neighbour.openness * run.seedMult[n];
-    if (random(state) >= chance) continue;
-    const added = min(seedAmount, freeShareAt(ws, n));
-    if (added < minAdoption) continue;
-    setAdoptionAt(ws, arrays, n, added, minAdoption);
-    ws.fresh[n] = 1;
-    tallyGrowth(run, n, neighbour, added);
+    trySeed(run, index, n, links[k], openFactor, undefined);
+  }
+  if (channels.jump === undefined) return;
+  const jumpFactor = openFactor * context.balance.viralSeedFactor;
+  for (const hop of context.twoHop[index]) {
+    if (arrays.adoption[hop.target] > 0 || arrays.banned[hop.target]) continue;
+    trySeed(run, index, hop.target, hop.mask, jumpFactor, hop.via);
   }
 }
 

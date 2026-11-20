@@ -23,7 +23,21 @@ export {
   getEndingParams,
   getMoments,
   getMomentProgress,
+  getOwnedCapabilityLevel,
+  getComputeRequired,
+  getComputeShortfall,
+  getWinProgress,
+  getStandings,
+  getIncomeBreakdown,
+  getReachableRegions,
+  type WinProgress,
+  type StandingRow,
+  type IncomeSource,
+  type IncomeLine,
+  type IncomeBreakdown,
+  type RegionReach,
 } from './selectors';
+export { CHANNEL_FLAG_PREFIX } from './channels';
 export type { Price } from './costs';
 export { chooseAiActions, chooseEventChoice, DEFAULT_PERSONALITY, type BotPolicy } from './ai';
 export { DEFAULT_MOMENT_SKILL, runHeadless, summarizeRun, type HeadlessOptions, type RunSummary } from './headless';

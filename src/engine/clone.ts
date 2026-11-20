@@ -13,6 +13,7 @@ export function cloneLab(lab: LabState): LabState {
     flags: lab.flags.slice(),
     stats: { ...lab.stats },
   };
+  if (lab.flagTimers) copy.flagTimers = { ...lab.flagTimers };
   if (lab.eliminated) copy.eliminated = { ...lab.eliminated };
   if (lab.personality) copy.personality = { ...lab.personality };
   return copy;

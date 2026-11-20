@@ -200,7 +200,8 @@ describe('ai-lab content pack', () => {
     it('flags set by easter eggs are actually read somewhere', () => {
       const setFlags = new Set(
         [...pack.events.flatMap(choiceEffects), ...pack.headlines.flatMap((h) => h.effects ?? [])].flatMap((e) =>
-          e.type === 'setFlag' ? [e.flag] : [],
+          // Channel flags are read by the engine (they grant a spread channel), not by conditions.
+          e.type === 'setFlag' && !e.flag.startsWith('channel:') ? [e.flag] : [],
         ),
       );
       const readFlags = new Set(

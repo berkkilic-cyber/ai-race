@@ -27,6 +27,12 @@ export const ENGINE_NEWS_KEYS = {
   launchPlayer: 'engine.news.launch.player',
   /** Rival {lab} ships model {model} (a node name key), tier {tier}. */
   launchRival: 'engine.news.launch.rival',
+  /**
+   * Lab {lab} first reaches {region} through a spread channel (fallback when the channel has no
+   * entryTextKey). Params also carry `channel` (channel id) and `from` (source region id), and
+   * `via` (the skipped region) for 'jump' channels.
+   */
+  channelEntry: 'engine.news.entry.channel',
 } as const;
 
 /** The `kind` each engine news key is emitted with. */
@@ -41,6 +47,7 @@ export const ENGINE_NEWS_KINDS: Record<keyof typeof ENGINE_NEWS_KEYS, NewsKind> 
   achievement: 'achievement',
   launchPlayer: 'launch',
   launchRival: 'launch',
+  channelEntry: 'entry',
 };
 
 /** Adds a news item; every engine-emitted item carries a `kind`. */

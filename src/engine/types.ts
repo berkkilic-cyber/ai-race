@@ -39,6 +39,40 @@ export interface RegionDef {
   neighbors: RegionId[];
   /** Free-form tags used by scopes and modifiers, e.g. "eu", "english", "island". */
   tags: string[];
+  /**
+   * Barrier ids (from ContentPack.barriers) on natural seeding INTO this region, e.g. "strict" or
+   * "language:spanish". Each one not cleared by a channel the seeding lab holds multiplies the
+   * seed chance by BalanceConfig.barrierSeedFactor.
+   */
+  barriers?: string[];
+  /**
+   * Barriers on the link to a neighbour, by neighbour id (e.g. { "russia": ["ocean"] } for a sea
+   * link). Links are symmetric: the neighbour lists the same barriers back.
+   */
+  linkBarriers?: Record<RegionId, string[]>;
+}
+
+/** Something that slows natural seeding into a region or across a link unless a channel clears it. */
+export interface BarrierDef {
+  id: string;
+  nameKey: string;
+}
+
+/**
+ * A way of spreading a lab can hold (from owned nodes' `channels`, or for a while from a
+ * `setFlag` effect on the flag "channel:<id>").
+ * - 'clear': removes the seeding penalty of the barriers in `clears` (default: the barrier with the channel's id).
+ * - 'jump': seeding also reaches regions two links away (skipping one neighbour), at viralSeedFactor.
+ * - 'open': the holder seeds openSeedFactor × as often everywhere, and every other lab's spread
+ *   rises by openRivalSpreadBonus while it holds it.
+ */
+export interface ChannelDef {
+  id: string;
+  nameKey: string;
+  kind: 'clear' | 'jump' | 'open';
+  clears?: string[];
+  /** News text when a lab first reaches a region through this channel ({lab}, {region}). */
+  entryTextKey?: string;
 }
 
 /** Stats that modifiers can change. 'mul' values multiply together, 'add' values sum. */
@@ -121,7 +155,11 @@ export type Effect =
     }
   /** Permanent bonus compute (a GPU allocation). Can be negative. */
   | { type: 'compute'; amount: number; target?: EffectTarget }
-  | { type: 'setFlag'; flag: string }
+  /**
+   * Sets a flag on the lab. With durationTicks the flag is removed again after that many ticks
+   * (a flag "channel:<id>" grants that channel while set).
+   */
+  | { type: 'setFlag'; flag: string; durationTicks?: number }
   | { type: 'news'; textKey: string; tone?: NewsTone };
 
 export type Condition =
@@ -175,6 +213,8 @@ export interface NodeDef {
   capabilityLevel?: number;
   /** Flags granted while owned, e.g. "canAcquire". */
   grantsFlags?: string[];
+  /** Channel ids (ContentPack.channels) held while owned: they change how the lab spreads. */
+  channels?: string[];
 }
 
 export interface EventChoiceDef {
@@ -322,6 +362,10 @@ export interface ContentPack {
   achievements: AchievementDef[];
   /** Tap-to-collect moments (only human-controlled labs get them). */
   moments: MomentDef[];
+  /** Seeding barriers regions and links may carry. */
+  barriers?: BarrierDef[];
+  /** Spread channels nodes and flags may grant. */
+  channels?: ChannelDef[];
   /** Overrides of the engine's default balance constants. */
   balance: Partial<BalanceConfig>;
   /** locale -> key -> text. Text may contain {lab}, {region}, {rival}, {amount}. */
@@ -367,6 +411,10 @@ export interface LabState {
   bans: Record<RegionId, number>;
   timedModifiers: { modifier: Modifier; untilTick: number }[];
   flags: string[];
+  /** Flags set with a duration: flag -> tick it is removed. */
+  flagTimers?: Record<string, number>;
+  /** Millions of new users gained last tick (drives new-user Hype). */
+  newUsersLastTick?: number;
   stats: {
     nodesBought: number;
     eventsResolved: number;

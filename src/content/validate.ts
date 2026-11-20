@@ -8,8 +8,11 @@ import { z } from 'zod';
 
 import { defaultBalance } from '@/engine/balance';
 import { ENGINE_NEWS_KEYS } from '@/engine/news';
+import { CHANNEL_FLAG_PREFIX } from '@/engine/channels';
 
 import type {
+  BarrierDef,
+  ChannelDef,
   AchievementDef,
   Condition,
   ContentPack,
@@ -109,7 +112,7 @@ const effectSchema = z.discriminatedUnion('type', [
     atMoment: z.boolean().optional(),
   }),
   z.strictObject({ type: z.literal('compute'), amount: z.number().min(-1000).max(1000), target }),
-  z.strictObject({ type: z.literal('setFlag'), flag: z.string().min(1) }),
+  z.strictObject({ type: z.literal('setFlag'), flag: z.string().min(1), durationTicks: z.number().int().positive().max(100000).optional() }),
   z.strictObject({ type: z.literal('news'), textKey: key, tone: tone.optional() }),
 ]);
 
@@ -163,6 +166,21 @@ const regionSchema = z.strictObject({
   powerCost: unit,
   neighbors: z.array(id).min(1),
   tags: z.array(z.string().min(1)),
+  barriers: z.array(z.string().min(1)).optional(),
+  linkBarriers: z.record(z.string(), z.array(z.string().min(1))).optional(),
+});
+
+/** Barrier and channel ids: kebab-case, optionally "group:name" (e.g. "language:spanish"). */
+const channelId = z.string().regex(/^[a-z0-9][a-z0-9-]*(:[a-z0-9][a-z0-9-]*)?$/, 'barrier and channel ids are kebab-case, optionally group:name');
+
+const barrierSchema = z.strictObject({ id: channelId, nameKey: key });
+
+const channelSchema = z.strictObject({
+  id: channelId,
+  nameKey: key,
+  kind: z.enum(['clear', 'jump', 'open']),
+  clears: z.array(channelId).optional(),
+  entryTextKey: key.optional(),
 });
 
 const nodeSchema = z.strictObject({
@@ -179,6 +197,7 @@ const nodeSchema = z.strictObject({
   onBuy: z.array(effectSchema).optional(),
   capabilityLevel: z.number().int().min(1).max(5).optional(),
   grantsFlags: z.array(z.string().min(1)).optional(),
+  channels: z.array(channelId).optional(),
 });
 
 const costSchema = z.strictObject({ hype: z.number().min(0).optional(), cash: z.number().min(0).optional() });
@@ -306,6 +325,8 @@ export const packSchema = z.strictObject({
   endings: z.array(endingSchema).min(1),
   achievements: z.array(achievementSchema),
   moments: z.array(momentSchema),
+  barriers: z.array(barrierSchema).optional(),
+  channels: z.array(channelSchema).optional(),
   balance: z.record(z.string(), z.number()),
   strings: z.record(z.string(), z.record(z.string(), z.string())).refine((s) => Object.keys(s).length > 0, 'no locales'),
 });
@@ -327,6 +348,8 @@ export type SchemaMatchesContract = [
   Assert<Same<z.infer<typeof endingSchema>, EndingDef>>,
   Assert<Same<z.infer<typeof achievementSchema>, AchievementDef>>,
   Assert<Same<z.infer<typeof momentSchema>, MomentDef>>,
+  Assert<Same<z.infer<typeof barrierSchema>, BarrierDef>>,
+  Assert<Same<z.infer<typeof channelSchema>, ChannelDef>>,
 ];
 
 // ───────────────────────────── Text rules ─────────────────────────────
@@ -335,7 +358,7 @@ export type SchemaMatchesContract = [
  * Placeholders the UI knows how to fill. {achievement} is an achievement id (engine achievement news);
  * {model} is a node's name key (engine launch news), which the UI translates; {tier} a number.
  */
-export const ALLOWED_PLACEHOLDERS = ['lab', 'rival', 'region', 'amount', 'achievement', 'model', 'tier'];
+export const ALLOWED_PLACEHOLDERS = ['lab', 'rival', 'region', 'amount', 'achievement', 'model', 'tier', 'pct'];
 
 /** Theme words the shared UI reads from every pack. */
 export const REQUIRED_TERM_KEYS = [
@@ -354,8 +377,15 @@ export const REQUIRED_TERM_KEYS = [
   'term.users',
 ] as const;
 
-/** Keys every pack must define although no pack data references them: engine news and UI theme words. */
-export const REQUIRED_KEYS: readonly string[] = [...Object.values(ENGINE_NEWS_KEYS), ...REQUIRED_TERM_KEYS];
+/**
+ * Plain-language phrases for every stat, for the UI to describe modifiers: `stat.<Stat>.gain` when
+ * the stat goes up and `stat.<Stat>.loss` when it goes down, with {pct} the size of the change
+ * ("Spreads {pct} faster").
+ */
+export const STAT_PHRASE_KEYS: readonly string[] = STATS.flatMap((stat) => [`stat.${stat}.gain`, `stat.${stat}.loss`]);
+
+/** Keys every pack must define although no pack data references them: engine news, UI theme words and stat phrases. */
+export const REQUIRED_KEYS: readonly string[] = [...Object.values(ENGINE_NEWS_KEYS), ...REQUIRED_TERM_KEYS, ...STAT_PHRASE_KEYS];
 
 /**
  * Prefixes of keys read by the engine or the UI rather than by pack data; never reported as unused.
@@ -436,6 +466,8 @@ function checkIntegrity(pack: ContentPack): string[] {
     ['endings', pack.endings],
     ['achievements', pack.achievements],
     ['moments', pack.moments],
+    ['barriers', pack.barriers ?? []],
+    ['channels', pack.channels ?? []],
   ];
   for (const [name, list] of collections) {
     for (const d of duplicates(list.map((x) => x.id))) err(`${name}: duplicate id "${d}"`);
@@ -565,6 +597,39 @@ function checkIntegrity(pack: ContentPack): string[] {
     const cut = pack.regions.filter((r) => !seen.has(r.id)).map((r) => r.id);
     if (cut.length > 0) err(`regions: graph is not connected; unreachable: ${cut.join(', ')}`);
   }
+  // Barriers and channels: known ids, symmetric links, channel flags name real channels
+  const barrierIds = new Set((pack.barriers ?? []).map((b) => b.id));
+  const channelIds = new Set((pack.channels ?? []).map((c) => c.id));
+  if (barrierIds.size > 31) err(`barriers: at most 31 barriers (has ${barrierIds.size})`);
+  for (const r of pack.regions) {
+    for (const b of r.barriers ?? []) if (!barrierIds.has(b)) err(`regions[${r.id}]: unknown barrier "${b}"`);
+    for (const [nb, list] of Object.entries(r.linkBarriers ?? {})) {
+      if (!r.neighbors.includes(nb)) err(`regions[${r.id}]: linkBarriers for "${nb}", which is not a neighbour`);
+      for (const b of list) if (!barrierIds.has(b)) err(`regions[${r.id}]: unknown barrier "${b}" on the link to "${nb}"`);
+      const back = regionById.get(nb)?.linkBarriers?.[r.id] ?? [];
+      if (list.some((b) => !back.includes(b)) || back.some((b) => !list.includes(b))) {
+        err(`regions[${r.id}]: link barriers to "${nb}" are not listed the same way back`);
+      }
+    }
+  }
+  for (const c of pack.channels ?? []) {
+    if (c.kind !== 'clear' && c.clears !== undefined) err(`channels[${c.id}]: only 'clear' channels have clears`);
+    for (const b of c.kind === 'clear' ? (c.clears ?? [c.id]) : []) if (!barrierIds.has(b)) err(`channels[${c.id}]: clears unknown barrier "${b}"`);
+  }
+  for (const n of pack.nodes) for (const c of n.channels ?? []) if (!channelIds.has(c)) err(`nodes[${n.id}]: unknown channel "${c}"`);
+  const flagEffects: [Effect, string][] = [
+    ...pack.nodes.flatMap((n) => (n.onBuy ?? []).map((e): [Effect, string] => [e, `nodes[${n.id}]`])),
+    ...pack.events.flatMap((ev) =>
+      ev.choices.flatMap((c) => [...c.effects, ...(c.risk?.effects ?? [])].map((e): [Effect, string] => [e, `events[${ev.id}].${c.id}`])),
+    ),
+    ...pack.headlines.flatMap((h) => (h.effects ?? []).map((e): [Effect, string] => [e, `headlines[${h.id}]`])),
+    ...pack.moments.flatMap((m) => [...m.onCollect, ...(m.onExpire ?? [])].map((e): [Effect, string] => [e, `moments[${m.id}]`])),
+  ];
+  for (const [e, where] of flagEffects) {
+    if (e.type === 'setFlag' && e.flag.startsWith(CHANNEL_FLAG_PREFIX) && !channelIds.has(e.flag.slice(CHANNEL_FLAG_PREFIX.length))) {
+      err(`${where}: flag "${e.flag}" names an unknown channel`);
+    }
+  }
   const countryOwner = new Map<string, string>();
   for (const r of pack.regions) {
     for (const c of r.countries) {
@@ -628,6 +693,11 @@ function checkIntegrity(pack: ContentPack): string[] {
     markKey(m.nameKey);
     markKey(m.collectTextKey);
     markKey(m.expireTextKey);
+  }
+  for (const b of pack.barriers ?? []) markKey(b.nameKey);
+  for (const c of pack.channels ?? []) {
+    markKey(c.nameKey);
+    markKey(c.entryTextKey);
   }
 
   for (const k of REQUIRED_KEYS) used.add(k);

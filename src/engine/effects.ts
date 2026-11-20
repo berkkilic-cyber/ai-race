@@ -144,6 +144,14 @@ export function applyEffect(
   momentRegion?: RegionId,
 ): void {
   if (effect.type === 'setFlag') {
+    if (effect.durationTicks !== undefined && effect.durationTicks > 0) {
+      const timers = (source.flagTimers ??= {});
+      const permanent = source.flags.includes(effect.flag) && timers[effect.flag] === undefined;
+      // A timed flag never shortens a permanent one; a second timed one extends the first.
+      if (!permanent) timers[effect.flag] = max(timers[effect.flag] ?? 0, state.tick + floor(effect.durationTicks));
+    } else if (source.flagTimers?.[effect.flag] !== undefined) {
+      delete source.flagTimers[effect.flag];
+    }
     if (!source.flags.includes(effect.flag)) source.flags.push(effect.flag);
     return;
   }

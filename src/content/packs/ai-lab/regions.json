@@ -20,7 +20,12 @@
       "north-america",
       "english",
       "tech-hub"
-    ]
+    ],
+    "linkBarriers": {
+      "russia": [
+        "ocean"
+      ]
+    }
   },
   {
     "id": "canada",
@@ -60,6 +65,9 @@
     "tags": [
       "north-america",
       "spanish"
+    ],
+    "barriers": [
+      "language:spanish"
     ]
   },
   {
@@ -95,6 +103,9 @@
       "north-america",
       "spanish",
       "island"
+    ],
+    "barriers": [
+      "language:spanish"
     ]
   },
   {
@@ -116,7 +127,12 @@
     "tags": [
       "south-america",
       "cheap-power"
-    ]
+    ],
+    "linkBarriers": {
+      "france": [
+        "ocean"
+      ]
+    }
   },
   {
     "id": "andes",
@@ -145,7 +161,15 @@
     "tags": [
       "south-america",
       "spanish"
-    ]
+    ],
+    "barriers": [
+      "language:spanish"
+    ],
+    "linkBarriers": {
+      "france": [
+        "ocean"
+      ]
+    }
   },
   {
     "id": "southern-cone",
@@ -168,7 +192,15 @@
     "tags": [
       "south-america",
       "spanish"
-    ]
+    ],
+    "barriers": [
+      "language:spanish"
+    ],
+    "linkBarriers": {
+      "far-south": [
+        "ocean"
+      ]
+    }
   },
   {
     "id": "far-south",
@@ -194,7 +226,21 @@
       "island",
       "cheap-power",
       "remote"
-    ]
+    ],
+    "linkBarriers": {
+      "southern-cone": [
+        "ocean"
+      ],
+      "australia": [
+        "ocean"
+      ],
+      "pacific": [
+        "ocean"
+      ],
+      "southern-africa": [
+        "ocean"
+      ]
+    }
   },
   {
     "id": "uk-ireland",
@@ -246,7 +292,18 @@
       "eu",
       "strict",
       "cheap-power"
-    ]
+    ],
+    "barriers": [
+      "strict"
+    ],
+    "linkBarriers": {
+      "brazil": [
+        "ocean"
+      ],
+      "andes": [
+        "ocean"
+      ]
+    }
   },
   {
     "id": "germany",
@@ -269,6 +326,9 @@
     "tags": [
       "europe",
       "eu",
+      "strict"
+    ],
+    "barriers": [
       "strict"
     ]
   },
@@ -296,6 +356,9 @@
       "eu",
       "strict",
       "tech-hub"
+    ],
+    "barriers": [
+      "strict"
     ]
   },
   {
@@ -318,7 +381,15 @@
       "europe",
       "eu",
       "spanish"
-    ]
+    ],
+    "barriers": [
+      "language:spanish"
+    ],
+    "linkBarriers": {
+      "north-africa": [
+        "ocean"
+      ]
+    }
   },
   {
     "id": "italy",
@@ -340,7 +411,12 @@
     "tags": [
       "europe",
       "eu"
-    ]
+    ],
+    "linkBarriers": {
+      "north-africa": [
+        "ocean"
+      ]
+    }
   },
   {
     "id": "nordics",
@@ -458,7 +534,12 @@
     "tags": [
       "europe",
       "eu"
-    ]
+    ],
+    "linkBarriers": {
+      "north-africa": [
+        "ocean"
+      ]
+    }
   },
   {
     "id": "turkiye",
@@ -479,6 +560,9 @@
     "tags": [
       "europe",
       "asia"
+    ],
+    "barriers": [
+      "language:asia-africa"
     ]
   },
   {
@@ -508,7 +592,15 @@
       "petro",
       "cheap-power",
       "strict"
-    ]
+    ],
+    "barriers": [
+      "strict"
+    ],
+    "linkBarriers": {
+      "usa": [
+        "ocean"
+      ]
+    }
   },
   {
     "id": "middle-east",
@@ -544,6 +636,9 @@
       "asia",
       "petro",
       "cheap-power"
+    ],
+    "barriers": [
+      "language:asia-africa"
     ]
   },
   {
@@ -572,6 +667,10 @@
       "petro",
       "cheap-power",
       "strict"
+    ],
+    "barriers": [
+      "strict",
+      "language:asia-africa"
     ]
   },
   {
@@ -600,6 +699,9 @@
     "tags": [
       "asia",
       "cheap-power"
+    ],
+    "barriers": [
+      "language:asia-africa"
     ]
   },
   {
@@ -669,6 +771,9 @@
     ],
     "tags": [
       "asia"
+    ],
+    "barriers": [
+      "language:asia-africa"
     ]
   },
   {
@@ -697,6 +802,10 @@
       "asia",
       "tech-hub",
       "strict"
+    ],
+    "barriers": [
+      "strict",
+      "language:asia-africa"
     ]
   },
   {
@@ -720,6 +829,9 @@
       "asia",
       "island",
       "tech-hub"
+    ],
+    "barriers": [
+      "language:asia-africa"
     ]
   },
   {
@@ -742,6 +854,9 @@
     "tags": [
       "asia",
       "tech-hub"
+    ],
+    "barriers": [
+      "language:asia-africa"
     ]
   },
   {
@@ -765,6 +880,9 @@
       "island",
       "tech-hub",
       "chips"
+    ],
+    "barriers": [
+      "language:asia-africa"
     ]
   },
   {
@@ -796,6 +914,9 @@
     "tags": [
       "asia",
       "island"
+    ],
+    "barriers": [
+      "language:asia-africa"
     ]
   },
   {
@@ -817,7 +938,18 @@
     "tags": [
       "asia",
       "island"
-    ]
+    ],
+    "barriers": [
+      "language:asia-africa"
+    ],
+    "linkBarriers": {
+      "australia": [
+        "ocean"
+      ],
+      "pacific": [
+        "ocean"
+      ]
+    }
   },
   {
     "id": "australia",
@@ -839,7 +971,15 @@
       "oceania",
       "english",
       "island"
-    ]
+    ],
+    "linkBarriers": {
+      "far-south": [
+        "ocean"
+      ],
+      "indonesia": [
+        "ocean"
+      ]
+    }
   },
   {
     "id": "pacific",
@@ -866,7 +1006,15 @@
       "oceania",
       "english",
       "island"
-    ]
+    ],
+    "linkBarriers": {
+      "far-south": [
+        "ocean"
+      ],
+      "indonesia": [
+        "ocean"
+      ]
+    }
   },
   {
     "id": "north-africa",
@@ -897,7 +1045,21 @@
       "africa",
       "petro",
       "cheap-power"
-    ]
+    ],
+    "barriers": [
+      "language:asia-africa"
+    ],
+    "linkBarriers": {
+      "iberia": [
+        "ocean"
+      ],
+      "italy": [
+        "ocean"
+      ],
+      "balkans": [
+        "ocean"
+      ]
+    }
   },
   {
     "id": "west-africa",
@@ -930,6 +1092,9 @@
     ],
     "tags": [
       "africa"
+    ],
+    "barriers": [
+      "language:asia-africa"
     ]
   },
   {
@@ -981,6 +1146,9 @@
     "tags": [
       "africa",
       "petro"
+    ],
+    "barriers": [
+      "language:asia-africa"
     ]
   },
   {
@@ -1043,6 +1211,11 @@
     "tags": [
       "africa",
       "english"
-    ]
+    ],
+    "linkBarriers": {
+      "far-south": [
+        "ocean"
+      ]
+    }
   }
 ]

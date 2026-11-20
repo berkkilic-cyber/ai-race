@@ -31,6 +31,14 @@ export interface BalanceConfig {
   seedChance: number;
   /** Adoption a seeded region starts at. */
   seedAmount: number;
+  /** Seed chance × this for each barrier on the link or the target region the lab holds no channel for. */
+  barrierSeedFactor: number;
+  /** 'jump' channel: seed chance into regions two links away, × the normal chance. */
+  viralSeedFactor: number;
+  /** 'open' channel: the holder's seed chance × this everywhere. */
+  openSeedFactor: number;
+  /** 'open' channel: every other lab's appeal × (1 + this) per lab holding it. */
+  openRivalSpreadBonus: number;
   /** Adoption a paid launch starts at. */
   launchAdoption: number;
   /** Fraction of adoption lost per tick in a banned region. */
@@ -208,6 +216,10 @@ export const defaultBalance: BalanceConfig = {
   seedThreshold: 0.15,
   seedChance: 0.003,
   seedAmount: 0.004,
+  barrierSeedFactor: 0.25,
+  viralSeedFactor: 0.5,
+  openSeedFactor: 1.5,
+  openRivalSpreadBonus: 0.05,
   launchAdoption: 0.01,
   banDecayRate: 0.02,
   eliminatedDecayRate: 0.2,

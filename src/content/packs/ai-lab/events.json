@@ -2329,6 +2329,11 @@
             "type": "agiProgress",
             "amount": 2,
             "target": "rivals"
+          },
+          {
+            "type": "setFlag",
+            "flag": "channel:open",
+            "durationTicks": 600
           }
         ]
       },

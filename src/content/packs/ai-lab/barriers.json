@@ -1,0 +1,18 @@
+[
+  {
+    "id": "ocean",
+    "nameKey": "barrier.ocean.name"
+  },
+  {
+    "id": "strict",
+    "nameKey": "barrier.strict.name"
+  },
+  {
+    "id": "language:spanish",
+    "nameKey": "barrier.language-spanish.name"
+  },
+  {
+    "id": "language:asia-africa",
+    "nameKey": "barrier.language-asia-africa.name"
+  }
+]
