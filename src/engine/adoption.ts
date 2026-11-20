@@ -52,5 +52,5 @@ export function banLab(state: GameState, context: EngineContext, lab: LabState, 
     if (current !== undefined && current > until) return;
   }
   lab.bans[regionId] = until;
-  pushNews(state, context, { textKey: ENGINE_NEWS_KEYS.ban, tone: 'bad', params: { lab: lab.id, region: regionId }, regionId, labId: lab.id });
+  pushNews(state, context, { textKey: ENGINE_NEWS_KEYS.ban, kind: 'ban', tone: 'bad', params: { lab: lab.id, region: regionId }, regionId, labId: lab.id });
 }

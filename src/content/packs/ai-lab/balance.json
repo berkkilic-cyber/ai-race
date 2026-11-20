@@ -13,7 +13,7 @@
   "agiBase": 0.0022,
   "agiComputeFactor": 0.06,
   "agiComputeExponent": 0.5,
-  "aiAgiFactor": 1.15,
+  "aiAgiFactor": 1.2,
   "regulationPerGrowth": 0.07,
   "regulationPerShare": 0.45,
   "backlashPerCapability": 0.115,

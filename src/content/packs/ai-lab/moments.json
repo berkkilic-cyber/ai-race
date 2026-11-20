@@ -1,0 +1,539 @@
+[
+  {
+    "id": "viral-post",
+    "kind": "boost",
+    "nameKey": "moment.viral-post.name",
+    "icon": "megaphone",
+    "weight": 3,
+    "conditions": [],
+    "lifetimeTicks": 24,
+    "onCollect": [
+      {
+        "type": "resource",
+        "resource": "hype",
+        "amount": 2.1,
+        "scaleWithIncome": 4.2
+      }
+    ],
+    "collectTextKey": "moment.viral-post.collect"
+  },
+  {
+    "id": "glowing-review",
+    "kind": "boost",
+    "nameKey": "moment.glowing-review.name",
+    "icon": "heart",
+    "weight": 2,
+    "conditions": [],
+    "lifetimeTicks": 24,
+    "onCollect": [
+      {
+        "type": "resource",
+        "resource": "hype",
+        "amount": 1.4,
+        "scaleWithIncome": 3.5
+      }
+    ],
+    "collectTextKey": "moment.glowing-review.collect"
+  },
+  {
+    "id": "angel-wire",
+    "kind": "boost",
+    "nameKey": "moment.angel-wire.name",
+    "icon": "cash",
+    "weight": 2,
+    "conditions": [
+      {
+        "type": "tickAtMost",
+        "value": 1200
+      }
+    ],
+    "lifetimeTicks": 22,
+    "onCollect": [
+      {
+        "type": "resource",
+        "resource": "cash",
+        "amount": 11.0,
+        "scaleWithIncome": 8.8
+      }
+    ],
+    "collectTextKey": "moment.angel-wire.collect"
+  },
+  {
+    "id": "intern-bugfix",
+    "kind": "boost",
+    "nameKey": "moment.intern-bugfix.name",
+    "icon": "bug",
+    "weight": 2,
+    "conditions": [
+      {
+        "type": "tickAtMost",
+        "value": 1200
+      }
+    ],
+    "lifetimeTicks": 22,
+    "onCollect": [
+      {
+        "type": "resource",
+        "resource": "cash",
+        "amount": 6.6,
+        "scaleWithIncome": 6.6
+      }
+    ],
+    "collectTextKey": "moment.intern-bugfix.collect"
+  },
+  {
+    "id": "celebrity-mention",
+    "kind": "boost",
+    "nameKey": "moment.celebrity-mention.name",
+    "icon": "star",
+    "weight": 2,
+    "conditions": [
+      {
+        "type": "tickAtLeast",
+        "value": 300
+      }
+    ],
+    "lifetimeTicks": 22,
+    "onCollect": [
+      {
+        "type": "resource",
+        "resource": "hype",
+        "amount": 2.8,
+        "scaleWithIncome": 5.6
+      }
+    ],
+    "collectTextKey": "moment.celebrity-mention.collect"
+  },
+  {
+    "id": "campus-adoption",
+    "kind": "boost",
+    "nameKey": "moment.campus-adoption.name",
+    "icon": "mortarboard",
+    "weight": 1.5,
+    "conditions": [
+      {
+        "type": "tickAtLeast",
+        "value": 400
+      }
+    ],
+    "lifetimeTicks": 26,
+    "onCollect": [
+      {
+        "type": "adoption",
+        "scope": {
+          "kind": "home"
+        },
+        "factor": 1.04,
+        "atMoment": true
+      },
+      {
+        "type": "resource",
+        "resource": "hype",
+        "amount": 0.7,
+        "scaleWithIncome": 2.1
+      }
+    ],
+    "collectTextKey": "moment.campus-adoption.collect"
+  },
+  {
+    "id": "dock-gpus",
+    "kind": "boost",
+    "nameKey": "moment.dock-gpus.name",
+    "icon": "chip",
+    "weight": 1,
+    "conditions": [
+      {
+        "type": "tickAtLeast",
+        "value": 600
+      }
+    ],
+    "lifetimeTicks": 20,
+    "onCollect": [
+      {
+        "type": "compute",
+        "amount": 2
+      }
+    ],
+    "collectTextKey": "moment.dock-gpus.collect"
+  },
+  {
+    "id": "mascot-meme",
+    "kind": "boost",
+    "nameKey": "moment.mascot-meme.name",
+    "icon": "heart",
+    "weight": 1.5,
+    "conditions": [
+      {
+        "type": "tickAtLeast",
+        "value": 600
+      }
+    ],
+    "lifetimeTicks": 22,
+    "onCollect": [
+      {
+        "type": "resource",
+        "resource": "hype",
+        "amount": 2.1,
+        "scaleWithIncome": 4.2
+      },
+      {
+        "type": "meter",
+        "meter": "backlash",
+        "amount": -1
+      }
+    ],
+    "collectTextKey": "moment.mascot-meme.collect"
+  },
+  {
+    "id": "keynote-slot",
+    "kind": "boost",
+    "nameKey": "moment.keynote-slot.name",
+    "icon": "speech",
+    "weight": 1.5,
+    "conditions": [
+      {
+        "type": "tickAtLeast",
+        "value": 600
+      },
+      {
+        "type": "nodesInTreeAtLeast",
+        "tree": "reach",
+        "value": 2
+      }
+    ],
+    "lifetimeTicks": 22,
+    "onCollect": [
+      {
+        "type": "resource",
+        "resource": "hype",
+        "amount": 3.5,
+        "scaleWithIncome": 6.3
+      }
+    ],
+    "collectTextKey": "moment.keynote-slot.collect"
+  },
+  {
+    "id": "leaderboard-win",
+    "kind": "boost",
+    "nameKey": "moment.leaderboard-win.name",
+    "icon": "trophy",
+    "weight": 1.5,
+    "conditions": [
+      {
+        "type": "nodesInTreeAtLeast",
+        "tree": "capability",
+        "value": 3
+      }
+    ],
+    "lifetimeTicks": 22,
+    "onCollect": [
+      {
+        "type": "resource",
+        "resource": "hype",
+        "amount": 2.1,
+        "scaleWithIncome": 4.2
+      },
+      {
+        "type": "agiProgress",
+        "amount": 0.3
+      }
+    ],
+    "collectTextKey": "moment.leaderboard-win.collect"
+  },
+  {
+    "id": "cheap-power",
+    "kind": "boost",
+    "nameKey": "moment.cheap-power.name",
+    "icon": "bolt",
+    "weight": 1.5,
+    "conditions": [
+      {
+        "type": "dataCentresAtLeast",
+        "value": 1
+      }
+    ],
+    "lifetimeTicks": 24,
+    "onCollect": [
+      {
+        "type": "resource",
+        "resource": "cash",
+        "amount": 4.4,
+        "scaleWithIncome": 11.0
+      }
+    ],
+    "collectTextKey": "moment.cheap-power.collect"
+  },
+  {
+    "id": "sovereign-fund",
+    "kind": "boost",
+    "nameKey": "moment.sovereign-fund.name",
+    "icon": "cash",
+    "weight": 1,
+    "conditions": [
+      {
+        "type": "tickAtLeast",
+        "value": 1500
+      }
+    ],
+    "lifetimeTicks": 20,
+    "onCollect": [
+      {
+        "type": "resource",
+        "resource": "cash",
+        "amount": 11.0,
+        "scaleWithIncome": 15.4
+      }
+    ],
+    "collectTextKey": "moment.sovereign-fund.collect"
+  },
+  {
+    "id": "leaked-memo",
+    "kind": "threat",
+    "nameKey": "moment.leaked-memo.name",
+    "icon": "document",
+    "weight": 3,
+    "conditions": [],
+    "lifetimeTicks": 32,
+    "onCollect": [],
+    "onExpire": [
+      {
+        "type": "meter",
+        "meter": "backlash",
+        "amount": 0.9
+      }
+    ],
+    "collectTextKey": "moment.leaked-memo.collect",
+    "expireTextKey": "moment.leaked-memo.expire"
+  },
+  {
+    "id": "regulator-letter",
+    "kind": "threat",
+    "nameKey": "moment.regulator-letter.name",
+    "icon": "gavel",
+    "weight": 2.5,
+    "conditions": [
+      {
+        "type": "tickAtLeast",
+        "value": 300
+      }
+    ],
+    "lifetimeTicks": 34,
+    "onCollect": [],
+    "onExpire": [
+      {
+        "type": "meter",
+        "meter": "regulation",
+        "amount": 0.9
+      }
+    ],
+    "collectTextKey": "moment.regulator-letter.collect",
+    "expireTextKey": "moment.regulator-letter.expire"
+  },
+  {
+    "id": "rival-recruiter",
+    "kind": "threat",
+    "nameKey": "moment.rival-recruiter.name",
+    "icon": "recruiter",
+    "weight": 2,
+    "conditions": [
+      {
+        "type": "tickAtLeast",
+        "value": 400
+      }
+    ],
+    "lifetimeTicks": 30,
+    "onCollect": [],
+    "onExpire": [
+      {
+        "type": "agiProgress",
+        "amount": -0.3
+      }
+    ],
+    "collectTextKey": "moment.rival-recruiter.collect",
+    "expireTextKey": "moment.rival-recruiter.expire"
+  },
+  {
+    "id": "cooling-alarm",
+    "kind": "threat",
+    "nameKey": "moment.cooling-alarm.name",
+    "icon": "thermometer",
+    "weight": 2,
+    "conditions": [
+      {
+        "type": "dataCentresAtLeast",
+        "value": 1
+      }
+    ],
+    "lifetimeTicks": 30,
+    "onCollect": [],
+    "onExpire": [
+      {
+        "type": "dataCentre",
+        "action": "disable",
+        "scope": {
+          "kind": "home"
+        },
+        "durationTicks": 30,
+        "atMoment": true
+      }
+    ],
+    "collectTextKey": "moment.cooling-alarm.collect",
+    "expireTextKey": "moment.cooling-alarm.expire"
+  },
+  {
+    "id": "journalist",
+    "kind": "threat",
+    "nameKey": "moment.journalist.name",
+    "icon": "camera",
+    "weight": 2,
+    "conditions": [
+      {
+        "type": "tickAtLeast",
+        "value": 600
+      }
+    ],
+    "lifetimeTicks": 34,
+    "onCollect": [
+      {
+        "type": "meter",
+        "meter": "backlash",
+        "amount": -1
+      }
+    ],
+    "onExpire": [
+      {
+        "type": "meter",
+        "meter": "backlash",
+        "amount": 0.9
+      }
+    ],
+    "collectTextKey": "moment.journalist.collect",
+    "expireTextKey": "moment.journalist.expire"
+  },
+  {
+    "id": "bad-screenshot",
+    "kind": "threat",
+    "nameKey": "moment.bad-screenshot.name",
+    "icon": "speech",
+    "weight": 2,
+    "conditions": [
+      {
+        "type": "nodesInTreeAtLeast",
+        "tree": "capability",
+        "value": 2
+      }
+    ],
+    "lifetimeTicks": 30,
+    "onCollect": [],
+    "onExpire": [
+      {
+        "type": "meter",
+        "meter": "backlash",
+        "amount": 0.6
+      },
+      {
+        "type": "adoption",
+        "scope": {
+          "kind": "home"
+        },
+        "factor": 0.97,
+        "atMoment": true
+      }
+    ],
+    "collectTextKey": "moment.bad-screenshot.collect",
+    "expireTextKey": "moment.bad-screenshot.expire"
+  },
+  {
+    "id": "site-protest",
+    "kind": "threat",
+    "nameKey": "moment.site-protest.name",
+    "icon": "crowd",
+    "weight": 1.5,
+    "conditions": [
+      {
+        "type": "worldShareAtLeast",
+        "value": 0.08
+      }
+    ],
+    "lifetimeTicks": 36,
+    "onCollect": [],
+    "onExpire": [
+      {
+        "type": "meter",
+        "meter": "backlash",
+        "amount": 0.6
+      },
+      {
+        "type": "adoption",
+        "scope": {
+          "kind": "home"
+        },
+        "factor": 0.93,
+        "atMoment": true
+      }
+    ],
+    "collectTextKey": "moment.site-protest.collect",
+    "expireTextKey": "moment.site-protest.expire"
+  },
+  {
+    "id": "power-surge",
+    "kind": "threat",
+    "nameKey": "moment.power-surge.name",
+    "icon": "bolt",
+    "weight": 1,
+    "conditions": [
+      {
+        "type": "tickAtLeast",
+        "value": 1500
+      },
+      {
+        "type": "dataCentresAtLeast",
+        "value": 2
+      }
+    ],
+    "lifetimeTicks": 30,
+    "onCollect": [],
+    "onExpire": [
+      {
+        "type": "dataCentre",
+        "action": "disable",
+        "scope": {
+          "kind": "home"
+        },
+        "durationTicks": 20,
+        "atMoment": true
+      },
+      {
+        "type": "meter",
+        "meter": "backlash",
+        "amount": 0.3
+      }
+    ],
+    "collectTextKey": "moment.power-surge.collect",
+    "expireTextKey": "moment.power-surge.expire"
+  },
+  {
+    "id": "prompt-injection",
+    "kind": "threat",
+    "nameKey": "moment.prompt-injection.name",
+    "icon": "bug",
+    "weight": 1.5,
+    "conditions": [
+      {
+        "type": "tickAtLeast",
+        "value": 1500
+      }
+    ],
+    "lifetimeTicks": 30,
+    "onCollect": [],
+    "onExpire": [
+      {
+        "type": "resourcePercent",
+        "resource": "hype",
+        "percent": -8
+      }
+    ],
+    "collectTextKey": "moment.prompt-injection.collect",
+    "expireTextKey": "moment.prompt-injection.expire"
+  }
+]

@@ -55,7 +55,7 @@ export function checkAchievements(state: GameState, context: EngineContext, chec
     if (achievement.checkAt !== checkAt || state.achievements.includes(achievement.id)) continue;
     if (!checkAll(state, context, player, achievement.conditions)) continue;
     state.achievements.push(achievement.id);
-    pushNews(state, context, { textKey: ENGINE_NEWS_KEYS.achievement, tone: 'good', params: { achievement: achievement.id }, labId: player.id });
+    pushNews(state, context, { textKey: ENGINE_NEWS_KEYS.achievement, kind: 'achievement', tone: 'good', params: { achievement: achievement.id }, labId: player.id });
   }
 }
 
@@ -70,5 +70,6 @@ export function checkEnding(state: GameState, context: EngineContext): void {
   state.ending.score = computeScore(state, context, kind);
   state.status = 'ended';
   state.pendingEvent = null;
+  state.moments = [];
   checkAchievements(state, context, 'end');
 }

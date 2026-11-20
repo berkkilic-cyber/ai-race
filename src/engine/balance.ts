@@ -164,6 +164,20 @@ export interface BalanceConfig {
   /** Most news items kept in state.news. */
   newsLogSize: number;
 
+  // ── Moments (tap-to-collect, human-controlled labs only) ──
+  /** Tick of the first moment spawn attempt. */
+  momentFirstTick: number;
+  /** Minimum ticks between moment spawn attempts (before the world-share speed-up). */
+  momentIntervalMin: number;
+  /** Maximum ticks between moment spawn attempts (before the world-share speed-up). */
+  momentIntervalMax: number;
+  /** The interval is multiplied by (1 − this × world share)... */
+  momentShareSpeedup: number;
+  /** ...but never falls below this many ticks. */
+  momentIntervalFloor: number;
+  /** Most moments one lab can have on the map at once. */
+  maxActiveMoments: number;
+
   // ── Endings and score ──
   /** World share that triggers the dependence ending. */
   dependenceShare: number;
@@ -260,6 +274,13 @@ export const defaultBalance: BalanceConfig = {
   headlineIntervalMin: 25,
   headlineIntervalMax: 50,
   newsLogSize: 50,
+
+  momentFirstTick: 40,
+  momentIntervalMin: 30,
+  momentIntervalMax: 54,
+  momentShareSpeedup: 1.5,
+  momentIntervalFloor: 16,
+  maxActiveMoments: 3,
 
   dependenceShare: 0.5,
   scoreWin: 1000,

@@ -42,12 +42,15 @@ getModifierTotal(state, pack, labId, stat, regionId?): number
 isBanned(state, labId, regionId): boolean
 checkConditions(state, pack, labId, conditions): boolean
 getEndingParams(state): Record<string, string>              // {lab} = player, {rival} = winning rival, for ending text
+getMoments(state, labId): MomentState[]                     // the lab's moments on the map now
+getMomentProgress(state, uid): number                       // 0..1 of the moment's lifetime used (1 once it is gone)
 
 // AI and headless play
 chooseAiActions(state, pack, labId): Action[]               // also used for rivals
 runHeadless(pack, setup, opts): GameState                   // plays a whole run with a bot as the player
-                                                            // opts: { policy, maxTicks, onTick? }; policies: sensible,
-                                                            // random, idle, and capability / reach / shadow (tree-focused)
+                                                            // opts: { policy, maxTicks, onTick?, momentSkill?,
+                                                            // onMomentCollected? }; policies: sensible, random, idle,
+                                                            // and capability / reach / shadow (tree-focused)
 defaultBalance: BalanceConfig                               // src/engine/balance.ts
 ```
 
@@ -55,7 +58,8 @@ defaultBalance: BalanceConfig                               // src/engine/balanc
 - Deterministic: all randomness comes from a seeded PRNG whose state is `GameState.rng`. Same seed and same actions give the same run.
 - `step` does nothing when `status === 'ended'` or when `pendingEvent` is set.
 - 1,000 headless runs must finish in under 60 seconds.
-- News params: {lab} and {rival} are lab ids, {region} a region id, {achievement} an achievement id; the UI resolves them to names. The engine's own news keys are `ENGINE_NEWS_KEYS`; `validatePack` requires a string for each, and for the UI theme words `term.*`.
+- News params: {lab} and {rival} are lab ids, {region} a region id, {achievement} an achievement id, {model} a node's name key (translate it), {tier} a number; the UI resolves them to names. The engine's own news keys are `ENGINE_NEWS_KEYS`; `validatePack` requires a string for each, and for the UI theme words `term.*` (`term.rival` labels the lead rival's AGI meter, `term.rivals` the rival labs themselves).
+- Every news item the engine emits has a `kind` (`ENGINE_NEWS_KINDS` maps each engine key): `launch` (a lab ships a new model tier; also carries `nodeId` and `tier`), `entry` (rival enters), `ban`, `elimination`, `acquisition`, `achievement`, `moment` (an expired threat), `headline` (pack headlines), `other` (region launches, unpaid data centres, content `news` effects).
 
 ## Simulation rules
 
@@ -74,19 +78,22 @@ Each tick, for every active lab, in `labOrder`:
 8. **Bans.** Each time a lab's regulation crosses 25, 50 and 75, the strictest regions where it is present ban it for `banDuration` ticks (adoption there decays while banned). A news item with `regionId` is emitted so the map can flash.
 9. **Elimination.** Regulation ≥ 100 → eliminated `banned`. Backlash ≥ 100 → eliminated `revolt`. An eliminated lab's adoption decays to zero over a few ticks.
 
+10. **Model launches.** When a lab's effective capability (rule 2, after the compute cap) reaches a tier it has never run this run, one news item of kind `launch` is emitted: `engine.news.launch.player` (tone good) or `engine.news.launch.rival` (tone bad), params `lab`, `model` (name key of the owned node providing the tier) and `tier`, with `nodeId`, `tier`, `labId` and the lab's home `regionId`. Internal flags `$launched:<tier>` make it once per tier per lab, even if compute later drops and recovers; a jump of several tiers announces only the top one.
+
 Then, once per tick:
 
 - **AI labs** act every `aiDecisionInterval` ticks through `chooseAiActions` (same actions and costs as the player, weighted by `personality`). Rivals enter at their `entryTick`. The controller protects itself: from meter level 50 it grows cautious per meter (fewer capability nodes as backlash rises, launches avoid strict regions, nodes that lower a worrying meter are wanted whatever the personality); above 40% caution it stops launching and stops adding compute. AI labs never buy other labs: buying out rivals is the player's path to a monopoly.
+- **Moments** (tap-to-collect, only for human-controlled labs). First, moments with `tick ≥ expiresTick` expire: `onExpire` applies, the lab's `stats.momentsMissed` rises, and a threat (not a boost) adds one news item of kind `moment` with its `expireTextKey` (params `lab`, `region`). Then, when `tick ≥ nextMomentTick`, each active human lab with fewer than `maxActiveMoments` moments gets one: a `MomentDef` whose `conditions` hold is drawn by `weight`, and placed in a region where the lab is present, not banned and has no other moment, weighted by its users there; a moment with a `dataCentre` effect only goes where the lab has a data centre. The next attempt is `momentIntervalMin..Max` ticks later, × (1 − `momentShareSpeedup` × the lab's world share), never below `momentIntervalFloor`. `collectMoment` applies `onCollect` and raises `momentsCollected`; collecting adds no news. Effects with `atMoment: true` act on the moment's region instead of their scope; `resource` effects with `scaleWithIncome: n` add n ticks of the lab's average income of that resource so far (`stats.*Earned ÷ tick`). Because this runs inside `step`, nothing spawns or expires while an event card is pending; `checkEnding` clears all moments. AI labs get no moments; their `aiAgiFactor` carries the expected moment income instead (see `docs/BALANCE.md`).
 - **Events.** When `tick ≥ nextEventTick` and nothing is pending, draw one eligible `EventDef` for the player by weight (respecting `once`), set `pendingEvent`. The next one is scheduled `eventIntervalMin..Max` ticks after it is resolved. AI labs do not get choice events.
 - **Headlines.** Every `headlineIntervalMin..Max` ticks one eligible `HeadlineDef` is added to `news`; `about: 'rival'` picks a random active rival and applies its effects to that rival.
 - **Achievements.** `checkAt: 'tick'` achievements are tested for the player.
 - **Endings**, checked in this order: player eliminated → `banned` / `revolt`; a rival's AGI progress ≥ 100 → `rivalAgi`; player's AGI progress ≥ 100 → `agi`; all rivals eliminated or acquired (and all have entered) → `monopoly`; player world share ≥ `dependenceShare` → `dependence`. The matching `EndingDef` variant is chosen, `checkAt: 'end'` achievements are tested, and a score is computed.
 
-**Actions.** `buyNode` needs all `requires`, Hype (and Cash if `cashCost`); node prices rise by `nodeCostGrowth` per node already owned, and data centre upgrades by `dataCentreUpgradeGrowth` per level already owned. `buildDataCentre` needs presence in the region, no ban, Cash, and fewer than `maxDataCentresPerRegion` there. `acquireRival` needs the `canAcquire` flag and Cash ≥ a price that grows with the rival's users, compute and AGI progress; the buyer takes over a share of the rival's adoption. `resolveEvent` pays the choice cost, applies effects, rolls the optional risk and fills `lastEventResult`.
+**Actions.** `buyNode` needs all `requires`, Hype (and Cash if `cashCost`); node prices rise by `nodeCostGrowth` per node already owned, and data centre upgrades by `dataCentreUpgradeGrowth` per level already owned. `buildDataCentre` needs presence in the region, no ban, Cash, and fewer than `maxDataCentresPerRegion` there. `collectMoment` needs an existing, unexpired moment of that lab (`unknownId` otherwise, `notAllowed` for another lab's) and fails with `eventPending` while a card is up. `acquireRival` needs the `canAcquire` flag and Cash ≥ a price that grows with the rival's users, compute and AGI progress; the buyer takes over a share of the rival's adoption. `resolveEvent` pays the choice cost, applies effects, rolls the optional risk and fills `lastEventResult`.
 
 ## Bots and balance tooling
 
-`runHeadless` plays the player's seat with a `BotPolicy`: `sensible` (the same planner as the rivals, default personality), `random`, `idle`, and the tree-focused `capability`, `reach` and `shadow` policies, which plan like `sensible` with their own personality and a push towards their win (model tiers and spare compute; launches every decision; buy-out tools and saving cash for acquisitions). `scripts/balance/` plays many runs per policy across founders and home regions and prints a report (`npm run balance`, see `docs/BALANCE.md`).
+`runHeadless` plays the player's seat with a `BotPolicy`. Its `momentSkill` option (0..1, default `DEFAULT_MOMENT_SKILL`: 0.7 for sensible and the focused policies, 0.3 random, 0 idle) is the chance the bot taps a moment before it expires, rolled when the moment appears with a generator of its own (so the roll never shifts the game's random stream); a tapped moment is collected after a reaction delay of up to 60% of its lifetime. Policies: `sensible` (the same planner as the rivals, default personality), `random`, `idle`, and the tree-focused `capability`, `reach` and `shadow` policies, which plan like `sensible` with their own personality and a push towards their win (model tiers and spare compute; launches every decision; buy-out tools and saving cash for acquisitions). `scripts/balance/` plays many runs per policy across founders and home regions and prints a report (`npm run balance`, see `docs/BALANCE.md`).
 
 ## UI state
 

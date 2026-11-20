@@ -100,8 +100,8 @@ describe('effects', () => {
   it('news pushes a news item about the source', () => {
     const next = apply(state, [{ type: 'news', textKey: 'k', tone: 'good' }, { type: 'news', textKey: 'k2' }]);
     expect(next.news.slice(-2)).toEqual([
-      { tick: 10, textKey: 'k', tone: 'good', params: { lab: PLAYER }, labId: PLAYER },
-      { tick: 10, textKey: 'k2', tone: 'neutral', params: { lab: PLAYER }, labId: PLAYER },
+      { tick: 10, kind: 'other', textKey: 'k', tone: 'good', params: { lab: PLAYER }, labId: PLAYER },
+      { tick: 10, kind: 'other', textKey: 'k2', tone: 'neutral', params: { lab: PLAYER }, labId: PLAYER },
     ]);
   });
 

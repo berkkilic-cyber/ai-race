@@ -1,6 +1,6 @@
 import type { Condition, Effect, EventDef, TreeId } from '@/engine/types';
 
-import { aiLabPack, validatePack } from '..';
+import { aiLabPack, MOMENT_ICONS, validatePack } from '..';
 
 const pack = aiLabPack;
 const RARE = (e: EventDef) => e.weight >= 0.01 && e.weight <= 0.05;
@@ -11,6 +11,11 @@ const allConditions = (): Condition[] => [
 ];
 const choiceEffects = (e: EventDef): Effect[] =>
   e.choices.flatMap((c) => [...c.effects, ...(c.risk?.effects ?? [])]);
+
+const BRAND_IDS = Object.keys(pack.strings.en).flatMap((k) => /^brand\.([a-z0-9-]+)\.name$/.exec(k)?.slice(1) ?? []);
+const BRAND_NAMES = BRAND_IDS.map((id) => pack.strings.en[`brand.${id}.name`]);
+/** Event, node and moment strings outside the automatic rules where a parody brand is harmless flavour. */
+const FLAVOUR_KEYS = ['event.cloud-credits.body', 'event.gpu-shortage.body', 'node.cap-gpu-lease.desc', 'node.cap-gpu-megadeal.desc'];
 
 describe('ai-lab content pack', () => {
   it('passes validation', () => {
@@ -105,6 +110,51 @@ describe('ai-lab content pack', () => {
     expect(pack.headlines.filter((h) => h.effects?.length).length).toBeGreaterThanOrEqual(10);
   });
 
+  describe('moments', () => {
+    const boosts = pack.moments.filter((m) => m.kind === 'boost');
+    const threats = pack.moments.filter((m) => m.kind === 'threat');
+
+    it('has at least 10 boosts and 8 threats with short names and known icons', () => {
+      expect(boosts.length).toBeGreaterThanOrEqual(10);
+      expect(threats.length).toBeGreaterThanOrEqual(8);
+      for (const m of pack.moments) {
+        expect(pack.strings.en[m.nameKey].length).toBeLessThan(28);
+        expect(MOMENT_ICONS).toContain(m.icon);
+      }
+      expect(new Set(pack.moments.map((m) => m.icon)).size).toBeGreaterThanOrEqual(14);
+    });
+
+    it('varies across early, mid and late game', () => {
+      const early = (m: (typeof pack.moments)[number]) => m.conditions.some((c) => c.type === 'tickAtMost');
+      const later = (m: (typeof pack.moments)[number]) => m.conditions.some((c) => c.type === 'tickAtLeast' && c.value >= 600);
+      const late = (m: (typeof pack.moments)[number]) => m.conditions.some((c) => c.type === 'tickAtLeast' && c.value >= 1500);
+      const gated = (m: (typeof pack.moments)[number]) => m.conditions.some((c) => c.type === 'nodesInTreeAtLeast' || c.type === 'dataCentresAtLeast' || c.type === 'worldShareAtLeast');
+      expect(pack.moments.filter((m) => m.conditions.length === 0).length).toBeGreaterThanOrEqual(3);
+      expect(pack.moments.filter(early).length).toBeGreaterThanOrEqual(2);
+      expect(pack.moments.filter(later).length).toBeGreaterThanOrEqual(4);
+      expect(pack.moments.filter(late).length).toBeGreaterThanOrEqual(2);
+      expect(pack.moments.filter(gated).length).toBeGreaterThanOrEqual(4);
+    });
+
+    it('boosts reward, threats penalise only when they expire, and every threat has news text', () => {
+      for (const m of boosts) {
+        expect(m.onCollect.length).toBeGreaterThan(0);
+        expect(m.onExpire ?? []).toEqual([]);
+      }
+      for (const m of threats) {
+        expect((m.onExpire ?? []).length).toBeGreaterThan(0);
+        expect(m.expireTextKey).toBeDefined();
+        expect(pack.strings.en[m.expireTextKey!]).toContain('{region}');
+      }
+    });
+
+    it('has two visible and one secret moment achievement', () => {
+      const usesMoments = pack.achievements.filter((a) => a.conditions.some((c) => (c.type === 'statAtLeast' || c.type === 'statAtMost') && c.stat.startsWith('moments')));
+      expect(usesMoments.filter((a) => !a.secret).length).toBeGreaterThanOrEqual(2);
+      expect(usesMoments.filter((a) => a.secret).length).toBeGreaterThanOrEqual(1);
+    });
+  });
+
   it('has a default ending per trigger plus at least 3 variants', () => {
     const triggers = ['agi', 'dependence', 'monopoly', 'banned', 'revolt', 'rivalAgi'];
     for (const t of triggers) {
@@ -149,7 +199,9 @@ describe('ai-lab content pack', () => {
 
     it('flags set by easter eggs are actually read somewhere', () => {
       const setFlags = new Set(
-        [...pack.events.flatMap(choiceEffects)].flatMap((e) => (e.type === 'setFlag' ? [e.flag] : [])),
+        [...pack.events.flatMap(choiceEffects), ...pack.headlines.flatMap((h) => h.effects ?? [])].flatMap((e) =>
+          e.type === 'setFlag' ? [e.flag] : [],
+        ),
       );
       const readFlags = new Set(
         [...allConditions(), ...pack.achievements.flatMap((a) => a.conditions)].flatMap((c) =>
@@ -174,5 +226,60 @@ describe('ai-lab content pack', () => {
       const re = new RegExp(`\\b${word}\\b`);
       expect({ word, hit: re.test(text) || re.test(labNames) }).toEqual({ word, hit: false });
     }
+    // The parody brands are near misses, never the exact real names (case-insensitive too).
+    for (const name of BRAND_NAMES) {
+      for (const word of banned) expect({ name, word, same: name.toLowerCase() === word.toLowerCase() }).toEqual({ name, word, same: false });
+      for (const word of banned) expect({ name, word, hit: new RegExp(`\\b${word}\\b`).test(name) }).toEqual({ name, word, hit: false });
+    }
+  });
+
+  describe('parody brands', () => {
+    it('defines about a dozen brands, each with a name and a kind', () => {
+      expect(BRAND_IDS.length).toBeGreaterThanOrEqual(12);
+      for (const id of BRAND_IDS) expect(pack.strings.en[`brand.${id}.kind`]).toBeTruthy();
+      expect(BRAND_NAMES).toEqual(expect.arrayContaining(['MVIDIA', 'NopenAI', 'Zlaude']));
+      const kinds = new Set(BRAND_IDS.map((id) => pack.strings.en[`brand.${id}.kind`]));
+      for (const kind of ['chip maker', 'lab', 'assistant', 'cloud', 'search giant', 'social network', 'benchmark site']) expect(kinds).toContain(kind);
+    });
+
+    it('appear only in world headlines, moment boosts and collect lines, flavour text and the lawyer eggs', () => {
+      const allowed = new Set<string>(FLAVOUR_KEYS);
+      for (const h of pack.headlines) {
+        const egg = h.conditions.some((c) => c.type === 'labNameIs');
+        // World headlines without effects, and the egg headlines whose only effect is their one-off flag.
+        if ((h.about === 'world' && !h.effects?.length) || (egg && (h.effects ?? []).every((e) => e.type === 'setFlag'))) allowed.add(h.textKey);
+      }
+      for (const m of pack.moments) {
+        if (m.kind === 'boost') allowed.add(m.nameKey);
+        if (m.collectTextKey !== undefined) allowed.add(m.collectTextKey);
+      }
+      for (const [key, text] of Object.entries(pack.strings.en)) {
+        if (key.startsWith('brand.')) continue;
+        const brands = BRAND_NAMES.filter((name) => text.includes(name));
+        if (brands.length > 0) expect({ key, brands, allowed: allowed.has(key) }).toEqual({ key, brands, allowed: true });
+      }
+    });
+
+    it('flavour text never sits on a card with a risk, a scandal flag or a meter penalty', () => {
+      for (const key of FLAVOUR_KEYS) {
+        const event = pack.events.find((e) => key.startsWith(`event.${e.id}.`));
+        if (!event) continue;
+        for (const choice of event.choices) {
+          expect({ key, choice: choice.id, risk: choice.risk !== undefined }).toEqual({ key, choice: choice.id, risk: false });
+          const misconduct = choice.effects.some((e) => (e.type === 'meter' && e.amount > 0) || e.type === 'setFlag' || e.type === 'ban');
+          expect({ key, choice: choice.id, misconduct }).toEqual({ key, choice: choice.id, misconduct: false });
+        }
+      }
+    });
+
+    it('every brand has a one-off lawyer egg for its name', () => {
+      for (const name of BRAND_NAMES) {
+        const egg = pack.headlines.find((h) => h.conditions.some((c) => c.type === 'labNameIs' && c.names.includes(name)));
+        expect({ name, egg: egg !== undefined }).toEqual({ name, egg: true });
+        expect(egg?.conditions).toContainEqual({ type: 'lacksFlag', flag: 'brand-lawyers' });
+        expect(egg?.effects).toEqual([{ type: 'setFlag', flag: 'brand-lawyers' }]);
+        expect(pack.strings.en[egg!.textKey]).toContain('lawyers');
+      }
+    });
   });
 });

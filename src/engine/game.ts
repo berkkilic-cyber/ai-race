@@ -10,7 +10,7 @@ export const PLAYER_LAB_ID = 'player';
 export const DEFAULT_PLAYER_COLOR = '#ffffff';
 
 function emptyStats(): LabState['stats'] {
-  return { nodesBought: 0, eventsResolved: 0, dataCentresBuilt: 0, peakWorldShare: 0, cashEarned: 0, hypeEarned: 0 };
+  return { nodesBought: 0, eventsResolved: 0, dataCentresBuilt: 0, peakWorldShare: 0, cashEarned: 0, hypeEarned: 0, momentsCollected: 0, momentsMissed: 0 };
 }
 
 function baseLab(id: string, homeRegion: string): Omit<LabState, 'name' | 'color' | 'controller' | 'hype' | 'cash' | 'active'> {
@@ -99,6 +99,8 @@ export function createGame(pack: ContentPack, setup: GameSetup): GameState {
     news: [],
     achievements: [],
     ending: null,
+    moments: [],
+    nextMomentTick: context.balance.momentFirstTick,
   };
   scheduleNextHeadline(state, context);
   return state;

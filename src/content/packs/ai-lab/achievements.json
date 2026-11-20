@@ -268,5 +268,56 @@
         "kind": "win"
       }
     ]
+  },
+  {
+    "id": "hands-on",
+    "nameKey": "achievement.hands-on.name",
+    "descKey": "achievement.hands-on.desc",
+    "secret": false,
+    "checkAt": "tick",
+    "conditions": [
+      {
+        "type": "statAtLeast",
+        "stat": "momentsCollected",
+        "value": 40
+      }
+    ]
+  },
+  {
+    "id": "inbox-zero",
+    "nameKey": "achievement.inbox-zero.name",
+    "descKey": "achievement.inbox-zero.desc",
+    "secret": false,
+    "checkAt": "tick",
+    "conditions": [
+      {
+        "type": "statAtLeast",
+        "stat": "momentsCollected",
+        "value": 20
+      },
+      {
+        "type": "statAtMost",
+        "stat": "momentsMissed",
+        "value": 0
+      }
+    ]
+  },
+  {
+    "id": "hands-off",
+    "nameKey": "achievement.hands-off.name",
+    "descKey": "achievement.hands-off.desc",
+    "secret": true,
+    "checkAt": "end",
+    "conditions": [
+      {
+        "type": "endingKindIs",
+        "kind": "win"
+      },
+      {
+        "type": "statAtMost",
+        "stat": "momentsCollected",
+        "value": 0
+      }
+    ]
   }
 ]

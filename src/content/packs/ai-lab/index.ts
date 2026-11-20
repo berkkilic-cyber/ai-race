@@ -5,6 +5,7 @@ import type {
   EventDef,
   FounderDef,
   HeadlineDef,
+  MomentDef,
   NodeDef,
   RegionDef,
   RegionId,
@@ -18,6 +19,7 @@ import events from './events.json';
 import founders from './founders.json';
 import headlines from './headlines.json';
 import map from './map.json';
+import moments from './moments.json';
 import nodes from './nodes.json';
 import regions from './regions.json';
 import rivals from './rivals.json';
@@ -39,6 +41,7 @@ export const aiLabPack: ContentPack = {
   rivals: rivals as RivalDef[],
   endings: endings as unknown as EndingDef[],
   achievements: achievements as unknown as AchievementDef[],
+  moments: moments as unknown as MomentDef[],
   balance,
   strings: { en: en as Record<string, string> },
 };

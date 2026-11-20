@@ -33,5 +33,7 @@ export function cloneState(state: GameState): GameState {
     news: state.news.slice(),
     achievements: state.achievements.slice(),
     ending: state.ending ? { ...state.ending } : null,
+    // Moments are never mutated after creation (only added and removed), so sharing them is safe.
+    moments: state.moments.slice(),
   };
 }

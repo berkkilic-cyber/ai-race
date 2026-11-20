@@ -2,10 +2,10 @@
 import { checkAll } from './conditions';
 import { getContext } from './context';
 import { acquirePrice, dataCentrePrice, launchPrice, nodePrice, upgradePrice, type Price } from './costs';
-import { capabilityOf, computeOf, isBannedAt, leadRivalOf, usersOf, worldShareOf } from './derived';
+import { capabilityOf, clamp, computeOf, isBannedAt, leadRivalOf, usersOf, worldShareOf } from './derived';
 import { cashIncomeOf, hypeIncomeOf, upkeepOf } from './economy';
 import { labModifierTable, statMultiplier } from './modifiers';
-import type { Condition, ContentPack, GameState, LabState, Meters, Stat } from './types';
+import type { Condition, ContentPack, GameState, LabState, Meters, MomentState, Stat } from './types';
 import { max } from './natives';
 
 function labOrThrow(state: GameState, labId: string): LabState {
@@ -116,4 +116,17 @@ export function getEndingParams(state: GameState): Record<string, string> {
   const winner = state.ending.winnerLabId;
   if (winner !== undefined && winner !== state.playerLabId) params.rival = winner;
   return params;
+}
+
+/** The lab's moments on the map now (oldest first). */
+export function getMoments(state: GameState, labId: string): MomentState[] {
+  return state.moments.filter((moment) => moment.labId === labId);
+}
+
+/** Share of the moment's lifetime used, 0 (just appeared) to 1 (expiring); 1 for a moment that no longer exists. */
+export function getMomentProgress(state: GameState, uid: string): number {
+  const moment = state.moments.find((m) => m.uid === uid);
+  if (!moment) return 1;
+  const lifetime = moment.expiresTick - moment.spawnTick;
+  return lifetime <= 0 ? 1 : clamp((state.tick - moment.spawnTick) / lifetime, 0, 1);
 }

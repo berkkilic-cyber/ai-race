@@ -7,11 +7,12 @@ import { cachedCapabilityCap, computeOf, ownedCapability } from './derived';
 import { applyIncome } from './economy';
 import { checkAchievements, checkEnding } from './endings';
 import { maybeAddHeadline, maybeDrawEvent } from './events';
-import { applyProgressAndMeters, applyThresholdBans, checkElimination } from './meters';
+import { applyProgressAndMeters, applyThresholdBans, checkElimination, INTERNAL_FLAG_PREFIX } from './meters';
+import { updateMoments } from './moments';
 import { expireTimedModifiers, labModifierTable } from './modifiers';
 import { ENGINE_NEWS_KEYS, pushNews } from './news';
 import { baseAppealOf, decayEliminated, spreadLab, spreadMultipliersOf, type LabTickInfo } from './spread';
-import type { ContentPack, GameState, LabState } from './types';
+import type { ContentPack, GameState, LabState, NodeDef } from './types';
 import { loadWorkspace, storeWorkspace, usersFromArrays, type Workspace } from './workspace';
 import { max, min, round } from './natives';
 
@@ -27,6 +28,7 @@ function enterRivals(state: GameState, context: EngineContext): void {
     if (def.entryTick > 0) {
       pushNews(state, context, {
         textKey: ENGINE_NEWS_KEYS.rivalEntered,
+        kind: 'entry',
         tone: 'neutral',
         params: { lab: id, region: lab.homeRegion },
         regionId: lab.homeRegion,
@@ -54,6 +56,48 @@ function tickInfo(lab: LabState, context: EngineContext, tick: number): LabTickI
   return { mods, compute, capability, baseAppeal: baseAppealOf(lab, capability, context), spreadMult: spreadMultipliersOf(mods, context) };
 }
 
+const launchFlagNames: string[] = [];
+
+/** Internal flag recording that a lab has launched model tier `tier` this run. */
+export function launchFlag(tier: number): string {
+  return (launchFlagNames[tier] ??= `${INTERNAL_FLAG_PREFIX}launched:${tier}`);
+}
+
+/** The owned node providing effective tier `tier`: one with exactly that level, else the lowest owned one above it. */
+function nodeForTier(lab: LabState, context: EngineContext, tier: number): NodeDef | undefined {
+  let best: NodeDef | undefined;
+  for (const nodeId of lab.ownedNodes) {
+    const node = context.nodes.get(nodeId);
+    const level = node?.capabilityLevel;
+    if (!node || level === undefined || level < tier) continue;
+    if (!best || level < (best.capabilityLevel ?? 0)) best = node;
+  }
+  return best;
+}
+
+/**
+ * When a lab's effective capability (after the compute cap) reaches a tier it has never
+ * run before, one 'launch' news item announces it. Lower tiers skipped in the same jump are
+ * marked as launched without news of their own.
+ */
+function announceLaunch(state: GameState, context: EngineContext, lab: LabState, tier: number): void {
+  if (tier <= 0 || lab.flags.includes(launchFlag(tier))) return;
+  for (let level = 1; level <= tier; level++) if (!lab.flags.includes(launchFlag(level))) lab.flags.push(launchFlag(level));
+  const node = nodeForTier(lab, context, tier);
+  if (!node) return;
+  const player = lab.id === state.playerLabId;
+  pushNews(state, context, {
+    textKey: player ? ENGINE_NEWS_KEYS.launchPlayer : ENGINE_NEWS_KEYS.launchRival,
+    kind: 'launch',
+    tone: player ? 'good' : 'bad',
+    params: { lab: lab.id, model: node.nameKey, tier },
+    nodeId: node.id,
+    tier,
+    regionId: lab.homeRegion,
+    labId: lab.id,
+  });
+}
+
 /** Rules 3 to 9 for one active lab (compute and capability are in `info`). */
 function updateLab(state: GameState, context: EngineContext, ws: Workspace, lab: LabState, infos: ReadonlyMap<string, LabTickInfo>): void {
   const info = infos.get(lab.id);
@@ -62,6 +106,7 @@ function updateLab(state: GameState, context: EngineContext, ws: Workspace, lab:
   // A meter pushed to 100 by an effect since the last tick eliminates before decay can save it.
   checkElimination(state, context, lab);
   if (!lab.active) return;
+  announceLaunch(state, context, lab, info.capability);
   const growth = spreadLab(state, context, ws, lab, info, infos);
   applyIncome(state, context, lab, arrays, info, growth);
   const share = context.worldPopulation > 0 ? usersFromArrays(arrays, context) / context.worldPopulation : 0;
@@ -104,6 +149,7 @@ export function stepInPlace(state: GameState, context: EngineContext): void {
   storeWorkspace(state, context, ws);
 
   runAiLabs(state, context);
+  updateMoments(state, context);
   maybeDrawEvent(state, context);
   maybeAddHeadline(state, context);
   checkAchievements(state, context, 'tick');
