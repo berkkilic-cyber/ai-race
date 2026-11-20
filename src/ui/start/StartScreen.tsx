@@ -1,134 +1,190 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { ScrollView, StyleSheet, View, type ScrollViewInstance } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import type { ContentPack } from '@/engine';
-
 import { Button } from '../components/Button';
-import { t } from '../i18n';
+import { usePackEntry } from '../hooks/useGame';
+import { regionName, t } from '../i18n';
 import { useGameStore } from '../store/game';
-import { colors, radius, spacing, touch, type } from '../theme';
+import { colors, spacing } from '../theme';
+import { FounderStep } from './FounderStep';
+import { HowToSheet } from './HowToSheet';
+import { defaultHomeRegion, missingText, randomLabName, validateLabName } from './logic';
+import { NameStep } from './NameStep';
+import { RegionListSheet } from './RegionListSheet';
+import { RegionStep } from './RegionStep';
+import { StepIndicator } from './StepIndicator';
+import { useWide } from './useWide';
 
-/** Default home: the first region no rival starts in. */
-export function defaultHomeRegion(pack: ContentPack): string {
-  return (pack.regions.find((r) => !pack.rivals.some((rv) => rv.homeRegion === r.id)) ?? pack.regions[0]).id;
-}
+const STEP_LABELS = ['ui.start.step.name', 'ui.start.step.founder', 'ui.start.step.region'] as const;
+const LAST = STEP_LABELS.length - 1;
 
-/** Placeholder start screen: lab name, founder, home region, Found the lab. `/?autostart=1` starts at once. */
+/**
+ * Start flow in three steps on one route: name, founder, home region, then
+ * Found the lab. `/?autostart=1` (optionally `&seed=`) starts a run at once with defaults.
+ */
 export function StartScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ autostart?: string; seed?: string }>();
-  const pack = useGameStore((s) => s.pack);
+  const { pack, geometry, labNames } = usePackEntry();
   const newGame = useGameStore((s) => s.newGame);
-  const [name, setName] = useState('');
-  const [founderId, setFounderId] = useState(pack.founders[0].id);
-  const [home, setHome] = useState(() => defaultHomeRegion(pack));
 
-  const found = (overrides?: { seed?: number }) => {
-    newGame({ playerName: name.trim() || t('ui.start.defaultName'), founderId, homeRegion: home, ...overrides });
+  const [step, setStep] = useState(0);
+  const [name, setName] = useState('');
+  const [founderId, setFounderId] = useState<string | null>(pack.founders[0]?.id ?? null);
+  const [home, setHome] = useState<string | null>(null);
+  const [howTo, setHowTo] = useState(false);
+  const [list, setList] = useState(false);
+  const [focus, setFocus] = useState<{ regionId: string; nonce: number } | null>(null);
+  const scroll = useRef<ScrollViewInstance>(null);
+  const wide = useWide();
+
+  useEffect(() => {
+    if (params.autostart !== '1') return;
+    const seed = params.seed ? Number(params.seed) : undefined;
+    newGame({
+      playerName: t('ui.start.defaultName'),
+      founderId: pack.founders[0].id,
+      homeRegion: defaultHomeRegion(pack),
+      ...(seed !== undefined && Number.isFinite(seed) ? { seed } : {}),
+    });
+    router.replace('/game');
+  }, [params.autostart, params.seed, newGame, pack, router]);
+
+  const goTo = useCallback((next: number) => {
+    setStep(next);
+    scroll.current?.scrollTo({ y: 0, animated: false });
+  }, []);
+
+  const nameCheck = validateLabName(name);
+  const missing = missingText({ name, founderId, homeRegion: home });
+
+  const found = () => {
+    if (missing || !nameCheck.ok || !founderId || !home) return;
+    newGame({ playerName: nameCheck.name, founderId, homeRegion: home });
     router.replace('/game');
   };
 
-  useEffect(() => {
-    if (params.autostart === '1') {
-      const seed = params.seed ? Number(params.seed) : undefined;
-      newGame({
-        playerName: t('ui.start.defaultName'),
-        founderId: pack.founders[0].id,
-        homeRegion: defaultHomeRegion(pack),
-        ...(seed !== undefined && Number.isFinite(seed) ? { seed } : {}),
-      });
-      router.replace('/game');
-    }
-  }, [params.autostart, params.seed, newGame, pack, router]);
+  const next = () => {
+    if (step === 0 && !nameCheck.ok) return;
+    if (step === 1 && !founderId) return;
+    if (step < LAST) goTo(step + 1);
+    else found();
+  };
 
-  const regions = pack.regions.slice().sort((a, b) => t(a.nameKey).localeCompare(t(b.nameKey)));
+  let primaryLabel = t('ui.start.next');
+  let primarySub: string | undefined;
+  let primaryDisabled = false;
+  if (step === 0 && !nameCheck.ok) {
+    primaryDisabled = true;
+    primarySub = missing ?? undefined;
+  } else if (step === 1 && !founderId) {
+    primaryDisabled = true;
+    primarySub = t('ui.start.missing.founder');
+  } else if (step === LAST) {
+    primaryLabel = t('ui.start.foundLab');
+    primaryDisabled = missing !== null;
+    const founder = pack.founders.find((f) => f.id === founderId);
+    primarySub = missing ?? (founder && home ? t('ui.start.summary', { founder: t(founder.nameKey), region: regionName(home) }) : undefined);
+  }
+
+  const pickFromList = (id: string) => {
+    setHome(id);
+    setList(false);
+    setFocus((f) => ({ regionId: id, nonce: (f?.nonce ?? 0) + 1 }));
+  };
+
+  const labels = STEP_LABELS.map((k) => t(k));
+  const primary = (
+    <Button
+      label={primaryLabel}
+      sublabel={primarySub}
+      variant="primary"
+      disabled={primaryDisabled}
+      onPress={next}
+      style={[styles.primary, wide && styles.primaryWide, step === LAST && styles.found]}
+      testID={step === LAST ? 'start-found' : 'start-next'}
+    />
+  );
+  const back = <Button label={t('ui.start.back')} variant="ghost" onPress={() => goTo(step - 1)} style={styles.back} testID="start-back" />;
+  const stepView =
+    step === 0 ? (
+      <NameStep name={name} onName={setName} onDice={() => setName((n) => randomLabName(labNames, n))} onHowTo={() => setHowTo(true)} onSubmit={next} wide={wide} />
+    ) : step === 1 ? (
+      <FounderStep founders={pack.founders} selected={founderId} onSelect={setFounderId} wide={wide} />
+    ) : (
+      <RegionStep
+        pack={pack}
+        geometry={geometry}
+        selected={home}
+        onSelect={setHome}
+        onOpenList={() => setList(true)}
+        focus={focus}
+        wide={wide}
+        action={wide ? primary : undefined}
+      />
+    );
 
   return (
-    <SafeAreaView style={styles.safe}>
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <Text style={styles.title}>{t('ui.start.title')}</Text>
-
-        <Text style={styles.label}>{t('ui.start.labName')}</Text>
-        <TextInput
-          style={styles.input}
-          value={name}
-          onChangeText={setName}
-          placeholder={t('ui.start.defaultName')}
-          placeholderTextColor={colors.dim}
-          maxLength={32}
-          autoCorrect={false}
-          testID="start-name"
-        />
-
-        <Text style={styles.label}>{t('ui.start.founder')}</Text>
-        {pack.founders.map((f) => (
-          <Pressable
-            key={f.id}
-            onPress={() => setFounderId(f.id)}
-            style={[styles.option, founderId === f.id && styles.selected]}
-            accessibilityRole="radio"
-            accessibilityState={{ selected: founderId === f.id }}
-            testID={`founder-${f.id}`}
-          >
-            <Text style={styles.optionTitle}>{t(f.nameKey)}</Text>
-            <Text style={styles.optionDesc}>{t(f.descKey)}</Text>
-          </Pressable>
-        ))}
-
-        <Text style={styles.label}>{t('ui.start.home')}</Text>
-        <View style={styles.regions}>
-          {regions.map((r) => (
-            <Pressable
-              key={r.id}
-              onPress={() => setHome(r.id)}
-              style={[styles.chip, home === r.id && styles.selected]}
-              accessibilityRole="radio"
-              accessibilityState={{ selected: home === r.id }}
-            >
-              <Text style={[styles.chipText, home === r.id && styles.chipTextSelected]}>{t(r.nameKey)}</Text>
-            </Pressable>
-          ))}
-        </View>
-      </ScrollView>
-      <View style={styles.footer}>
-        <Button label={t('ui.start.found')} variant="primary" onPress={() => found()} testID="start-found" />
-      </View>
+    <SafeAreaView style={styles.safe} edges={['top', 'bottom', 'left', 'right']}>
+      {wide ? (
+        <>
+          <View style={styles.wideContent}>{stepView}</View>
+          <View style={styles.wideFooter}>
+            <View style={styles.side}>{step > 0 ? back : null}</View>
+            <StepIndicator labels={labels} step={step} onStep={goTo} compact />
+            <View style={[styles.side, styles.sideRight]}>{step < LAST ? primary : null}</View>
+          </View>
+        </>
+      ) : (
+        <>
+          <View style={styles.header}>
+            <StepIndicator labels={labels} step={step} onStep={goTo} />
+          </View>
+          <ScrollView ref={scroll} style={styles.scroll} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+            {stepView}
+          </ScrollView>
+          <View style={styles.footer}>
+            {step > 0 ? back : null}
+            {primary}
+          </View>
+        </>
+      )}
+      <HowToSheet visible={howTo} onClose={() => setHowTo(false)} />
+      <RegionListSheet visible={list} regions={pack.regions} selected={home} onSelect={pickFromList} onClose={() => setList(false)} />
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
-  content: { padding: spacing.l, gap: spacing.s, paddingBottom: spacing.xl },
-  title: { color: colors.text, fontSize: type.xl, fontWeight: '800', marginBottom: spacing.s },
-  label: { color: colors.dim, fontSize: type.s, marginTop: spacing.m, textTransform: 'uppercase', letterSpacing: 0.5 },
-  input: {
-    minHeight: touch,
-    backgroundColor: colors.surface,
-    borderRadius: radius.s,
-    borderWidth: 1,
+  header: { paddingHorizontal: spacing.l, paddingTop: spacing.m, paddingBottom: spacing.s },
+  scroll: { flex: 1 },
+  content: { padding: spacing.l, paddingTop: spacing.s, paddingBottom: spacing.xl },
+  footer: {
+    flexDirection: 'row',
+    gap: spacing.s,
+    padding: spacing.l,
+    paddingTop: spacing.m,
+    borderTopWidth: 1,
     borderColor: colors.border,
-    color: colors.text,
-    fontSize: type.m,
-    paddingHorizontal: spacing.m,
+    backgroundColor: colors.bg,
   },
-  option: { backgroundColor: colors.surface, borderRadius: radius.s, borderWidth: 1, borderColor: colors.border, padding: spacing.m, gap: 2 },
-  selected: { borderColor: colors.player, backgroundColor: colors.raised },
-  optionTitle: { color: colors.text, fontSize: type.m, fontWeight: '700' },
-  optionDesc: { color: colors.dim, fontSize: type.s },
-  regions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.s },
-  chip: {
-    minHeight: touch,
-    justifyContent: 'center',
-    paddingHorizontal: spacing.m,
-    borderRadius: radius.pill,
-    borderWidth: 1,
+  back: { minWidth: 96 },
+  primary: { flex: 1, minHeight: 52 },
+  primaryWide: { flex: 0, minHeight: 48, minWidth: 160 },
+  found: { minHeight: 60 },
+  wideContent: { flex: 1, paddingHorizontal: spacing.xl, paddingTop: spacing.l, paddingBottom: spacing.s },
+  wideFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.l,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.s,
+    borderTopWidth: 1,
     borderColor: colors.border,
-    backgroundColor: colors.surface,
   },
-  chipText: { color: colors.text, fontSize: type.s },
-  chipTextSelected: { color: colors.player, fontWeight: '700' },
-  footer: { padding: spacing.l, borderTopWidth: 1, borderColor: colors.border, backgroundColor: colors.bg },
+  side: { width: 200, flexDirection: 'row' },
+  sideRight: { justifyContent: 'flex-end' },
 });
