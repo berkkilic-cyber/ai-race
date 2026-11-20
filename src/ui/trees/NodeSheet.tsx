@@ -9,7 +9,7 @@ import { Sheet } from '../components/Sheet';
 import { fmtCash, fmtCompact } from '../format';
 import { failureText, t } from '../i18n';
 import { useGameStore } from '../store/game';
-import { colors, radius, spacing, tabular, type } from '../theme';
+import { colors, radius, spacing, tabular, type, voice } from '../theme';
 import { TREE_ACCENT } from './accent';
 import { describeNode } from './describe';
 import { CheckGlyph, CrossGlyph, LockGlyph } from './Glyphs';
@@ -146,7 +146,7 @@ function NodeSheetBody({ node, justBought, onClose, onBuy }: { node: NodeDef; ju
         {lines.map((line, i) => (
           <View key={i} style={styles.lineRow}>
             <View style={[styles.lineDot, { backgroundColor: line.tone === 'good' ? colors.good : colors.bad }]} />
-            <Text style={[styles.lineText, { color: line.tone === 'good' ? colors.good : colors.bad }]}>{line.text}</Text>
+            <Text style={[styles.lineText, { color: line.tone === 'good' ? colors.goodText : colors.bad }]}>{line.text}</Text>
           </View>
         ))}
       </View>
@@ -196,7 +196,7 @@ const styles = StyleSheet.create({
   },
   chipDot: { width: 6, height: 6, borderRadius: 3 },
   chipText: { fontSize: type.xs, fontWeight: '700' },
-  name: { color: colors.text, fontSize: type.l, fontWeight: '800' },
+  name: { ...voice.calmHeading, color: colors.text, fontSize: type.l + 2 },
   desc: { color: colors.dim, fontSize: type.s },
   section: { gap: spacing.xs },
   sectionTitle: { color: colors.dim, fontSize: type.xs, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 },

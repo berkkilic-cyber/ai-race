@@ -3,7 +3,8 @@ import { StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { Button } from '../components/Button';
 import { t } from '../i18n';
-import { colors, radius, spacing, tabular, touch, type } from '../theme';
+import { Mascot } from '../mascot';
+import { colors, radius, spacing, tabular, touch, type, voice } from '../theme';
 import { MAX_LAB_NAME, missingText } from './logic';
 
 export interface NameStepProps {
@@ -23,6 +24,7 @@ export function NameStep({ name, onName, onDice, onHowTo, onSubmit, wide }: Name
   return (
     <View style={[styles.wrap, wide && styles.wrapWide]}>
       <View style={[styles.hero, wide && styles.pane]}>
+        <Mascot mood={name.trim() ? 'pleased' : 'calm'} size={64} />
         <Text style={styles.title} accessibilityRole="header">
           {t('ui.start.gameTitle')}
         </Text>
@@ -74,22 +76,22 @@ const styles = StyleSheet.create({
   wrapWide: { flex: 1, flexDirection: 'row', alignItems: 'center', paddingTop: 0, gap: spacing.xl + spacing.l },
   pane: { flex: 1 },
   right: { gap: spacing.l },
-  hero: { gap: spacing.s, alignItems: 'center', paddingVertical: spacing.xl },
-  title: { color: colors.player, fontSize: type.display + 12, fontWeight: '900', letterSpacing: -1 },
-  tagline: { color: colors.text, fontSize: type.m, textAlign: 'center', lineHeight: 22, maxWidth: 300 },
+  hero: { gap: spacing.s, alignItems: 'center', paddingVertical: spacing.l },
+  title: { ...voice.calmHeading, color: colors.text, fontSize: type.display + 12, lineHeight: type.display + 18, letterSpacing: -1.5, marginTop: spacing.s },
+  tagline: { color: colors.dim, fontSize: type.m, textAlign: 'center', lineHeight: 22, maxWidth: 300 },
   field: { gap: spacing.s },
-  label: { color: colors.dim, fontSize: type.s, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.6 },
+  label: { ...voice.calmLabel, color: colors.dim, fontSize: type.xs },
   inputRow: { flexDirection: 'row', gap: spacing.s },
   input: {
     flex: 1,
     minHeight: touch + 8,
     backgroundColor: colors.surface,
     borderRadius: radius.s,
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border,
     color: colors.text,
-    fontSize: type.l,
-    fontWeight: '600',
+    ...voice.calmHeading,
+    fontSize: type.l + 2,
     paddingHorizontal: spacing.m,
   },
   inputBad: { borderColor: colors.bad },

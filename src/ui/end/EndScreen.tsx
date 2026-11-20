@@ -10,11 +10,11 @@ import { Card } from '../components/Card';
 import { Meter } from '../components/Meter';
 import { fmtPct, fmtUsers } from '../format';
 import { usePackEntry } from '../hooks/useGame';
-import { labColor, labName, regionName, t } from '../i18n';
+import { labName, readableLabColor, regionName, t } from '../i18n';
 import { mixColor } from '../map/mapColors';
 import { newsText } from '../news/newsText';
 import { useGameStore } from '../store/game';
-import { colors, radius, spacing, tabular, type } from '../theme';
+import { colors, radius, spacing, tabular, type, voice } from '../theme';
 import { FinalMap } from './FinalMap';
 import { endStats, pickNotableHeadlines, playAgainSetup } from './logic';
 import { useWide } from '../start/useWide';
@@ -81,7 +81,7 @@ function EndView({ state }: { state: GameState }) {
   const def = pack.endings.find((e) => e.id === ending.endingId);
   const player = state.labs[state.playerLabId];
   const win = ending.kind === 'win';
-  const accent = win ? colors.good : colors.bad;
+  const accent = win ? colors.goodText : colors.bad;
   const params = { lab: state.playerLabId, ...(ending.winnerLabId ? { rival: ending.winnerLabId } : {}) };
   const winner = !win && ending.winnerLabId && ending.winnerLabId !== state.playerLabId ? state.labs[ending.winnerLabId] : undefined;
   const founder = pack.founders.find((f) => f.id === player.founderId);
@@ -99,7 +99,7 @@ function EndView({ state }: { state: GameState }) {
   };
 
   const bannerEl = (
-    <View style={[styles.banner, { borderColor: accent, backgroundColor: mixColor(colors.surface, accent, 0.14) }]} testID="end-banner">
+    <View style={[styles.banner, { borderColor: accent, backgroundColor: mixColor(colors.surface, accent, 0.07) }]} testID="end-banner">
       <View style={[styles.kindPill, { backgroundColor: accent }]}>
         <Text style={styles.kind}>{t(win ? 'ui.end.victory' : 'ui.end.defeat')}</Text>
       </View>
@@ -109,7 +109,7 @@ function EndView({ state }: { state: GameState }) {
       {def ? <Text style={[styles.body, wide && styles.bodyWide]}>{t(def.bodyKey, params)}</Text> : null}
       {winner ? (
         <View style={styles.winner}>
-          <View style={[styles.swatch, { backgroundColor: labColor(winner) }]} />
+          <View style={[styles.swatch, { backgroundColor: readableLabColor(winner) }]} />
           <Text style={styles.winnerText}>{t('ui.end.wonBy', { rival: winner.id })}</Text>
         </View>
       ) : null}
@@ -224,36 +224,36 @@ function EndView({ state }: { state: GameState }) {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
   row: { flexDirection: 'row' },
-  leftPane: { width: 400, borderRightWidth: 1, borderColor: colors.border },
+  leftPane: { width: 400, borderRightWidth: StyleSheet.hairlineWidth, borderColor: colors.border },
   leftContent: { padding: spacing.l, paddingBottom: spacing.s },
   scoreRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.m, paddingHorizontal: spacing.l, paddingVertical: spacing.s },
   scoreRowText: { flex: 1, gap: 2 },
   labLineLeft: { color: colors.dim, fontSize: type.xs },
-  scoreCompact: { color: colors.player, fontSize: type.display, fontWeight: '900', ...tabular },
+  scoreCompact: { ...voice.calmNumber, color: colors.playerText, fontSize: type.display, lineHeight: type.display + 6 },
   rightPane: { flex: 1 },
   rightContent: { padding: spacing.l, gap: spacing.m },
   footerWide: { borderTopWidth: 0, paddingTop: 0 },
   content: { padding: spacing.l, gap: spacing.m, paddingBottom: spacing.xl },
-  banner: { borderWidth: 1, borderTopWidth: 4, borderRadius: radius.l, padding: spacing.l, gap: spacing.s },
-  kindPill: { alignSelf: 'flex-start', borderRadius: radius.pill, paddingHorizontal: spacing.m, paddingVertical: spacing.xs },
-  kind: { color: colors.onPlayer, fontSize: type.s, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1.2 },
-  title: { color: colors.text, fontSize: type.xl + 4, fontWeight: '900', lineHeight: 32 },
+  banner: { borderTopWidth: 3, padding: spacing.l, paddingTop: spacing.m, gap: spacing.s },
+  kindPill: { alignSelf: 'flex-start', borderRadius: radius.pill, paddingHorizontal: spacing.m, paddingVertical: 3 },
+  kind: { ...voice.calmLabel, color: colors.newsPaper, fontSize: type.xs, fontWeight: '700', letterSpacing: 1.4 },
+  title: { ...voice.calmHeading, color: colors.text, fontSize: type.xl + 6, lineHeight: 34 },
   body: { color: colors.text, fontSize: type.m, lineHeight: 22 },
-  titleWide: { fontSize: type.xl, lineHeight: 29 },
+  titleWide: { fontSize: type.xl + 2, lineHeight: 30 },
   bodyWide: { fontSize: type.s + 1, lineHeight: 20 },
   winner: { flexDirection: 'row', alignItems: 'center', gap: spacing.s, marginTop: spacing.xs },
   swatch: { width: 12, height: 12, borderRadius: 6 },
   winnerText: { color: colors.text, fontSize: type.s, fontWeight: '700', flexShrink: 1 },
   scoreCard: { alignItems: 'center', gap: spacing.xs },
-  scoreLabel: { color: colors.dim, fontSize: type.s, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1 },
-  score: { color: colors.player, fontSize: type.display + 16, fontWeight: '900', ...tabular },
+  scoreLabel: { ...voice.calmLabel, color: colors.dim, fontSize: type.xs },
+  score: { ...voice.calmNumber, color: colors.playerText, fontSize: type.display + 16, lineHeight: type.display + 24 },
   labLine: { color: colors.dim, fontSize: type.s, textAlign: 'center' },
   section: { gap: spacing.m },
-  sectionTitle: { color: colors.text, fontSize: type.l, fontWeight: '800' },
-  subTitle: { color: colors.dim, fontSize: type.xs, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.8 },
+  sectionTitle: { ...voice.calmHeading, color: colors.text, fontSize: type.l + 2 },
+  subTitle: { ...voice.calmLabel, color: colors.dim, fontSize: type.xs },
   grid: { flexDirection: 'row', flexWrap: 'wrap', rowGap: spacing.m },
   stat: { width: '50%', paddingRight: spacing.s, gap: 2 },
-  statValue: { color: colors.text, fontSize: type.l, fontWeight: '800', ...tabular },
+  statValue: { ...voice.calmNumber, color: colors.text, fontSize: type.l + 2 },
   statLabel: { color: colors.dim, fontSize: type.xs },
   meters: { flexDirection: 'row', gap: spacing.m },
   empty: { color: colors.dim, fontSize: type.s, lineHeight: 19 },

@@ -55,5 +55,5 @@ const styles = StyleSheet.create({
   barOn: { backgroundColor: colors.player },
   label: { color: colors.dim, fontSize: type.s },
   labelCurrent: { color: colors.text, fontWeight: '700' },
-  labelDone: { color: colors.player },
+  labelDone: { color: colors.playerText },
 });

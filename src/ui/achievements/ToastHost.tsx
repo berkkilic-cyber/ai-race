@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { t } from '../i18n';
 import { useWide } from '../events/useWide';
 import { useGameStore } from '../store/game';
-import { colors, radius, spacing, type } from '../theme';
+import { colors, radius, spacing, type, voice } from '../theme';
 import { currentToast, dismissToast, EMPTY_QUEUE, enqueueToasts, newAchievementIds, type Toast, type ToastQueue } from './queue';
 
 /** How long a toast stays up. */
@@ -37,7 +37,7 @@ function AchievementToast({ toast, onDone, wide }: { toast: Toast; onDone: (key:
           <Text style={styles.badgeText}>{secret ? '?' : '★'}</Text>
         </View>
         <View style={styles.texts}>
-          <Text style={[styles.kicker, { color: secret ? colors.info : colors.player }]}>
+          <Text style={[styles.kicker, { color: secret ? colors.info : colors.playerText }]}>
             {t(secret ? 'ui.achievements.secretFound' : 'ui.achievements.unlocked').toUpperCase()}
           </Text>
           <Text style={styles.name} numberOfLines={1}>
@@ -104,6 +104,6 @@ const styles = StyleSheet.create({
   badgeText: { color: colors.onPlayer, fontSize: type.l, fontWeight: '900' },
   texts: { flex: 1, gap: 1 },
   kicker: { fontSize: type.xs, fontWeight: '900', letterSpacing: 1.2 },
-  name: { color: colors.text, fontSize: type.m, fontWeight: '800' },
+  name: { ...voice.calmHeading, color: colors.text, fontSize: type.m + 1 },
   desc: { color: colors.dim, fontSize: type.s },
 });

@@ -97,7 +97,7 @@ const styles = StyleSheet.create({
   weighted: { borderBottomWidth: EDGE },
   primaryEdge: { borderBottomColor: colors.playerDeep },
   inkEdge: { borderBottomColor: colors.newsRed },
-  disabled: { opacity: 0.42 },
+  disabled: { opacity: 0.55 },
   pressed: { backgroundColor: colors.raised, transform: [{ translateY: 1 }] },
   pressedWeighted: { borderBottomWidth: 0, marginTop: EDGE, transform: [{ translateY: 0 }] },
   inner: { alignItems: 'center' },

@@ -7,8 +7,8 @@ import type { ContentPack } from '@/engine';
 import { Button } from '../components/Button';
 import { Pips } from '../components/Pips';
 import { fmtUsers, toPips } from '../format';
-import { t } from '../i18n';
-import { colors, radius, spacing, type } from '../theme';
+import { readableLabColor, t } from '../i18n';
+import { colors, radius, spacing, type, voice } from '../theme';
 import { regionRead } from './logic';
 import { RegionPickerMap, type RivalHome } from './RegionPickerMap';
 
@@ -35,7 +35,7 @@ const ATTRS = [
 /** Step 3: world map in picker mode, a panel for the chosen region, and a list as an alternative. */
 export function RegionStep({ pack, geometry, selected, onSelect, onOpenList, focus, wide, action }: RegionStepProps) {
   const region = selected ? pack.regions.find((r) => r.id === selected) : undefined;
-  const rivalHomes: RivalHome[] = pack.rivals.map((r) => ({ regionId: r.homeRegion, color: r.color }));
+  const rivalHomes: RivalHome[] = pack.rivals.map((r) => ({ regionId: r.homeRegion, color: readableLabColor({ color: r.color, controller: 'ai' }) }));
   const rivalsHere = region ? pack.rivals.filter((r) => r.homeRegion === region.id) : [];
   const head = (
     <View style={styles.head}>
@@ -117,14 +117,14 @@ const styles = StyleSheet.create({
   panelScrollContent: { gap: spacing.s },
   titleWide: { fontSize: type.l },
   head: { gap: spacing.xs },
-  title: { color: colors.text, fontSize: type.xl, fontWeight: '800' },
+  title: { ...voice.calmHeading, color: colors.text, fontSize: type.xl },
   hint: { color: colors.dim, fontSize: type.s },
   panel: { backgroundColor: colors.surface, borderRadius: radius.l, borderWidth: 1, borderColor: colors.border, padding: spacing.l, gap: spacing.s },
   panelOn: { borderColor: colors.player },
   panelHead: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: spacing.s },
-  name: { color: colors.text, fontSize: type.l, fontWeight: '800', flexShrink: 1 },
+  name: { ...voice.calmHeading, color: colors.text, fontSize: type.l, flexShrink: 1 },
   pop: { color: colors.dim, fontSize: type.s },
-  read: { color: colors.player, fontSize: type.s, fontWeight: '600', lineHeight: 19 },
+  read: { color: colors.playerText, fontSize: type.s, fontWeight: '600', lineHeight: 19 },
   attrs: { flexDirection: 'row', flexWrap: 'wrap', rowGap: spacing.s, marginTop: spacing.xs },
   attr: { width: '50%', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingRight: spacing.m, gap: spacing.s },
   attrWide: { width: '100%', paddingRight: 0 },

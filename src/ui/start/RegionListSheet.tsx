@@ -91,7 +91,7 @@ const styles = StyleSheet.create({
   pressed: { opacity: 0.8 },
   rowText: { flex: 1, gap: 2 },
   name: { color: colors.text, fontSize: type.m, fontWeight: '600' },
-  nameOn: { color: colors.player },
+  nameOn: { color: colors.playerText },
   read: { color: colors.dim, fontSize: type.xs },
   pop: { color: colors.dim, fontSize: type.s },
 });

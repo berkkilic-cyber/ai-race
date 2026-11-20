@@ -181,7 +181,7 @@ export function RegionPickerMap({ geometry, selected, onSelect, rivalHomes, focu
 
   const fills = useMemo<Record<string, string>>(() => {
     const out: Record<string, string> = {};
-    for (const home of rivalHomes) out[home.regionId] = mixColor(colors.raised, home.color, 0.3);
+    for (const home of rivalHomes) out[home.regionId] = mixColor(colors.dotRest, home.color, 0.6);
     if (selected) out[selected] = colors.player;
     return out;
   }, [selected, rivalHomes]);

@@ -3,6 +3,8 @@ import { Circle, G, Path } from 'react-native-svg';
 
 import type { MapGeometry } from '@/content/packs/ai-lab/geometry';
 
+import { asDotGeometry, drawableDots } from '../map/dotGeometry';
+import { DOT_SIZE } from '../map/DotLayer';
 import { colors } from '../theme';
 
 export interface MapOutline {
@@ -24,23 +26,33 @@ export interface MapDot {
 
 export interface MapShapesProps {
   geometry: MapGeometry;
-  /** Fill per region; missing regions use the raised surface colour. */
+  /** Colour per region (its dots, or its fill); missing regions rest. */
   fills: Record<string, string>;
   outlines?: readonly MapOutline[];
   dots?: readonly MapDot[];
 }
 
 /**
- * Static SVG content of the world map (regions, outlines, dots) in map units,
+ * Static SVG content of the world map (the dot matrix, or region fills for a pack
+ * without one; outlines; marker dots) in map units,
  * using the same generated geometry as the living map. Place inside an <Svg>
  * whose viewBox is the geometry's.
  */
 export const MapShapes = memo(function MapShapes({ geometry, fills, outlines = [], dots = [] }: MapShapesProps) {
+  const matrix = asDotGeometry(geometry);
   return (
     <G pointerEvents="none">
-      {Object.entries(geometry.regions).map(([id, g]) => (
-        <Path key={id} d={g.d} fill={fills[id] ?? colors.raised} stroke={colors.bg} strokeWidth={0.7} strokeLinejoin="round" />
-      ))}
+      {matrix ? (
+        <G transform={`translate(${matrix.dots.pitch / 2} ${matrix.dots.pitch / 2}) scale(${matrix.dots.pitch})`}>
+          {Object.entries(matrix.regions).map(([id, g]) => (
+            <Path key={id} d={drawableDots(g.dots.join(''))} fill="none" stroke={fills[id] ?? colors.dotRest} strokeWidth={DOT_SIZE} strokeLinecap="round" />
+          ))}
+        </G>
+      ) : (
+        Object.entries(geometry.regions).map(([id, g]) => (
+          <Path key={id} d={g.d} fill={fills[id] ?? colors.raised} stroke={colors.bg} strokeWidth={0.7} strokeLinejoin="round" />
+        ))
+      )}
       {outlines.map((o) =>
         geometry.regions[o.regionId] ? (
           <Path

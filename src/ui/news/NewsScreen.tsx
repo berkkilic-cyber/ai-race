@@ -147,8 +147,8 @@ const styles = StyleSheet.create({
     borderColor: colors.player,
   },
   achPressed: { backgroundColor: colors.raised },
-  achIcon: { color: colors.player, fontSize: type.s },
-  achText: { color: colors.player, fontSize: type.s, fontWeight: '800' },
+  achIcon: { color: colors.playerText, fontSize: type.s },
+  achText: { color: colors.playerText, fontSize: type.s, fontWeight: '800' },
   list: { flex: 1 },
   /** Wide: keep lines a comfortable length, centred in the main area. */
   centred: { width: '100%', maxWidth: MAX_LINE_WIDTH, alignSelf: 'center' },

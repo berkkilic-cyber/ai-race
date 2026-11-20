@@ -6,7 +6,7 @@ import type { MapGeometry } from '@/content/packs/ai-lab/geometry';
 import { getWorldShare, type ContentPack, type GameState } from '@/engine';
 
 import { fmtPct } from '../format';
-import { labColor, labName } from '../i18n';
+import { labName, readableLabColor } from '../i18n';
 import { bannedKey, parseSites, regionFills, sitesKey } from '../map/mapColors';
 import { MapShapes, type MapDot, type MapOutline } from '../start/MapShapes';
 import { colors, radius, spacing, tabular, type } from '../theme';
@@ -25,7 +25,7 @@ export function FinalMap({ state, pack, geometry }: FinalMapProps) {
     const outlineList: MapOutline[] = banned ? banned.split('|').map((id) => ({ regionId: id, color: colors.bad, width: 1.6, dashed: true })) : [];
     const perRegion = new Map<string, number>();
     const dotList: MapDot[] = [];
-    for (const site of parseSites(sitesKey(state), state.playerLabId, (id) => (state.labs[id] ? labColor(state.labs[id]) : colors.dim))) {
+    for (const site of parseSites(sitesKey(state), state.playerLabId, (id) => (state.labs[id] ? readableLabColor(state.labs[id]) : colors.dim))) {
       const g = geometry.regions[site.regionId];
       if (!g) continue;
       const n = perRegion.get(site.regionId) ?? 0;
@@ -41,7 +41,9 @@ export function FinalMap({ state, pack, geometry }: FinalMapProps) {
         glow: site.online,
       });
     }
-    return { fills: regionFills(state, ids), outlines: outlineList, dots: dotList };
+    // Untouched regions rest (MapShapes draws them in the resting dot colour).
+    const fills = Object.fromEntries(Object.entries(regionFills(state, ids)).filter(([, c]) => c !== colors.raised));
+    return { fills, outlines: outlineList, dots: dotList };
   }, [state, geometry]);
 
   const legend = useMemo(
@@ -64,7 +66,7 @@ export function FinalMap({ state, pack, geometry }: FinalMapProps) {
       <View style={styles.legend}>
         {legend.map(({ lab, share }) => (
           <View key={lab.id} style={styles.item}>
-            <View style={[styles.swatch, { backgroundColor: labColor(lab) }]} />
+            <View style={[styles.swatch, { backgroundColor: readableLabColor(lab) }]} />
             <Text style={[styles.name, lab.controller === 'human' && styles.me, !lab.active && styles.out]} numberOfLines={1}>
               {labName(lab)}
             </Text>
