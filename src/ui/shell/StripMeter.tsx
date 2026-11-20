@@ -52,25 +52,27 @@ export function StripMeter({ label, value, color, pulseAbove = 75, tag, testID }
         <View style={[styles.track, tag ? styles.trackTagged : null]}>
           <Animated.View style={[styles.fill, { width: `${pct}%`, backgroundColor: color }, fillStyle]} />
         </View>
-        <Text style={[styles.value, pulsing && { color: colors.bad }]}>{Math.floor(pct)}</Text>
+        <Text style={[styles.value, pulsing && { color: colors.bad }]} numberOfLines={1}>
+          {Math.floor(pct)}%
+        </Text>
       </View>
     </View>
   );
 }
 
-/** Wide enough for "100" so the bar does not jump as the number changes. */
-const VALUE_WIDTH = 22;
+/** Wide enough for "100%" so the bar does not jump as the number changes. */
+const VALUE_WIDTH = 31;
 
 const styles = StyleSheet.create({
   wrap: { flex: 1, minWidth: 0, justifyContent: 'center', gap: 3 },
   // The tagged meter takes the tag's natural width; the others share what is left.
   wrapTagged: { flexGrow: 0, flexShrink: 0, flexBasis: 'auto' },
-  label: { ...voice.calmLabel, color: colors.dim, fontSize: 9.5, lineHeight: 11, letterSpacing: 0.3 },
+  label: { ...voice.calmLabel, color: colors.dim, fontSize: 9, lineHeight: 11, letterSpacing: 0.1 },
   tag: { alignSelf: 'flex-start', backgroundColor: colors.newsInk, paddingHorizontal: 4, height: 13, justifyContent: 'center', transform: [{ rotate: '-1.5deg' }] },
   tagText: { ...voice.loudKicker, fontSize: 10.5, lineHeight: 12, letterSpacing: 0.8, color: colors.newsPaper },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   track: { flex: 1, height: 3, backgroundColor: colors.raised, overflow: 'hidden' },
   trackTagged: { minWidth: 56 },
   fill: { height: '100%' },
-  value: { ...voice.calmNumber, width: VALUE_WIDTH, textAlign: 'right', color: colors.text, fontSize: 13, lineHeight: 15 },
+  value: { ...voice.calmNumber, width: VALUE_WIDTH, textAlign: 'right', color: colors.text, fontSize: 12.5, lineHeight: 15 },
 });
