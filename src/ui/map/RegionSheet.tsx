@@ -96,6 +96,8 @@ function OpenRegionSheet({ regionId, onClose }: { regionId: string; onClose: () 
     <Sheet
       visible
       onClose={onClose}
+      // The map beside the panel stays live: another region switches it, the sea closes it.
+      dismissOnOutsidePress={false}
       title={t(region.nameKey)}
       headerRight={<Button label="✕" compact variant="ghost" onPress={onClose} accessibilityLabel={t('ui.region.close')} />}
       testID="region-sheet"

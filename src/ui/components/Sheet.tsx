@@ -1,5 +1,5 @@
-import type { ReactNode } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { useEffect, useRef, type ReactNode } from 'react';
+import { BackHandler, Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import Animated, { SlideInRight } from 'react-native-reanimated';
 
 import { useInsets } from '../hooks/useInsets';
@@ -22,6 +22,13 @@ export interface SheetProps {
    * the game shell, whose main area is already inside the safe area.
    */
   safeArea?: boolean;
+  /**
+   * Wide mode: a tap anywhere outside the panel (in the parent) closes it, through an
+   * invisible layer below the panel. Default true. Turn it off only where the content beside
+   * the panel must stay interactive (the map's region panel). Narrow mode always closes on
+   * a tap on its scrim. Android back closes every sheet.
+   */
+  dismissOnOutsidePress?: boolean;
   testID?: string;
 }
 
@@ -34,12 +41,14 @@ export function sheetPanelWidth(windowWidth: number): number {
  * Overlay panel inside its parent (not a native modal, so the screen behind stays live).
  * Place it last inside a full-size parent.
  * - Wide (landscape): a right-hand side panel, full height of the parent, sliding in
- *   from the right, no scrim, so whatever is beside it stays usable.
+ *   from the right, no scrim. A tap outside it closes it (an invisible layer below the
+ *   panel), unless `dismissOnOutsidePress` is off, as for the map's region panel.
  * - Narrow (portrait): a bottom sheet over a light scrim; tapping the scrim closes it.
  */
-export function Sheet({ visible, onClose, title, headerRight, children, maxHeight = '70%', safeArea = false, testID }: SheetProps) {
+export function Sheet({ visible, onClose, title, headerRight, children, maxHeight = '70%', safeArea = false, dismissOnOutsidePress = true, testID }: SheetProps) {
   const { width, height } = useWindowDimensions();
   const insets = useInsets();
+  useBackToClose(visible, onClose);
   if (!visible) return null;
   const edge = safeArea ? insets : { top: 0, right: 0, bottom: 0, left: 0 };
   if (layoutModeFor(width, height) === 'wide') {
@@ -52,6 +61,10 @@ export function Sheet({ visible, onClose, title, headerRight, children, maxHeigh
       );
     return (
       <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
+        {/* Below the panel in z-order, above the page: an outside tap closes the panel. Draws nothing. */}
+        {dismissOnOutsidePress ? (
+          <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel={t('ui.sheet.close')} testID="sheet-outside" {...NOT_FOCUSABLE} />
+        ) : null}
         <Animated.View
           entering={SlideInRight.duration(200)}
           style={[styles.panel, { width: sheetPanelWidth(width) + edge.right, paddingTop: edge.top, paddingRight: edge.right, paddingBottom: edge.bottom }]}
@@ -89,6 +102,25 @@ export function Sheet({ visible, onClose, title, headerRight, children, maxHeigh
       </View>
     </View>
   );
+}
+
+/** The outside layer is for pointers only; keyboard and screen-reader users have the close button. */
+const NOT_FOCUSABLE = { accessible: false, focusable: false, tabIndex: -1 } as const;
+
+/** Android back closes the open sheet (the most recently opened one first). */
+function useBackToClose(visible: boolean, onClose: () => void) {
+  const handler = useRef(onClose);
+  useEffect(() => {
+    handler.current = onClose;
+  }, [onClose]);
+  useEffect(() => {
+    if (!visible || Platform.OS !== 'android') return;
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      handler.current();
+      return true;
+    });
+    return () => sub.remove();
+  }, [visible]);
 }
 
 /**
