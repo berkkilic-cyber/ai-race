@@ -88,3 +88,19 @@ export function createHitTester(geometry: MapGeometry, smallArea: number, radius
     },
   };
 }
+
+/** The region whose centroid is nearest to a map point, if within `maxDist` map units. */
+export function nearestRegion(geometry: MapGeometry, x: number, y: number, maxDist: number): string | null {
+  let best: string | null = null;
+  let bestDist = maxDist * maxDist;
+  for (const [id, g] of Object.entries(geometry.regions)) {
+    const dx = g.centroid[0] - x;
+    const dy = g.centroid[1] - y;
+    const d = dx * dx + dy * dy;
+    if (d <= bestDist) {
+      bestDist = d;
+      best = id;
+    }
+  }
+  return best;
+}

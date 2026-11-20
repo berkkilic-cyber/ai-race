@@ -3,14 +3,16 @@ import { Platform, StyleSheet, View, type HostInstance, type LayoutChangeEvent }
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import Svg from 'react-native-svg';
+import { scheduleOnRN } from 'react-native-worklets';
 
 import type { MapGeometry } from '@/content/packs/ai-lab/geometry';
 
 import { Button } from '../components/Button';
+import { logLifecycle } from '../diagnostics/log';
 import { t } from '../i18n';
 import { createHitTester } from '../map/hitTest';
 import { mixColor } from '../map/mapColors';
-import { centreOn, clampScale, clampTranslate, fit, toMapPoint, zoomAbout, type Layout } from '../map/viewTransform';
+import { centreOn, clampScale, clampTranslate, fit, panBy, toMapPoint, zoomAbout, type Layout } from '../map/viewTransform';
 import { colors, radius, spacing } from '../theme';
 import { MapShapes, type MapDot, type MapOutline } from './MapShapes';
 
@@ -54,8 +56,8 @@ export function RegionPickerMap({ geometry, selected, onSelect, rivalHomes, focu
   const tx = useSharedValue(0);
   const ty = useSharedValue(0);
   const startScale = useSharedValue(1);
-  const startTx = useSharedValue(0);
-  const startTy = useSharedValue(0);
+  const lastPan = useSharedValue<[number, number]>([0, 0]);
+  const panAnchor = useSharedValue<[number, number]>([0, 0]);
 
   const onLayout = useCallback(
     (e: LayoutChangeEvent) => {
@@ -111,57 +113,77 @@ export function RegionPickerMap({ geometry, selected, onSelect, rivalHomes, focu
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [focus?.nonce, size.w]);
 
-  const pan = Gesture.Pan()
-    .minDistance(8)
-    .averageTouches(true)
-    .onStart(() => {
-      startTx.set(tx.get());
-      startTy.set(ty.get());
-    })
-    .onUpdate((e) => {
-      const [x, y] = clampTranslate(layout.get(), scale.get(), startTx.get() + e.translationX, startTy.get() + e.translationY);
-      tx.set(x);
-      ty.set(y);
-    });
-
-  const pinch = Gesture.Pinch()
-    .onStart(() => {
-      startScale.set(scale.get());
-    })
-    .onUpdate((e) => {
-      const l = layout.get();
-      const s1 = clampScale(startScale.get() * e.scale);
-      const [zx, zy] = zoomAbout(l, scale.get(), s1, tx.get(), ty.get(), e.focalX, e.focalY);
-      const [x, y] = clampTranslate(l, s1, zx, zy);
-      scale.set(s1);
-      tx.set(x);
-      ty.set(y);
-    });
-
-  const doubleTap = Gesture.Tap()
-    .numberOfTaps(2)
-    .onEnd(() => {
-      scale.set(withTiming(1));
-      tx.set(withTiming(0));
-      ty.set(withTiming(0));
-    });
-
+  // The tap arrives in map units, converted on the UI thread with the transform of that moment.
   const select = useCallback(
-    (px: number, py: number) => {
-      const [x, y] = toMapPoint(layout.get(), scale.get(), tx.get(), ty.get(), px, py);
+    (x: number, y: number) => {
       const id = hitTester.at(x, y);
+      logLifecycle('region tapped', { region: id ?? 'none', where: 'start' });
       if (id) onSelect(id);
     },
-    [layout, scale, tx, ty, hitTester, onSelect],
+    [hitTester, onSelect],
   );
-  const tap = Gesture.Tap()
-    .runOnJS(true)
-    .maxDistance(10)
-    .onEnd((e, success) => {
-      if (success) select(e.x, e.y);
-    });
 
-  const gesture = Gesture.Simultaneous(pan, pinch, Gesture.Exclusive(doubleTap, tap));
+  // Same structure as the game map (src/ui/map/WorldMap.tsx): pan and pinch on the UI thread,
+  // racing against the taps; the double tap is two short one-finger taps that stay put.
+  const gesture = useMemo(() => {
+    const pan = Gesture.Pan()
+      .minDistance(8)
+      .averageTouches(true)
+      .onBegin((e) => {
+        panAnchor.set([e.absoluteX, e.absoluteY]);
+        lastPan.set([0, 0]);
+      })
+      .onStart((e) => {
+        // The travel before activation (the slop) is left out of the translation on some
+        // platforms: add it once, so the content stays under a single finger from touch-down.
+        lastPan.set([e.translationX, e.translationY]);
+        if (e.numberOfPointers !== 1) return;
+        const [ax, ay] = panAnchor.get();
+        const [x, y] = panBy(layout.get(), scale.get(), tx.get(), ty.get(), e.absoluteX - ax, e.absoluteY - ay);
+        tx.set(x);
+        ty.set(y);
+      })
+      .onUpdate((e) => {
+        // Applied as deltas, so a pinch's focal correction in between is kept.
+        const [lx, ly] = lastPan.get();
+        lastPan.set([e.translationX, e.translationY]);
+        const [x, y] = panBy(layout.get(), scale.get(), tx.get(), ty.get(), e.translationX - lx, e.translationY - ly);
+        tx.set(x);
+        ty.set(y);
+      });
+    const pinch = Gesture.Pinch()
+      .onStart(() => {
+        startScale.set(scale.get());
+      })
+      .onUpdate((e) => {
+        const l = layout.get();
+        const s1 = clampScale(startScale.get() * e.scale);
+        const [zx, zy] = zoomAbout(l, scale.get(), s1, tx.get(), ty.get(), e.focalX, e.focalY);
+        const [x, y] = clampTranslate(l, s1, zx, zy);
+        scale.set(s1);
+        tx.set(x);
+        ty.set(y);
+      });
+    const doubleTap = Gesture.Tap()
+      .numberOfTaps(2)
+      .maxDistance(10)
+      .maxDuration(250)
+      .maxDelay(300)
+      .onStart((e) => {
+        if (e.numberOfPointers > 1) return;
+        scale.set(withTiming(1));
+        tx.set(withTiming(0));
+        ty.set(withTiming(0));
+      });
+    const tap = Gesture.Tap()
+      .maxDistance(10)
+      .onStart((e) => {
+        if (e.numberOfPointers > 1) return;
+        const [x, y] = toMapPoint(layout.get(), scale.get(), tx.get(), ty.get(), e.x, e.y);
+        scheduleOnRN(select, x, y);
+      });
+    return Gesture.Race(Gesture.Simultaneous(pan, pinch), Gesture.Exclusive(doubleTap, tap));
+  }, [layout, scale, tx, ty, startScale, lastPan, panAnchor, select]);
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: tx.get() }, { translateY: ty.get() }, { scale: scale.get() }],
   }));
@@ -202,8 +224,8 @@ export function RegionPickerMap({ geometry, selected, onSelect, rivalHomes, focu
       <GestureDetector gesture={gesture}>
         <View ref={container} style={styles.container} onLayout={onLayout} collapsable={false} testID="picker-map">
           {size.w > 0 ? (
-            <Animated.View style={[styles.fill, animatedStyle]}>
-              <Svg width={size.w} height={size.h} viewBox={`0 0 ${vw} ${vh}`} preserveAspectRatio="xMidYMid meet">
+            <Animated.View style={[styles.fill, animatedStyle]} pointerEvents="none">
+              <Svg width={size.w} height={size.h} viewBox={`0 0 ${vw} ${vh}`} preserveAspectRatio="xMidYMid meet" pointerEvents="none">
                 <MapShapes geometry={geometry} fills={fills} outlines={outlines} dots={dots} />
               </Svg>
             </Animated.View>

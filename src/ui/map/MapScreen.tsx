@@ -32,11 +32,13 @@ export function MapScreen() {
           geometry={geometry}
           selected={selected}
           onSelect={setSelected}
+          onTapEmpty={close}
           focusRegion={home}
           defaultView={wide ? 'world' : 'focus'}
           insetRight={wide && selected ? sheetPanelWidth(width) : 0}
           controls={wide ? 'bottomLeft' : 'topRight'}
         />
+        {/* The one sheet without an outside-tap layer: the map beside it stays live (another region switches the panel, the sea closes it). */}
         <RegionSheet regionId={selected} onClose={close} />
       </View>
     </AmbientGate>

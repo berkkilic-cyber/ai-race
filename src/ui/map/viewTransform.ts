@@ -119,3 +119,13 @@ export function toMapPoint(layout: Layout, s: number, tx: number, ty: number, px
   const qy = cy + (py - cy - ty) / ss;
   return [finite((qx - ox) / k, 0), finite((qy - oy) / k, 0)];
 }
+
+/**
+ * Translation after dragging by (dx, dy) screen points: the content follows the finger
+ * point for point (translation is in screen units, never divided by the scale), up to the
+ * clamp. Used with per-event deltas so a pinch's focal correction in between is kept.
+ */
+export function panBy(layout: Layout, s: number, tx: number, ty: number, dx: number, dy: number): [number, number] {
+  'worklet';
+  return clampTranslate(layout, s, finite(tx, 0) + finite(dx, 0), finite(ty, 0) + finite(dy, 0));
+}
