@@ -51,6 +51,8 @@ function edgeTone(edge: TreeEdge, statusOf: (id: string) => NodeStatus | undefin
 }
 
 const EDGE_ORDER: Record<EdgeTone, number> = { dim: 0, ready: 1, lit: 2 };
+/** Dash pattern as numbers: react-native-svg parses arrays the same on every platform. */
+const DASH_READY = [4, 4];
 
 function TreeGraphImpl({ tree, flash, onSelect, horizontal, selected, insetRight }: TreeGraphProps) {
   const pack = useGameStore((s) => s.pack);
@@ -117,7 +119,7 @@ function TreeGraphImpl({ tree, flash, onSelect, horizontal, selected, insetRight
             stroke={tone === 'dim' ? colors.border : accent}
             strokeOpacity={tone === 'ready' ? 0.45 : 1}
             strokeWidth={tone === 'lit' ? 2.5 : 1.5}
-            strokeDasharray={tone === 'ready' ? '4 4' : undefined}
+            strokeDasharray={tone === 'ready' ? DASH_READY : undefined}
             strokeLinejoin="round"
           />
         ))}

@@ -14,6 +14,7 @@ const AnimatedG = Animated.createAnimatedComponent(G);
 /** Service lines go to at most this many neighbours, and never further than this (map units). */
 const MAX_LINES = 3;
 const MAX_LINE_LENGTH = 170;
+const MIN_LINE_LENGTH = 0.5;
 
 /** Offset of the n-th site in a region from the marker point, in map units (a small spiral). */
 function offset(n: number): [number, number] {
@@ -50,7 +51,12 @@ export const SitesLayer = memo(function SitesLayer({ geometry }: { geometry: Map
       if (!from) continue;
       const targets = region.neighbors
         .map((id) => ({ id, pop: byId.get(id)?.population ?? 0, at: geometry.regions[id]?.centroid }))
-        .filter((n): n is { id: string; pop: number; at: [number, number] } => !!n.at && Math.hypot(n.at[0] - from[0], n.at[1] - from[1]) <= MAX_LINE_LENGTH)
+        .filter((n): n is { id: string; pop: number; at: [number, number] } => {
+          if (!n.at) return false;
+          const d = Math.hypot(n.at[0] - from[0], n.at[1] - from[1]);
+          // No zero-length lines: with a round cap native draws them as stray dots.
+          return d > MIN_LINE_LENGTH && d <= MAX_LINE_LENGTH;
+        })
         .sort((a, b) => b.pop - a.pop)
         .slice(0, MAX_LINES)
         .map((n) => n.at);
