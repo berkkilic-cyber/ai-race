@@ -1,0 +1,768 @@
+[
+  {
+    "id": "p-first-users",
+    "textKey": "headline.p-first-users",
+    "tone": "good",
+    "weight": 1,
+    "about": "player",
+    "conditions": [
+      {
+        "type": "tickAtMost",
+        "value": 600
+      }
+    ]
+  },
+  {
+    "id": "p-valuation",
+    "textKey": "headline.p-valuation",
+    "tone": "good",
+    "weight": 1,
+    "about": "player",
+    "conditions": []
+  },
+  {
+    "id": "p-hoodie",
+    "textKey": "headline.p-hoodie",
+    "tone": "neutral",
+    "weight": 1,
+    "about": "player",
+    "conditions": [],
+    "effects": [
+      {
+        "type": "resource",
+        "resource": "hype",
+        "amount": 3
+      }
+    ]
+  },
+  {
+    "id": "p-podcast",
+    "textKey": "headline.p-podcast",
+    "tone": "good",
+    "weight": 1,
+    "about": "player",
+    "conditions": [],
+    "effects": [
+      {
+        "type": "resource",
+        "resource": "hype",
+        "amount": 5
+      }
+    ]
+  },
+  {
+    "id": "p-office-slide",
+    "textKey": "headline.p-office-slide",
+    "tone": "neutral",
+    "weight": 1,
+    "about": "player",
+    "conditions": [
+      {
+        "type": "tickAtMost",
+        "value": 600
+      }
+    ]
+  },
+  {
+    "id": "p-safety-blog",
+    "textKey": "headline.p-safety-blog",
+    "tone": "good",
+    "weight": 1,
+    "about": "player",
+    "conditions": [
+      {
+        "type": "hasNode",
+        "nodeId": "cap-safety-team"
+      }
+    ],
+    "effects": [
+      {
+        "type": "meter",
+        "meter": "backlash",
+        "amount": -2
+      }
+    ]
+  },
+  {
+    "id": "p-benchmark-win",
+    "textKey": "headline.p-benchmark-win",
+    "tone": "good",
+    "weight": 1,
+    "about": "player",
+    "conditions": [
+      {
+        "type": "hasNode",
+        "nodeId": "shadow-benchmarks"
+      }
+    ],
+    "effects": [
+      {
+        "type": "resource",
+        "resource": "hype",
+        "amount": 6
+      }
+    ]
+  },
+  {
+    "id": "p-outage",
+    "textKey": "headline.p-outage",
+    "tone": "bad",
+    "weight": 1,
+    "about": "player",
+    "conditions": [
+      {
+        "type": "tickAtLeast",
+        "value": 600
+      }
+    ],
+    "effects": [
+      {
+        "type": "resource",
+        "resource": "hype",
+        "amount": -4
+      }
+    ]
+  },
+  {
+    "id": "p-parody-ad",
+    "textKey": "headline.p-parody-ad",
+    "tone": "bad",
+    "weight": 1,
+    "about": "player",
+    "conditions": [
+      {
+        "type": "tickAtLeast",
+        "value": 600
+      }
+    ],
+    "effects": [
+      {
+        "type": "meter",
+        "meter": "backlash",
+        "amount": 2
+      }
+    ]
+  },
+  {
+    "id": "p-poll",
+    "textKey": "headline.p-poll",
+    "tone": "bad",
+    "weight": 1,
+    "about": "player",
+    "conditions": [
+      {
+        "type": "meterAtLeast",
+        "meter": "backlash",
+        "value": 40
+      }
+    ],
+    "effects": [
+      {
+        "type": "meter",
+        "meter": "backlash",
+        "amount": 1
+      }
+    ]
+  },
+  {
+    "id": "p-lobby-fish",
+    "textKey": "headline.p-lobby-fish",
+    "tone": "neutral",
+    "weight": 1,
+    "about": "player",
+    "conditions": [
+      {
+        "type": "hasNode",
+        "nodeId": "shadow-lobbying"
+      }
+    ]
+  },
+  {
+    "id": "p-agents",
+    "textKey": "headline.p-agents",
+    "tone": "neutral",
+    "weight": 1,
+    "about": "player",
+    "conditions": [
+      {
+        "type": "hasNode",
+        "nodeId": "cap-model-4"
+      }
+    ]
+  },
+  {
+    "id": "p-robot-dog",
+    "textKey": "headline.p-robot-dog",
+    "tone": "good",
+    "weight": 1,
+    "about": "player",
+    "conditions": [
+      {
+        "type": "hasNode",
+        "nodeId": "cap-robotics"
+      }
+    ],
+    "effects": [
+      {
+        "type": "resource",
+        "resource": "hype",
+        "amount": 4
+      }
+    ]
+  },
+  {
+    "id": "p-everything",
+    "textKey": "headline.p-everything",
+    "tone": "neutral",
+    "weight": 1,
+    "about": "player",
+    "conditions": [
+      {
+        "type": "hasNode",
+        "nodeId": "reach-superapp"
+      }
+    ]
+  },
+  {
+    "id": "p-hearing-clip",
+    "textKey": "headline.p-hearing-clip",
+    "tone": "bad",
+    "weight": 1,
+    "about": "player",
+    "conditions": [
+      {
+        "type": "meterAtLeast",
+        "meter": "regulation",
+        "value": 50
+      }
+    ],
+    "effects": [
+      {
+        "type": "meter",
+        "meter": "regulation",
+        "amount": 2
+      }
+    ]
+  },
+  {
+    "id": "p-agi-soon",
+    "textKey": "headline.p-agi-soon",
+    "tone": "neutral",
+    "weight": 1,
+    "about": "player",
+    "conditions": [
+      {
+        "type": "agiAtLeast",
+        "value": 70
+      }
+    ]
+  },
+  {
+    "id": "p-datacentre-pond",
+    "textKey": "headline.p-datacentre-pond",
+    "tone": "neutral",
+    "weight": 1,
+    "about": "player",
+    "conditions": [
+      {
+        "type": "dataCentresAtLeast",
+        "value": 2
+      }
+    ]
+  },
+  {
+    "id": "r-launch",
+    "textKey": "headline.r-launch",
+    "tone": "neutral",
+    "weight": 1,
+    "about": "rival",
+    "conditions": [],
+    "effects": [
+      {
+        "type": "resource",
+        "resource": "hype",
+        "amount": 3
+      }
+    ]
+  },
+  {
+    "id": "r-funding",
+    "textKey": "headline.r-funding",
+    "tone": "neutral",
+    "weight": 1,
+    "about": "rival",
+    "conditions": [],
+    "effects": [
+      {
+        "type": "resource",
+        "resource": "cash",
+        "amount": 40
+      }
+    ]
+  },
+  {
+    "id": "r-demo-fail",
+    "textKey": "headline.r-demo-fail",
+    "tone": "good",
+    "weight": 1,
+    "about": "rival",
+    "conditions": [],
+    "effects": [
+      {
+        "type": "resource",
+        "resource": "hype",
+        "amount": -5
+      }
+    ]
+  },
+  {
+    "id": "r-ceo-tweet",
+    "textKey": "headline.r-ceo-tweet",
+    "tone": "neutral",
+    "weight": 1,
+    "about": "rival",
+    "conditions": []
+  },
+  {
+    "id": "r-benchmark",
+    "textKey": "headline.r-benchmark",
+    "tone": "neutral",
+    "weight": 1,
+    "about": "rival",
+    "conditions": [],
+    "effects": [
+      {
+        "type": "resource",
+        "resource": "hype",
+        "amount": 4
+      }
+    ]
+  },
+  {
+    "id": "r-lawsuit",
+    "textKey": "headline.r-lawsuit",
+    "tone": "good",
+    "weight": 1,
+    "about": "rival",
+    "conditions": [
+      {
+        "type": "tickAtLeast",
+        "value": 600
+      }
+    ],
+    "effects": [
+      {
+        "type": "meter",
+        "meter": "regulation",
+        "amount": 3
+      }
+    ]
+  },
+  {
+    "id": "r-leak",
+    "textKey": "headline.r-leak",
+    "tone": "good",
+    "weight": 1,
+    "about": "rival",
+    "conditions": [
+      {
+        "type": "tickAtLeast",
+        "value": 600
+      }
+    ],
+    "effects": [
+      {
+        "type": "meter",
+        "meter": "backlash",
+        "amount": 2
+      }
+    ]
+  },
+  {
+    "id": "r-hires",
+    "textKey": "headline.r-hires",
+    "tone": "bad",
+    "weight": 1,
+    "about": "rival",
+    "conditions": [
+      {
+        "type": "tickAtLeast",
+        "value": 600
+      }
+    ],
+    "effects": [
+      {
+        "type": "agiProgress",
+        "amount": 1
+      }
+    ]
+  },
+  {
+    "id": "r-gpus",
+    "textKey": "headline.r-gpus",
+    "tone": "bad",
+    "weight": 1,
+    "about": "rival",
+    "conditions": [
+      {
+        "type": "tickAtLeast",
+        "value": 600
+      }
+    ],
+    "effects": [
+      {
+        "type": "agiProgress",
+        "amount": 1
+      }
+    ]
+  },
+  {
+    "id": "r-protest",
+    "textKey": "headline.r-protest",
+    "tone": "good",
+    "weight": 1,
+    "about": "rival",
+    "conditions": [
+      {
+        "type": "tickAtLeast",
+        "value": 600
+      }
+    ],
+    "effects": [
+      {
+        "type": "meter",
+        "meter": "backlash",
+        "amount": 3
+      }
+    ]
+  },
+  {
+    "id": "r-chatbot-rude",
+    "textKey": "headline.r-chatbot-rude",
+    "tone": "good",
+    "weight": 1,
+    "about": "rival",
+    "conditions": [],
+    "effects": [
+      {
+        "type": "meter",
+        "meter": "backlash",
+        "amount": 1
+      }
+    ]
+  },
+  {
+    "id": "r-ethics",
+    "textKey": "headline.r-ethics",
+    "tone": "neutral",
+    "weight": 1,
+    "about": "rival",
+    "conditions": [
+      {
+        "type": "tickAtLeast",
+        "value": 600
+      }
+    ],
+    "effects": [
+      {
+        "type": "meter",
+        "meter": "backlash",
+        "amount": 2
+      }
+    ]
+  },
+  {
+    "id": "r-rebrand",
+    "textKey": "headline.r-rebrand",
+    "tone": "neutral",
+    "weight": 1,
+    "about": "rival",
+    "conditions": []
+  },
+  {
+    "id": "r-merger",
+    "textKey": "headline.r-merger",
+    "tone": "neutral",
+    "weight": 1,
+    "about": "rival",
+    "conditions": [
+      {
+        "type": "tickAtLeast",
+        "value": 1800
+      }
+    ]
+  },
+  {
+    "id": "r-agi-claim",
+    "textKey": "headline.r-agi-claim",
+    "tone": "bad",
+    "weight": 1,
+    "about": "rival",
+    "conditions": [
+      {
+        "type": "tickAtLeast",
+        "value": 1800
+      }
+    ],
+    "effects": [
+      {
+        "type": "agiProgress",
+        "amount": 1
+      }
+    ]
+  },
+  {
+    "id": "w-gpu-price",
+    "textKey": "headline.w-gpu-price",
+    "tone": "neutral",
+    "weight": 1,
+    "about": "world",
+    "conditions": []
+  },
+  {
+    "id": "w-prompt-jobs",
+    "textKey": "headline.w-prompt-jobs",
+    "tone": "neutral",
+    "weight": 1,
+    "about": "world",
+    "conditions": [
+      {
+        "type": "tickAtMost",
+        "value": 600
+      }
+    ]
+  },
+  {
+    "id": "w-dictionary",
+    "textKey": "headline.w-dictionary",
+    "tone": "neutral",
+    "weight": 1,
+    "about": "world",
+    "conditions": []
+  },
+  {
+    "id": "w-schools",
+    "textKey": "headline.w-schools",
+    "tone": "neutral",
+    "weight": 1,
+    "about": "world",
+    "conditions": []
+  },
+  {
+    "id": "w-energy",
+    "textKey": "headline.w-energy",
+    "tone": "bad",
+    "weight": 1,
+    "about": "world",
+    "conditions": [
+      {
+        "type": "tickAtLeast",
+        "value": 600
+      }
+    ],
+    "effects": [
+      {
+        "type": "meter",
+        "meter": "backlash",
+        "amount": 1
+      }
+    ]
+  },
+  {
+    "id": "w-regulator",
+    "textKey": "headline.w-regulator",
+    "tone": "neutral",
+    "weight": 1,
+    "about": "world",
+    "conditions": []
+  },
+  {
+    "id": "w-poets",
+    "textKey": "headline.w-poets",
+    "tone": "neutral",
+    "weight": 1,
+    "about": "world",
+    "conditions": []
+  },
+  {
+    "id": "w-coffee",
+    "textKey": "headline.w-coffee",
+    "tone": "neutral",
+    "weight": 1,
+    "about": "world",
+    "conditions": []
+  },
+  {
+    "id": "w-hype-index",
+    "textKey": "headline.w-hype-index",
+    "tone": "good",
+    "weight": 1,
+    "about": "world",
+    "conditions": [],
+    "effects": [
+      {
+        "type": "resource",
+        "resource": "hype",
+        "amount": 3
+      }
+    ]
+  },
+  {
+    "id": "w-water",
+    "textKey": "headline.w-water",
+    "tone": "bad",
+    "weight": 1,
+    "about": "world",
+    "conditions": [
+      {
+        "type": "tickAtLeast",
+        "value": 600
+      }
+    ],
+    "effects": [
+      {
+        "type": "meter",
+        "meter": "backlash",
+        "amount": 1
+      }
+    ]
+  },
+  {
+    "id": "w-robots-jog",
+    "textKey": "headline.w-robots-jog",
+    "tone": "neutral",
+    "weight": 1,
+    "about": "world",
+    "conditions": [
+      {
+        "type": "tickAtLeast",
+        "value": 600
+      }
+    ]
+  },
+  {
+    "id": "w-doom",
+    "textKey": "headline.w-doom",
+    "tone": "neutral",
+    "weight": 1,
+    "about": "world",
+    "conditions": [
+      {
+        "type": "tickAtLeast",
+        "value": 600
+      }
+    ]
+  },
+  {
+    "id": "w-billionaire-bunker",
+    "textKey": "headline.w-billionaire-bunker",
+    "tone": "neutral",
+    "weight": 1,
+    "about": "world",
+    "conditions": [
+      {
+        "type": "tickAtLeast",
+        "value": 1800
+      }
+    ]
+  },
+  {
+    "id": "w-turing",
+    "textKey": "headline.w-turing",
+    "tone": "neutral",
+    "weight": 1,
+    "about": "world",
+    "conditions": [
+      {
+        "type": "tickAtLeast",
+        "value": 1800
+      }
+    ]
+  },
+  {
+    "id": "w-pause",
+    "textKey": "headline.w-pause",
+    "tone": "neutral",
+    "weight": 1,
+    "about": "world",
+    "conditions": [
+      {
+        "type": "tickAtLeast",
+        "value": 1800
+      }
+    ]
+  },
+  {
+    "id": "egg-42",
+    "textKey": "headline.egg-42",
+    "tone": "neutral",
+    "weight": 40,
+    "about": "player",
+    "conditions": [
+      {
+        "type": "labNameIs",
+        "names": [
+          "42",
+          "Forty-Two",
+          "Forty Two",
+          "FortyTwo"
+        ]
+      }
+    ],
+    "effects": [
+      {
+        "type": "resource",
+        "resource": "hype",
+        "amount": 4
+      }
+    ]
+  },
+  {
+    "id": "egg-eliza",
+    "textKey": "headline.egg-eliza",
+    "tone": "neutral",
+    "weight": 40,
+    "about": "player",
+    "conditions": [
+      {
+        "type": "labNameIs",
+        "names": [
+          "Eliza",
+          "Doctor Eliza",
+          "Dr Eliza"
+        ]
+      }
+    ],
+    "effects": [
+      {
+        "type": "meter",
+        "meter": "backlash",
+        "amount": -2
+      }
+    ]
+  },
+  {
+    "id": "egg-perceptron",
+    "textKey": "headline.egg-perceptron",
+    "tone": "neutral",
+    "weight": 40,
+    "about": "player",
+    "conditions": [
+      {
+        "type": "labNameIs",
+        "names": [
+          "Perceptron",
+          "Mark I",
+          "Mark 1"
+        ]
+      }
+    ],
+    "effects": [
+      {
+        "type": "resource",
+        "resource": "hype",
+        "amount": 4
+      }
+    ]
+  }
+]

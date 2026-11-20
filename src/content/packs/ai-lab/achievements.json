@@ -1,0 +1,249 @@
+[
+  {
+    "id": "hello-world",
+    "nameKey": "achievement.hello-world.name",
+    "descKey": "achievement.hello-world.desc",
+    "secret": false,
+    "checkAt": "tick",
+    "conditions": [
+      {
+        "type": "hasNode",
+        "nodeId": "cap-model-1"
+      }
+    ]
+  },
+  {
+    "id": "gigawatt",
+    "nameKey": "achievement.gigawatt.name",
+    "descKey": "achievement.gigawatt.desc",
+    "secret": false,
+    "checkAt": "tick",
+    "conditions": [
+      {
+        "type": "dataCentresAtLeast",
+        "value": 5
+      }
+    ]
+  },
+  {
+    "id": "household-name",
+    "nameKey": "achievement.household-name.name",
+    "descKey": "achievement.household-name.desc",
+    "secret": false,
+    "checkAt": "tick",
+    "conditions": [
+      {
+        "type": "worldShareAtLeast",
+        "value": 0.1
+      }
+    ]
+  },
+  {
+    "id": "unicorn-stable",
+    "nameKey": "achievement.unicorn-stable.name",
+    "descKey": "achievement.unicorn-stable.desc",
+    "secret": false,
+    "checkAt": "tick",
+    "conditions": [
+      {
+        "type": "resourceAtLeast",
+        "resource": "cash",
+        "value": 1000
+      }
+    ]
+  },
+  {
+    "id": "hype-machine",
+    "nameKey": "achievement.hype-machine.name",
+    "descKey": "achievement.hype-machine.desc",
+    "secret": false,
+    "checkAt": "tick",
+    "conditions": [
+      {
+        "type": "resourceAtLeast",
+        "resource": "hype",
+        "value": 300
+      }
+    ]
+  },
+  {
+    "id": "full-stack",
+    "nameKey": "achievement.full-stack.name",
+    "descKey": "achievement.full-stack.desc",
+    "secret": false,
+    "checkAt": "tick",
+    "conditions": [
+      {
+        "type": "nodesInTreeAtLeast",
+        "tree": "capability",
+        "value": 12
+      }
+    ]
+  },
+  {
+    "id": "shadow-cabinet",
+    "nameKey": "achievement.shadow-cabinet.name",
+    "descKey": "achievement.shadow-cabinet.desc",
+    "secret": false,
+    "checkAt": "tick",
+    "conditions": [
+      {
+        "type": "nodesInTreeAtLeast",
+        "tree": "shadow",
+        "value": 12
+      }
+    ]
+  },
+  {
+    "id": "digital-god",
+    "nameKey": "achievement.digital-god.name",
+    "descKey": "achievement.digital-god.desc",
+    "secret": false,
+    "checkAt": "end",
+    "conditions": [
+      {
+        "type": "agiAtLeast",
+        "value": 100
+      }
+    ]
+  },
+  {
+    "id": "under-the-radar",
+    "nameKey": "achievement.under-the-radar.name",
+    "descKey": "achievement.under-the-radar.desc",
+    "secret": false,
+    "checkAt": "end",
+    "conditions": [
+      {
+        "type": "tickAtLeast",
+        "value": 1800
+      },
+      {
+        "type": "meterAtMost",
+        "meter": "regulation",
+        "value": 10
+      }
+    ]
+  },
+  {
+    "id": "speedrun-to-nowhere",
+    "nameKey": "achievement.speedrun-to-nowhere.name",
+    "descKey": "achievement.speedrun-to-nowhere.desc",
+    "secret": true,
+    "checkAt": "end",
+    "conditions": [
+      {
+        "type": "tickAtMost",
+        "value": 300
+      }
+    ]
+  },
+  {
+    "id": "persona-non-grata",
+    "nameKey": "achievement.persona-non-grata.name",
+    "descKey": "achievement.persona-non-grata.desc",
+    "secret": true,
+    "checkAt": "tick",
+    "conditions": [
+      {
+        "type": "hasFlag",
+        "flag": "homeBanned"
+      }
+    ]
+  },
+  {
+    "id": "clean-hands",
+    "nameKey": "achievement.clean-hands.name",
+    "descKey": "achievement.clean-hands.desc",
+    "secret": true,
+    "checkAt": "end",
+    "conditions": [
+      {
+        "type": "lacksNode",
+        "nodeId": "shadow-benchmarks"
+      },
+      {
+        "type": "tickAtLeast",
+        "value": 1800
+      }
+    ]
+  },
+  {
+    "id": "cloud-native",
+    "nameKey": "achievement.cloud-native.name",
+    "descKey": "achievement.cloud-native.desc",
+    "secret": true,
+    "checkAt": "end",
+    "conditions": [
+      {
+        "type": "agiAtLeast",
+        "value": 100
+      },
+      {
+        "type": "dataCentresAtMost",
+        "value": 0
+      }
+    ]
+  },
+  {
+    "id": "monk-mode",
+    "nameKey": "achievement.monk-mode.name",
+    "descKey": "achievement.monk-mode.desc",
+    "secret": true,
+    "checkAt": "end",
+    "conditions": [
+      {
+        "type": "agiAtLeast",
+        "value": 100
+      },
+      {
+        "type": "lacksNode",
+        "nodeId": "reach-app"
+      }
+    ]
+  },
+  {
+    "id": "office-supplies",
+    "nameKey": "achievement.office-supplies.name",
+    "descKey": "achievement.office-supplies.desc",
+    "secret": true,
+    "checkAt": "tick",
+    "conditions": [
+      {
+        "type": "hasFlag",
+        "flag": "paperclips"
+      }
+    ]
+  },
+  {
+    "id": "doors-please",
+    "nameKey": "achievement.doors-please.name",
+    "descKey": "achievement.doors-please.desc",
+    "secret": true,
+    "checkAt": "tick",
+    "conditions": [
+      {
+        "type": "hasFlag",
+        "flag": "podbay"
+      }
+    ]
+  },
+  {
+    "id": "broke-genius",
+    "nameKey": "achievement.broke-genius.name",
+    "descKey": "achievement.broke-genius.desc",
+    "secret": true,
+    "checkAt": "end",
+    "conditions": [
+      {
+        "type": "agiAtLeast",
+        "value": 100
+      },
+      {
+        "type": "resourceAtMost",
+        "resource": "cash",
+        "value": 5
+      }
+    ]
+  }
+]
