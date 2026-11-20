@@ -119,6 +119,9 @@ export const Stripes = memo(function Stripes({ height, stripe, a = colors.stripe
 /** Grid cell of the drafting ground, and how many cells make a major square. */
 const GRID = 14;
 const MAJOR = 5;
+/** The grid is drawn as translucent linework, so it stays on the sheet when the ground changes colour (composure flood). */
+const GRID_ALPHA = 0.08;
+const MAJOR_ALPHA = 0.13;
 
 /**
  * The ground behind the map, trees and news: a drafting grid (blueprint), polka dots
@@ -134,13 +137,13 @@ export const Ground = memo(function Ground() {
         <Defs>
           <Pattern id={id} patternUnits="userSpaceOnUse" width={big} height={big}>
             {minor.map((x) => (
-              <Line key={`v${x}`} x1={x} y1={0} x2={x} y2={big} stroke={colors.grid} strokeWidth={1} />
+              <Line key={`v${x}`} x1={x} y1={0} x2={x} y2={big} stroke={colors.grid} strokeOpacity={GRID_ALPHA} strokeWidth={1} />
             ))}
             {minor.map((y) => (
-              <Line key={`h${y}`} x1={0} y1={y} x2={big} y2={y} stroke={colors.grid} strokeWidth={1} />
+              <Line key={`h${y}`} x1={0} y1={y} x2={big} y2={y} stroke={colors.grid} strokeOpacity={GRID_ALPHA} strokeWidth={1} />
             ))}
-            <Line x1={0.5} y1={0} x2={0.5} y2={big} stroke={colors.gridMajor} strokeWidth={1} />
-            <Line x1={0} y1={0.5} x2={big} y2={0.5} stroke={colors.gridMajor} strokeWidth={1} />
+            <Line x1={0.5} y1={0} x2={0.5} y2={big} stroke={colors.gridMajor} strokeOpacity={MAJOR_ALPHA} strokeWidth={1} />
+            <Line x1={0} y1={0.5} x2={big} y2={0.5} stroke={colors.gridMajor} strokeOpacity={MAJOR_ALPHA} strokeWidth={1} />
           </Pattern>
         </Defs>
         <Rect x={0} y={0} width="100%" height="100%" fill={`url(#${id})`} />

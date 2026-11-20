@@ -152,7 +152,7 @@ const styles = StyleSheet.create({
   pressed: { opacity: 0.75 },
   name:
     shape.tile === 'schematic'
-      ? { ...voice.calmHeading, fontSize: 10, lineHeight: 13, letterSpacing: 0.3 }
+      ? { ...voice.bodyStrong, fontSize: 12, lineHeight: 14, letterSpacing: 0.1 }
       : shape.tile === 'plate'
         ? { ...voice.calmHeading, fontSize: 14, lineHeight: 15, letterSpacing: 0 }
         : { ...voice.bodyStrong, fontSize: type.xs, lineHeight: 14 },

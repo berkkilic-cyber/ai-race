@@ -4,6 +4,7 @@
   "main": "expo-router/entry",
   "dependencies": {
     "@expo-google-fonts/anton": "^0.4.2",
+    "@expo-google-fonts/b612": "^0.4.1",
     "@expo-google-fonts/b612-mono": "^0.4.1",
     "@expo-google-fonts/barlow": "^0.4.1",
     "@expo-google-fonts/barlow-condensed": "^0.4.1",

@@ -74,9 +74,11 @@ async function capture(OUT) {
   const errors = [];
   try {
     const page = await browser.newPage();
-    page.on('pageerror', (e) => errors.push(String(e)));
+    // Each error is tagged with the last screenshot taken before it, to find where it happened.
+    let after = '(load)';
+    page.on('pageerror', (e) => errors.push(`after ${after}: ${String(e).split('\n')[0]}`));
     page.on('console', (m) => {
-      if (m.type() === 'error') errors.push(m.text());
+      if (m.type() === 'error') errors.push(`after ${after}: ${m.text().split('\n')[0]}`);
     });
     await page.setViewport({ ...VIEW, deviceScaleFactor: SCALE });
     const base = `http://127.0.0.1:${PORT}`;
@@ -85,6 +87,7 @@ async function capture(OUT) {
       const file = path.join(OUT, `${THEME}-${name}.png`);
       await page.screenshot({ path: file });
       console.log(`saved ${path.relative(ROOT, file)}`);
+      after = name;
     };
     const game = (fn, arg) => page.evaluate(fn, arg);
     const advance = (n, opts) => page.evaluate((n, opts) => window.__game.advance(n, opts), n, opts);

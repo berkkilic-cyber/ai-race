@@ -39,8 +39,9 @@ export function themeFontSources(): FontSources {
   } else {
     // blueprint: the default, also when EXPO_PUBLIC_THEME is unset or unknown (resolveThemeName).
     return {
+      B612_400Regular: require('@expo-google-fonts/b612/400Regular').B612_400Regular,
+      B612_700Bold: require('@expo-google-fonts/b612/700Bold').B612_700Bold,
       B612Mono_400Regular: require('@expo-google-fonts/b612-mono/400Regular').B612Mono_400Regular,
-      B612Mono_700Bold: require('@expo-google-fonts/b612-mono/700Bold').B612Mono_700Bold,
       HankenGrotesk_400Regular: require('@expo-google-fonts/hanken-grotesk/400Regular').HankenGrotesk_400Regular,
       HankenGrotesk_600SemiBold: require('@expo-google-fonts/hanken-grotesk/600SemiBold').HankenGrotesk_600SemiBold,
       SofiaSansExtraCondensed_700Bold: require('@expo-google-fonts/sofia-sans-extra-condensed/700Bold').SofiaSansExtraCondensed_700Bold,

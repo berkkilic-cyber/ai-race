@@ -37,7 +37,7 @@ function BreakingBand() {
 /** Tint strength per composure level (1, 2, 3): blueprint floods red at the end. */
 const TINT: Record<typeof shape.composure, [number, number, number]> = {
   classic: [0, 0.035, 0.055],
-  redline: [0, 0.06, 0.55],
+  redline: [0, 0.04, 0.14],
   tape: [0, 0.04, 0.07],
   drain: [0, 0, 0.04],
 };
@@ -144,7 +144,12 @@ function PeelingSticker({ level }: { level: ComposureLevel }) {
   );
 }
 
-const DRAIN_STEPS = [colors.bg, mixColor(colors.bg, colors.drain, 0.3), mixColor(colors.bg, colors.drain, 0.7), colors.drain];
+/** The ground per composure level: candy drains to grey; blueprint's sheet floods red at the end. */
+const DRAIN_STEPS =
+  shape.composure === 'redline'
+    ? [colors.bg, colors.bg, mixColor(colors.bg, colors.drain, 0.22), colors.drain]
+    : [colors.bg, mixColor(colors.bg, colors.drain, 0.3), mixColor(colors.bg, colors.drain, 0.7), colors.drain];
+const GROUND_SHIFTS = shape.composure === 'drain' || shape.composure === 'redline';
 
 /**
  * The main area with the composure overlays (docs/DESIGN.md), drawn the theme's way
@@ -163,7 +168,7 @@ export function ComposureStage({ children }: { children: ReactNode }) {
   const tint = TINT[shape.composure];
   const classic = shape.composure === 'classic';
 
-  const groundStyle = useAnimatedStyle(() => ({ backgroundColor: shape.composure === 'drain' ? interpolateColor(progress.get(), [0, 1, 2, 3], DRAIN_STEPS) : colors.bg }));
+  const groundStyle = useAnimatedStyle(() => ({ backgroundColor: GROUND_SHIFTS ? interpolateColor(progress.get(), [0, 1, 2, 3], DRAIN_STEPS) : colors.bg }));
   const tintStyle = useAnimatedStyle(() => ({ opacity: interpolate(progress.get(), [1, 2, 3], tint, 'clamp') }));
   const frameStyle = useAnimatedStyle(() => ({ opacity: interpolate(progress.get(), [1, 2], [0, 1], 'clamp') * (clock ? 1 - 0.7 * wave(clock.get(), 1.4) : 1) }));
 

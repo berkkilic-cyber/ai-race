@@ -69,9 +69,9 @@ export interface Palette {
   scrim: string;
   scrimLight: string;
   transparent: string;
-  /** Ground pattern: minor grid line (blueprint drafting grid; matches bg where unused). */
+  /** Ground pattern: minor grid line (blueprint drafting grid, drawn translucent over the ground). */
   grid: string;
-  /** Ground pattern: major grid line every few cells. */
+  /** Ground pattern: major grid line every few cells (also candy's polka dots, drawn solid). */
   gridMajor: string;
   /** Hazard stripes: the bright band. */
   stripeA: string;
@@ -202,20 +202,20 @@ const blueprint: Palette = {
   newsRule: '#C7D2E4',
   newsGood: '#13804A',
   newsWash: '#EEF2F8',
-  dotRest: '#3268DA',
+  dotRest: '#3F76E3',
   dotBanned: '#082F86',
   offline: '#7393D6',
   scrim: 'rgba(3, 16, 56, 0.62)',
   scrimLight: 'rgba(3, 16, 56, 0.25)',
   transparent: 'transparent',
-  grid: '#1B50CC',
-  gridMajor: '#2B5ED3',
+  grid: '#E6F3FF',
+  gridMajor: '#E6F3FF',
   stripeA: '#FFD400',
   stripeB: '#1149C9',
   outline: '#E6F3FF',
   shadow: '#062C86',
   mark: '#FF3B3B',
-  drain: '#E8231A',
+  drain: '#A3162B',
   chrome: '#0B3CA6',
 };
 
@@ -555,8 +555,8 @@ export const themeFontFaces: Record<ThemeName, FontRoles> = {
     newsHeavy: 'BarlowCondensed_800ExtraBold',
   },
   blueprint: {
-    heading: 'B612Mono_700Bold',
-    number: 'B612Mono_400Regular',
+    heading: 'B612_700Bold',
+    number: 'B612_400Regular',
     label: 'B612Mono_400Regular',
     body: 'HankenGrotesk_400Regular',
     bodyBold: 'HankenGrotesk_600SemiBold',
