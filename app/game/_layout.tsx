@@ -11,6 +11,7 @@ import { TabButton } from '@/ui/shell/TabButton';
 import { Ticker } from '@/ui/shell/Ticker';
 import { TopBar } from '@/ui/shell/TopBar';
 import { colors } from '@/ui/theme';
+import { TreesTabBadge } from '@/ui/trees';
 
 /** Game shell: top bar, resources, meters, tab content, ticker, tab bar, event modal, game loop. */
 export default function GameLayout() {
@@ -31,7 +32,7 @@ export default function GameLayout() {
             <TabButton label={t('ui.tab.map')} />
           </TabTrigger>
           <TabTrigger name="trees" href="/game/trees" asChild>
-            <TabButton label={t('ui.tab.trees')} />
+            <TabButton label={t('ui.tab.trees')} badge={<TreesTabBadge />} />
           </TabTrigger>
           <TabTrigger name="news" href="/game/news" asChild>
             <TabButton label={t('ui.tab.news')} />
