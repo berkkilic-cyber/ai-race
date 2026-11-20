@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { Modal, StyleSheet, View } from 'react-native';
 
+import { useInsets } from '../hooks/useInsets';
 import { useGameStore } from '../store/game';
 import { colors, spacing } from '../theme';
 import { diffSnapshots, snapshotPlayer, type StatDelta } from './deltas';
@@ -26,6 +27,7 @@ export function EventModal() {
   const pack = useGameStore((s) => s.pack);
   const dismiss = useGameStore((s) => s.dismissEventResult);
   const [changes, setChanges] = useState<Changes | null>(null);
+  const insets = useInsets();
 
   const choose = useCallback((choiceId: string) => {
     const store = useGameStore.getState();
@@ -61,7 +63,15 @@ export function EventModal() {
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={() => undefined} statusBarTranslucent>
-      <View style={styles.scrim}>{content}</View>
+      {/* The scrim covers the whole screen; the card stays inside the safe area (clear of a notch or Dynamic Island). */}
+      <View
+        style={[
+          styles.scrim,
+          { paddingTop: insets.top + spacing.l, paddingBottom: insets.bottom + spacing.l, paddingLeft: insets.left + spacing.l, paddingRight: insets.right + spacing.l },
+        ]}
+      >
+        {content}
+      </View>
     </Modal>
   );
 }

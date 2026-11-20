@@ -38,6 +38,9 @@ export interface MapShapesProps {
  * using the same generated geometry as the living map. Place inside an <Svg>
  * whose viewBox is the geometry's.
  */
+/** Dash pattern as numbers: react-native-svg parses arrays the same on every platform. */
+const DASHED = [4, 2];
+
 export const MapShapes = memo(function MapShapes({ geometry, fills, outlines = [], dots = [] }: MapShapesProps) {
   const matrix = asDotGeometry(geometry);
   return (
@@ -61,7 +64,7 @@ export const MapShapes = memo(function MapShapes({ geometry, fills, outlines = [
             fill="none"
             stroke={o.color}
             strokeWidth={o.width ?? 1.6}
-            strokeDasharray={o.dashed ? '4 2' : undefined}
+            strokeDasharray={o.dashed ? DASHED : undefined}
             strokeLinejoin="round"
           />
         ) : null,

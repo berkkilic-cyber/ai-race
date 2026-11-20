@@ -4,6 +4,7 @@ import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, w
 
 import type { NewsTone } from '@/engine';
 
+import { useInsets } from '../hooks/useInsets';
 import { colors, spacing, voice } from '../theme';
 import { isWide } from './useWide';
 
@@ -46,6 +47,7 @@ const STAMP: Record<NewsTone, string> = { bad: colors.newsRed, good: colors.news
 export function EventFrame({ tone, label, meta, live, children, aside, footer, testID }: EventFrameProps) {
   const { width, height } = useWindowDimensions();
   const wide = isWide(width, height);
+  const insets = useInsets();
   const reduced = useReducedMotion();
   const drop = useSharedValue(0);
   const fade = useSharedValue(0);
@@ -92,7 +94,7 @@ export function EventFrame({ tone, label, meta, live, children, aside, footer, t
     </View>
   );
   const footerView = footer ? <View style={[styles.footer, wide && styles.footerWide]}>{footer}</View> : null;
-  const maxHeight = height - MARGIN * 2 - SHADOW;
+  const maxHeight = Math.max(0, height - insets.top - insets.bottom - MARGIN * 2 - SHADOW);
 
   if (wide) {
     return (

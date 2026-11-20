@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Keyboard, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import type { RegionDef } from '@/engine';
 
@@ -22,7 +22,7 @@ export function RegionListSheet({ visible, regions, selected, onSelect, onClose 
   const [query, setQuery] = useState('');
   const matches = searchRegions(regions, query);
   return (
-    <Sheet visible={visible} onClose={onClose} title={t('ui.start.regionList')} maxHeight="85%" testID="start-region-sheet">
+    <Sheet visible={visible} onClose={onClose} title={t('ui.start.regionList')} maxHeight="85%" safeArea testID="start-region-sheet">
       <TextInput
         style={styles.search}
         value={query}
@@ -30,6 +30,15 @@ export function RegionListSheet({ visible, regions, selected, onSelect, onClose 
         placeholder={t('ui.start.regionSearch')}
         placeholderTextColor={colors.dim}
         autoCorrect={false}
+        autoCapitalize="words"
+        autoComplete="off"
+        textContentType="none"
+        maxLength={40}
+        returnKeyType="done"
+        enterKeyHint="done"
+        submitBehavior="blurAndSubmit"
+        onSubmitEditing={() => Keyboard.dismiss()}
+        clearButtonMode="while-editing"
         accessibilityLabel={t('ui.start.regionSearch')}
         testID="start-region-search"
       />
@@ -40,7 +49,10 @@ export function RegionListSheet({ visible, regions, selected, onSelect, onClose 
           return (
             <Pressable
               key={r.id}
-              onPress={() => onSelect(r.id)}
+              onPress={() => {
+                Keyboard.dismiss();
+                onSelect(r.id);
+              }}
               style={({ pressed }) => [styles.row, on && styles.rowOn, pressed && styles.pressed]}
               accessibilityRole="radio"
               accessibilityState={{ selected: on }}

@@ -1,10 +1,11 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ScrollView, StyleSheet, View, type ScrollViewInstance } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View, type ScrollViewInstance } from 'react-native';
 
 import { Button } from '../components/Button';
 import { usePackEntry } from '../hooks/useGame';
+import { useInsets } from '../hooks/useInsets';
+import { dismissKeyboardOnTap, useKeyboardVisible } from '../hooks/useKeyboardVisible';
 import { regionName, t } from '../i18n';
 import { useGameStore } from '../store/game';
 import { colors, spacing } from '../theme';
@@ -39,6 +40,8 @@ export function StartScreen() {
   const [focus, setFocus] = useState<{ regionId: string; nonce: number } | null>(null);
   const scroll = useRef<ScrollViewInstance>(null);
   const wide = useWide();
+  const insets = useInsets();
+  const keyboard = useKeyboardVisible();
 
   useEffect(() => {
     if (params.autostart !== '1') return;
@@ -53,6 +56,7 @@ export function StartScreen() {
   }, [params.autostart, params.seed, newGame, pack, router]);
 
   const goTo = useCallback((next: number) => {
+    Keyboard.dismiss();
     setStep(next);
     scroll.current?.scrollTo({ y: 0, animated: false });
   }, []);
@@ -67,6 +71,7 @@ export function StartScreen() {
   };
 
   const next = () => {
+    Keyboard.dismiss();
     if (step === 0 && !nameCheck.ok) return;
     if (step === 1 && !founderId) return;
     if (step < LAST) goTo(step + 1);
@@ -90,6 +95,7 @@ export function StartScreen() {
   }
 
   const pickFromList = (id: string) => {
+    Keyboard.dismiss();
     setHome(id);
     setList(false);
     setFocus((f) => ({ regionId: id, nonce: (f?.nonce ?? 0) + 1 }));
@@ -110,7 +116,15 @@ export function StartScreen() {
   const back = <Button label={t('ui.start.back')} variant="ghost" onPress={() => goTo(step - 1)} style={styles.back} testID="start-back" />;
   const stepView =
     step === 0 ? (
-      <NameStep name={name} onName={setName} onDice={() => setName((n) => randomLabName(labNames, n))} onHowTo={() => setHowTo(true)} onSubmit={next} wide={wide} />
+      <NameStep
+        name={name}
+        onName={setName}
+        onDice={() => setName((n) => randomLabName(labNames, n))}
+        onHowTo={() => setHowTo(true)}
+        onSubmit={next}
+        wide={wide}
+        compact={wide && keyboard}
+      />
     ) : step === 1 ? (
       <FounderStep founders={pack.founders} selected={founderId} onSelect={setFounderId} wide={wide} />
     ) : (
@@ -126,39 +140,67 @@ export function StartScreen() {
       />
     );
 
+  // Safe area applied once, explicitly: the background runs to the screen edges, the
+  // content sits inside the insets, and the sheets cover the screen with their own
+  // content inside the safe area. The keyboard-avoiding view shrinks the content so the
+  // field and the Next button stay above the keyboard (in landscape it takes most of the
+  // height); a tap on the background dismisses the keyboard.
   return (
-    <SafeAreaView style={styles.safe} edges={['top', 'bottom', 'left', 'right']}>
-      {wide ? (
-        <>
-          <View style={styles.wideContent}>{stepView}</View>
-          <View style={styles.wideFooter}>
-            <View style={styles.side}>{step > 0 ? back : null}</View>
-            <StepIndicator labels={labels} step={step} onStep={goTo} compact />
-            <View style={[styles.side, styles.sideRight]}>{step < LAST ? primary : null}</View>
-          </View>
-        </>
-      ) : (
-        <>
-          <View style={styles.header}>
-            <StepIndicator labels={labels} step={step} onStep={goTo} />
-          </View>
-          <ScrollView ref={scroll} style={styles.scroll} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-            {stepView}
-          </ScrollView>
-          <View style={styles.footer}>
-            {step > 0 ? back : null}
-            {primary}
-          </View>
-        </>
-      )}
+    <View style={styles.safe} {...dismissKeyboardOnTap}>
+      <View style={[styles.inset, { paddingTop: insets.top, paddingRight: insets.right, paddingBottom: insets.bottom, paddingLeft: insets.left }]}>
+        <KeyboardAvoidingView style={styles.avoid} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} enabled={Platform.OS !== 'web'}>
+          {wide ? (
+            <>
+              {step === 0 ? (
+                <ScrollView style={styles.scroll} contentContainerStyle={[styles.wideContent, styles.grow]}
+                  keyboardShouldPersistTaps="handled"
+                  keyboardDismissMode="on-drag"
+                  showsVerticalScrollIndicator={false}
+                >
+                  {stepView}
+                </ScrollView>
+              ) : (
+                <View style={styles.wideContent}>{stepView}</View>
+              )}
+              <View style={styles.wideFooter}>
+                <View style={styles.side}>{step > 0 ? back : null}</View>
+                <StepIndicator labels={labels} step={step} onStep={goTo} compact />
+                <View style={[styles.side, styles.sideRight]}>{step < LAST ? primary : null}</View>
+              </View>
+            </>
+          ) : (
+            <>
+              <View style={styles.header}>
+                <StepIndicator labels={labels} step={step} onStep={goTo} />
+              </View>
+              <ScrollView
+                ref={scroll}
+                style={styles.scroll}
+                contentContainerStyle={styles.content}
+                keyboardShouldPersistTaps="handled"
+                keyboardDismissMode="on-drag"
+              >
+                {stepView}
+              </ScrollView>
+              <View style={styles.footer}>
+                {step > 0 ? back : null}
+                {primary}
+              </View>
+            </>
+          )}
+        </KeyboardAvoidingView>
+      </View>
       <HowToSheet visible={howTo} onClose={() => setHowTo(false)} />
       <RegionListSheet visible={list} regions={pack.regions} selected={home} onSelect={pickFromList} onClose={() => setList(false)} />
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
+  inset: { flex: 1 },
+  avoid: { flex: 1 },
+  grow: { flexGrow: 1 },
   header: { paddingHorizontal: spacing.l, paddingTop: spacing.m, paddingBottom: spacing.s },
   scroll: { flex: 1 },
   content: { padding: spacing.l, paddingTop: spacing.s, paddingBottom: spacing.xl },

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { StyleSheet, Text, TextInput, View } from 'react-native';
+import { Keyboard, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { Button } from '../components/Button';
 import { t } from '../i18n';
@@ -15,21 +15,28 @@ export interface NameStepProps {
   onSubmit: () => void;
   /** Two panes side by side: title on the left, the name field on the right. */
   wide?: boolean;
+  /**
+   * Keyboard up in landscape: only the field shows (no title pane, no How to play), so the
+   * field fits in the little height the keyboard leaves.
+   */
+  compact?: boolean;
 }
 
 /** Step 1: title, tagline, lab name with a random-name button, How to play. */
-export function NameStep({ name, onName, onDice, onHowTo, onSubmit, wide }: NameStepProps) {
+export function NameStep({ name, onName, onDice, onHowTo, onSubmit, wide, compact }: NameStepProps) {
   const [touched, setTouched] = useState(false);
   const problem = missingText({ name, founderId: 'x', homeRegion: 'x' });
   return (
     <View style={[styles.wrap, wide && styles.wrapWide]}>
-      <View style={[styles.hero, wide && styles.pane]}>
-        <Mascot mood={name.trim() ? 'pleased' : 'calm'} size={64} />
-        <Text style={styles.title} accessibilityRole="header">
-          {t('ui.start.gameTitle')}
-        </Text>
-        <Text style={styles.tagline}>{t('ui.start.tagline')}</Text>
-      </View>
+      {compact ? null : (
+        <View style={[styles.hero, wide && styles.pane]}>
+          <Mascot mood={name.trim() ? 'pleased' : 'calm'} size={64} />
+          <Text style={styles.title} accessibilityRole="header">
+            {t('ui.start.gameTitle')}
+          </Text>
+          <Text style={styles.tagline}>{t('ui.start.tagline')}</Text>
+        </View>
+      )}
 
       <View style={[styles.right, wide && styles.pane]}>
         <View style={styles.field}>
@@ -43,13 +50,21 @@ export function NameStep({ name, onName, onDice, onHowTo, onSubmit, wide }: Name
                 onName(v);
               }}
               onBlur={() => setTouched(true)}
-              onSubmitEditing={onSubmit}
+              onSubmitEditing={() => {
+                Keyboard.dismiss();
+                onSubmit();
+              }}
+              submitBehavior="blurAndSubmit"
               placeholder={t('ui.start.namePlaceholder')}
               placeholderTextColor={colors.dim}
               maxLength={MAX_LAB_NAME + 8}
               autoCorrect={false}
               autoCapitalize="words"
-              returnKeyType="next"
+              returnKeyType="done"
+              enterKeyHint="done"
+              autoComplete="off"
+              textContentType="none"
+              importantForAutofill="no"
               accessibilityLabel={t('ui.start.nameLabel')}
               testID="start-name"
             />
@@ -65,7 +80,7 @@ export function NameStep({ name, onName, onDice, onHowTo, onSubmit, wide }: Name
           </View>
         </View>
 
-        <Button label={t('ui.start.howTo')} variant="ghost" onPress={onHowTo} style={styles.howTo} testID="start-howto-open" />
+        {compact ? null : <Button label={t('ui.start.howTo')} variant="ghost" onPress={onHowTo} style={styles.howTo} testID="start-howto-open" />}
       </View>
     </View>
   );
@@ -84,6 +99,8 @@ const styles = StyleSheet.create({
   inputRow: { flexDirection: 'row', gap: spacing.s },
   input: {
     flex: 1,
+    // Web gives inputs an intrinsic width (~20 characters); without this the dice button overflows a narrow pane.
+    minWidth: 0,
     minHeight: touch + 8,
     backgroundColor: colors.surface,
     borderRadius: radius.s,

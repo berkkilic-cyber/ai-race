@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import Animated, { SlideInRight } from 'react-native-reanimated';
 
+import { useInsets } from '../hooks/useInsets';
 import { layoutModeFor } from '../hooks/useLayoutMode';
 import { t } from '../i18n';
 import { colors, layout, radius, spacing, touch, type, voice } from '../theme';
@@ -15,6 +16,12 @@ export interface SheetProps {
   children?: ReactNode;
   /** Largest height as a fraction of the parent (narrow mode only). Default 0.7. */
   maxHeight?: `${number}%`;
+  /**
+   * Set when the parent reaches the screen edges (start flow, end screen): the panel then
+   * extends under the insets with its content kept inside the safe area. Leave unset inside
+   * the game shell, whose main area is already inside the safe area.
+   */
+  safeArea?: boolean;
   testID?: string;
 }
 
@@ -30,9 +37,11 @@ export function sheetPanelWidth(windowWidth: number): number {
  *   from the right, no scrim, so whatever is beside it stays usable.
  * - Narrow (portrait): a bottom sheet over a light scrim; tapping the scrim closes it.
  */
-export function Sheet({ visible, onClose, title, headerRight, children, maxHeight = '70%', testID }: SheetProps) {
+export function Sheet({ visible, onClose, title, headerRight, children, maxHeight = '70%', safeArea = false, testID }: SheetProps) {
   const { width, height } = useWindowDimensions();
+  const insets = useInsets();
   if (!visible) return null;
+  const edge = safeArea ? insets : { top: 0, right: 0, bottom: 0, left: 0 };
   if (layoutModeFor(width, height) === 'wide') {
     const right =
       headerRight ??
@@ -43,14 +52,18 @@ export function Sheet({ visible, onClose, title, headerRight, children, maxHeigh
       );
     return (
       <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
-        <Animated.View entering={SlideInRight.duration(200)} style={[styles.panel, { width: sheetPanelWidth(width) }]} testID={testID}>
+        <Animated.View
+          entering={SlideInRight.duration(200)}
+          style={[styles.panel, { width: sheetPanelWidth(width) + edge.right, paddingTop: edge.top, paddingRight: edge.right, paddingBottom: edge.bottom }]}
+          testID={testID}
+        >
           <View style={[styles.header, styles.panelHeader]}>
             <Text style={styles.title} numberOfLines={1}>
               {title}
             </Text>
             {right}
           </View>
-          <ScrollView style={styles.scroll} contentContainerStyle={styles.panelContent}>
+          <ScrollView style={styles.scroll} contentContainerStyle={styles.panelContent} {...KEYBOARD_SCROLL}>
             {children}
           </ScrollView>
         </Animated.View>
@@ -60,7 +73,7 @@ export function Sheet({ visible, onClose, title, headerRight, children, maxHeigh
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
       <Pressable style={styles.scrim} onPress={onClose} accessibilityRole="button" accessibilityLabel="close" />
-      <View style={[styles.sheet, { maxHeight }]} testID={testID}>
+      <View style={[styles.sheet, { maxHeight, paddingBottom: edge.bottom, paddingLeft: edge.left, paddingRight: edge.right }]} testID={testID}>
         <View style={styles.handle} />
         {title || headerRight ? (
           <View style={styles.header}>
@@ -70,11 +83,19 @@ export function Sheet({ visible, onClose, title, headerRight, children, maxHeigh
             {headerRight}
           </View>
         ) : null}
-        <ScrollView contentContainerStyle={styles.content}>{children}</ScrollView>
+        <ScrollView contentContainerStyle={styles.content} {...KEYBOARD_SCROLL}>
+          {children}
+        </ScrollView>
       </View>
     </View>
   );
 }
+
+/**
+ * Sheets may hold text fields (the region search): taps on rows work while the keyboard
+ * is up, dragging the list dismisses it, and iOS scrolls the content clear of it.
+ */
+const KEYBOARD_SCROLL = { keyboardShouldPersistTaps: 'handled', keyboardDismissMode: 'on-drag', automaticallyAdjustKeyboardInsets: true } as const;
 
 const styles = StyleSheet.create({
   scrim: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: colors.scrimLight },

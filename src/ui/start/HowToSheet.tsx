@@ -32,7 +32,7 @@ function terms(): Record<string, string> {
 export function HowToSheet({ visible, onClose }: HowToSheetProps) {
   const params = terms();
   return (
-    <Sheet visible={visible} onClose={onClose} title={t('ui.start.howTo')} maxHeight="88%" testID="start-howto">
+    <Sheet visible={visible} onClose={onClose} title={t('ui.start.howTo')} maxHeight="88%" safeArea testID="start-howto">
       {CARDS.map((card, i) => (
         <View key={card} style={styles.card}>
           <View style={styles.num}>

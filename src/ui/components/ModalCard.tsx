@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { Modal, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useInsets } from '../hooks/useInsets';
 import { layoutModeFor } from '../hooks/useLayoutMode';
 import { colors, layout, radius, spacing, type, voice } from '../theme';
 
@@ -21,15 +21,16 @@ const TONE = { good: colors.good, bad: colors.bad, neutral: colors.info } as con
 /**
  * A centred card over everything, on a dark scrim. Its content scrolls inside the card.
  * Wide (landscape): up to layout.modalMaxWidth wide and at most the screen height minus
- * the safe areas and a margin. Narrow: up to 480 wide and 90% of the height.
+ * the safe areas and a margin. Narrow: up to 480 wide and 90% of the safe height.
  */
 export function ModalCard({ visible, title, tone = 'neutral', children, onRequestClose, testID }: ModalCardProps) {
   const { width, height } = useWindowDimensions();
-  const insets = useSafeAreaInsets();
+  const insets = useInsets();
   const wide = layoutModeFor(width, height) === 'wide';
+  // The scrim covers the screen; the card stays inside the safe area in both modes.
   const scrimInsets = wide
     ? { paddingTop: insets.top + spacing.m, paddingBottom: insets.bottom + spacing.m, paddingLeft: insets.left + spacing.l, paddingRight: insets.right + spacing.l }
-    : null;
+    : { paddingTop: insets.top + spacing.l, paddingBottom: insets.bottom + spacing.l, paddingLeft: insets.left + spacing.l, paddingRight: insets.right + spacing.l };
   const cardSize = wide ? { maxWidth: layout.modalMaxWidth, maxHeight: Math.max(0, height - insets.top - insets.bottom - 2 * spacing.m) } : null;
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onRequestClose ?? (() => undefined)} statusBarTranslucent supportedOrientations={['portrait', 'landscape']}>

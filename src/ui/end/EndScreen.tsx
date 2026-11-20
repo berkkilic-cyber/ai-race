@@ -1,7 +1,6 @@
 import { Redirect, useRouter } from 'expo-router';
 import { useState, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 import type { GameState, NewsItem } from '@/engine';
 
@@ -10,6 +9,7 @@ import { Card } from '../components/Card';
 import { Meter } from '../components/Meter';
 import { fmtPct, fmtUsers } from '../format';
 import { usePackEntry } from '../hooks/useGame';
+import { useInsets } from '../hooks/useInsets';
 import { labName, readableLabColor, regionName, t } from '../i18n';
 import { mixColor } from '../map/mapColors';
 import { newsText } from '../news/newsText';
@@ -77,6 +77,9 @@ function EndView({ state }: { state: GameState }) {
   const ending = state.ending!;
   const score = useCountUp(Math.round(ending.score));
   const wide = useWide();
+  const insets = useInsets();
+  // Safe area applied once, explicitly (no SafeAreaView): background to the edges, content inside the insets.
+  const safe = [styles.safe, { paddingTop: insets.top, paddingRight: insets.right, paddingBottom: insets.bottom, paddingLeft: insets.left }];
 
   const def = pack.endings.find((e) => e.id === ending.endingId);
   const player = state.labs[state.playerLabId];
@@ -197,7 +200,7 @@ function EndView({ state }: { state: GameState }) {
 
   if (wide) {
     return (
-      <SafeAreaView style={[styles.safe, styles.row]} edges={['top', 'bottom', 'left', 'right']}>
+      <View style={[safe, styles.row]}>
         <View style={styles.leftPane}>
           <ScrollView contentContainerStyle={styles.leftContent}>{bannerEl}</ScrollView>
           {scoreRowEl}
@@ -206,18 +209,18 @@ function EndView({ state }: { state: GameState }) {
         <ScrollView style={styles.rightPane} contentContainerStyle={styles.rightContent} testID="end-right">
           {sectionsEl}
         </ScrollView>
-      </SafeAreaView>
+      </View>
     );
   }
   return (
-    <SafeAreaView style={styles.safe}>
+    <View style={safe}>
       <ScrollView contentContainerStyle={styles.content}>
         {bannerEl}
         {scoreEl}
         {sectionsEl}
       </ScrollView>
       {buttonsEl}
-    </SafeAreaView>
+    </View>
   );
 }
 
