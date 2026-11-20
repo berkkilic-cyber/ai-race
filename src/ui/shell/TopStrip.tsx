@@ -11,6 +11,7 @@ import { labName, t } from '../i18n';
 import { Mascot, useMascotMood } from '../mascot';
 import { useGameStore } from '../store/game';
 import { colors, layout, spacing, voice } from '../theme';
+import { useTutorialTarget } from '../tutorial/targets';
 import { wideShellLayout } from './shellLayout';
 import { StripMeter } from './StripMeter';
 
@@ -41,6 +42,8 @@ export function TopStrip({ right }: { right?: ReactNode }) {
   const { stripWidth } = wideShellLayout(width, height, insets);
   const income = r.cashPerDay;
   const incomeText = stripWidth >= ROOM_FOR_INCOME ? fmtPerDay(`${income >= 0 ? '+' : ''}${fmtCash(income)}`) : undefined;
+  const resourcesRef = useTutorialTarget('shell.resources');
+  const metersRef = useTutorialTarget('shell.meters');
   const tagFor = (key: 'regulation' | 'backlash' | 'rival') => (composure.level >= 2 && composure.driver === key ? t(dangerKey(key)) : null);
 
   const ruleStyle = useAnimatedStyle(() => {
@@ -65,11 +68,11 @@ export function TopStrip({ right }: { right?: ReactNode }) {
         </View>
       </View>
       <View style={styles.rule} />
-      <View style={styles.stats}>
-        <Stat label={t('term.hype')} testID="res-hype" a11y={fmtCompact(r.hype)}>
+      <View style={styles.stats} ref={resourcesRef}>
+        <Stat label={t('term.hype')} target="shell.hype" testID="res-hype" a11y={fmtCompact(r.hype)}>
           <CountingNumber value={r.hype} format={fmtCompact} notable={Math.max(2, Math.abs(r.hypePerDay) * 3)} style={styles.value} />
         </Stat>
-        <Stat label={t('term.cash')} testID="res-cash" a11y={`${fmtCash(r.cash)}${incomeText ? ` ${incomeText}` : ''}`}>
+        <Stat label={t('term.cash')} target="shell.cash" testID="res-cash" a11y={`${fmtCash(r.cash)}${incomeText ? ` ${incomeText}` : ''}`}>
           <View style={styles.valueRow}>
             <CountingNumber value={r.cash} format={fmtCash} notable={Math.max(1, Math.abs(income) * 3)} style={styles.value} />
             {incomeText ? (
@@ -79,15 +82,15 @@ export function TopStrip({ right }: { right?: ReactNode }) {
             ) : null}
           </View>
         </Stat>
-        <Stat label={t('term.compute')} testID="res-compute" a11y={fmtCompact(r.compute)}>
+        <Stat label={t('term.compute')} target="shell.compute" testID="res-compute" a11y={fmtCompact(r.compute)}>
           <CountingNumber value={r.compute} format={fmtCompact} style={styles.value} />
         </Stat>
-        <Stat label={t('term.capability')} testID="res-tier" a11y={fmtTier(r.tier)}>
+        <Stat label={t('term.capability')} target="shell.tier" testID="res-tier" a11y={fmtTier(r.tier)}>
           <CountingNumber value={r.tier} format={fmtTier} style={[styles.value, styles.tier]} color={colors.playerText} />
         </Stat>
       </View>
       <View style={styles.rule} />
-      <View style={styles.meters}>
+      <View style={styles.meters} ref={metersRef}>
         <StripMeter label={t('term.regulation')} value={m.regulation} color={colors.info} tag={tagFor('regulation')} testID="meter-regulation" />
         <StripMeter label={t('term.backlash')} value={m.backlash} color={colors.alarm} tag={tagFor('backlash')} testID="meter-backlash" />
         <StripMeter label={t('term.rival')} value={m.rival} color={colors.amber} tag={tagFor('rival')} testID="meter-rival" />
@@ -98,9 +101,10 @@ export function TopStrip({ right }: { right?: ReactNode }) {
   );
 }
 
-function Stat({ label, a11y, children, testID }: { label: string; a11y: string; children: ReactNode; testID?: string }) {
+function Stat({ label, a11y, children, target, testID }: { label: string; a11y: string; children: ReactNode; target?: string; testID?: string }) {
+  const tutorialRef = useTutorialTarget(target ?? null);
   return (
-    <View style={styles.stat} testID={testID} accessibilityLabel={`${label} ${a11y}`}>
+    <View style={styles.stat} ref={tutorialRef} testID={testID} accessibilityLabel={`${label} ${a11y}`}>
       <Text style={styles.statLabel} numberOfLines={1}>
         {label}
       </Text>

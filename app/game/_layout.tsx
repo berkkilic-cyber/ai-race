@@ -16,6 +16,7 @@ import { Ticker } from '@/ui/shell/Ticker';
 import { TickerDock } from '@/ui/shell/TickerDock';
 import { colors } from '@/ui/theme';
 import { TreesTabBadge } from '@/ui/trees';
+import { TutorialHost } from '@/ui/tutorial';
 
 /**
  * Game shell: header, tab content, ticker, tabs, event modal, game loop.
@@ -63,20 +64,21 @@ function GameShell() {
           <TabList asChild style={shell.tabBar}>
             <View>
               <TabTrigger name="index" href="/game" asChild>
-                <TabButton label={t('ui.tab.map')} />
+                <TabButton label={t('ui.tab.map')} targetId="tab.map" />
               </TabTrigger>
               <TabTrigger name="trees" href="/game/trees" asChild>
-                <TabButton label={t('ui.tab.trees')} badge={<TreesTabBadge />} />
+                <TabButton label={t('ui.tab.trees')} badge={<TreesTabBadge />} targetId="tab.trees" />
               </TabTrigger>
               <TabTrigger name="news" href="/game/news" asChild>
-                <TabButton label={t('ui.tab.news')} />
+                <TabButton label={t('ui.tab.news')} targetId="tab.news" />
               </TabTrigger>
             </View>
           </TabList>
         </Tabs>
       </Animated.View>
-      <EventModal />
       <ToastHost />
+      <TutorialHost />
+      <EventModal />
     </View>
   );
 }

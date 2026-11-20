@@ -6,6 +6,7 @@ import { canApply, getNodeCost, type ActionFailure, type NodeDef } from '@/engin
 
 import { Button } from '../components/Button';
 import { Sheet } from '../components/Sheet';
+import { useTutorialTarget } from '../tutorial/targets';
 import { fmtCash, fmtCompact } from '../format';
 import { failureText, t } from '../i18n';
 import { useGameStore } from '../store/game';
@@ -71,6 +72,7 @@ function useSheetView(node: NodeDef): SheetView {
 }
 
 function NodeSheetBody({ node, justBought, onClose, onBuy }: { node: NodeDef; justBought: boolean; onClose: () => void; onBuy: (id: string) => void }) {
+  const tutorialRef = useTutorialTarget(`node.buy:${node.id}`);
   const pack = useGameStore((s) => s.pack);
   const view = useSheetView(node);
   const lines = useMemo(() => describeNode(node), [node]);
@@ -107,14 +109,16 @@ function NodeSheetBody({ node, justBought, onClose, onBuy }: { node: NodeDef; ju
       </Text>
     </View>
   ) : (
-    <Button
-      label={t('ui.trees.buy')}
-      variant="primary"
-      disabled={view.reason !== null}
-      sublabel={view.reason !== null ? failureText(view.reason) : undefined}
-      onPress={() => onBuy(node.id)}
-      testID="node-buy"
-    />
+    <View ref={tutorialRef}>
+      <Button
+        label={t('ui.trees.buy')}
+        variant="primary"
+        disabled={view.reason !== null}
+        sublabel={view.reason !== null ? failureText(view.reason) : undefined}
+        onPress={() => onBuy(node.id)}
+        testID="node-buy"
+      />
+    </View>
   );
 
   const purchase = (

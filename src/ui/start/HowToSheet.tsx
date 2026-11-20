@@ -1,9 +1,11 @@
+import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '../components/Button';
 import { Sheet } from '../components/Sheet';
 import { t } from '../i18n';
 import { colors, radius, spacing, type } from '../theme';
+import { useTutorialStore } from '../tutorial/store';
 
 export interface HowToSheetProps {
   visible: boolean;
@@ -28,9 +30,14 @@ function terms(): Record<string, string> {
   };
 }
 
-/** Four short cards on how a run works. */
+/** Four short cards on how a run works, and a button that queues the guided tutorial for the next run. */
 export function HowToSheet({ visible, onClose }: HowToSheetProps) {
   const params = terms();
+  const [queued, setQueued] = useState(false);
+  const replay = () => {
+    useTutorialStore.getState().replayNextRun();
+    setQueued(true);
+  };
   return (
     <Sheet visible={visible} onClose={onClose} title={t('ui.start.howTo')} maxHeight="88%" safeArea testID="start-howto">
       {CARDS.map((card, i) => (
@@ -44,6 +51,13 @@ export function HowToSheet({ visible, onClose }: HowToSheetProps) {
           </View>
         </View>
       ))}
+      {queued ? (
+        <Text style={styles.body} testID="start-tutorial-queued">
+          {t('ui.tutorial.replayQueued')}
+        </Text>
+      ) : (
+        <Button label={t('ui.tutorial.replay')} variant="secondary" onPress={replay} testID="start-tutorial-replay" />
+      )}
       <Button label={t('ui.start.howTo.close')} variant="primary" onPress={onClose} testID="start-howto-close" />
     </Sheet>
   );

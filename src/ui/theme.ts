@@ -175,14 +175,15 @@ export const layout = {
 
 /**
  * Stacking order of the in-tree overlays at the root of a screen (zIndex and Android
- * elevation). Higher draws above lower: sheets live inside the shell; the tutorial dims
- * the shell; toasts sit above that; the event card covers everything; the error screen
- * covers the event card.
+ * elevation). Higher draws above lower: sheets live inside the shell; toasts sit above
+ * the shell; the tutorial's dim and captions cover both; the event card covers everything
+ * (the tutorial waits behind it, except the one caption that explains it); the error
+ * screen covers the event card.
  */
 export const layer = {
   sheet: 10,
-  tutorial: 30,
-  toast: 40,
+  toast: 30,
+  tutorial: 40,
   event: 50,
   /** Tutorial captions that explain the event card sit over it. */
   tutorialOverEvent: 60,

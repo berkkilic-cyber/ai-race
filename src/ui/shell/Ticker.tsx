@@ -20,6 +20,7 @@ import { TICKER_SPEED, useComposure, useComposureProgress } from '../composure';
 import { useWide } from '../events/useWide';
 import { useInsets } from '../hooks/useInsets';
 import { useAmbientRunning } from '../motion/ambient';
+import { useTutorialTarget } from '../tutorial/targets';
 import { t } from '../i18n';
 import { newsText } from '../news/newsText';
 import { useUnreadCount } from '../news/useNews';
@@ -63,6 +64,7 @@ export function Ticker() {
   const reduced = useReducedMotion();
   // The crawl holds still while ambient motion is stopped (paused, background, run over).
   const moving = useAmbientRunning() !== false;
+  const tutorialRef = useTutorialTarget('shell.ticker');
   const { level } = useComposure();
   const progress = useComposureProgress();
   const items = useMemo(() => news.slice(-RECENT).reverse(), [news]);
@@ -135,6 +137,7 @@ export function Ticker() {
   const bottomPad = wide ? Math.max(0, insets.bottom) : 0;
   return (
     <Pressable
+      ref={tutorialRef}
       style={({ pressed }) => [styles.ticker, wide && { minHeight: layout.tickerHeight, height: layout.tickerHeight + bottomPad, paddingBottom: bottomPad }, pressed && styles.pressed]}
       onPress={() => router.navigate('/game/news')}
       accessibilityRole="button"

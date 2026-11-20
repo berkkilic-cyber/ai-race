@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { t } from '../i18n';
 import { SPEEDS, useGameStore } from '../store/game';
 import { colors, layout, radius, touch, voice } from '../theme';
+import { useTutorialTarget } from '../tutorial/targets';
 
 /** Extra hit area so each compact button still takes a 44-point touch. */
 const SLOP = Math.ceil((touch - layout.speedButton) / 2);
@@ -22,8 +23,9 @@ function PauseGlyph({ color }: { color: string }) {
 export function SpeedControl() {
   const speed = useGameStore((s) => s.speed);
   const setSpeed = useGameStore((s) => s.setSpeed);
+  const tutorialRef = useTutorialTarget('shell.speed');
   return (
-    <View style={styles.pill}>
+    <View style={styles.pill} ref={tutorialRef}>
       {SPEEDS.map((s) => {
         const selected = speed === s;
         const label = s === 0 ? t('ui.speed.pause') : t('ui.speed.play', { speed: s });

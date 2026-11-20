@@ -5,13 +5,15 @@ import { fmtCash, fmtCompact, fmtPerDay } from '../format';
 import { useResources } from '../hooks/useGame';
 import { t } from '../i18n';
 import { colors, spacing } from '../theme';
+import { useTutorialTarget } from '../tutorial/targets';
 
 /** Hype, Cash with income per day, Compute and Model tier. */
 export function ResourceRow() {
   const r = useResources();
   const income = r.cashPerDay;
+  const tutorialRef = useTutorialTarget('shell.resources');
   return (
-    <View style={styles.row}>
+    <View style={styles.row} ref={tutorialRef}>
       <ResourcePill label={t('term.hype')} value={fmtCompact(r.hype)} sub={fmtPerDay(`+${fmtCompact(r.hypePerDay)}`)} subTone="dim" color={colors.info} testID="res-hype" />
       <ResourcePill
         label={t('term.cash')}

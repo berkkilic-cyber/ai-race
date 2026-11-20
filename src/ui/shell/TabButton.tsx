@@ -4,8 +4,14 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { useLayoutMode } from '../hooks/useLayoutMode';
 import { colors, layout, spacing, touch, type, voice } from '../theme';
+import { useTutorialTarget } from '../tutorial/targets';
 
-export type TabButtonProps = TabTriggerSlotProps & { label: string; /** Optional badge drawn at the label's top-right corner. */ badge?: ReactNode };
+export type TabButtonProps = TabTriggerSlotProps & {
+  label: string;
+  /** Optional badge drawn at the label's top-right corner. */ badge?: ReactNode;
+  /** Tutorial target id for this tab. */
+  targetId?: string;
+};
 
 /**
  * One tab of the custom tab bar; receives isFocused and onPress from TabTrigger.
@@ -19,8 +25,9 @@ export type TabButtonProps = TabTriggerSlotProps & { label: string; /** Optional
  * used to vanish because the rail's content width was zero (the left inset was padded
  * twice inside a 56-point rail); explicit sizes keep that from hiding them silently.
  */
-export function TabButton({ label, badge, isFocused, ref: _ref, ...props }: TabButtonProps) {
+export function TabButton({ label, badge, isFocused, targetId, ref: _ref, ...props }: TabButtonProps) {
   const wide = useLayoutMode() === 'wide';
+  const tutorialRef = useTutorialTarget(targetId ?? null);
   return (
     <Pressable
       {...props}
@@ -28,6 +35,7 @@ export function TabButton({ label, badge, isFocused, ref: _ref, ...props }: TabB
       accessibilityRole="tab"
       accessibilityState={{ selected: !!isFocused }}
     >
+      <View style={StyleSheet.absoluteFill} pointerEvents="none" ref={tutorialRef} />
       {isFocused ? <View style={wide ? styles.markWide : styles.markNarrow} /> : null}
       <View style={wide ? styles.labelBoxWide : null}>
         <Text style={[styles.label, isFocused && styles.focused]} numberOfLines={1} maxFontSizeMultiplier={1.2}>

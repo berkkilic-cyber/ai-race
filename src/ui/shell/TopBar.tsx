@@ -6,6 +6,7 @@ import { labName, t } from '../i18n';
 import { Mascot, useMascotMood } from '../mascot';
 import { SPEEDS, useGameStore } from '../store/game';
 import { colors, spacing, tabular, type, voice } from '../theme';
+import { useTutorialTarget } from '../tutorial/targets';
 
 /** Lab name, day counter and the speed control. */
 export function TopBar() {
@@ -14,6 +15,7 @@ export function TopBar() {
   const speed = useGameStore((s) => s.speed);
   const setSpeed = useGameStore((s) => s.setSpeed);
   const mood = useMascotMood();
+  const speedRef = useTutorialTarget('shell.speed');
   return (
     <View style={styles.bar}>
       <Mascot mood={mood} size={30} testID="mascot" />
@@ -23,7 +25,7 @@ export function TopBar() {
         </Text>
         <Text style={styles.day}>{fmtDay(tick)}</Text>
       </View>
-      <View style={styles.speeds}>
+      <View style={styles.speeds} ref={speedRef}>
         {SPEEDS.map((s) => (
           <Button
             key={s}

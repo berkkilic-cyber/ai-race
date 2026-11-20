@@ -6,6 +6,7 @@ import type { NewsTone } from '@/engine';
 
 import { useInsets } from '../hooks/useInsets';
 import { useAmbientClock, wave } from '../motion/ambient';
+import { useTutorialTarget } from '../tutorial/targets';
 import { colors, spacing, voice } from '../theme';
 import { isWide } from './useWide';
 
@@ -61,6 +62,8 @@ export function EventFrame({ tone, label, meta, live, children, aside, footer, t
 
   // The live dot blinks on the shell's shared ambient clock.
   const clock = useAmbientClock(!!live);
+  // The tutorial points at the choices when it explains the first card.
+  const choicesRef = useTutorialTarget(live ? 'event.choices' : null);
 
   const cardStyle = useAnimatedStyle(() => {
     const v = drop.get();
@@ -108,7 +111,7 @@ export function EventFrame({ tone, label, meta, live, children, aside, footer, t
               {children}
             </ScrollView>
           </View>
-          <View style={[styles.column, styles.asideColumn]}>
+          <View style={[styles.column, styles.asideColumn]} ref={choicesRef}>
             <ScrollView style={styles.scroll} contentContainerStyle={[styles.content, styles.asideContent]} bounces={false}>
               {aside}
             </ScrollView>
@@ -120,7 +123,7 @@ export function EventFrame({ tone, label, meta, live, children, aside, footer, t
   }
 
   return (
-    <Animated.View style={[styles.sheet, { maxWidth: NARROW_MAX_WIDTH, maxHeight }, cardStyle]} testID={testID}>
+    <Animated.View style={[styles.sheet, { maxWidth: NARROW_MAX_WIDTH, maxHeight }, cardStyle]} testID={testID} ref={choicesRef}>
       <View style={styles.head}>
         {masthead}
         {rules}

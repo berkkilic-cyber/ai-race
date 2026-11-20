@@ -5,6 +5,7 @@ import Animated, { Easing, useAnimatedStyle, useSharedValue, withSequence, withT
 import { fmtCash, fmtCompact } from '../format';
 import { t } from '../i18n';
 import { useAmbientClock, wave } from '../motion/ambient';
+import { useTutorialTarget } from '../tutorial/targets';
 import { colors, radius, spacing, tabular, type } from '../theme';
 import { CheckGlyph, LockGlyph } from './Glyphs';
 import type { TileRect } from './layout';
@@ -34,6 +35,7 @@ function NodeTileImpl({ nodeId, name, status, costHype, costCash, accent, rect, 
   const buyable = status === 'buyable';
   // The glow breathes on the shell's shared ambient clock (still off screen, paused or with reduced motion).
   const clock = useAmbientClock(buyable);
+  const tutorialRef = useTutorialTarget(`node:${nodeId}`);
 
   useEffect(() => {
     if (flashKey === 0) return;
@@ -54,7 +56,7 @@ function NodeTileImpl({ nodeId, name, status, costHype, costCash, accent, rect, 
   const price = priceText(costHype, costCash);
 
   return (
-    <Animated.View style={[styles.wrap, { left: rect.x, top: rect.y, width: rect.w, height: rect.h }, bumpStyle]}>
+    <Animated.View style={[styles.wrap, { left: rect.x, top: rect.y, width: rect.w, height: rect.h }, bumpStyle]} ref={tutorialRef}>
       {buyable ? <Animated.View pointerEvents="none" style={[styles.glow, { borderColor: accent }, glowStyle]} /> : null}
       <Animated.View pointerEvents="none" style={[styles.flash, { backgroundColor: accent }, flashStyle]} />
       <Pressable

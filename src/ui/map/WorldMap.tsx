@@ -7,6 +7,7 @@ import Svg from 'react-native-svg';
 import type { MapGeometry } from '@/content/packs/ai-lab/geometry';
 
 import { t } from '../i18n';
+import { measureView, useTutorialTargetMeasure } from '../tutorial/targets';
 import { colors, radius, spacing, touch, voice } from '../theme';
 import { asDotGeometry } from './dotGeometry';
 import { DotLayer } from './DotLayer';
@@ -15,7 +16,7 @@ import { createHitTester } from './hitTest';
 import { RegionLayer } from './RegionLayer';
 import { RippleLayer } from './RippleLayer';
 import { SitesLayer } from './SitesLayer';
-import { centreOn, clampScale, clampTranslate, fit, fitWorld, toMapPoint, zoomAbout, type Layout } from './viewTransform';
+import { centreOn, clampScale, clampTranslate, fit, fitWorld, toMapPoint, toScreenPoint, zoomAbout, type Layout } from './viewTransform';
 
 export interface WorldMapProps {
   geometry: MapGeometry;
@@ -46,6 +47,8 @@ const WHEEL_STEP = 0.0015;
 const BUTTON_ZOOM = 1.6;
 const CONTROL = 34;
 const CONTROL_SLOP = (touch - CONTROL) / 2;
+/** Largest side of the tutorial's home-region target. */
+const HOME_TARGET_MAX = 96;
 
 /** A quiet round map control (zoom in, out, reset) with a full 44-point touch area. */
 function MapControl({ glyph, onPress, label, testID }: { glyph: string; onPress: () => void; label: string; testID?: string }) {
@@ -232,6 +235,27 @@ export function WorldMap({ geometry, selected, onSelect, focusRegion, defaultSca
     el.addEventListener('wheel', onWheel, { passive: false });
     return () => el.removeEventListener('wheel', onWheel);
   }, [zoomBy]);
+
+  // Tutorial target "map.home": a square around the focus region's marker point, in window coordinates.
+  const hasSize = size.w > 0;
+  const measureHome = useMemo(() => {
+    const region = focusRegion ? geometry.regions[focusRegion] : undefined;
+    if (!region || !hasSize) return null;
+    return async () => {
+      const box = await measureView(container.current as unknown as Parameters<typeof measureView>[0]);
+      if (!box) return null;
+      const l = layout.get();
+      const s = scale.get();
+      const [px, py] = toScreenPoint(l, s, tx.get(), ty.get(), region.centroid[0], region.centroid[1]);
+      const [x0, y0] = toScreenPoint(l, s, tx.get(), ty.get(), region.bbox[0], region.bbox[1]);
+      const [x1, y1] = toScreenPoint(l, s, tx.get(), ty.get(), region.bbox[2], region.bbox[3]);
+      const side = Math.min(HOME_TARGET_MAX, Math.max(touch, Math.min(Math.abs(x1 - x0), Math.abs(y1 - y0)) * 0.6));
+      const left = Math.max(0, Math.min(box.width - side, px - side / 2));
+      const top = Math.max(0, Math.min(box.height - side, py - side / 2));
+      return { x: box.x + left, y: box.y + top, width: Math.min(side, box.width), height: Math.min(side, box.height) };
+    };
+  }, [focusRegion, geometry, hasSize, layout, scale, tx, ty]);
+  useTutorialTargetMeasure('map.home', measureHome);
 
   const [, , vw, vh] = geometry.viewBox;
   return (

@@ -7,6 +7,7 @@ import { useWide } from '../events/useWide';
 import { useInsets } from '../hooks/useInsets';
 import { wideShellLayout } from '../shell/shellLayout';
 import { useGameStore } from '../store/game';
+import { useTutorialStore } from '../tutorial/store';
 import { colors, layer, radius, spacing, type, voice } from '../theme';
 import { currentToast, dismissToast, EMPTY_QUEUE, enqueueToasts, newAchievementIds, type Toast, type ToastQueue } from './queue';
 
@@ -55,14 +56,17 @@ function AchievementToast({ toast, onDone, wide }: { toast: Toast; onDone: (key:
 
 /**
  * Shows a toast at the top for each achievement the player earns, one at a time.
- * Waits while an event card or its result is up. Mount once in the game shell.
+ * Waits while an event card or its result, or a tutorial coach mark, is up. Mount once in the game shell.
  */
 export function ToastHost() {
   const insets = useInsets();
   const wide = useWide();
   const { width, height } = useWindowDimensions();
   const [queue, setQueue] = useState<ToastQueue>(EMPTY_QUEUE);
-  const blocked = useGameStore((s) => !!s.state?.pendingEvent || s.eventResult !== null);
+  const eventUp = useGameStore((s) => !!s.state?.pendingEvent || s.eventResult !== null);
+  // Toasts also wait while a tutorial coach mark is up.
+  const coaching = useTutorialStore((s) => s.showing);
+  const blocked = eventUp || coaching;
 
   useEffect(
     () =>
@@ -99,7 +103,7 @@ function hostFrame(wide: boolean, width: number, height: number, insets: ReturnT
 }
 
 const styles = StyleSheet.create({
-  // Above the shell and the tutorial dim, below the event card (and hidden while one is up).
+  // Above the shell, below the tutorial and the event card (and hidden while a card is up).
   host: { position: 'absolute', alignItems: 'center', zIndex: layer.toast, elevation: layer.toast },
   toast: { width: '100%', maxWidth: 440, borderRadius: radius.l, borderWidth: 2, backgroundColor: colors.raised },
   normal: { borderColor: colors.player },

@@ -14,6 +14,7 @@ import {
 import { Button } from '../components/Button';
 import { Pips } from '../components/Pips';
 import { Sheet } from '../components/Sheet';
+import { useTutorialTarget } from '../tutorial/targets';
 import { fmtCash, fmtPct, fmtUsers, toPips } from '../format';
 import { failureText, labName, readableLabColor, t } from '../i18n';
 import { useGameStore } from '../store/game';
@@ -49,6 +50,7 @@ function OpenRegionSheet({ regionId, onClose }: { regionId: string; onClose: () 
   const state = useGameStore((s) => s.state);
   const pack = useGameStore((s) => s.pack);
   const dispatch = useGameStore((s) => s.dispatch);
+  const buildRef = useTutorialTarget(`region.build:${regionId}`);
   const region = pack.regions.find((r) => r.id === regionId);
   if (!state || !region) return null;
 
@@ -106,15 +108,16 @@ function OpenRegionSheet({ regionId, onClose }: { regionId: string; onClose: () 
 
       <View style={styles.actions}>
         {actions.map((row) => (
-          <Button
-            key={row.key}
-            label={row.label}
-            variant={row.check.ok ? 'primary' : 'secondary'}
-            disabled={!row.check.ok}
-            sublabel={row.check.ok ? fmtCash(row.cost) : `${fmtCash(row.cost)} · ${failureText(row.check.reason)}`}
-            onPress={() => dispatch(row.action)}
-            testID={`region-action-${row.key}`}
-          />
+          <View key={row.key} ref={row.key === 'build' ? buildRef : undefined}>
+            <Button
+              label={row.label}
+              variant={row.check.ok ? 'primary' : 'secondary'}
+              disabled={!row.check.ok}
+              sublabel={row.check.ok ? fmtCash(row.cost) : `${fmtCash(row.cost)} · ${failureText(row.check.reason)}`}
+              onPress={() => dispatch(row.action)}
+              testID={`region-action-${row.key}`}
+            />
+          </View>
         ))}
       </View>
 

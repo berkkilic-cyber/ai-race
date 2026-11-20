@@ -6,6 +6,7 @@ import type { TreeId } from '@/engine';
 
 import { t } from '../i18n';
 import { useGameStore } from '../store/game';
+import { useTutorialTarget } from '../tutorial/targets';
 import { colors, radius, spacing, tabular, touch, type } from '../theme';
 import { TREE_ACCENT } from './accent';
 import { TREES } from './status';
@@ -45,8 +46,9 @@ function useTreeCounts(): number[] {
 function TreePickerImpl({ selected, onSelect, compact, right }: TreePickerProps) {
   const counts = useTreeCounts();
   const buyable = useBuyableByTree();
+  const tutorialRef = useTutorialTarget('tree.picker');
   return (
-    <View style={[styles.row, compact && styles.rowCompact]}>
+    <View style={[styles.row, compact && styles.rowCompact]} ref={tutorialRef}>
       {TREES.map((tree, i) => {
         const active = tree === selected;
         const accent = TREE_ACCENT[tree];
