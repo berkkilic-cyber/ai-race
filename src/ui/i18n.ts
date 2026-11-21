@@ -3,6 +3,8 @@ import type { ActionFailure, ContentPack, LabId, LabState, RegionId } from '@/en
 import { DEFAULT_PACK_ID, getPackEntry } from './packs';
 import uiStrings from './strings/en.json';
 import eventsStrings from './strings/events.en.json';
+import momentsStrings from './strings/moments.en.json';
+import raceStrings from './strings/race.en.json';
 import startStrings from './strings/start.en.json';
 import treesStrings from './strings/trees.en.json';
 import tutorialStrings from './strings/tutorial.en.json';
@@ -13,7 +15,7 @@ export type Params = Record<string, string | number>;
 
 const LOCALE = 'en';
 /** Shared captions plus one file per feature, so feature tasks never edit the same file. */
-const UI: Record<string, string> = { ...uiStrings, ...treesStrings, ...eventsStrings, ...startStrings, ...tutorialStrings };
+const UI: Record<string, string> = { ...uiStrings, ...treesStrings, ...eventsStrings, ...startStrings, ...tutorialStrings, ...momentsStrings, ...raceStrings };
 
 /** Params whose values are lab ids, resolved to lab names. */
 const LAB_PARAMS = new Set(['lab', 'rival']);
