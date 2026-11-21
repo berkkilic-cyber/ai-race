@@ -94,8 +94,8 @@ function playerTurn(state: GameState, context: EngineContext, policy: BotPolicy)
 
 /** Plays a whole run with a bot in the player's seat and returns the final state. */
 export function runHeadless(pack: ContentPack, setup: GameSetup, opts: HeadlessOptions): GameState {
-  const context = getContext(pack);
   const state = cloneState(createGame(pack, setup));
+  const context = getContext(pack, state.difficulty);
   const skill = max(0, min(1, opts.momentSkill ?? DEFAULT_MOMENT_SKILL[opts.policy]));
   const tapper = skill > 0 && pack.moments.length > 0 ? new MomentTapper(setup.seed, skill, opts.onMomentCollected) : undefined;
   while (state.status === 'running' && state.tick < opts.maxTicks) {
@@ -134,7 +134,7 @@ export interface RunSummary {
 
 /** Compact facts about a finished (or timed-out) run, for balance scripts. */
 export function summarizeRun(state: GameState, pack: ContentPack): RunSummary {
-  const context = getContext(pack);
+  const context = getContext(pack, state.difficulty);
   const player = state.labs[state.playerLabId];
   return {
     endingId: state.ending?.endingId ?? null,

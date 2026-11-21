@@ -43,13 +43,14 @@ export function backlashGainOf(context: EngineContext, lab: LabState, share: num
 
 /** AGI progress, regulation and backlash for one tick; `share` is the lab's world share after spread. */
 export function applyProgressAndMeters(context: EngineContext, lab: LabState, info: LabTickInfo, growth: GrowthTally, share: number): void {
-  const { regulationDecay, backlashDecay, aiRegulationDecay, aiBacklashDecay, aiMeterGainFactor } = context.balance;
+  const { regulationDecay, backlashDecay, aiRegulationDecay, aiBacklashDecay, aiMeterGainFactor, playerRegulationGainFactor, playerBacklashGainFactor } = context.balance;
   // AI labs get no event cards to relieve their meters, so they gain less and lose more.
   const ai = lab.controller === 'ai';
-  const gainFactor = ai ? aiMeterGainFactor : 1;
+  const regulationFactor = ai ? aiMeterGainFactor : playerRegulationGainFactor;
+  const backlashFactor = ai ? aiMeterGainFactor : playerBacklashGainFactor;
   lab.agiProgress = clamp(lab.agiProgress + agiGainOf(context, info) * (ai ? context.balance.aiAgiFactor : 1), 0, 100);
-  lab.regulation = clamp(lab.regulation + regulationGainOf(context, share, info, growth) * gainFactor - regulationDecay - (ai ? aiRegulationDecay : 0), 0, 100);
-  lab.backlash = clamp(lab.backlash + backlashGainOf(context, lab, share, info) * gainFactor - backlashDecay - (ai ? aiBacklashDecay : 0), 0, 100);
+  lab.regulation = clamp(lab.regulation + regulationGainOf(context, share, info, growth) * regulationFactor - regulationDecay - (ai ? aiRegulationDecay : 0), 0, 100);
+  lab.backlash = clamp(lab.backlash + backlashGainOf(context, lab, share, info) * backlashFactor - backlashDecay - (ai ? aiBacklashDecay : 0), 0, 100);
 }
 
 function strictestPresentRegions(state: GameState, context: EngineContext, lab: LabState, count: number, arrays?: LabArrays): string[] {

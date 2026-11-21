@@ -7,6 +7,8 @@
  *                      [--coverage] [--workers 2] [--out report.md]
  *                      [--moment-skill 0,0.4,0.7,1]   (each policy once per skill)
  *                      [--moments file.json]          (replace the pack's moments for a sweep)
+ *                      [--difficulty frontier|a,b|all] (default: the pack's default level)
+ *                      [--brief]                      (summary tables only, no per-policy detail)
  *
  * Seeds are base + run index, so a report is reproducible; tune on one --seed
  * and confirm on another.
@@ -19,7 +21,7 @@ import type { BotPolicy, ContentPack } from '@/engine';
 
 import { coverageReport } from './coverage';
 import { FOUNDERS, HOME_REGIONS } from './jobs';
-import { policyReport, summaryTable } from './report';
+import { difficultyTable, policyReport, summaryTable } from './report';
 import { PACK, setBalanceOverrides, simulate, type Job, type RunRecord } from './simulate';
 
 const ALL_POLICIES: BotPolicy[] = ['sensible', 'capability', 'reach', 'shadow', 'random', 'idle'];
@@ -36,10 +38,14 @@ interface Options {
   momentSkills?: number[];
   /** Replacement moment list (JSON file) for sweeps. */
   moments?: ContentPack['moments'];
+  /** Difficulty ids to play (each policy once per level); default: the pack's default. */
+  difficulties?: string[];
+  /** Only the summary tables. */
+  brief: boolean;
 }
 
 function parseArgs(argv: string[]): Options {
-  const options: Options = { runs: 1000, policies: ALL_POLICIES, seed: 1, coverage: false, workers: availableParallelism(), balance: {} };
+  const options: Options = { runs: 1000, policies: ALL_POLICIES, seed: 1, coverage: false, workers: availableParallelism(), balance: {}, brief: false };
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     const next = () => argv[++i];
@@ -51,6 +57,11 @@ function parseArgs(argv: string[]): Options {
     else if (arg === '--out') options.out = next();
     else if (arg === '--balance') options.balance = JSON.parse(next()) as Record<string, unknown>;
     else if (arg === '--moment-skill') options.momentSkills = next().split(',').map(Number);
+    else if (arg === '--difficulty') {
+      const value = next();
+      options.difficulties = value === 'all' ? (PACK.difficulties ?? []).map((d) => d.id) : value.split(',');
+      for (const id of options.difficulties) if (!(PACK.difficulties ?? []).some((d) => d.id === id)) throw new Error(`Unknown difficulty ${id}`);
+    } else if (arg === '--brief') options.brief = true;
     else if (arg === '--moments') options.moments = JSON.parse(readFileSync(next(), 'utf8')) as ContentPack['moments'];
     else throw new Error(`Unknown argument ${arg}`);
   }
@@ -66,7 +77,7 @@ const SECRET_NAMES = [
   ),
 ];
 
-export function jobsFor(policy: BotPolicy, runs: number, seed: number, coverage: boolean, momentSkill?: number): Job[] {
+export function jobsFor(policy: BotPolicy, runs: number, seed: number, coverage: boolean, momentSkill?: number, difficulty?: string): Job[] {
   const jobs: Job[] = [];
   for (let i = 0; i < runs; i++) {
     jobs.push({
@@ -77,6 +88,7 @@ export function jobsFor(policy: BotPolicy, runs: number, seed: number, coverage:
       seed: seed * 100_003 + i,
       coverage,
       ...(momentSkill !== undefined ? { momentSkill } : {}),
+      ...(difficulty !== undefined ? { difficulty } : {}),
     });
   }
   return jobs;
@@ -117,12 +129,17 @@ async function main(): Promise<void> {
   const options = parseArgs(process.argv.slice(2));
   const start = performance.now();
   const skills: (number | undefined)[] = options.momentSkills ?? [undefined];
-  const jobs = options.policies.flatMap((p) => skills.flatMap((skill) => jobsFor(p, options.runs, options.seed, options.coverage, skill)));
+  const levels: (string | undefined)[] = options.difficulties ?? [undefined];
+  const jobs = levels.flatMap((level) =>
+    options.policies.flatMap((p) => skills.flatMap((skill) => jobsFor(p, options.runs, options.seed, options.coverage, skill, level))),
+  );
   setBalanceOverrides(options.balance, options.moments);
   const records = await runInWorkers(jobs, options.workers, options.balance, options.moments);
   const seconds = (performance.now() - start) / 1000;
   const byPolicy = new Map<string, RunRecord[]>();
-  const labelOf = (job: Job): string => (job.momentSkill === undefined ? job.policy : `${job.policy}@${job.momentSkill}`);
+  const multiLevel = levels.length > 1;
+  const labelOf = (job: Job): string =>
+    `${multiLevel ? `${job.difficulty}/` : ''}${job.momentSkill === undefined ? job.policy : `${job.policy}@${job.momentSkill}`}`;
   for (const record of records) byPolicy.set(labelOf(record.job), [...(byPolicy.get(labelOf(record.job)) ?? []), record]);
 
   const out: string[] = [];
@@ -133,12 +150,19 @@ async function main(): Promise<void> {
   );
   if (Object.keys(options.balance).length > 0) out.push(`\nBalance overrides: \`${JSON.stringify(options.balance)}\``);
   if (options.moments) out.push(`\nMoments replaced (${options.moments.length} from --moments).`);
+  out.push(`\nDifficulty: ${levels.map((l) => l ?? `${PACK.defaultDifficulty ?? 'none'} (pack default)`).join(', ')}.`);
   out.push('');
   out.push(summaryTable(byPolicy));
   out.push('');
-  for (const [policy, runs] of byPolicy) {
-    out.push(policyReport(policy, runs));
+  if (multiLevel || options.difficulties) {
+    out.push(difficultyTable(records, levels.map((l) => l ?? PACK.defaultDifficulty ?? 'none'), PACK.defaultDifficulty ?? 'none'));
     out.push('');
+  }
+  if (!options.brief) {
+    for (const [policy, runs] of byPolicy) {
+      out.push(policyReport(policy, runs));
+      out.push('');
+    }
   }
   if (options.coverage) out.push(coverageReport(records, byPolicy.get('sensible') ?? []));
   const text = out.join('\n');

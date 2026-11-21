@@ -1,0 +1,74 @@
+[
+  {
+    "id": "sandbox",
+    "nameKey": "difficulty.sandbox.name",
+    "descKey": "difficulty.sandbox.desc",
+    "scoreMultiplier": 0.75,
+    "balance": {
+      "aiAgiFactor": 1.16,
+      "rivalEntryTickFactor": 1.15,
+      "aiExpansionFactor": 0.95,
+      "playerStartHypeFactor": 1.15,
+      "playerStartCashFactor": 1.15,
+      "playerRegulationGainFactor": 0.95,
+      "playerBacklashGainFactor": 0.95,
+      "momentThreatWeightFactor": 0.7,
+      "momentLifetimeFactor": 1.2
+    }
+  },
+  {
+    "id": "frontier",
+    "nameKey": "difficulty.frontier.name",
+    "descKey": "difficulty.frontier.desc",
+    "scoreMultiplier": 1,
+    "balance": {
+      "rivalEntryTickFactor": 0.9,
+      "aiExpansionFactor": 1.1,
+      "playerRegulationGainFactor": 1.1,
+      "playerBacklashGainFactor": 1.1,
+      "momentThreatWeightFactor": 1.2,
+      "acquireBaseCost": 600
+    }
+  },
+  {
+    "id": "arms-race",
+    "nameKey": "difficulty.arms-race.name",
+    "descKey": "difficulty.arms-race.desc",
+    "scoreMultiplier": 1.35,
+    "balance": {
+      "aiAgiFactor": 1.31,
+      "rivalEntryTickFactor": 0.85,
+      "aiExpansionFactor": 1.0,
+      "playerStartHypeFactor": 0.85,
+      "playerStartCashFactor": 0.85,
+      "playerRegulationGainFactor": 1.15,
+      "playerBacklashGainFactor": 1.25,
+      "momentThreatWeightFactor": 1.6,
+      "momentLifetimeFactor": 0.85,
+      "acquireBaseCost": 700,
+      "dataCentreUpkeep": 0.08,
+      "backlashPerDataCentreLevel": 0.0045
+    }
+  },
+  {
+    "id": "hard-takeoff",
+    "nameKey": "difficulty.hard-takeoff.name",
+    "descKey": "difficulty.hard-takeoff.desc",
+    "scoreMultiplier": 1.75,
+    "balance": {
+      "aiAgiFactor": 1.36,
+      "rivalEntryTickFactor": 0.7,
+      "aiExpansionFactor": 1.1,
+      "playerStartHypeFactor": 0.7,
+      "playerStartCashFactor": 0.7,
+      "playerRegulationGainFactor": 1.3,
+      "playerBacklashGainFactor": 1.4,
+      "momentThreatWeightFactor": 2.2,
+      "momentLifetimeFactor": 0.7,
+      "acquireBaseCost": 850,
+      "acquirePerAgi": 9,
+      "dataCentreUpkeep": 0.09,
+      "backlashPerDataCentreLevel": 0.006
+    }
+  }
+]

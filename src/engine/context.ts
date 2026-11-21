@@ -1,10 +1,13 @@
 import { mergeBalance, type BalanceConfig } from './balance';
-import type { ChannelDef, ContentPack, EventDef, FounderDef, NodeDef, RegionDef, RivalDef } from './types';
+import type { ChannelDef, ContentPack, DifficultyDef, EventDef, FounderDef, NodeDef, RegionDef, RivalDef } from './types';
 
 /** Lookup tables derived once per pack. Packs are treated as immutable. */
 export interface EngineContext {
   pack: ContentPack;
+  /** Defaults ← pack balance ← the run's difficulty balance. */
   balance: BalanceConfig;
+  /** The run's difficulty level (after fallback), if the pack has one. */
+  difficulty?: DifficultyDef;
   regions: Map<string, RegionDef>;
   nodes: Map<string, NodeDef>;
   events: Map<string, EventDef>;
@@ -64,15 +67,51 @@ function twoHopOf(neighbours: number[][], links: number[][]): { target: number; 
   });
 }
 
-const cache = new WeakMap<ContentPack, EngineContext>();
+interface PackContexts {
+  /** The pack's own balance, no difficulty. */
+  base: EngineContext;
+  /** By resolved difficulty id. */
+  byDifficulty: Map<string, EngineContext>;
+}
+
+const cache = new WeakMap<ContentPack, PackContexts>();
+
+/**
+ * The difficulty a run uses: the one named if the pack has it, else the pack's default
+ * (if that exists), else none.
+ */
+export function resolveDifficulty(pack: ContentPack, id?: string): DifficultyDef | undefined {
+  const list = pack.difficulties;
+  if (!list || list.length === 0) return undefined;
+  return (id !== undefined ? list.find((d) => d.id === id) : undefined) ?? list.find((d) => d.id === pack.defaultDifficulty);
+}
 
 function byId<T extends { id: string }>(items: readonly T[]): Map<string, T> {
   return new Map(items.map((item) => [item.id, item]));
 }
 
-export function getContext(pack: ContentPack): EngineContext {
-  const cached = cache.get(pack);
-  if (cached) return cached;
+/**
+ * The engine context of a pack for a run at `difficulty` (a difficulty id; unknown or
+ * missing falls back as in resolveDifficulty). Lookups are built once per pack and shared;
+ * each difficulty gets its own merged balance.
+ */
+export function getContext(pack: ContentPack, difficulty?: string): EngineContext {
+  let entry = cache.get(pack);
+  if (!entry) {
+    entry = { base: buildContext(pack), byDifficulty: new Map() };
+    cache.set(pack, entry);
+  }
+  const def = resolveDifficulty(pack, difficulty);
+  if (!def) return entry.base;
+  let context = entry.byDifficulty.get(def.id);
+  if (!context) {
+    context = { ...entry.base, balance: mergeBalance(pack.balance, def.balance), difficulty: def, capabilityCapMemo: new Map() };
+    entry.byDifficulty.set(def.id, context);
+  }
+  return context;
+}
+
+function buildContext(pack: ContentPack): EngineContext {
   const regionIndex = new Map(pack.regions.map((region, index) => [region.id, index]));
   const neighbourIndices = pack.regions.map((region) =>
     region.neighbors.map((id) => regionIndex.get(id)).filter((index): index is number => index !== undefined),
@@ -103,6 +142,5 @@ export function getContext(pack: ContentPack): EngineContext {
     linkBarrierMask,
     twoHop: twoHopOf(neighbourIndices, linkBarrierMask),
   };
-  cache.set(pack, context);
   return context;
 }

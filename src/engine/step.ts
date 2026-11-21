@@ -8,6 +8,7 @@ import { cachedCapabilityCap, computeOf, ownedCapability } from './derived';
 import { applyIncome } from './economy';
 import { checkAchievements, checkEnding } from './endings';
 import { maybeAddHeadline, maybeDrawEvent } from './events';
+import { rivalEntryTick } from './game';
 import { applyProgressAndMeters, applyThresholdBans, checkElimination, INTERNAL_FLAG_PREFIX } from './meters';
 import { updateMoments } from './moments';
 import { expireTimedModifiers, labModifierTable } from './modifiers';
@@ -23,10 +24,11 @@ function enterRivals(state: GameState, context: EngineContext): void {
     const lab = state.labs[id];
     if (lab.active || lab.eliminated) continue;
     const def = context.rivals.get(id);
-    if (!def || state.tick < def.entryTick) continue;
+    const entryTick = def ? rivalEntryTick(context, def) : 0;
+    if (!def || state.tick < entryTick) continue;
     lab.active = true;
     addAdoptionCapped(state, context, lab, lab.homeRegion, context.balance.startAdoption);
-    if (def.entryTick > 0) {
+    if (entryTick > 0) {
       pushNews(state, context, {
         textKey: ENGINE_NEWS_KEYS.rivalEntered,
         kind: 'entry',
@@ -217,6 +219,6 @@ export function stepInPlace(state: GameState, context: EngineContext): void {
 export function step(state: GameState, pack: ContentPack): GameState {
   if (state.status === 'ended' || state.pendingEvent) return state;
   const draft = cloneState(state);
-  stepInPlace(draft, getContext(pack));
+  stepInPlace(draft, getContext(pack, state.difficulty));
   return draft;
 }

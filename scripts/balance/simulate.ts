@@ -26,6 +26,8 @@ export interface Job {
   coverage?: boolean;
   /** Probability the bot taps a moment in time; default by policy (DEFAULT_MOMENT_SKILL). */
   momentSkill?: number;
+  /** Difficulty id; default: the pack's default difficulty. */
+  difficulty?: string;
 }
 
 export interface RivalRecord {
@@ -223,7 +225,13 @@ export function simulate(job: Job): RunRecord {
   try {
     state = runHeadless(
       PACK,
-      { playerName: job.playerName ?? 'Bot Lab', founderId: job.founderId, homeRegion: job.homeRegion, seed: job.seed },
+      {
+        playerName: job.playerName ?? 'Bot Lab',
+        founderId: job.founderId,
+        homeRegion: job.homeRegion,
+        seed: job.seed,
+        ...(job.difficulty !== undefined ? { difficulty: job.difficulty } : {}),
+      },
       { policy: job.policy, maxTicks: MAX_TICKS, onTick, onMomentCollected, ...(job.momentSkill !== undefined ? { momentSkill: job.momentSkill } : {}) },
     );
   } catch (error) {

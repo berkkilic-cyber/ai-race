@@ -4,6 +4,8 @@ import type { FounderDef } from '@/engine';
 
 import { t } from '../i18n';
 import { colors, radius, spacing, type, voice } from '../theme';
+import type { DifficultyOption } from './difficulty';
+import { DifficultyPicker } from './DifficultyPicker';
 import { founderPerkLines } from './logic';
 
 export interface FounderStepProps {
@@ -12,12 +14,18 @@ export interface FounderStepProps {
   onSelect: (id: string) => void;
   /** The cards side by side in one row. */
   wide?: boolean;
+  /** Difficulty levels under the founders (none: no picker). */
+  difficulties?: readonly DifficultyOption[];
+  difficulty?: string;
+  onDifficulty?: (id: string) => void;
+  /** What each founder really starts with at the chosen difficulty, by founder id. */
+  starts?: Readonly<Record<string, { hype: number; cash: number }>>;
 }
 
 const TONE = { good: colors.good, bad: colors.bad, neutral: colors.text } as const;
 
 /** Step 2: the founders as selectable cards with their perks. */
-export function FounderStep({ founders, selected, onSelect, wide }: FounderStepProps) {
+export function FounderStep({ founders, selected, onSelect, wide, difficulties = [], difficulty, onDifficulty, starts }: FounderStepProps) {
   return (
     <View style={[styles.wrap, wide && styles.wrapWide]}>
       <View style={[styles.head, wide && styles.headWide]}>
@@ -45,7 +53,7 @@ export function FounderStep({ founders, selected, onSelect, wide }: FounderStepP
               </View>
               <Text style={styles.desc}>{t(f.descKey)}</Text>
               <View style={styles.perks}>
-                {founderPerkLines(f).map((line) => (
+                {founderPerkLines(f, starts?.[f.id]).map((line) => (
                   <View key={line.text} style={styles.perk}>
                     <View style={[styles.bullet, { backgroundColor: line.tone === 'neutral' ? colors.dim : TONE[line.tone] }]} />
                     <Text style={[styles.perkText, { color: TONE[line.tone] }]}>{line.text}</Text>
@@ -56,13 +64,14 @@ export function FounderStep({ founders, selected, onSelect, wide }: FounderStepP
           );
         })}
       </View>
+      {onDifficulty ? <DifficultyPicker options={difficulties} selected={difficulty} onSelect={onDifficulty} wide={wide} /> : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   wrap: { gap: spacing.l },
-  wrapWide: { flex: 1, gap: spacing.m },
+  wrapWide: { flex: 1, gap: spacing.s },
   head: { gap: spacing.xs },
   headWide: { flexDirection: 'row', alignItems: 'baseline', gap: spacing.m, flexWrap: 'wrap' },
   title: { ...voice.calmHeading, color: colors.text, fontSize: type.xl },

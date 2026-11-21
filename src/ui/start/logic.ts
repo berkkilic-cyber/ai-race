@@ -135,11 +135,14 @@ export function modifierLine(mod: Modifier): PerkLine {
   return { text, tone: delta === 0 ? 'neutral' : better ? 'good' : 'bad' };
 }
 
-/** Starting Hype, starting Cash, then one line per modifier. */
-export function founderPerkLines(founder: FounderDef): PerkLine[] {
+/**
+ * Starting Hype, starting Cash, then one line per modifier. `start` is what the founder
+ * really starts with at the chosen difficulty (getFounderStart); default: the founder's own.
+ */
+export function founderPerkLines(founder: FounderDef, start: { hype: number; cash: number } = { hype: founder.startHype, cash: founder.startCash }): PerkLine[] {
   return [
-    { text: t('ui.start.perk.startHype', { amount: fmtCompact(founder.startHype), hype: t('term.hype') }), tone: 'neutral' },
-    { text: t('ui.start.perk.startCash', { amount: fmtCash(founder.startCash), cash: t('term.cash') }), tone: 'neutral' },
+    { text: t('ui.start.perk.startHype', { amount: fmtCompact(start.hype), hype: t('term.hype') }), tone: 'neutral' },
+    { text: t('ui.start.perk.startCash', { amount: fmtCash(start.cash), cash: t('term.cash') }), tone: 'neutral' },
     ...founder.modifiers.map(modifierLine),
   ];
 }

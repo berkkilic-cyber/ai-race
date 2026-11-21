@@ -349,6 +349,20 @@ export interface AchievementDef {
   conditions: Condition[];
 }
 
+/**
+ * A difficulty level: balance overrides applied over the pack's own for one run, and a
+ * multiplier on the final score. Names and descriptions are string keys in the pack.
+ */
+export interface DifficultyDef {
+  id: string;
+  nameKey: string;
+  descKey: string;
+  /** Merged over defaults ← pack balance for runs at this level. */
+  balance: Partial<BalanceConfig>;
+  /** The final score is multiplied by this (> 0). */
+  scoreMultiplier: number;
+}
+
 export interface ContentPack {
   id: string;
   version: number;
@@ -368,6 +382,10 @@ export interface ContentPack {
   channels?: ChannelDef[];
   /** Overrides of the engine's default balance constants. */
   balance: Partial<BalanceConfig>;
+  /** Difficulty levels, easiest first. Optional: without them every run uses `balance`. */
+  difficulties?: DifficultyDef[];
+  /** Id of the level used when a run names none (or an unknown one). */
+  defaultDifficulty?: string;
   /** locale -> key -> text. Text may contain {lab}, {region}, {rival}, {amount}. */
   strings: Record<string, Record<string, string>>;
 }
@@ -501,6 +519,8 @@ export interface GameState {
   moments: MomentState[];
   /** Tick of the next moment spawn attempt. */
   nextMomentTick: number;
+  /** Id of the run's difficulty level (resolved at createGame); absent when the pack has none. */
+  difficulty?: string;
 }
 
 export interface GameSetup {
@@ -510,6 +530,8 @@ export interface GameSetup {
   seed: number;
   /** Which rivals take part. Default: all in the pack. */
   rivalIds?: LabId[];
+  /** Difficulty id from ContentPack.difficulties; unknown or missing = the pack default, then none. */
+  difficulty?: string;
 }
 
 // ───────────────────────────── Actions ─────────────────────────────

@@ -17,6 +17,7 @@ import { newsText } from '../news/newsText';
 import { useGameStore } from '../store/game';
 import { colors, flatShadow, radius, shape, spacing, tabular, type, voice } from '../theme';
 import { FinalMap } from './FinalMap';
+import { difficultyEndLine } from '../start/difficulty';
 import { endStats, pickNotableHeadlines, playAgainSetup } from './logic';
 import { useWide } from '../start/useWide';
 import { useCountUp } from './useCountUp';
@@ -102,6 +103,7 @@ function EndView({ state }: { state: GameState }) {
   const winner = !win && ending.winnerLabId && ending.winnerLabId !== state.playerLabId ? state.labs[ending.winnerLabId] : undefined;
   const founder = pack.founders.find((f) => f.id === player.founderId);
   const stats = endStats(state, pack);
+  const level = difficultyEndLine(state, pack);
   const headlines = pickNotableHeadlines(state.news, state.playerLabId);
   const achievements = state.achievements.flatMap((id) => pack.achievements.filter((a) => a.id === id));
 
@@ -140,6 +142,11 @@ function EndView({ state }: { state: GameState }) {
       <Text style={styles.labLine} numberOfLines={2}>
         {t('ui.end.labLine', { name: labName(player), founder: founder ? t(founder.nameKey) : '', region: regionName(player.homeRegion) })}
       </Text>
+      {level ? (
+        <Text style={styles.levelLine} numberOfLines={1} testID="end-difficulty">
+          {level}
+        </Text>
+      ) : null}
     </Card>
   );
   const scoreRowEl = (
@@ -149,6 +156,11 @@ function EndView({ state }: { state: GameState }) {
         <Text style={styles.labLineLeft} numberOfLines={2}>
           {t('ui.end.labLine', { name: labName(player), founder: founder ? t(founder.nameKey) : '', region: regionName(player.homeRegion) })}
         </Text>
+        {level ? (
+          <Text style={styles.levelLineLeft} numberOfLines={1} testID="end-difficulty">
+            {level}
+          </Text>
+        ) : null}
       </View>
       <Text style={styles.scoreCompact} testID="end-score">
         {fmtInt(score)}
@@ -246,6 +258,7 @@ const styles = StyleSheet.create({
   scoreRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.m, paddingHorizontal: spacing.l, paddingVertical: spacing.s },
   scoreRowText: { flex: 1, gap: 2 },
   labLineLeft: { ...voice.body, color: colors.dim, fontSize: type.xs },
+  levelLineLeft: { ...voice.calmLabel, color: colors.playerText },
   scoreCompact: { ...voice.calmNumber, color: colors.playerText, fontSize: type.display, lineHeight: type.display + 6 },
   rightPane: { flex: 1 },
   rightContent: { padding: spacing.l, gap: spacing.m },
@@ -265,6 +278,7 @@ const styles = StyleSheet.create({
   scoreLabel: { ...voice.calmLabel, color: colors.dim, fontSize: type.xs },
   score: { ...voice.calmNumber, color: colors.playerText, fontSize: type.display + 16, lineHeight: type.display + 24 },
   labLine: { ...voice.body, color: colors.dim, fontSize: type.s, textAlign: 'center' },
+  levelLine: { ...voice.calmLabel, color: colors.playerText, textAlign: 'center' },
   section: { gap: spacing.m },
   sectionTitle: { ...voice.calmHeading, color: colors.text, fontSize: type.l + 2 },
   subTitle: { ...voice.calmLabel, color: colors.dim, fontSize: type.xs },

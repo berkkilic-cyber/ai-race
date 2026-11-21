@@ -47,7 +47,7 @@ export function pickNotableHeadlines(news: readonly NewsItem[], playerId: LabId,
     .map((e) => e.item);
 }
 
-/** Same lab name, founder and home region as the finished run, with a fresh seed. */
+/** Same lab name, founder, home region and difficulty as the finished run, with a fresh seed. */
 export function playAgainSetup(state: GameState, random: () => number = Math.random): NewGameSetup {
   const player = state.labs[state.playerLabId];
   let seed = Math.floor(random() * 0x7fffffff);
@@ -58,6 +58,7 @@ export function playAgainSetup(state: GameState, random: () => number = Math.ran
     homeRegion: player.homeRegion,
     packId: state.packId,
     seed,
+    ...(state.difficulty !== undefined ? { difficulty: state.difficulty } : {}),
   };
 }
 

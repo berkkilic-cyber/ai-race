@@ -37,6 +37,24 @@ describe('validatePack', () => {
     expectProblem(problemsOf((p) => { p.balance.baseSpread = -1; }), /"baseSpread" must be a finite number >= 0/);
   });
 
+  it('validates difficulties: ids, strings, balance keys, multipliers, default', () => {
+    const d = (p: ContentPack) => p.difficulties!;
+    expect(d(clone()).length).toBe(4);
+    expectProblem(problemsOf((p) => { d(p)[1].id = d(p)[0].id; }), /difficulties: duplicate id "sandbox"/);
+    expectProblem(problemsOf((p) => { d(p)[0].nameKey = 'difficulty.nope.name'; }), /missing key "difficulty.nope.name"/);
+    expectProblem(problemsOf((p) => { (d(p)[0].balance as Record<string, number>).warpSpeed = 2; }), /difficulties\[sandbox\]\.balance: unknown key "warpSpeed"/);
+    expectProblem(problemsOf((p) => { (d(p)[0].balance as Record<string, number>).banThresholds = 2; }), /not a number setting/);
+    expectProblem(problemsOf((p) => { d(p)[0].balance.aiAgiFactor = -1; }), /must be a finite number >= 0/);
+    expectProblem(problemsOf((p) => { d(p)[0].balance.computePerCapabilityLevel = 5; }), /can only be set in the pack's balance/);
+    expectProblem(problemsOf((p) => { d(p)[0].scoreMultiplier = 0; }), /scoreMultiplier/);
+    expectProblem(problemsOf((p) => { d(p)[0].scoreMultiplier = -1; }), /scoreMultiplier/);
+    expectProblem(problemsOf((p) => { p.defaultDifficulty = 'nightmare'; }), /defaultDifficulty: "nightmare" is not one of/);
+    expectProblem(problemsOf((p) => { delete p.defaultDifficulty; }), /defaultDifficulty: required/);
+    expectProblem(problemsOf((p) => { p.strings.en['difficulty.sandbox.desc'] = 'x'.repeat(61); }), /difficulty description/);
+    // Difficulties are optional (their strings are then unused).
+    expect(problemsOf((p) => { delete p.difficulties; delete p.defaultDifficulty; }).filter((x) => !/unused key "difficulty\./.test(x))).toEqual([]);
+  });
+
   it('catches duplicate ids', () => {
     expectProblem(problemsOf((p) => { p.nodes[1].id = p.nodes[0].id; }), /duplicate id "cap-model-1"/);
   });
