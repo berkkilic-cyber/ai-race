@@ -39,6 +39,40 @@ export interface RegionDef {
   neighbors: RegionId[];
   /** Free-form tags used by scopes and modifiers, e.g. "eu", "english", "island". */
   tags: string[];
+  /**
+   * Barrier ids (from ContentPack.barriers) on natural seeding INTO this region, e.g. "strict" or
+   * "language:spanish". Each one not cleared by a channel the seeding lab holds multiplies the
+   * seed chance by BalanceConfig.barrierSeedFactor.
+   */
+  barriers?: string[];
+  /**
+   * Barriers on the link to a neighbour, by neighbour id (e.g. { "russia": ["ocean"] } for a sea
+   * link). Links are symmetric: the neighbour lists the same barriers back.
+   */
+  linkBarriers?: Record<RegionId, string[]>;
+}
+
+/** Something that slows natural seeding into a region or across a link unless a channel clears it. */
+export interface BarrierDef {
+  id: string;
+  nameKey: string;
+}
+
+/**
+ * A way of spreading a lab can hold (from owned nodes' `channels`, or for a while from a
+ * `setFlag` effect on the flag "channel:<id>").
+ * - 'clear': removes the seeding penalty of the barriers in `clears` (default: the barrier with the channel's id).
+ * - 'jump': seeding also reaches regions two links away (skipping one neighbour), at viralSeedFactor.
+ * - 'open': the holder seeds openSeedFactor × as often everywhere, and every other lab's spread
+ *   rises by openRivalSpreadBonus while it holds it.
+ */
+export interface ChannelDef {
+  id: string;
+  nameKey: string;
+  kind: 'clear' | 'jump' | 'open';
+  clears?: string[];
+  /** News text when a lab first reaches a region through this channel ({lab}, {region}). */
+  entryTextKey?: string;
 }
 
 /** Stats that modifiers can change. 'mul' values multiply together, 'add' values sum. */
@@ -81,13 +115,30 @@ export type RegionScope =
 export type EffectTarget = 'self' | 'rivals' | 'leadRival' | 'randomRival';
 
 export type Effect =
-  | { type: 'resource'; resource: ResourceId; amount: number; target?: EffectTarget }
+  | {
+      type: 'resource';
+      resource: ResourceId;
+      amount: number;
+      target?: EffectTarget;
+      /**
+       * Optional progress scaling: adds this many ticks of the receiving lab's average income
+       * of `resource` so far in the run (stats.hypeEarned or cashEarned ÷ tick) to `amount`.
+       */
+      scaleWithIncome?: number;
+    }
   /** Adds `percent` % of the lab's current amount (can be negative). */
   | { type: 'resourcePercent'; resource: ResourceId; percent: number; target?: EffectTarget }
   | { type: 'meter'; meter: MeterId; amount: number; target?: EffectTarget }
   | { type: 'agiProgress'; amount: number; target?: EffectTarget }
   /** Multiplies the lab's adoption in the scoped regions by `factor`. */
-  | { type: 'adoption'; scope: RegionScope; factor: number; target?: EffectTarget }
+  | {
+      type: 'adoption';
+      scope: RegionScope;
+      factor: number;
+      target?: EffectTarget;
+      /** In a moment's effects: act on the moment's region instead of `scope` (ignored elsewhere). */
+      atMoment?: boolean;
+    }
   /** Bans the lab from the scoped regions. durationTicks -1 = permanent. */
   | { type: 'ban'; scope: RegionScope; durationTicks: number; target?: EffectTarget }
   | { type: 'unban'; scope: RegionScope; target?: EffectTarget }
@@ -99,10 +150,16 @@ export type Effect =
       scope: RegionScope;
       durationTicks?: number;
       target?: EffectTarget;
+      /** In a moment's effects: act on the moment's region instead of `scope` (ignored elsewhere). */
+      atMoment?: boolean;
     }
   /** Permanent bonus compute (a GPU allocation). Can be negative. */
   | { type: 'compute'; amount: number; target?: EffectTarget }
-  | { type: 'setFlag'; flag: string }
+  /**
+   * Sets a flag on the lab. With durationTicks the flag is removed again after that many ticks
+   * (a flag "channel:<id>" grants that channel while set).
+   */
+  | { type: 'setFlag'; flag: string; durationTicks?: number }
   | { type: 'news'; textKey: string; tone?: NewsTone };
 
 export type Condition =
@@ -156,6 +213,8 @@ export interface NodeDef {
   capabilityLevel?: number;
   /** Flags granted while owned, e.g. "canAcquire". */
   grantsFlags?: string[];
+  /** Channel ids (ContentPack.channels) held while owned: they change how the lab spreads. */
+  channels?: string[];
 }
 
 export interface EventChoiceDef {
@@ -198,6 +257,35 @@ export interface HeadlineDef {
   about: 'player' | 'rival' | 'world';
   conditions: Condition[];
   effects?: Effect[];
+}
+
+export type MomentKind = 'boost' | 'threat';
+
+/**
+ * A short-lived thing that appears on a region of the map and can be tapped.
+ * A boost is collected for a reward (ignoring it just loses the reward); a threat
+ * is contained by tapping it in time, and lands a penalty if it expires.
+ */
+export interface MomentDef {
+  id: string;
+  kind: MomentKind;
+  nameKey: string;
+  /** An icon id the UI maps to a drawing (the pack validator lists the allowed ids), e.g. "megaphone". */
+  icon: string;
+  /** Relative spawn weight among eligible moments. */
+  weight: number;
+  /** All must hold for the lab for this moment to spawn. */
+  conditions: Condition[];
+  /** Ticks the moment stays on the map. */
+  lifetimeTicks: number;
+  /** Applied when the player taps it in time (collecting a boost, containing a threat). */
+  onCollect: Effect[];
+  /** Applied when it expires untapped. */
+  onExpire?: Effect[];
+  /** Short text the UI may show on collect. */
+  collectTextKey?: string;
+  /** Threats: news text added when it expires ({lab}, {region}). */
+  expireTextKey?: string;
 }
 
 export interface FounderDef {
@@ -272,6 +360,12 @@ export interface ContentPack {
   rivals: RivalDef[];
   endings: EndingDef[];
   achievements: AchievementDef[];
+  /** Tap-to-collect moments (only human-controlled labs get them). */
+  moments: MomentDef[];
+  /** Seeding barriers regions and links may carry. */
+  barriers?: BarrierDef[];
+  /** Spread channels nodes and flags may grant. */
+  channels?: ChannelDef[];
   /** Overrides of the engine's default balance constants. */
   balance: Partial<BalanceConfig>;
   /** locale -> key -> text. Text may contain {lab}, {region}, {rival}, {amount}. */
@@ -317,6 +411,10 @@ export interface LabState {
   bans: Record<RegionId, number>;
   timedModifiers: { modifier: Modifier; untilTick: number }[];
   flags: string[];
+  /** Flags set with a duration: flag -> tick it is removed. */
+  flagTimers?: Record<string, number>;
+  /** Millions of new users gained last tick (drives new-user Hype). */
+  newUsersLastTick?: number;
   stats: {
     nodesBought: number;
     eventsResolved: number;
@@ -324,11 +422,24 @@ export interface LabState {
     peakWorldShare: number;
     cashEarned: number;
     hypeEarned: number;
+    /** Moments tapped in time (boosts collected and threats contained). */
+    momentsCollected: number;
+    /** Moments that expired untapped. */
+    momentsMissed: number;
   };
 }
 
+/** What a news item is about, so the UI can treat some specially without parsing text keys. */
+export type NewsKind = 'launch' | 'entry' | 'ban' | 'elimination' | 'acquisition' | 'achievement' | 'moment' | 'headline' | 'other';
+
 export interface NewsItem {
   tick: number;
+  /** Set on every item the engine emits. 'launch' = a lab shipped a new model tier. */
+  kind?: NewsKind;
+  /** Launches: the node providing the new tier. */
+  nodeId?: NodeId;
+  /** Launches: the new effective model tier. */
+  tier?: number;
   textKey: string;
   tone: NewsTone;
   /** Values for {placeholders}; region/lab values are ids the UI resolves to names. */
@@ -341,6 +452,18 @@ export interface NewsItem {
 export interface PendingEvent {
   eventId: EventId;
   labId: LabId;
+}
+
+/** A moment on the map. */
+export interface MomentState {
+  /** Unique within the run. */
+  uid: string;
+  defId: string;
+  labId: LabId;
+  regionId: RegionId;
+  spawnTick: number;
+  /** The moment expires (and can no longer be tapped) when tick reaches this. */
+  expiresTick: number;
 }
 
 export interface GameEnding {
@@ -374,6 +497,10 @@ export interface GameState {
   news: NewsItem[];
   achievements: string[];
   ending: GameEnding | null;
+  /** Active moments of every lab. Empty while none are up and after the run ends. */
+  moments: MomentState[];
+  /** Tick of the next moment spawn attempt. */
+  nextMomentTick: number;
 }
 
 export interface GameSetup {
@@ -395,7 +522,9 @@ export type Action =
   | { type: 'launchInRegion'; labId: LabId; regionId: RegionId }
   | { type: 'resolveEvent'; labId: LabId; choiceId: string }
   /** Buy out a rival. Needs the "canAcquire" flag. */
-  | { type: 'acquireRival'; labId: LabId; targetLabId: LabId };
+  | { type: 'acquireRival'; labId: LabId; targetLabId: LabId }
+  /** Tap a moment: collect a boost or contain a threat. 'unknownId' when it no longer exists. */
+  | { type: 'collectMoment'; labId: LabId; uid: string };
 
 export type ActionFailure =
   | 'gameEnded'

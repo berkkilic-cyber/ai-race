@@ -1,6 +1,6 @@
 /** A small, theme-neutral content pack for engine tests. */
 import { ENGINE_NEWS_KEYS } from '../news';
-import type { ContentPack, GameSetup, RegionDef } from '../types';
+import type { ContentPack, GameSetup, MomentDef, RegionDef } from '../types';
 
 function region(
   id: string,
@@ -33,6 +33,8 @@ const engineStrings: Record<string, string> = {
   [ENGINE_NEWS_KEYS.dataCentreUnpaid]: 'A site of {lab} in {region} goes dark.',
   [ENGINE_NEWS_KEYS.launched]: '{lab} launches in {region}.',
   [ENGINE_NEWS_KEYS.achievement]: 'Achievement: {achievement}.',
+  [ENGINE_NEWS_KEYS.launchPlayer]: '{lab} ships {model}.',
+  [ENGINE_NEWS_KEYS.launchRival]: '{lab} ships {model}.',
 };
 
 export const testPack: ContentPack = {
@@ -126,6 +128,8 @@ export const testPack: ContentPack = {
     { id: 'ach_first_site', nameKey: 'ach.firstSite', descKey: 'ach.firstSite.desc', secret: false, checkAt: 'tick', conditions: [{ type: 'dataCentresAtLeast', value: 1 }] },
     { id: 'ach_any_win_agi', nameKey: 'ach.agi', descKey: 'ach.agi.desc', secret: true, checkAt: 'end', conditions: [{ type: 'agiAtLeast', value: 100 }] },
   ],
+  // Moments are off in the base fixture so other rules' tests keep their random streams; see momentPack.
+  moments: [],
   balance: {},
   strings: {
     en: {
@@ -152,5 +156,33 @@ function fillMissingStrings(pack: ContentPack): void {
   visit({ ...pack, strings: {} }, '');
 }
 fillMissingStrings(testPack);
+
+/** Moments for the moment tests: two boosts, a plain threat and a data-centre threat. */
+export const testMoments: MomentDef[] = [
+  {
+    id: 'tip', kind: 'boost', nameKey: 'moment.tip.name', icon: 'star', weight: 3, conditions: [], lifetimeTicks: 20,
+    onCollect: [{ type: 'resource', resource: 'hype', amount: 5 }], collectTextKey: 'moment.tip.collect',
+  },
+  {
+    id: 'grant', kind: 'boost', nameKey: 'moment.grant.name', icon: 'cash', weight: 1, conditions: [{ type: 'tickAtLeast', value: 100 }], lifetimeTicks: 20,
+    onCollect: [{ type: 'resource', resource: 'cash', amount: 4, scaleWithIncome: 10 }],
+  },
+  {
+    id: 'leak', kind: 'threat', nameKey: 'moment.leak.name', icon: 'document', weight: 2, conditions: [], lifetimeTicks: 30,
+    onCollect: [], onExpire: [{ type: 'meter', meter: 'backlash', amount: 5 }], expireTextKey: 'moment.leak.expire',
+  },
+  {
+    id: 'heat', kind: 'threat', nameKey: 'moment.heat.name', icon: 'thermometer', weight: 2, conditions: [], lifetimeTicks: 30,
+    onCollect: [], onExpire: [{ type: 'dataCentre', action: 'disable', scope: { kind: 'home' }, durationTicks: 50, atMoment: true }],
+    expireTextKey: 'moment.heat.expire',
+  },
+];
+
+export const momentPack: ContentPack = {
+  ...testPack,
+  moments: testMoments,
+  strings: { en: { ...testPack.strings.en, 'moment.leak.expire': 'A memo of {lab} leaks in {region}.', 'moment.heat.expire': 'A site of {lab} in {region} overheats.' } },
+};
+fillMissingStrings(momentPack);
 
 export const testSetup: GameSetup = { playerName: 'Tester', founderId: 'thinker', homeRegion: 'north', seed: 1 };

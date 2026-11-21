@@ -31,6 +31,14 @@ export interface BalanceConfig {
   seedChance: number;
   /** Adoption a seeded region starts at. */
   seedAmount: number;
+  /** Seed chance × this for each barrier on the link or the target region the lab holds no channel for. */
+  barrierSeedFactor: number;
+  /** 'jump' channel: seed chance into regions two links away, × the normal chance. */
+  viralSeedFactor: number;
+  /** 'open' channel: the holder's seed chance × this everywhere. */
+  openSeedFactor: number;
+  /** 'open' channel: every other lab's appeal × (1 + this) per lab holding it. */
+  openRivalSpreadBonus: number;
   /** Adoption a paid launch starts at. */
   launchAdoption: number;
   /** Fraction of adoption lost per tick in a banned region. */
@@ -164,6 +172,20 @@ export interface BalanceConfig {
   /** Most news items kept in state.news. */
   newsLogSize: number;
 
+  // ── Moments (tap-to-collect, human-controlled labs only) ──
+  /** Tick of the first moment spawn attempt. */
+  momentFirstTick: number;
+  /** Minimum ticks between moment spawn attempts (before the world-share speed-up). */
+  momentIntervalMin: number;
+  /** Maximum ticks between moment spawn attempts (before the world-share speed-up). */
+  momentIntervalMax: number;
+  /** The interval is multiplied by (1 − this × world share)... */
+  momentShareSpeedup: number;
+  /** ...but never falls below this many ticks. */
+  momentIntervalFloor: number;
+  /** Most moments one lab can have on the map at once. */
+  maxActiveMoments: number;
+
   // ── Endings and score ──
   /** World share that triggers the dependence ending. */
   dependenceShare: number;
@@ -194,6 +216,10 @@ export const defaultBalance: BalanceConfig = {
   seedThreshold: 0.15,
   seedChance: 0.003,
   seedAmount: 0.004,
+  barrierSeedFactor: 0.25,
+  viralSeedFactor: 0.5,
+  openSeedFactor: 1.5,
+  openRivalSpreadBonus: 0.05,
   launchAdoption: 0.01,
   banDecayRate: 0.02,
   eliminatedDecayRate: 0.2,
@@ -260,6 +286,13 @@ export const defaultBalance: BalanceConfig = {
   headlineIntervalMin: 25,
   headlineIntervalMax: 50,
   newsLogSize: 50,
+
+  momentFirstTick: 40,
+  momentIntervalMin: 30,
+  momentIntervalMax: 54,
+  momentShareSpeedup: 1.5,
+  momentIntervalFloor: 16,
+  maxActiveMoments: 3,
 
   dependenceShare: 0.5,
   scoreWin: 1000,

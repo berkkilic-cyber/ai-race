@@ -74,6 +74,6 @@ export function maybeAddHeadline(state: GameState, context: EngineContext): void
   const picked = weightedPick(state, headlineCandidates(state, context, player), (c) => c.headline.weight);
   if (!picked) return;
   const { headline, subject } = picked;
-  pushNews(state, context, { textKey: headline.textKey, tone: headline.tone, params: { lab: subject.id }, labId: subject.id });
+  pushNews(state, context, { textKey: headline.textKey, kind: 'headline', tone: headline.tone, params: { lab: subject.id }, labId: subject.id });
   applyEffects(state, context, subject, headline.effects);
 }

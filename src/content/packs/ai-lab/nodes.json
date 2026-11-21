@@ -315,6 +315,9 @@
         "op": "mul",
         "value": 1.1
       }
+    ],
+    "channels": [
+      "viral"
     ]
   },
   {
@@ -385,6 +388,9 @@
         "value": 1.2,
         "regionTag": "spanish"
       }
+    ],
+    "channels": [
+      "language:spanish"
     ]
   },
   {
@@ -404,6 +410,9 @@
         "op": "mul",
         "value": 1.3
       }
+    ],
+    "channels": [
+      "ocean"
     ]
   },
   {
@@ -462,6 +471,9 @@
         "value": 1.25,
         "regionTag": "africa"
       }
+    ],
+    "channels": [
+      "language:asia-africa"
     ]
   },
   {
@@ -487,6 +499,9 @@
         "op": "mul",
         "value": 1.25
       }
+    ],
+    "channels": [
+      "ocean"
     ]
   },
   {
@@ -533,6 +548,9 @@
         "value": 0.7,
         "regionTag": "eu"
       }
+    ],
+    "channels": [
+      "strict"
     ]
   },
   {
@@ -564,6 +582,9 @@
         "op": "mul",
         "value": 1.05
       }
+    ],
+    "channels": [
+      "strict"
     ]
   },
   {
@@ -594,6 +615,10 @@
         "op": "mul",
         "value": 1.15
       }
+    ],
+    "channels": [
+      "viral",
+      "ocean"
     ]
   },
   {
@@ -915,7 +940,7 @@
       {
         "stat": "acquireCost",
         "op": "mul",
-        "value": 0.6
+        "value": 0.7
       }
     ],
     "onBuy": [

@@ -93,7 +93,7 @@ export function eliminateLab(
   lab.eliminated = byLabId === undefined ? { reason, tick: state.tick } : { reason, tick: state.tick, byLabId };
   if (reason === 'acquired') return;
   const textKey = reason === 'banned' ? ENGINE_NEWS_KEYS.eliminatedBanned : ENGINE_NEWS_KEYS.eliminatedRevolt;
-  pushNews(state, context, { textKey, tone: 'bad', params: { lab: lab.id }, labId: lab.id });
+  pushNews(state, context, { textKey, kind: 'elimination', tone: 'bad', params: { lab: lab.id }, labId: lab.id });
 }
 
 /** Full regulation eliminates as 'banned', full backlash as 'revolt'. */

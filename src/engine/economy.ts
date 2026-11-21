@@ -87,6 +87,7 @@ export function applyIncome(
     upkeep -= dataCentreUpkeepOf(dc, context, info.mods);
     pushNews(state, context, {
       textKey: ENGINE_NEWS_KEYS.dataCentreUnpaid,
+      kind: 'other',
       tone: 'bad',
       params: { lab: lab.id, region: dc.regionId },
       regionId: dc.regionId,

@@ -1,5 +1,5 @@
 import type { EngineContext } from './context';
-import type { GameState, NewsItem } from './types';
+import type { GameState, NewsItem, NewsKind } from './types';
 import { max } from './natives';
 
 /**
@@ -23,9 +23,35 @@ export const ENGINE_NEWS_KEYS = {
   launched: 'engine.news.launched',
   /** Achievement {achievement} earned. */
   achievement: 'engine.news.achievement',
+  /** The player's lab {lab} ships model {model} (a node name key), tier {tier}. */
+  launchPlayer: 'engine.news.launch.player',
+  /** Rival {lab} ships model {model} (a node name key), tier {tier}. */
+  launchRival: 'engine.news.launch.rival',
+  /**
+   * Lab {lab} first reaches {region} through a spread channel (fallback when the channel has no
+   * entryTextKey). Params also carry `channel` (channel id) and `from` (source region id), and
+   * `via` (the skipped region) for 'jump' channels.
+   */
+  channelEntry: 'engine.news.entry.channel',
 } as const;
 
-export function pushNews(state: GameState, context: EngineContext, item: Omit<NewsItem, 'tick'>): void {
+/** The `kind` each engine news key is emitted with. */
+export const ENGINE_NEWS_KINDS: Record<keyof typeof ENGINE_NEWS_KEYS, NewsKind> = {
+  ban: 'ban',
+  eliminatedBanned: 'elimination',
+  eliminatedRevolt: 'elimination',
+  acquired: 'acquisition',
+  rivalEntered: 'entry',
+  dataCentreUnpaid: 'other',
+  launched: 'other',
+  achievement: 'achievement',
+  launchPlayer: 'launch',
+  launchRival: 'launch',
+  channelEntry: 'entry',
+};
+
+/** Adds a news item; every engine-emitted item carries a `kind`. */
+export function pushNews(state: GameState, context: EngineContext, item: Omit<NewsItem, 'tick' | 'kind'> & { kind: NewsKind }): void {
   state.news.push({ tick: state.tick, ...item });
   const overflow = state.news.length - max(0, context.balance.newsLogSize);
   if (overflow > 0) state.news.splice(0, overflow);

@@ -764,5 +764,427 @@
         "amount": 4
       }
     ]
+  },
+  {
+    "id": "w-brand-keynote",
+    "textKey": "headline.w-brand-keynote",
+    "tone": "neutral",
+    "weight": 1,
+    "about": "world",
+    "conditions": []
+  },
+  {
+    "id": "w-brand-sold-out",
+    "textKey": "headline.w-brand-sold-out",
+    "tone": "neutral",
+    "weight": 1,
+    "about": "world",
+    "conditions": []
+  },
+  {
+    "id": "w-brand-rename",
+    "textKey": "headline.w-brand-rename",
+    "tone": "neutral",
+    "weight": 1,
+    "about": "world",
+    "conditions": []
+  },
+  {
+    "id": "w-brand-polite",
+    "textKey": "headline.w-brand-polite",
+    "tone": "neutral",
+    "weight": 1,
+    "about": "world",
+    "conditions": []
+  },
+  {
+    "id": "w-brand-versions",
+    "textKey": "headline.w-brand-versions",
+    "tone": "neutral",
+    "weight": 1,
+    "about": "world",
+    "conditions": []
+  },
+  {
+    "id": "w-brand-voice",
+    "textKey": "headline.w-brand-voice",
+    "tone": "neutral",
+    "weight": 1,
+    "about": "world",
+    "conditions": []
+  },
+  {
+    "id": "w-brand-meta-board",
+    "textKey": "headline.w-brand-meta-board",
+    "tone": "neutral",
+    "weight": 1,
+    "about": "world",
+    "conditions": []
+  },
+  {
+    "id": "w-brand-feta",
+    "textKey": "headline.w-brand-feta",
+    "tone": "neutral",
+    "weight": 1,
+    "about": "world",
+    "conditions": []
+  },
+  {
+    "id": "w-brand-moogle",
+    "textKey": "headline.w-brand-moogle",
+    "tone": "neutral",
+    "weight": 1,
+    "about": "world",
+    "conditions": []
+  },
+  {
+    "id": "w-brand-region",
+    "textKey": "headline.w-brand-region",
+    "tone": "neutral",
+    "weight": 1,
+    "about": "world",
+    "conditions": []
+  },
+  {
+    "id": "w-brand-toaster",
+    "textKey": "headline.w-brand-toaster",
+    "tone": "neutral",
+    "weight": 1,
+    "about": "world",
+    "conditions": []
+  },
+  {
+    "id": "w-brand-shoestring",
+    "textKey": "headline.w-brand-shoestring",
+    "tone": "neutral",
+    "weight": 1,
+    "about": "world",
+    "conditions": []
+  },
+  {
+    "id": "w-brand-summary",
+    "textKey": "headline.w-brand-summary",
+    "tone": "neutral",
+    "weight": 1,
+    "about": "world",
+    "conditions": []
+  },
+  {
+    "id": "w-brand-tie",
+    "textKey": "headline.w-brand-tie",
+    "tone": "neutral",
+    "weight": 1,
+    "about": "world",
+    "conditions": []
+  },
+  {
+    "id": "w-brand-numbers",
+    "textKey": "headline.w-brand-numbers",
+    "tone": "neutral",
+    "weight": 1,
+    "about": "world",
+    "conditions": []
+  },
+  {
+    "id": "egg-brand-mvidia",
+    "textKey": "headline.egg-brand-mvidia",
+    "tone": "neutral",
+    "weight": 40,
+    "about": "player",
+    "conditions": [
+      {
+        "type": "labNameIs",
+        "names": [
+          "MVIDIA"
+        ]
+      },
+      {
+        "type": "lacksFlag",
+        "flag": "brand-lawyers"
+      }
+    ],
+    "effects": [
+      {
+        "type": "setFlag",
+        "flag": "brand-lawyers"
+      }
+    ]
+  },
+  {
+    "id": "egg-brand-nopenai",
+    "textKey": "headline.egg-brand-nopenai",
+    "tone": "neutral",
+    "weight": 40,
+    "about": "player",
+    "conditions": [
+      {
+        "type": "labNameIs",
+        "names": [
+          "NopenAI"
+        ]
+      },
+      {
+        "type": "lacksFlag",
+        "flag": "brand-lawyers"
+      }
+    ],
+    "effects": [
+      {
+        "type": "setFlag",
+        "flag": "brand-lawyers"
+      }
+    ]
+  },
+  {
+    "id": "egg-brand-zlaude",
+    "textKey": "headline.egg-brand-zlaude",
+    "tone": "neutral",
+    "weight": 40,
+    "about": "player",
+    "conditions": [
+      {
+        "type": "labNameIs",
+        "names": [
+          "Zlaude"
+        ]
+      },
+      {
+        "type": "lacksFlag",
+        "flag": "brand-lawyers"
+      }
+    ],
+    "effects": [
+      {
+        "type": "setFlag",
+        "flag": "brand-lawyers"
+      }
+    ]
+  },
+  {
+    "id": "egg-brand-germini",
+    "textKey": "headline.egg-brand-germini",
+    "tone": "neutral",
+    "weight": 40,
+    "about": "player",
+    "conditions": [
+      {
+        "type": "labNameIs",
+        "names": [
+          "Germini"
+        ]
+      },
+      {
+        "type": "lacksFlag",
+        "flag": "brand-lawyers"
+      }
+    ],
+    "effects": [
+      {
+        "type": "setFlag",
+        "flag": "brand-lawyers"
+      }
+    ]
+  },
+  {
+    "id": "egg-brand-chatjpt",
+    "textKey": "headline.egg-brand-chatjpt",
+    "tone": "neutral",
+    "weight": 40,
+    "about": "player",
+    "conditions": [
+      {
+        "type": "labNameIs",
+        "names": [
+          "ChatJPT"
+        ]
+      },
+      {
+        "type": "lacksFlag",
+        "flag": "brand-lawyers"
+      }
+    ],
+    "effects": [
+      {
+        "type": "setFlag",
+        "flag": "brand-lawyers"
+      }
+    ]
+  },
+  {
+    "id": "egg-brand-deepsleek",
+    "textKey": "headline.egg-brand-deepsleek",
+    "tone": "neutral",
+    "weight": 40,
+    "about": "player",
+    "conditions": [
+      {
+        "type": "labNameIs",
+        "names": [
+          "DeepSleek"
+        ]
+      },
+      {
+        "type": "lacksFlag",
+        "flag": "brand-lawyers"
+      }
+    ],
+    "effects": [
+      {
+        "type": "setFlag",
+        "flag": "brand-lawyers"
+      }
+    ]
+  },
+  {
+    "id": "egg-brand-llamarama",
+    "textKey": "headline.egg-brand-llamarama",
+    "tone": "neutral",
+    "weight": 40,
+    "about": "player",
+    "conditions": [
+      {
+        "type": "labNameIs",
+        "names": [
+          "Llamarama"
+        ]
+      },
+      {
+        "type": "lacksFlag",
+        "flag": "brand-lawyers"
+      }
+    ],
+    "effects": [
+      {
+        "type": "setFlag",
+        "flag": "brand-lawyers"
+      }
+    ]
+  },
+  {
+    "id": "egg-brand-applause",
+    "textKey": "headline.egg-brand-applause",
+    "tone": "neutral",
+    "weight": 40,
+    "about": "player",
+    "conditions": [
+      {
+        "type": "labNameIs",
+        "names": [
+          "Applause Intelligence",
+          "Applause"
+        ]
+      },
+      {
+        "type": "lacksFlag",
+        "flag": "brand-lawyers"
+      }
+    ],
+    "effects": [
+      {
+        "type": "setFlag",
+        "flag": "brand-lawyers"
+      }
+    ]
+  },
+  {
+    "id": "egg-brand-amazoom",
+    "textKey": "headline.egg-brand-amazoom",
+    "tone": "neutral",
+    "weight": 40,
+    "about": "player",
+    "conditions": [
+      {
+        "type": "labNameIs",
+        "names": [
+          "Amazoom Cloud",
+          "Amazoom"
+        ]
+      },
+      {
+        "type": "lacksFlag",
+        "flag": "brand-lawyers"
+      }
+    ],
+    "effects": [
+      {
+        "type": "setFlag",
+        "flag": "brand-lawyers"
+      }
+    ]
+  },
+  {
+    "id": "egg-brand-moogle",
+    "textKey": "headline.egg-brand-moogle",
+    "tone": "neutral",
+    "weight": 40,
+    "about": "player",
+    "conditions": [
+      {
+        "type": "labNameIs",
+        "names": [
+          "Moogle"
+        ]
+      },
+      {
+        "type": "lacksFlag",
+        "flag": "brand-lawyers"
+      }
+    ],
+    "effects": [
+      {
+        "type": "setFlag",
+        "flag": "brand-lawyers"
+      }
+    ]
+  },
+  {
+    "id": "egg-brand-feta",
+    "textKey": "headline.egg-brand-feta",
+    "tone": "neutral",
+    "weight": 40,
+    "about": "player",
+    "conditions": [
+      {
+        "type": "labNameIs",
+        "names": [
+          "Feta"
+        ]
+      },
+      {
+        "type": "lacksFlag",
+        "flag": "brand-lawyers"
+      }
+    ],
+    "effects": [
+      {
+        "type": "setFlag",
+        "flag": "brand-lawyers"
+      }
+    ]
+  },
+  {
+    "id": "egg-brand-leaderbored",
+    "textKey": "headline.egg-brand-leaderbored",
+    "tone": "neutral",
+    "weight": 40,
+    "about": "player",
+    "conditions": [
+      {
+        "type": "labNameIs",
+        "names": [
+          "LeaderBored"
+        ]
+      },
+      {
+        "type": "lacksFlag",
+        "flag": "brand-lawyers"
+      }
+    ],
+    "effects": [
+      {
+        "type": "setFlag",
+        "flag": "brand-lawyers"
+      }
+    ]
   }
 ]

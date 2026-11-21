@@ -1,0 +1,37 @@
+[
+  {
+    "id": "viral",
+    "nameKey": "channel.viral.name",
+    "kind": "jump",
+    "entryTextKey": "channel.viral.entry"
+  },
+  {
+    "id": "ocean",
+    "nameKey": "channel.ocean.name",
+    "kind": "clear",
+    "entryTextKey": "channel.ocean.entry"
+  },
+  {
+    "id": "strict",
+    "nameKey": "channel.strict.name",
+    "kind": "clear",
+    "entryTextKey": "channel.strict.entry"
+  },
+  {
+    "id": "language:spanish",
+    "nameKey": "channel.language-spanish.name",
+    "kind": "clear",
+    "entryTextKey": "channel.language-spanish.entry"
+  },
+  {
+    "id": "language:asia-africa",
+    "nameKey": "channel.language-asia-africa.name",
+    "kind": "clear",
+    "entryTextKey": "channel.language-asia-africa.entry"
+  },
+  {
+    "id": "open",
+    "nameKey": "channel.open.name",
+    "kind": "open"
+  }
+]

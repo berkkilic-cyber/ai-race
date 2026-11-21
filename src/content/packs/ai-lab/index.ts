@@ -1,10 +1,13 @@
 import type {
   AchievementDef,
+  BarrierDef,
+  ChannelDef,
   ContentPack,
   EndingDef,
   EventDef,
   FounderDef,
   HeadlineDef,
+  MomentDef,
   NodeDef,
   RegionDef,
   RegionId,
@@ -13,11 +16,14 @@ import type {
 
 import achievements from './achievements.json';
 import balance from './balance.json';
+import barriers from './barriers.json';
+import channels from './channels.json';
 import endings from './endings.json';
 import events from './events.json';
 import founders from './founders.json';
 import headlines from './headlines.json';
 import map from './map.json';
+import moments from './moments.json';
 import nodes from './nodes.json';
 import regions from './regions.json';
 import rivals from './rivals.json';
@@ -31,14 +37,17 @@ import en from './strings/en.json';
 export const aiLabPack: ContentPack = {
   id: 'ai-lab',
   version: 1,
-  regions: regions as RegionDef[],
-  nodes: nodes as NodeDef[],
+  regions: regions as unknown as RegionDef[],
+  nodes: nodes as unknown as NodeDef[],
   events: events as unknown as EventDef[],
   headlines: headlines as unknown as HeadlineDef[],
   founders: founders as FounderDef[],
   rivals: rivals as RivalDef[],
   endings: endings as unknown as EndingDef[],
   achievements: achievements as unknown as AchievementDef[],
+  moments: moments as unknown as MomentDef[],
+  barriers: barriers as BarrierDef[],
+  channels: channels as ChannelDef[],
   balance,
   strings: { en: en as Record<string, string> },
 };

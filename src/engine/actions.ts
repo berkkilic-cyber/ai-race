@@ -8,6 +8,7 @@ import { applyEffects } from './effects';
 import { scheduleNextEvent } from './events';
 import { eliminateLab } from './meters';
 import { labModifierTable, statMultiplier } from './modifiers';
+import { collectMoment, findMoment } from './moments';
 import { ENGINE_NEWS_KEYS, pushNews } from './news';
 import { random } from './rng';
 import { assertNever } from './scopes';
@@ -85,6 +86,13 @@ function checkAcquire(state: GameState, context: EngineContext, lab: LabState, t
   return affordable(lab, 0, acquirePrice(lab, target, context, state.tick));
 }
 
+function checkCollect(state: GameState, lab: LabState, uid: string): ActionCheck {
+  const moment = findMoment(state, uid);
+  if (!moment) return fail('unknownId');
+  if (moment.labId !== lab.id) return fail('notAllowed');
+  return OK;
+}
+
 export function checkAction(state: GameState, context: EngineContext, action: Action): ActionCheck {
   if (state.status === 'ended') return fail('gameEnded');
   const lab = state.labs[action.labId];
@@ -104,6 +112,8 @@ export function checkAction(state: GameState, context: EngineContext, action: Ac
       return checkResolve(state, context, lab, action.choiceId);
     case 'acquireRival':
       return checkAcquire(state, context, lab, action.targetLabId);
+    case 'collectMoment':
+      return checkCollect(state, lab, action.uid);
     default:
       return assertNever(action);
   }
@@ -140,7 +150,7 @@ function doLaunch(state: GameState, context: EngineContext, lab: LabState, regio
   if (!region) return;
   lab.cash -= launchPrice(lab, context, region, state.tick);
   placeAdoption(state, context, lab, regionId, context.balance.launchAdoption);
-  pushNews(state, context, { textKey: ENGINE_NEWS_KEYS.launched, tone: 'neutral', params: { lab: lab.id, region: regionId }, regionId, labId: lab.id });
+  pushNews(state, context, { textKey: ENGINE_NEWS_KEYS.launched, kind: 'other', tone: 'neutral', params: { lab: lab.id, region: regionId }, regionId, labId: lab.id });
 }
 
 function doResolve(state: GameState, context: EngineContext, lab: LabState, choiceId: string): void {
@@ -174,7 +184,7 @@ function doAcquire(state: GameState, context: EngineContext, lab: LabState, targ
     addAdoptionCapped(state, context, lab, regionId, taken[regionId] * context.balance.acquireAdoptionShare);
   }
   eliminateLab(state, context, target, 'acquired', lab.id);
-  pushNews(state, context, { textKey: ENGINE_NEWS_KEYS.acquired, tone: 'good', params: { lab: target.id, rival: lab.id }, labId: target.id });
+  pushNews(state, context, { textKey: ENGINE_NEWS_KEYS.acquired, kind: 'acquisition', tone: 'good', params: { lab: target.id, rival: lab.id }, labId: target.id });
 }
 
 /** Applies an already-checked action to a draft state in place. */
@@ -193,6 +203,8 @@ export function executeAction(state: GameState, context: EngineContext, action: 
       return doResolve(state, context, lab, action.choiceId);
     case 'acquireRival':
       return doAcquire(state, context, lab, action.targetLabId);
+    case 'collectMoment':
+      return collectMoment(state, context, lab, action.uid);
     default:
       return assertNever(action);
   }

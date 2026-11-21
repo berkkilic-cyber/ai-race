@@ -24,6 +24,8 @@ export interface Job {
   playerName?: string;
   /** Also record coverage data (events, headlines, news param problems). */
   coverage?: boolean;
+  /** Probability the bot taps a moment in time; default by policy (DEFAULT_MOMENT_SKILL). */
+  momentSkill?: number;
 }
 
 export interface RivalRecord {
@@ -64,6 +66,18 @@ export interface RunRecord {
   purchases: number;
   dataCentresBuilt: number;
   achievements: string[];
+  /** Hype and cash income over the run (stats.hypeEarned / cashEarned, not counting moments). */
+  hypeEarned: number;
+  cashEarned: number;
+  /** What the bot's moment taps gained. */
+  momentHype: number;
+  momentCash: number;
+  momentsCollected: number;
+  momentsMissed: number;
+  /** News items without a kind (should stay empty). */
+  kindlessNews: number;
+  /** Model launches announced: player, rivals. */
+  launches: { player: number; rivals: number };
   seenEvents: string[];
   headlines: string[];
   paramProblems: string[];
@@ -116,6 +130,8 @@ export function simulate(job: Job): RunRecord {
     lastPurchaseTick = tick;
   };
 
+  let kindlessNews = 0;
+  const launches = { player: 0, rivals: 0 };
   let peakRegulation = 0;
   let peakBacklash = 0;
   let rivalPeakRegulation = 0;
@@ -159,6 +175,14 @@ export function simulate(job: Job): RunRecord {
         checkNewsParams(item, state, paramProblems);
       }
     }
+    for (let i = state.news.length - 1; i >= 0 && state.news[i].tick === tick; i--) {
+      const item = state.news[i];
+      if (item.kind === undefined) kindlessNews++;
+      if (item.kind === 'launch') {
+        if (item.labId === player.id) launches.player++;
+        else launches.rivals++;
+      }
+    }
     if (bought) purchased(tick);
     if (tick % 5 === 0 || bought) {
       const capability = getCapabilityLevel(state, PACK, player.id);
@@ -167,12 +191,18 @@ export function simulate(job: Job): RunRecord {
     }
   };
 
+  let momentHype = 0;
+  let momentCash = 0;
+  const onMomentCollected = (gain: { hype: number; cash: number }): void => {
+    momentHype += gain.hype;
+    momentCash += gain.cash;
+  };
   let state: GameState;
   try {
     state = runHeadless(
       PACK,
       { playerName: job.playerName ?? 'Bot Lab', founderId: job.founderId, homeRegion: job.homeRegion, seed: job.seed },
-      { policy: job.policy, maxTicks: MAX_TICKS, onTick },
+      { policy: job.policy, maxTicks: MAX_TICKS, onTick, onMomentCollected, ...(job.momentSkill !== undefined ? { momentSkill: job.momentSkill } : {}) },
     );
   } catch (error) {
     return emptyRecord(job, String(error instanceof Error ? (error.stack ?? error.message) : error));
@@ -217,6 +247,14 @@ export function simulate(job: Job): RunRecord {
     purchases,
     dataCentresBuilt: player.stats.dataCentresBuilt,
     achievements: state.achievements.slice(),
+    hypeEarned: player.stats.hypeEarned,
+    cashEarned: player.stats.cashEarned,
+    momentHype,
+    momentCash,
+    momentsCollected: player.stats.momentsCollected,
+    momentsMissed: player.stats.momentsMissed,
+    kindlessNews,
+    launches,
     seenEvents: job.coverage ? state.seenEvents.slice() : [],
     headlines: [...headlines],
     paramProblems: [...paramProblems],
@@ -249,6 +287,14 @@ function emptyRecord(job: Job, error: string): RunRecord {
     purchases: 0,
     dataCentresBuilt: 0,
     achievements: [],
+    hypeEarned: 0,
+    cashEarned: 0,
+    momentHype: 0,
+    momentCash: 0,
+    momentsCollected: 0,
+    momentsMissed: 0,
+    kindlessNews: 0,
+    launches: { player: 0, rivals: 0 },
     seenEvents: [],
     headlines: [],
     paramProblems: [],

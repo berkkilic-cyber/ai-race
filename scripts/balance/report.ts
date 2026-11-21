@@ -112,6 +112,21 @@ export function policyReport(policy: string, runs: RunRecord[]): string {
     ),
   );
   out.push('');
+  const share = (part: number[], whole: number[]) => {
+    const a = part.reduce((x, y) => x + y, 0);
+    const b = whole.reduce((x, y) => x + y, 0);
+    return pct(a, a + b);
+  };
+  out.push(
+    `Moments: ${fmt(median(runs.map((r) => r.momentsCollected)))} tapped and ${fmt(median(runs.map((r) => r.momentsMissed)))} missed per run (median); moment income is ${share(
+      runs.map((r) => r.momentHype),
+      runs.map((r) => r.hypeEarned),
+    )} of all Hype and ${share(
+      runs.map((r) => r.momentCash),
+      runs.map((r) => r.cashEarned),
+    )} of all Cash earned (moments + income); per run median ${fmt(median(runs.map((r) => r.momentHype)))} Hype, ${fmt(median(runs.map((r) => r.momentCash)))} Cash. Launch news per run (median): player ${fmt(median(runs.map((r) => r.launches.player)))}, rivals ${fmt(median(runs.map((r) => r.launches.rivals)))}; news items without a kind: ${runs.reduce((n, r) => n + r.kindlessNews, 0)}.`,
+  );
+  out.push('');
   const allRivalsBought = runs.filter((r) => r.rivals.length > 0 && r.rivals.every((x) => x.eliminated === 'acquired' && x.byPlayer)).length;
   out.push(`Runs where the player bought every rival: ${pct(allRivalsBought, n)}.`);
   out.push(

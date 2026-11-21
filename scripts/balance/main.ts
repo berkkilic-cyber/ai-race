@@ -5,6 +5,7 @@
  *
  *   npm run balance -- [--runs 1000] [--policies sensible,idle] [--seed 1]
  *                      [--coverage] [--workers 2] [--out report.md]
+ *                      [--moment-skill 0,0.4,0.7,1]   (each policy once per skill)
  *
  * Seeds are base + run index, so a report is reproducible; tune on one --seed
  * and confirm on another.
@@ -30,6 +31,8 @@ interface Options {
   workers: number;
   out?: string;
   balance: Record<string, unknown>;
+  /** Play every policy once per skill (labelled policy@skill); default: each policy's own skill. */
+  momentSkills?: number[];
 }
 
 function parseArgs(argv: string[]): Options {
@@ -44,6 +47,7 @@ function parseArgs(argv: string[]): Options {
     else if (arg === '--workers') options.workers = Math.max(1, Number(next()));
     else if (arg === '--out') options.out = next();
     else if (arg === '--balance') options.balance = JSON.parse(next()) as Record<string, unknown>;
+    else if (arg === '--moment-skill') options.momentSkills = next().split(',').map(Number);
     else throw new Error(`Unknown argument ${arg}`);
   }
   return options;
@@ -58,7 +62,7 @@ const SECRET_NAMES = [
   ),
 ];
 
-export function jobsFor(policy: BotPolicy, runs: number, seed: number, coverage: boolean): Job[] {
+export function jobsFor(policy: BotPolicy, runs: number, seed: number, coverage: boolean, momentSkill?: number): Job[] {
   const jobs: Job[] = [];
   for (let i = 0; i < runs; i++) {
     jobs.push({
@@ -68,6 +72,7 @@ export function jobsFor(policy: BotPolicy, runs: number, seed: number, coverage:
       homeRegion: HOME_REGIONS[Math.floor(i / FOUNDERS.length) % HOME_REGIONS.length],
       seed: seed * 100_003 + i,
       coverage,
+      ...(momentSkill !== undefined ? { momentSkill } : {}),
     });
   }
   return jobs;
@@ -107,12 +112,14 @@ function runInWorkers(jobs: Job[], workers: number, balance: Record<string, unkn
 async function main(): Promise<void> {
   const options = parseArgs(process.argv.slice(2));
   const start = performance.now();
-  const jobs = options.policies.flatMap((p) => jobsFor(p, options.runs, options.seed, options.coverage));
+  const skills: (number | undefined)[] = options.momentSkills ?? [undefined];
+  const jobs = options.policies.flatMap((p) => skills.flatMap((skill) => jobsFor(p, options.runs, options.seed, options.coverage, skill)));
   setBalanceOverrides(options.balance);
   const records = await runInWorkers(jobs, options.workers, options.balance);
   const seconds = (performance.now() - start) / 1000;
   const byPolicy = new Map<string, RunRecord[]>();
-  for (const record of records) byPolicy.set(record.job.policy, [...(byPolicy.get(record.job.policy) ?? []), record]);
+  const labelOf = (job: Job): string => (job.momentSkill === undefined ? job.policy : `${job.policy}@${job.momentSkill}`);
+  for (const record of records) byPolicy.set(labelOf(record.job), [...(byPolicy.get(labelOf(record.job)) ?? []), record]);
 
   const out: string[] = [];
   out.push(`# Balance report`);
