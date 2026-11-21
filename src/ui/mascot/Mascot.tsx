@@ -1,11 +1,11 @@
 import { memo, useEffect, useState } from 'react';
 import { View } from 'react-native';
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
-import Svg, { Circle, Ellipse, G, Path, Rect } from 'react-native-svg';
+import Svg, { Circle, Ellipse, G, Line, Path, Polygon, Rect } from 'react-native-svg';
 
 import { t } from '../i18n';
 import { shakeAt, useAmbientClock, useAmbientRunning, wave } from '../motion/ambient';
-import { colors } from '../theme';
+import { colors, shape } from '../theme';
 import type { MascotMood } from './mood';
 
 export interface MascotProps {
@@ -41,8 +41,7 @@ function useBlink(enabled: boolean): boolean {
   return closed;
 }
 
-function Face({ mood, blink }: { mood: MascotMood; blink: boolean }) {
-  const ink = colors.onPlayer;
+function Face({ mood, blink, ink }: { mood: MascotMood; blink: boolean; ink: string }) {
   const line = { stroke: ink, strokeWidth: 2, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const, fill: 'none' };
   const closedEyes = <Path d="M9 14.5H13M19 14.5H23" {...line} />;
   switch (mood) {
@@ -120,9 +119,72 @@ function Face({ mood, blink }: { mood: MascotMood; blink: boolean }) {
   }
 }
 
+/** Pin rows of the blueprint chip (y of each pin on both sides). */
+const PINS = [10.5, 16, 21.5] as const;
+
+/** Wobbly sticker outline for candy (an original blob, not a circle). */
+const BLOB = 'M15 3.4C19.4 2.4 22.2 4.4 25 5.9C28.9 8 29.9 12.2 29.1 16.8C28.2 22.6 24.4 28.6 16.4 28.7C8.6 28.8 3.1 24.2 3.2 16.4C3.3 10.8 6 4.9 15 3.4Z';
+
 /**
- * The player's model as a face: a soft rounded square in the accent colour with two dot
- * eyes and a short mouth. Seven moods; blinks; reacts to a mood change with a small pop,
+ * Body and face placement per theme (shape.mascot):
+ * - square: a soft rounded square in the accent (paper, night);
+ * - node: a signal-yellow schematic chip with pin stubs and a pin-1 notch, the same symbol as the tree tiles (blueprint);
+ * - sign: a warning-triangle face (hazard);
+ * - blob: a magenta sticker blob with an ink outline and a flat shadow (candy).
+ */
+function Body({ mood, blink }: { mood: MascotMood; blink: boolean }) {
+  switch (shape.mascot) {
+    case 'node':
+      return (
+        <G>
+          {PINS.map((y) => (
+            <G key={y}>
+              <Line x1={1.2} y1={y} x2={6.5} y2={y} stroke={colors.outline} strokeWidth={1.5} />
+              <Line x1={25.5} y1={y} x2={30.8} y2={y} stroke={colors.outline} strokeWidth={1.5} />
+            </G>
+          ))}
+          <Rect x={6} y={4.5} width={20} height={23} fill={colors.player} stroke={colors.outline} strokeWidth={1.2} />
+          <Path d="M13.2 4.5A2.8 2.8 0 0 0 18.8 4.5" fill="none" stroke={colors.onPlayer} strokeWidth={1.2} />
+          <G transform="translate(5.6 7.4) scale(0.65)">
+            <Face mood={mood} blink={blink} ink={colors.onPlayer} />
+          </G>
+        </G>
+      );
+    case 'sign':
+      return (
+        <G>
+          <Polygon points="16,1.6 31,28.6 1,28.6" fill={colors.player} stroke={colors.player} strokeWidth={1.5} strokeLinejoin="round" />
+          <Polygon points="16,6.4 26.6,25.8 5.4,25.8" fill="none" stroke={colors.onPlayer} strokeWidth={1.7} strokeLinejoin="miter" />
+          <G transform="translate(7.2 9.6) scale(0.55)">
+            <Face mood={mood} blink={blink} ink={colors.onPlayer} />
+          </G>
+        </G>
+      );
+    case 'blob':
+      return (
+        <G transform="rotate(-6 16 16)">
+          <Path d={BLOB} fill={colors.shadow} transform="translate(1.6 1.8)" />
+          <Path d={BLOB} fill={colors.player} stroke={colors.outline} strokeWidth={2} strokeLinejoin="round" />
+          <Path d="M8.6 9.6Q10 7.4 12.4 6.6" stroke={colors.onPlayer} strokeWidth={1.6} strokeLinecap="round" fill="none" opacity={0.8} />
+          <G transform="translate(1.2 1.4) scale(0.92)">
+            <Face mood={mood} blink={blink} ink={colors.outline} />
+          </G>
+        </G>
+      );
+    case 'square':
+    default:
+      return (
+        <G>
+          <Rect x={2} y={2} width={28} height={28} rx={9} fill={colors.player} />
+          <Face mood={mood} blink={blink} ink={colors.onPlayer} />
+        </G>
+      );
+  }
+}
+
+/**
+ * The player's model as a face, in the theme's body (see Body) with two eyes and a short
+ * mouth. Seven moods; blinks; reacts to a mood change with a small pop,
  * shakes while panicking and breathes while asleep (both off with reduced motion).
  */
 export const Mascot = memo(function Mascot({ mood, size = 28, blinks = true, testID }: MascotProps) {
@@ -152,8 +214,7 @@ export const Mascot = memo(function Mascot({ mood, size = 28, blinks = true, tes
     <View accessibilityRole="image" accessibilityLabel={t('ui.mascot.label', { mood: t(`ui.mascot.mood.${mood}`) })} testID={testID}>
       <Animated.View style={[{ width: size, height: size }, style]}>
         <Svg width={size} height={size} viewBox="0 0 32 32">
-          <Rect x={2} y={2} width={28} height={28} rx={9} fill={colors.player} />
-          <Face mood={mood} blink={blink} />
+          <Body mood={mood} blink={blink} />
           {mood === 'asleep' ? <Path d="M24 3.2h4l-4 4h4" stroke={colors.dim} strokeWidth={1.4} strokeLinecap="round" strokeLinejoin="round" fill="none" /> : null}
         </Svg>
       </Animated.View>

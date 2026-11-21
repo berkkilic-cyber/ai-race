@@ -5,7 +5,7 @@ import type { EventChoiceDef } from '@/engine';
 
 import { fmtCash, fmtCompact } from '../format';
 import { t } from '../i18n';
-import { colors, spacing, touch, voice } from '../theme';
+import { colors, shape, spacing, touch, voice } from '../theme';
 import { effectHints } from './hints';
 import { HintChip, RiskTag } from './HintChip';
 
@@ -80,7 +80,8 @@ const styles = StyleSheet.create({
     gap: spacing.s,
     marginRight: 3,
     marginBottom: 3,
-    shadowColor: colors.newsRed,
+    // Hazard choices stand on safety yellow; elsewhere on tabloid red.
+    shadowColor: shape.composure === 'tape' ? colors.stripeA : colors.newsRed,
     shadowOffset: { width: 3, height: 3 },
     shadowOpacity: 1,
     shadowRadius: 0,

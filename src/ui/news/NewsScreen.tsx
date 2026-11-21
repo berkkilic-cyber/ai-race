@@ -116,7 +116,7 @@ export function NewsScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.bg },
+  screen: { flex: 1, backgroundColor: colors.transparent },
   toolbarWrap: { borderBottomWidth: 1, borderColor: colors.border },
   toolbar: { flexDirection: 'row', alignItems: 'center', gap: spacing.s, paddingRight: spacing.m },
   filterScroll: { flex: 1 },

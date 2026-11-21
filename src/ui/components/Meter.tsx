@@ -3,7 +3,7 @@ import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 
 import { useAmbientClock, wave } from '../motion/ambient';
 
-import { colors, radius, spacing, tabular, type } from '../theme';
+import { colors, radius, shape, spacing, tabular, type, voice } from '../theme';
 
 export interface MeterProps {
   label: string;
@@ -46,8 +46,8 @@ export function Meter({ label, value, color = colors.bad, pulseAbove = 75, testI
 const styles = StyleSheet.create({
   wrap: { flex: 1, minWidth: 0 },
   row: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: spacing.xs, gap: spacing.xs },
-  label: { color: colors.dim, fontSize: type.xs, flexShrink: 1 },
-  value: { color: colors.text, fontSize: type.xs, fontWeight: '700', ...tabular },
-  track: { height: 6, borderRadius: radius.pill, backgroundColor: colors.raised, overflow: 'hidden' },
+  label: { ...voice.body, color: colors.dim, fontSize: type.xs, flexShrink: 1 },
+  value: { ...voice.calmNumber, color: colors.text, fontSize: type.xs, ...tabular },
+  track: { height: 6, borderRadius: radius.pill, backgroundColor: colors.raised, overflow: 'hidden', borderWidth: shape.panel === 'sticker' ? shape.hairline * 0.75 : 0, borderColor: colors.outline },
   fill: { height: '100%', borderRadius: radius.pill },
 });

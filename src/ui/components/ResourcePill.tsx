@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 
-import { colors, radius, spacing, tabular, type } from '../theme';
+import { colors, radius, shape, spacing, tabular, type, voice } from '../theme';
 
 export interface ResourcePillProps {
   label: string;
@@ -41,12 +41,12 @@ const styles = StyleSheet.create({
     minWidth: 0,
     backgroundColor: colors.surface,
     borderRadius: radius.s,
-    borderWidth: 1,
-    borderColor: colors.border,
+    borderWidth: shape.panel === 'plain' ? 1 : shape.outline,
+    borderColor: shape.panel === 'sticker' ? colors.outline : colors.border,
     paddingHorizontal: spacing.s,
     paddingVertical: spacing.xs,
   },
-  label: { color: colors.dim, fontSize: type.xs },
-  value: { fontSize: type.m, fontWeight: '700', ...tabular },
-  sub: { fontSize: type.xs, ...tabular },
+  label: { ...voice.calmLabel, color: colors.dim, fontSize: type.xs },
+  value: { ...voice.calmNumber, fontSize: type.m, ...tabular },
+  sub: { ...voice.body, fontSize: type.xs, ...tabular },
 });

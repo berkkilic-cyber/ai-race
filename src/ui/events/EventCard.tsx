@@ -57,7 +57,7 @@ export function EventCard({ event, state, pack, onChoose }: EventCardProps) {
 
 export const storyStyles = StyleSheet.create({
   title: { ...voice.loudHeadline, color: colors.newsInk, fontSize: 34, lineHeight: 33 },
-  body: { color: colors.newsInk, fontSize: 15, lineHeight: 21 },
+  body: { ...voice.body, color: colors.newsInk, fontSize: 15, lineHeight: 21 },
   prompt: { ...voice.loudKicker, color: colors.newsDim, fontSize: 12, letterSpacing: 1.6 },
 });
 const styles = storyStyles;

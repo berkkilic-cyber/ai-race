@@ -7,7 +7,8 @@ import type { NewsTone } from '@/engine';
 import { useInsets } from '../hooks/useInsets';
 import { useAmbientClock, wave } from '../motion/ambient';
 import { useTutorialTarget } from '../tutorial/targets';
-import { colors, spacing, voice } from '../theme';
+import { PanelDeco, Stripes } from '../components/Deco';
+import { colors, shape, spacing, voice } from '../theme';
 import { isWide } from './useWide';
 
 export interface EventFrameProps {
@@ -31,10 +32,15 @@ export interface EventFrameProps {
 const MARGIN = spacing.l;
 const WIDE_MAX_WIDTH = 800;
 const NARROW_MAX_WIDTH = 480;
-/** Hard offset shadow of the tabloid sheet. */
-const SHADOW = 6;
-/** The card arrives tilted and dropping, then settles flat with a small thud. */
+/** Hard offset shadow of the tabloid sheet (heavier on the sticker theme, where it must jar). */
+const SHADOW = shape.panel === 'sticker' ? 9 : 6;
+/** Blueprint casts the printout's shadow onto the drawing in deep blue; elsewhere ink. */
+const SHADOW_COLOR = shape.panel === 'ticks' ? colors.shadow : colors.newsInk;
+/** The card arrives tilted and dropping, then settles (flat, or slightly askew on candy) with a small thud. */
 const ENTRY_TILT = -5;
+const REST_TILT = shape.panel === 'sticker' ? -1.4 : 0;
+/** Outlined rubber stamp (blueprint) or a solid block. */
+const OUTLINE_STAMP = shape.stamp === 'outline';
 
 /** Kicker stamp colours: bad news is red, good and developing stories are ink. */
 const STAMP: Record<NewsTone, string> = { bad: colors.newsRed, good: colors.newsInk, neutral: colors.newsInk };
@@ -69,16 +75,16 @@ export function EventFrame({ tone, label, meta, live, children, aside, footer, t
     const v = drop.get();
     return {
       opacity: fade.get(),
-      transform: [{ translateY: (1 - v) * -46 }, { rotate: `${(1 - v) * ENTRY_TILT}deg` }, { scale: 1 + (1 - v) * 0.08 }],
+      transform: [{ translateY: (1 - v) * -46 }, { rotate: `${(1 - v) * ENTRY_TILT + REST_TILT}deg` }, { scale: 1 + (1 - v) * 0.08 }],
     };
   });
   const dotStyle = useAnimatedStyle(() => ({ opacity: clock ? 1 - 0.85 * wave(clock.get(), 1.04) : 1 }));
 
   const masthead = (
     <View style={styles.masthead}>
-      <View style={[styles.stamp, { backgroundColor: STAMP[tone] }]}>
-        {live ? <Animated.View style={[styles.liveDot, dotStyle]} /> : null}
-        <Text style={styles.stampText} numberOfLines={1}>
+      <View style={[styles.stamp, OUTLINE_STAMP ? { borderColor: STAMP[tone], borderWidth: 2.5 } : { backgroundColor: STAMP[tone] }]}>
+        {live ? <Animated.View style={[styles.liveDot, OUTLINE_STAMP && { backgroundColor: STAMP[tone] }, dotStyle]} /> : null}
+        <Text style={[styles.stampText, OUTLINE_STAMP && { color: STAMP[tone] }]} numberOfLines={1}>
           {label}
         </Text>
       </View>
@@ -95,12 +101,16 @@ export function EventFrame({ tone, label, meta, live, children, aside, footer, t
       <View style={styles.ruleThin} />
     </View>
   );
+  // Hazard: the bulletin arrives under a band of warning tape. Blueprint: crop marks; hazard: clipped corners.
+  const tape = shape.composure === 'tape' ? <Stripes height={9} stripe={9} a={colors.stripeA} b={colors.newsInk} /> : null;
+  const deco = shape.panel === 'ticks' || shape.panel === 'clip' ? <PanelDeco ground={colors.bg} color={shape.panel === 'ticks' ? colors.newsPaper : colors.newsInk} edgeWidth={2} clip={14} /> : null;
   const footerView = footer ? <View style={[styles.footer, wide && styles.footerWide]}>{footer}</View> : null;
   const maxHeight = Math.max(0, height - insets.top - insets.bottom - MARGIN * 2 - SHADOW);
 
   if (wide) {
     return (
       <Animated.View style={[styles.sheet, { maxWidth: WIDE_MAX_WIDTH, maxHeight }, cardStyle]} testID={testID}>
+        {tape}
         <View style={styles.row}>
           <View style={[styles.column, styles.storyColumn]}>
             <View style={styles.head}>
@@ -118,12 +128,14 @@ export function EventFrame({ tone, label, meta, live, children, aside, footer, t
             {footerView}
           </View>
         </View>
+        {deco}
       </Animated.View>
     );
   }
 
   return (
     <Animated.View style={[styles.sheet, { maxWidth: NARROW_MAX_WIDTH, maxHeight }, cardStyle]} testID={testID} ref={choicesRef}>
+      {tape}
       <View style={styles.head}>
         {masthead}
         {rules}
@@ -133,6 +145,7 @@ export function EventFrame({ tone, label, meta, live, children, aside, footer, t
         {aside}
       </ScrollView>
       {footerView}
+      {deco}
     </Animated.View>
   );
 }
@@ -142,9 +155,9 @@ const styles = StyleSheet.create({
     width: '100%',
     alignSelf: 'center',
     backgroundColor: colors.newsPaper,
-    borderWidth: 2,
+    borderWidth: shape.panel === 'clip' || shape.panel === 'sticker' ? 3 : 2,
     borderColor: colors.newsInk,
-    shadowColor: colors.newsInk,
+    shadowColor: SHADOW_COLOR,
     shadowOffset: { width: SHADOW, height: SHADOW },
     shadowOpacity: 1,
     shadowRadius: 0,
@@ -156,7 +169,7 @@ const styles = StyleSheet.create({
   asideColumn: { flex: 1 },
   head: { paddingHorizontal: spacing.l, paddingTop: spacing.m },
   masthead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingBottom: spacing.s },
-  stamp: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: spacing.s, paddingVertical: 2, transform: [{ rotate: '-2.5deg' }] },
+  stamp: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: spacing.s, paddingVertical: 2, transform: [{ rotate: OUTLINE_STAMP ? '-4deg' : '-2.5deg' }] },
   liveDot: { width: 7, height: 7, backgroundColor: colors.newsPaper },
   stampText: { ...voice.loudKicker, fontSize: 17, lineHeight: 20, letterSpacing: 2, color: colors.newsPaper },
   meta: { ...voice.loudKicker, fontSize: 12, letterSpacing: 1.2, color: colors.newsDim },

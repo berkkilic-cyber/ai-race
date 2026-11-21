@@ -3,7 +3,7 @@ import Animated, { FadeIn, useAnimatedStyle } from 'react-native-reanimated';
 
 import { useAmbientClock, wave } from '../motion/ambient';
 
-import { colors, spacing, voice } from '../theme';
+import { colors, radius, shape, spacing, voice } from '../theme';
 
 export interface StripMeterProps {
   label: string;
@@ -67,11 +67,21 @@ const styles = StyleSheet.create({
   wrap: { flex: 1, minWidth: 0, justifyContent: 'center', gap: 3 },
   // The tagged meter takes the tag's natural width; the others share what is left.
   wrapTagged: { flexGrow: 0, flexShrink: 0, flexBasis: 'auto' },
-  label: { ...voice.calmLabel, color: colors.dim, fontSize: 9, lineHeight: 11, letterSpacing: 0.1 },
+  // Wide capitals faces (mono, tracked) drop their tracking here so the label and its percent value fit a narrow meter.
+  label: { ...voice.calmLabel, color: colors.dim, fontSize: shape.panel === 'ticks' ? 8.5 : 9, lineHeight: 11, letterSpacing: Math.min(voice.calmLabel.letterSpacing ?? 0, 0.1) },
   tag: { alignSelf: 'flex-start', backgroundColor: colors.newsInk, paddingHorizontal: 4, height: 13, justifyContent: 'center', transform: [{ rotate: '-1.5deg' }] },
   tagText: { ...voice.loudKicker, fontSize: 10.5, lineHeight: 12, letterSpacing: 0.8, color: colors.newsPaper },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
-  track: { flex: 1, height: 3, backgroundColor: colors.raised, overflow: 'hidden' },
+  // Track per shape: hairline (soft), an outlined gauge (blueprint), a chunky bar (hazard), a pill (candy).
+  track: {
+    flex: 1,
+    height: shape.panel === 'plain' ? 3 : shape.panel === 'ticks' ? 5 : 6,
+    backgroundColor: shape.panel === 'ticks' ? colors.transparent : colors.raised,
+    borderWidth: shape.panel === 'ticks' || shape.panel === 'sticker' ? shape.hairline * 0.75 : 0,
+    borderColor: colors.outline,
+    borderRadius: radius.pill,
+    overflow: 'hidden',
+  },
   trackTagged: { minWidth: 56 },
   fill: { height: '100%' },
   value: { ...voice.calmNumber, width: VALUE_WIDTH, textAlign: 'right', color: colors.text, fontSize: 12.5, lineHeight: 15 },

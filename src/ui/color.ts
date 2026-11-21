@@ -53,3 +53,82 @@ export function ensureContrast(color: string, backgrounds: readonly string[], mi
   }
   return toward;
 }
+
+/** Hue rotation in degrees (HSL), keeping saturation and lightness. */
+export function rotateHue(hex: string, degrees: number): string {
+  const [r, g, b] = parseHex(hex).map((v) => v / 255);
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const l = (max + min) / 2;
+  const d = max - min;
+  if (d === 0) return hex.toLowerCase();
+  const s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+  let h = max === r ? (g - b) / d + (g < b ? 6 : 0) : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+  h = (((h * 60 + degrees) % 360) + 360) % 360;
+  const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+  const p = 2 * l - q;
+  const channel = (t: number) => {
+    let x = t;
+    if (x < 0) x += 1;
+    if (x > 1) x -= 1;
+    if (x < 1 / 6) return p + (q - p) * 6 * x;
+    if (x < 1 / 2) return q;
+    if (x < 2 / 3) return p + (q - p) * (2 / 3 - x) * 6;
+    return p;
+  };
+  const k = h / 360;
+  return rgbToHex([channel(k + 1 / 3) * 255, channel(k) * 255, channel(k - 1 / 3) * 255]);
+}
+
+/** Hue of a colour in degrees (0..360), or null for greys. */
+export function hueOf(hex: string): number | null {
+  const [r, g, b] = parseHex(hex).map((v) => v / 255);
+  const max = Math.max(r, g, b);
+  const d = max - Math.min(r, g, b);
+  if (d < 0.04) return null;
+  const h = max === r ? (g - b) / d + (g < b ? 6 : 0) : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+  return h * 60;
+}
+
+/** Smallest angle between two hues, 0..180. */
+export function hueDistance(a: number, b: number): number {
+  const d = Math.abs(a - b) % 360;
+  return d > 180 ? 360 - d : d;
+}
+
+/**
+ * A colour whose hue sits at least `minHue` degrees from `avoid` (the player's colour), so
+ * a rival never passes for the player on the map. Rotates away from `avoid` in the
+ * direction it already leans; greys and colours already far enough are returned as is.
+ */
+export function distinctFrom(color: string, avoid: string, minHue: number): string {
+  const h = hueOf(color);
+  const a = hueOf(avoid);
+  if (h === null || a === null) return color;
+  const d = hueDistance(h, a);
+  if (d >= minHue) return color;
+  const signed = ((h - a + 540) % 360) - 180;
+  return rotateHue(color, (signed >= 0 ? 1 : -1) * (minHue - d));
+}
+
+/** The tokens readableOn needs from a palette. */
+export interface ReadableGround {
+  bg: string;
+  surface: string;
+  player: string;
+}
+
+/**
+ * A lab colour adjusted for one theme: rivals are first lifted `lift` of the way towards
+ * `toward` (light tints on a dark drawing) and moved away from the player's hue (at least
+ * `minHue` degrees), then every colour is stepped towards `toward` until it
+ * reaches `min` contrast on the theme's bg and surface. Pure.
+ */
+export function readableOn(base: string, ground: ReadableGround, min: number, toward: string, opts: { rival: boolean; minHue: number; lift: number }): string {
+  let c = base;
+  if (opts.rival) {
+    if (opts.lift > 0) c = mixColor(c, toward, opts.lift);
+    c = distinctFrom(c, ground.player, opts.minHue);
+  }
+  return ensureContrast(c, [ground.bg, ground.surface], min, toward);
+}

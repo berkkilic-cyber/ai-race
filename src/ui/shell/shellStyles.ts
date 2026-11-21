@@ -2,7 +2,7 @@ import { StyleSheet, useWindowDimensions, type ViewStyle } from 'react-native';
 
 import { useInsets } from '../hooks/useInsets';
 import { useLayoutMode } from '../hooks/useLayoutMode';
-import { colors } from '../theme';
+import { colors, shape } from '../theme';
 import { narrowShellLayout, wideShellLayout } from './shellLayout';
 
 export interface ShellStyles {
@@ -43,7 +43,7 @@ const base = StyleSheet.create({
 
 const narrow = StyleSheet.create({
   main: { flex: 1 },
-  tabBar: { flexDirection: 'row', backgroundColor: colors.bg, borderTopWidth: StyleSheet.hairlineWidth, borderColor: colors.border },
+  tabBar: { flexDirection: 'row', backgroundColor: colors.chrome, borderTopWidth: shape.hairline, borderColor: colors.border },
 });
 
 const wide = StyleSheet.create({
@@ -56,8 +56,8 @@ const wide = StyleSheet.create({
     flexDirection: 'column',
     justifyContent: 'flex-start',
     alignItems: 'stretch',
-    backgroundColor: colors.bg,
-    borderRightWidth: StyleSheet.hairlineWidth,
+    backgroundColor: colors.chrome,
+    borderRightWidth: shape.hairline,
     borderColor: colors.border,
   },
 });

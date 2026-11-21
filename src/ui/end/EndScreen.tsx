@@ -6,6 +6,7 @@ import type { GameState, NewsItem } from '@/engine';
 
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
+import { Ground } from '../components/Deco';
 import { Meter } from '../components/Meter';
 import { fmtInt, fmtPct, fmtUsers } from '../format';
 import { usePackEntry } from '../hooks/useGame';
@@ -14,7 +15,7 @@ import { labName, readableLabColor, regionName, t } from '../i18n';
 import { mixColor } from '../map/mapColors';
 import { newsText } from '../news/newsText';
 import { useGameStore } from '../store/game';
-import { colors, radius, spacing, tabular, type, voice } from '../theme';
+import { colors, flatShadow, radius, shape, spacing, tabular, type, voice } from '../theme';
 import { FinalMap } from './FinalMap';
 import { endStats, pickNotableHeadlines, playAgainSetup } from './logic';
 import { useWide } from '../start/useWide';
@@ -214,6 +215,7 @@ function EndView({ state }: { state: GameState }) {
   }
   return (
     <View style={safe}>
+      <Ground />
       <ScrollView contentContainerStyle={styles.content}>
         {bannerEl}
         {scoreEl}
@@ -227,52 +229,52 @@ function EndView({ state }: { state: GameState }) {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
   row: { flexDirection: 'row' },
-  leftPane: { width: 400, borderRightWidth: StyleSheet.hairlineWidth, borderColor: colors.border },
+  leftPane: { width: 400, borderRightWidth: shape.hairline, borderColor: colors.border },
   leftContent: { padding: spacing.l, paddingBottom: spacing.s },
   scoreRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.m, paddingHorizontal: spacing.l, paddingVertical: spacing.s },
   scoreRowText: { flex: 1, gap: 2 },
-  labLineLeft: { color: colors.dim, fontSize: type.xs },
+  labLineLeft: { ...voice.body, color: colors.dim, fontSize: type.xs },
   scoreCompact: { ...voice.calmNumber, color: colors.playerText, fontSize: type.display, lineHeight: type.display + 6 },
   rightPane: { flex: 1 },
   rightContent: { padding: spacing.l, gap: spacing.m },
   footerWide: { borderTopWidth: 0, paddingTop: 0 },
   content: { padding: spacing.l, gap: spacing.m, paddingBottom: spacing.xl },
-  banner: { borderTopWidth: 3, padding: spacing.l, paddingTop: spacing.m, gap: spacing.s },
+  banner: { borderTopWidth: 3, padding: spacing.l, paddingTop: spacing.m, gap: spacing.s, borderRadius: radius.s, borderWidth: shape.panel === 'plain' ? 0 : shape.hairline, borderColor: shape.panel === 'sticker' ? colors.outline : colors.border, ...flatShadow() },
   kindPill: { alignSelf: 'flex-start', borderRadius: radius.pill, paddingHorizontal: spacing.m, paddingVertical: 3 },
   kind: { ...voice.calmLabel, color: colors.newsPaper, fontSize: type.xs, fontWeight: '700', letterSpacing: 1.4 },
   title: { ...voice.calmHeading, color: colors.text, fontSize: type.xl + 6, lineHeight: 34 },
-  body: { color: colors.text, fontSize: type.m, lineHeight: 22 },
+  body: { ...voice.body, color: colors.text, fontSize: type.m, lineHeight: 22 },
   titleWide: { fontSize: type.xl + 2, lineHeight: 30 },
   bodyWide: { fontSize: type.s + 1, lineHeight: 20 },
   winner: { flexDirection: 'row', alignItems: 'center', gap: spacing.s, marginTop: spacing.xs },
   swatch: { width: 12, height: 12, borderRadius: 6 },
-  winnerText: { color: colors.text, fontSize: type.s, fontWeight: '700', flexShrink: 1 },
+  winnerText: { ...voice.bodyStrong, color: colors.text, fontSize: type.s, flexShrink: 1 },
   scoreCard: { alignItems: 'center', gap: spacing.xs },
   scoreLabel: { ...voice.calmLabel, color: colors.dim, fontSize: type.xs },
   score: { ...voice.calmNumber, color: colors.playerText, fontSize: type.display + 16, lineHeight: type.display + 24 },
-  labLine: { color: colors.dim, fontSize: type.s, textAlign: 'center' },
+  labLine: { ...voice.body, color: colors.dim, fontSize: type.s, textAlign: 'center' },
   section: { gap: spacing.m },
   sectionTitle: { ...voice.calmHeading, color: colors.text, fontSize: type.l + 2 },
   subTitle: { ...voice.calmLabel, color: colors.dim, fontSize: type.xs },
   grid: { flexDirection: 'row', flexWrap: 'wrap', rowGap: spacing.m },
   stat: { width: '50%', paddingRight: spacing.s, gap: 2 },
   statValue: { ...voice.calmNumber, color: colors.text, fontSize: type.l + 2 },
-  statLabel: { color: colors.dim, fontSize: type.xs },
+  statLabel: { ...voice.body, color: colors.dim, fontSize: type.xs },
   meters: { flexDirection: 'row', gap: spacing.m },
-  empty: { color: colors.dim, fontSize: type.s, lineHeight: 19 },
+  empty: { ...voice.body, color: colors.dim, fontSize: type.s, lineHeight: 19 },
   headline: { flexDirection: 'row', gap: spacing.m },
   toneBar: { width: 3, borderRadius: 2 },
   headlineText: { flex: 1, gap: 2 },
   headlineDay: { color: colors.dim, fontSize: type.xs, ...tabular },
-  headlineBody: { color: colors.text, fontSize: type.s, lineHeight: 19 },
-  achievement: { backgroundColor: colors.raised, borderRadius: radius.s, borderWidth: 1, borderColor: colors.border, padding: spacing.m, gap: 2 },
+  headlineBody: { ...voice.body, color: colors.text, fontSize: type.s, lineHeight: 19 },
+  achievement: { backgroundColor: colors.raised, borderRadius: radius.s, borderWidth: shape.panel === 'plain' ? 1 : shape.hairline, borderColor: shape.panel === 'sticker' ? colors.outline : colors.border, padding: spacing.m, gap: 2 },
   secret: { borderColor: colors.info, backgroundColor: mixColor(colors.raised, colors.info, 0.12) },
   achHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.s },
-  achName: { color: colors.text, fontSize: type.m, fontWeight: '700', flexShrink: 1 },
+  achName: { ...voice.bodyStrong, color: colors.text, fontSize: type.m, flexShrink: 1 },
   secretName: { color: colors.info },
   secretPill: { backgroundColor: colors.info, borderRadius: radius.pill, paddingHorizontal: spacing.s, paddingVertical: 1 },
   secretPillText: { color: colors.onPlayer, fontSize: type.xs, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.6 },
-  achDesc: { color: colors.dim, fontSize: type.s },
-  footer: { flexDirection: 'row', gap: spacing.s, padding: spacing.l, paddingTop: spacing.m, borderTopWidth: 1, borderColor: colors.border, backgroundColor: colors.bg },
+  achDesc: { ...voice.body, color: colors.dim, fontSize: type.s },
+  footer: { flexDirection: 'row', gap: spacing.s, padding: spacing.l, paddingTop: spacing.m, borderTopWidth: shape.hairline, borderColor: colors.border, backgroundColor: colors.chrome },
   footerBtn: { flex: 1, minHeight: 56 },
 });
