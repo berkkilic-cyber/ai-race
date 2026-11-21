@@ -216,7 +216,7 @@ function CrateFlight({ p, crate }: { p: MapProjection; crate: Crate }) {
     const [ex, ey] = project(frame.get(), scale.get(), tx.get(), ty.get(), cx, cy);
     const k = progress.get();
     const show = k > 0.85 ? Math.min(1, (k - 0.85) / 0.15) : 0;
-    return { opacity: show, transform: [{ translateX: ex - 40 }, { translateY: ey - 40 - show * 10 }] };
+    return { opacity: show, transform: [{ translateX: ex - 40 }, { translateY: Math.max(4, ey - 40 - show * 10) }] };
   });
   return (
     <>

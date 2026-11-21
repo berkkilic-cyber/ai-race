@@ -15,7 +15,10 @@
  *   a two-second long press on the mascot shows the touch debug overlay;
  *   the tutorial's "tap your home region" completes by a map tap, and (fresh run) by the
  *   Regions button, whose hint appears after a few seconds;
- *   on the start screen, the home-region picker takes a tap, a pinch and a drag.
+ *   on the start screen, the home-region picker takes a tap, a pinch and a drag;
+ *   live map: a boost bubble appears and a touch tap on it collects it, without opening the
+ *   region underneath; a threat left alone expires and its penalty shows; a tap on a region
+ *   still opens it while bubbles are on screen.
  * Screenshots go to docs/screenshots/native/touch-<W>x<H>-*.png.
  * Serves dist/ in-process; the server and browser are closed before exiting.
  * Env: CHROME, PORT (default 8773), SEED (7), DAYS (120), W, H, INSETS.
@@ -335,6 +338,78 @@ async function mapChecks(context, errors) {
   await page.close();
 }
 
+/** Moment bubbles take taps before the regions, and the regions still work around them. */
+async function liveChecks(context, errors) {
+  const h = await touchPage(context, errors);
+  const { page } = h;
+  const q = `debug=1${INSETS ? `&insets=${INSETS}` : ''}`;
+  await page.goto(`http://127.0.0.1:${PORT}/?autostart=1&seed=${SEED}&${q}`, { waitUntil: 'networkidle0' });
+  await page.waitForFunction(() => location.pathname === '/game' && !!window.__game && !!window.__mapLive);
+  await page.addStyleTag({ content: '[data-testid="achievement-toast"]{display:none !important}' });
+  const home = await page.evaluate((days) => {
+    const g = window.__game;
+    g.store.getState().setSpeed(0);
+    g.advance(days, { bot: true });
+    const s = g.store.getState().state;
+    // Clear the moments the run left, so only the ones placed here are on the map.
+    g.store.setState({ state: { ...s, moments: [] } });
+    return s.labs[s.playerLabId].homeRegion;
+  }, DAYS);
+  await sleep(800);
+  const stats = () => page.evaluate(() => {
+    const s = window.__game.store.getState().state;
+    return { ...s.labs[s.playerLabId].stats, moments: s.moments.map((m) => m.uid), cash: s.labs[s.playerLabId].cash, hype: s.labs[s.playerLabId].hype };
+  });
+
+  // A boost appears at home; a touch tap on the bubble collects it.
+  const uid = await page.evaluate((r) => window.__mapLive.spawnMoment('boost', { regionId: r, life: 400, defId: 'angel-wire' }), home);
+  await sleep(700);
+  const bubble = (await page.evaluate(() => window.__mapLive.bubbles()))[uid];
+  check(!!bubble, `a boost bubble appears on the map (${uid})`);
+  const before = await stats();
+  await h.tap(bubble);
+  await sleep(500);
+  let info = await h.touchInfo();
+  const after = await stats();
+  check(!after.moments.includes(uid) && after.momentsCollected === before.momentsCollected + 1 && after.cash > before.cash, `a touch tap on the bubble collects it (collected ${before.momentsCollected} → ${after.momentsCollected}, cash ${before.cash.toFixed(1)} → ${after.cash.toFixed(1)})`);
+  check(!(await h.has('region-sheet')) && info.region === `target:${uid}`, `the tap on the bubble opens no region (hit ${info.region})`);
+  check(await h.has('moment-float-collected'), 'the collect shows a floating line with the gain');
+  await h.shot('live-collect');
+
+  // A threat left alone lands and shows its penalty.
+  await sleep(2400);
+  const threat = await page.evaluate((r) => window.__mapLive.spawnMoment('threat', { regionId: r, life: 4, defId: 'leaked-memo' }), home);
+  await sleep(400);
+  const backlash0 = await page.evaluate(() => window.__game.store.getState().state.labs[window.__game.store.getState().state.playerLabId].backlash);
+  await page.evaluate(() => window.__game.store.getState().setSpeed(3));
+  await page.waitForFunction((id) => !window.__game.store.getState().state.moments.some((m) => m.uid === id), { timeout: 10000, polling: 20 }, threat).catch(() => undefined);
+  await page.evaluate(() => window.__game.store.getState().setSpeed(0));
+  await sleep(250);
+  const landed = await page.evaluate(() => document.querySelector('[data-testid="moment-float-expired"]')?.textContent ?? '');
+  const s2 = await stats();
+  check(!s2.moments.includes(threat) && s2.momentsMissed === after.momentsMissed + 1, `a threat left alone expires (missed ${after.momentsMissed} → ${s2.momentsMissed}; backlash was ${backlash0.toFixed(1)})`);
+  check(/backlash/i.test(landed), `its penalty shows on the map: "${landed}"`);
+  await h.shot('live-landed');
+
+  // With bubbles on screen, a tap on a region still opens it.
+  await sleep(2200);
+  const far = Object.entries(geometry.regions).sort((a, b) => {
+    const d = (g) => Math.hypot(g.centroid[0] - geometry.regions[home].centroid[0], g.centroid[1] - geometry.regions[home].centroid[1]);
+    return d(b[1]) - d(a[1]);
+  })[0][0];
+  await page.evaluate((r, f) => {
+    window.__mapLive.spawnMoment('boost', { regionId: r, life: 400 });
+    window.__mapLive.spawnMoment('threat', { regionId: f, life: 400 });
+  }, home, far);
+  await sleep(600);
+  await h.tap(await h.at(...insidePoint(home)));
+  await sleep(600);
+  info = await h.touchInfo();
+  check((await h.has('region-sheet')) && info.region === home, `with bubbles on screen a tap on ${home}'s marker opens it (hit ${info.region})`);
+  await h.shot('live-region');
+  await page.close();
+}
+
 /** The start screen's home-region picker: a tap picks the region, a drag pans, a pinch zooms. */
 async function pickerChecks(context, errors) {
   const h = await touchPage(context, errors);
@@ -463,6 +538,7 @@ async function main() {
   const errors = [];
   try {
     if (!process.env.ONLY || process.env.ONLY === 'map') await mapChecks(await browser.createBrowserContext(), errors);
+    if (!process.env.ONLY || process.env.ONLY === 'live') await liveChecks(await browser.createBrowserContext(), errors);
     if (!process.env.ONLY || process.env.ONLY === 'picker') await pickerChecks(await browser.createBrowserContext(), errors);
     if (!process.env.ONLY || process.env.ONLY === 'tutorial') {
       await tutorialRoute(await browser.createBrowserContext(), errors, 'map');
