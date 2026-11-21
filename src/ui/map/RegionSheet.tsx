@@ -18,6 +18,7 @@ import { useTutorialTarget } from '../tutorial/targets';
 import { fmtCash, fmtPct, fmtUsers, toPips } from '../format';
 import { failureText, labName, readableLabColor, t } from '../i18n';
 import { useGameStore } from '../store/game';
+import { ReachNote } from './live/ReachNote';
 import { colors, spacing, type, voice } from '../theme';
 
 export interface RegionSheetProps {
@@ -107,6 +108,7 @@ function OpenRegionSheet({ regionId, onClose }: { regionId: string; onClose: () 
         <Stat label={t('ui.region.adoption')} value={fmtPct(mine)} sub={t('ui.region.users', { amount: fmtUsers(mine * region.population) })} />
       </View>
       {banned ? <Text style={styles.banned}>{t('ui.region.banned')}</Text> : null}
+      <ReachNote state={state} pack={pack} regionId={region.id} />
 
       <View style={styles.actions}>
         {actions.map((row) => (

@@ -11,6 +11,12 @@ import { measureView, useTutorialTargetMeasure } from '../tutorial/targets';
 import { colors, radius, spacing, touch, voice } from '../theme';
 import { asDotGeometry } from './dotGeometry';
 import { DotLayer } from './DotLayer';
+import { BannerHost } from '../banners/BannerHost';
+import { MomentLayer } from '../moments/MomentLayer';
+import { Leaderboard } from './live/Leaderboard';
+import { ObjectsLayer } from './live/ObjectsLayer';
+import { ProjectionProvider, TapTargets, type Frame, type MapProjection } from './live/projection';
+import { LaunchPulses, ReachHints, RouteArcs, RouteRunners } from './live/RouteLayer';
 import { MapDebugOverlay } from './MapDebugOverlay';
 import { OverlayLayer } from './OverlayLayer';
 import { createHitTester, nearestRegion } from './hitTest';
@@ -50,6 +56,8 @@ export interface WorldMapProps {
   extraControl?: ReactNode;
   /** Change the nonce to bring a region into view (centred, zoomed in if it is small), e.g. after picking it from a list. */
   centreRequest?: { regionId: string; nonce: number } | null;
+  /** Draw the live layers (moments, objects, routes, banners, standings). Default true. */
+  live?: boolean;
 }
 
 /** Regions smaller than this (map units²) also take taps within HIT_RADIUS of their centroid. */
@@ -114,6 +122,7 @@ export function WorldMap({
   controls = 'topRight',
   extraControl,
   centreRequest,
+  live = true,
 }: WorldMapProps) {
   const regionIds = useMemo(() => Object.keys(geometry.regions), [geometry]);
   const dots = useMemo(() => asDotGeometry(geometry), [geometry]);
@@ -127,6 +136,10 @@ export function WorldMap({
   const scale = useSharedValue(1);
   const tx = useSharedValue(0);
   const ty = useSharedValue(0);
+  /** The layout mirrored for worklets: the live layers project map points to the screen on the UI thread. */
+  const frame = useSharedValue<Frame>({ cw: 1, ch: 1, mw: geometry.width, mh: geometry.height, insetRight: 0 });
+  /** Things on the map that take taps before the regions (moment bubbles, their edge indicators). */
+  const targets = useMemo(() => new TapTargets(), []);
   /** Until when an animation set by applyView may still be running (ms, Date.now). */
   const animatingUntil = useRef(0);
   const home = useRef<[number, number, number]>([1, 0, 0]);
@@ -179,6 +192,7 @@ export function WorldMap({
       setSize({ w: width, h: height });
       const l: Layout = { cw: width, ch: height, mw: geometry.width, mh: geometry.height, insetRight: layout.current.insetRight ?? 0 };
       layout.current = l;
+      frame.set({ cw: width, ch: height, mw: geometry.width, mh: geometry.height, insetRight: l.insetRight ?? 0 });
       recordTouch({ layout: { w: width, h: height } });
       const h = computeHome(l);
       home.current = h;
@@ -192,7 +206,7 @@ export function WorldMap({
       applyView({ s: h[0], tx: h[1], ty: h[2] });
       logLifecycle('view refit', { reason: decision === 'first' ? 'first-layout' : 'resize', w: next.w, h: next.h });
     },
-    [geometry, computeHome, applyView],
+    [geometry, computeHome, applyView, frame],
   );
 
   // The side panel opened, closed or changed selection: keep the selection centred in the
@@ -205,6 +219,7 @@ export function WorldMap({
     if (!hasSize) return;
     const l: Layout = { ...layout.current, insetRight };
     layout.current = l;
+    frame.set({ cw: l.cw, ch: l.ch, mw: l.mw, mh: l.mh, insetRight });
     const decision = panelDecision(shownFocus.current, focusId);
     shownFocus.current = focusId;
     if (decision === 'none') return;
@@ -213,7 +228,7 @@ export function WorldMap({
     const [x, y] = region ? centreOn(l, v.s, region.centroid[0], region.centroid[1]) : clampTranslate(l, v.s, v.tx, v.ty);
     applyView({ s: v.s, tx: x, ty: y }, ANIM_MS);
     logLifecycle('view refit', { reason: decision === 'centre' ? 'panel-open' : 'panel-close', region: focusId ?? undefined });
-  }, [insetRight, focusId, hasSize, geometry, applyView]);
+  }, [insetRight, focusId, hasSize, geometry, applyView, frame]);
 
   const resetView = useCallback(() => {
     const l = layout.current;
@@ -287,12 +302,21 @@ export function WorldMap({
     if (centreId && centreNonce !== undefined) focusOn(centreId, true, 'list-pick');
   }, [centreNonce, centreId, focusOn]);
 
-  // A tap in touch-view points: converted with the view of this moment and hit-tested. A miss
-  // within a finger's width of a region's marker still picks that region; the sea is "none".
+  // A tap in touch-view points: converted with the view of this moment and hit-tested. Things
+  // on the map that take taps (moment bubbles, their edge indicators) come first; then a
+  // region, where a miss within a finger's width of a region's marker still picks it; the sea is "none".
   const handleTap = useCallback(
     (px: number, py: number) => {
       const l = layout.current;
       const v = view.current;
+      const target = targets.hit(l, v, px, py);
+      if (target) {
+        recordTouch({ region: `target:${target.id}` });
+        logLifecycle('map target tapped', { target: target.id, edge: target.edge ? 1 : 0, x: Math.round(px), y: Math.round(py) });
+        if (target.edge) target.target.onEdgeTap?.();
+        else target.target.onTap();
+        return;
+      }
       const [mx, my] = toMapPoint(l, v.s, v.tx, v.ty, px, py);
       const pointsPerUnit = fit(l).k * v.s;
       let id = hitTester.at(mx, my);
@@ -302,7 +326,7 @@ export function WorldMap({
       if (id) onSelect(id);
       else onTapEmpty?.();
     },
-    [hitTester, geometry, onSelect, onTapEmpty],
+    [hitTester, geometry, onSelect, onTapEmpty, targets],
   );
 
   const mapTouch = useMapTouch('game', {
@@ -323,6 +347,7 @@ export function WorldMap({
     },
     tap: handleTap,
     doubleTap: resetView,
+    claimsTap: (px, py) => targets.size > 0 && targets.hit(layout.current, view.current, px, py) !== null,
     gestureEnd: (kind, v) => logView(kind, v),
   });
 
@@ -371,6 +396,11 @@ export function WorldMap({
   }, [focusRegion, geometry, hasSize]);
   useTutorialTargetMeasure('map.home', measureHome);
 
+  const projection = useMemo<MapProjection>(
+    () => ({ scale, tx, ty, frame, view: () => view.current, layout: () => layout.current, targets, focus: (id) => focusOn(id, true, 'map-object') }),
+    [scale, tx, ty, frame, targets, focusOn],
+  );
+
   const [, , vw, vh] = geometry.viewBox;
   const viewBox = `0 0 ${vw} ${vh}`;
   return (
@@ -392,7 +422,25 @@ export function WorldMap({
               <OverlayLayer geometry={geometry} selected={selected} />
               <RippleLayer geometry={geometry} />
             </Svg>
+            {live ? (
+              // Live map-unit drawings (route arcs, launch pulses, spread hints) animate on a canvas of their own.
+              <Svg width={size.w} height={size.h} viewBox={viewBox} preserveAspectRatio="xMidYMid meet" pointerEvents="none" style={styles.canvas}>
+                <ReachHints geometry={geometry} />
+                <RouteArcs geometry={geometry} />
+                <LaunchPulses geometry={geometry} />
+              </Svg>
+            ) : null}
           </Animated.View>
+        ) : null}
+        {size.w > 0 && live ? (
+          // Screen-space things pinned to the map at a constant size. All below the touch view and pointerEvents none.
+          <ProjectionProvider value={projection}>
+            <ObjectsLayer geometry={geometry} selected={selected} />
+            <RouteRunners geometry={geometry} />
+            <MomentLayer geometry={geometry} />
+            <BannerHost insetRight={insetRight > 0 ? insetRight : controls === 'topRight' ? CONTROL + spacing.m * 2 : 0} />
+            <Leaderboard insetRight={insetRight} visibleWidth={size.w - insetRight} />
+          </ProjectionProvider>
         ) : null}
         {/* The touch view: a real native view (collapsable false) with no children, above the drawing. */}
         <View style={[styles.fill, WEB_TOUCH]} collapsable={false} testID="map-touch" {...mapTouch.props} />

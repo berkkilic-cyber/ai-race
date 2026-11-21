@@ -1,6 +1,6 @@
 import { memo, useMemo } from 'react';
 import Animated, { useAnimatedProps } from 'react-native-reanimated';
-import { G, Line, Rect } from 'react-native-svg';
+import { G, Line } from 'react-native-svg';
 
 import type { MapGeometry } from '@/content/packs/ai-lab/geometry';
 
@@ -35,9 +35,9 @@ interface Placed extends SiteMarker {
 }
 
 /**
- * Data centres as small solid squares with a soft pulse. An online site also sends a thin
- * line of light to the two or three most populous neighbouring regions it serves (a
- * display choice: the pack's neighbour list, nearest-first by population). Offline sites are grey.
+ * The light of data centres: an online site sends a thin pulsing line to the two or three
+ * most populous neighbouring regions it serves (a display choice: the pack's neighbour list,
+ * by population). The sites themselves are rack chips at a constant size (live/ObjectsLayer).
  */
 export const SitesLayer = memo(function SitesLayer({ geometry }: { geometry: MapGeometry }) {
   const key = useGameStore((s) => (s.state ? sitesKey(s.state) : ''));
@@ -94,7 +94,6 @@ export const SitesLayer = memo(function SitesLayer({ geometry }: { geometry: Map
 
   // Two animated groups for all sites, driven by the shell's shared ambient clock.
   const clock = useAmbientClock(placed.length > 0);
-  const glowProps = useAnimatedProps(() => ({ opacity: unitInterval(0.12 + (clock ? 0.5 + 0.5 * wave(clock.get(), 2.6) : 0.5) * 0.28) }));
   const lineProps = useAnimatedProps(() => ({ opacity: unitInterval(0.3 + (clock ? 0.5 + 0.5 * wave(clock.get(), 2.6) : 0.5) * 0.45) }));
 
   if (placed.length === 0) return null;
@@ -105,16 +104,6 @@ export const SitesLayer = memo(function SitesLayer({ geometry }: { geometry: Map
           p.lines.map(([x, y], i) => <Line key={`l-${p.key}-${i}`} x1={p.x} y1={p.y} x2={x} y2={y} stroke={p.color} strokeWidth={p.mine ? 0.7 : 0.5} strokeLinecap="round" />),
         )}
       </AnimatedG>
-      <AnimatedG animatedProps={glowProps}>
-        {placed
-          .filter((p) => p.online)
-          .map((p) => (
-            <Rect key={`g-${p.key}`} x={p.x - p.h * 2.4} y={p.y - p.h * 2.4} width={p.h * 4.8} height={p.h * 4.8} rx={p.h * 1.2} fill={p.color} />
-          ))}
-      </AnimatedG>
-      {placed.map((p) => (
-        <Rect key={p.key} x={p.x - p.h} y={p.y - p.h} width={p.h * 2} height={p.h * 2} fill={p.online ? p.color : colors.offline} stroke={colors.bg} strokeWidth={0.7} />
-      ))}
     </G>
   );
 });

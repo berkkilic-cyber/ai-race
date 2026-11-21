@@ -60,6 +60,7 @@ export function useMapTouch(name: string, hooks: TouchHooks): MapTouch {
           hooksRef.current.tap(x, y);
         },
         doubleTap: (x, y) => hooksRef.current.doubleTap(x, y),
+        claimsTap: (x, y) => hooksRef.current.claimsTap?.(x, y) ?? false,
         begin: () => hooksRef.current.begin?.(),
         gestureEnd: (k, v) => hooksRef.current.gestureEnd?.(k, v),
       }));

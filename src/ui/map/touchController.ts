@@ -7,6 +7,7 @@
  *   two fingers                          pinch-zoom around their midpoint, plus pan
  *   released within SLOP and TAP_MS      tap (never after a pan or a second finger)
  *   two taps within DOUBLE_TAP_MS        double tap (the second tap is not reported as a tap)
+ *   a tap the host claims (claimsTap)    always a single tap, never part of a double tap
  *
  * The view is read from and written to the host through `hooks`, so the host can keep it
  * in a ref and push it to the native transform without any React state per move.
@@ -39,6 +40,12 @@ export interface TouchHooks {
   tap(x: number, y: number): void;
   /** The second tap of a double tap. */
   doubleTap(x: number, y: number): void;
+  /**
+   * True when a tap here belongs to something on the map that takes taps of its own (a
+   * moment bubble): such a tap is always a single tap and never starts or completes a double
+   * tap, so tapping two bubbles quickly collects both instead of resetting the view.
+   */
+  claimsTap?(x: number, y: number): boolean;
   /** A pan or pinch ended (the last finger lifted). */
   gestureEnd?(kind: GestureKind, v: MapView): void;
 }
@@ -140,6 +147,11 @@ export class TouchController {
     const at = lastPt ?? down;
     if (dist(at, down) > SLOP || t - down.t > TAP_MS) {
       this.lastTap = null;
+      return;
+    }
+    if (this.hooks.claimsTap?.(down.x, down.y)) {
+      this.lastTap = null;
+      this.hooks.tap(down.x, down.y);
       return;
     }
     const prevTap = this.lastTap;
