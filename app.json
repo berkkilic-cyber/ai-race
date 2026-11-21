@@ -2,15 +2,27 @@
   "expo": {
     "name": "AI Race",
     "slug": "ai-race",
+    "owner": "bullgrinder",
     "version": "1.0.0",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/f57a074c-822d-48e6-8a8f-003dacfe13f8"
+    },
     "orientation": "landscape",
     "icon": "./assets/images/icon.png",
     "scheme": "airace",
     "userInterfaceStyle": "dark",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/expo.icon",
+      "bundleIdentifier": "com.bullgrinder.airace",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
+      "package": "com.bullgrinder.airace",
       "adaptiveIcon": {
         "backgroundColor": "#0b1620",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -39,6 +51,11 @@
       "typedRoutes": true,
       "reactCompiler": true
     },
-    "backgroundColor": "#0b1620"
+    "backgroundColor": "#0b1620",
+    "extra": {
+      "eas": {
+        "projectId": "f57a074c-822d-48e6-8a8f-003dacfe13f8"
+      }
+    }
   }
 }

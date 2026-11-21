@@ -1,0 +1,44 @@
+name: EAS Update
+
+# Publishes the game over the air to the "preview" channel on every push to the playtest
+# branch, so the installed preview build picks it up on its next launch. Needs the
+# EXPO_TOKEN repository secret (an Expo access token); without it the job skips quietly.
+
+on:
+  push:
+    branches:
+      - task/10-style
+  workflow_dispatch:
+
+concurrency:
+  group: eas-update-preview
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+    steps:
+      - name: Check for the Expo token
+        id: token
+        run: |
+          if [ -n "$EXPO_TOKEN" ]; then echo "present=true" >> "$GITHUB_OUTPUT"; else echo "No EXPO_TOKEN secret: skipping."; fi
+      - uses: actions/checkout@v4
+        if: steps.token.outputs.present == 'true'
+      - uses: actions/setup-node@v4
+        if: steps.token.outputs.present == 'true'
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install
+        if: steps.token.outputs.present == 'true'
+        run: npm ci
+      - name: Check
+        if: steps.token.outputs.present == 'true'
+        run: npm run typecheck && npm test
+      - name: Publish update
+        if: steps.token.outputs.present == 'true'
+        run: |
+          MESSAGE="$(git log -1 --pretty=%s)"
+          npx --yes eas-cli@latest update --channel preview --environment preview --message "$MESSAGE" --non-interactive

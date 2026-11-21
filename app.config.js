@@ -15,7 +15,9 @@ function git(args) {
 }
 
 module.exports = ({ config }) => {
-  const commit = git('rev-parse --short HEAD') || 'unknown';
+  // EAS Build uploads the project without its .git folder and passes the commit in instead.
+  const fromEnv = (process.env.EAS_BUILD_GIT_COMMIT_HASH || process.env.GITHUB_SHA || '').slice(0, 7);
+  const commit = git('rev-parse --short HEAD') || fromEnv || 'unknown';
   const dirty = git('status --porcelain --untracked-files=no') !== '';
   const time = new Date().toISOString();
   // Web has no manifest at run time: the same stamp goes in through EXPO_PUBLIC_ variables,

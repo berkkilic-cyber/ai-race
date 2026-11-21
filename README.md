@@ -31,3 +31,17 @@ npm run lint        # ESLint (expo lint), including layer import rules
 npm test            # Jest
 npm run test:engine # engine tests only
 ```
+
+## Over-the-air updates (EAS Update)
+
+The playtest build is a `preview` build (`eas build --profile preview --platform ios`) on the
+`preview` channel. Every push to `task/10-style` publishes an update through
+`.github/workflows/eas-update.yml` (needs the `EXPO_TOKEN` repository secret). By hand:
+
+```
+eas update --channel preview --environment preview --message "what changed"
+```
+
+Updates carry JavaScript and assets only. A new native library, or a change of `version` in
+`app.json` (the runtime version follows it), needs a new build. `expo-updates` is the one
+dependency this adds.
