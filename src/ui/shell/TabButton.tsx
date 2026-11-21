@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { useLayoutMode } from '../hooks/useLayoutMode';
+import { Icon, type IconName } from '../icons';
 import { PanelDeco } from '../components/Deco';
 import { colors, flatShadow, layout, radius, shape, spacing, touch, type, voice } from '../theme';
 import { useTutorialTarget } from '../tutorial/targets';
@@ -12,6 +13,8 @@ export type TabButtonProps = TabTriggerSlotProps & {
   /** Optional badge drawn at the label's top-right corner. */ badge?: ReactNode;
   /** Tutorial target id for this tab. */
   targetId?: string;
+  /** Icon over the label. */
+  icon?: IconName;
 };
 
 /**
@@ -26,7 +29,7 @@ export type TabButtonProps = TabTriggerSlotProps & {
  * used to vanish because the rail's content width was zero (the left inset was padded
  * twice inside a 56-point rail); explicit sizes keep that from hiding them silently.
  */
-export function TabButton({ label, badge, isFocused, targetId, ref: _ref, ...props }: TabButtonProps) {
+export function TabButton({ label, badge, isFocused, targetId, icon, ref: _ref, ...props }: TabButtonProps) {
   const wide = useLayoutMode() === 'wide';
   const tutorialRef = useTutorialTarget(targetId ?? null);
   return (
@@ -40,6 +43,11 @@ export function TabButton({ label, badge, isFocused, targetId, ref: _ref, ...pro
       {isFocused && !BOXED ? <View style={wide ? styles.markWide : styles.markNarrow} /> : null}
       <View style={[wide ? styles.labelBoxWide : null, BOXED && styles.box, BOXED && isFocused && styles.boxFocused]}>
         {BOXED && isFocused && shape.panel === 'ticks' ? <PanelDeco /> : null}
+        {icon ? (
+          <View style={styles.icon}>
+            <Icon name={icon} size={18} color={isFocused ? focusedColor : colors.dim} accent={isFocused ? accentFocused : colors.dim} />
+          </View>
+        ) : null}
         <Text style={[styles.label, isFocused && styles.focused]} numberOfLines={1} maxFontSizeMultiplier={1.2}>
           {label}
         </Text>
@@ -51,12 +59,17 @@ export function TabButton({ label, badge, isFocused, targetId, ref: _ref, ...pro
 
 /** Themes whose active tab is a box (title box, yellow plate, sticker) rather than a rule. */
 const BOXED = shape.panel !== 'plain';
+/** Icon colours of the active tab: ink on the theme's filled plates, otherwise text with the player accent. */
+const FILLED = shape.panel === 'clip' || shape.panel === 'sticker';
+const focusedColor = FILLED ? colors.onPlayer : colors.text;
+const accentFocused = FILLED ? colors.onPlayer : colors.player;
 
 const styles = StyleSheet.create({
   tab: { flex: 1, minHeight: touch, alignItems: 'center', justifyContent: 'center', paddingVertical: spacing.s },
   tabWide: { height: layout.railItemHeight, alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center' },
   labelBoxWide: { maxWidth: layout.railWidth - 6, flexShrink: 0 },
   pressed: { opacity: 0.6 },
+  icon: { alignItems: 'center', marginBottom: 1 },
   label: { ...voice.calmHeading, color: colors.dim, fontSize: shape.panel === 'ticks' ? 10 : shape.panel === 'clip' ? type.m - 2 : shape.panel === 'sticker' ? type.s - 1 : type.s + 1, letterSpacing: shape.panel === 'plain' ? voice.calmHeading.letterSpacing : 0, lineHeight: type.s + 5, textAlign: 'center' },
   focused: { color: shape.panel === 'clip' || shape.panel === 'sticker' ? colors.onPlayer : colors.text },
   box: { paddingHorizontal: shape.panel === 'ticks' ? 3 : 5, paddingVertical: 3, borderRadius: radius.pill, borderWidth: shape.hairline, borderColor: colors.transparent },

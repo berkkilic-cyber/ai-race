@@ -1,12 +1,13 @@
 import { useEffect, useMemo } from 'react';
 import { StyleSheet, Text } from 'react-native';
 
-import { canApply, type ContentPack, type EventDef, type GameState } from '@/engine';
+import type { ContentPack, EventDef, GameState } from '@/engine';
 
 import { fmtDay } from '../format';
-import { failureText, t } from '../i18n';
+import { t } from '../i18n';
 import { colors, voice } from '../theme';
 import { ChoiceButton } from './ChoiceButton';
+import { explainChoice } from './choiceInfo';
 import { EventFrame } from './EventFrame';
 import { toneHaptic } from './haptics';
 
@@ -16,22 +17,18 @@ export interface EventCardProps {
   state: GameState;
   pack: ContentPack;
   onChoose: (choiceId: string) => void;
+  /** Opens a choice's explanation panel. */
+  onInfo?: (choiceId: string) => void;
 }
 
 /** The pending event as a tabloid front page. There is no close button: only a choice ends it. */
-export function EventCard({ event, state, pack, onChoose }: EventCardProps) {
+export function EventCard({ event, state, pack, onChoose, onInfo }: EventCardProps) {
   useEffect(() => {
     toneHaptic(event.tone);
   }, [event.id, event.tone]);
 
-  const reasons = useMemo(
-    () =>
-      event.choices.map((choice) => {
-        const check = canApply(state, pack, { type: 'resolveEvent', labId: state.playerLabId, choiceId: choice.id });
-        return check.ok ? null : failureText(check.reason);
-      }),
-    [event, state, pack],
-  );
+  // Why a choice is locked: its first unmet requirement, else the cost the player cannot pay (canApply decides).
+  const reasons = useMemo(() => event.choices.map((choice) => explainChoice(state, pack, choice).blocker), [event, state, pack]);
 
   return (
     <EventFrame
@@ -44,7 +41,7 @@ export function EventCard({ event, state, pack, onChoose }: EventCardProps) {
         <>
           <Text style={styles.prompt}>{t('ui.events.choose')}</Text>
           {event.choices.map((choice, i) => (
-            <ChoiceButton key={choice.id} choice={choice} disabledReason={reasons[i]} onChoose={onChoose} />
+            <ChoiceButton key={choice.id} choice={choice} disabledReason={reasons[i]} onChoose={onChoose} onInfo={onInfo} />
           ))}
         </>
       }

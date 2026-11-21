@@ -9,6 +9,7 @@ import { useGameStore } from '../store/game';
 import { colors } from '../theme';
 import { HypeBalance } from './HypeBalance';
 import { lightHaptic } from './haptics';
+import { ModelNudge } from './ModelNudge';
 import { NodeSheet } from './NodeSheet';
 import { TreeGraph } from './TreeGraph';
 import { TreePicker } from './TreePicker';
@@ -87,6 +88,7 @@ export function TreesScreen() {
     <AmbientGate active={focused}>
       <View style={styles.root}>
         <TreePicker selected={tree} onSelect={pickTree} compact={wide} right={wide ? <HypeBalance /> : null} />
+        <ModelNudge />
         <TreeGraph
           tree={tree}
           flash={flash}

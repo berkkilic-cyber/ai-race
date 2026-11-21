@@ -3,7 +3,9 @@ import Animated, { FadeIn, useAnimatedStyle } from 'react-native-reanimated';
 
 import { useAmbientClock, wave } from '../motion/ambient';
 
+import { Icon, type IconName } from '../icons';
 import { colors, radius, shape, spacing, voice } from '../theme';
+import { FitLabel } from './FitLabel';
 
 export interface StripMeterProps {
   label: string;
@@ -14,6 +16,10 @@ export interface StripMeterProps {
   pulseAbove?: number;
   /** Tabloid tag that replaces the label (composure level 2+ on the driving meter). */
   tag?: string | null;
+  /** Abbreviation shown when the full label does not fit. */
+  shortLabel?: string;
+  /** Small icon before the label. */
+  icon?: IconName;
   testID?: string;
 }
 
@@ -22,7 +28,7 @@ export interface StripMeterProps {
  * hairline track with the value in serif figures beside it. When the meter drives the
  * composure level the label turns into a tabloid tag ("REGULATORS CIRCLING").
  */
-export function StripMeter({ label, value, color, pulseAbove = 75, tag, testID }: StripMeterProps) {
+export function StripMeter({ label, value, color, pulseAbove = 75, tag, shortLabel, icon, testID }: StripMeterProps) {
   const pct = Math.max(0, Math.min(100, value));
   const pulsing = pct > pulseAbove;
   // Pulses on the shell's shared ambient clock (still when paused or with reduced motion).
@@ -44,9 +50,7 @@ export function StripMeter({ label, value, color, pulseAbove = 75, tag, testID }
           </Text>
         </Animated.View>
       ) : (
-        <Text style={styles.label} numberOfLines={1}>
-          {label}
-        </Text>
+        <StripLabel label={label} shortLabel={shortLabel} icon={icon} color={color} />
       )}
       <View style={styles.row}>
         <View style={[styles.track, tag ? styles.trackTagged : null]}>
@@ -56,6 +60,17 @@ export function StripMeter({ label, value, color, pulseAbove = 75, tag, testID }
           {Math.floor(pct)}%
         </Text>
       </View>
+    </View>
+  );
+}
+
+/** Icon and label of a strip meter: the label abbreviates (then drops to the icon alone) rather than clip. */
+export function StripLabel({ label, shortLabel, icon, color }: { label: string; shortLabel?: string; icon?: IconName; color: string }) {
+  const options = shortLabel && shortLabel !== label ? [label, shortLabel] : [label];
+  return (
+    <View style={styles.labelRow}>
+      {icon ? <Icon name={icon} size={11} color={colors.dim} accent={color} strokeWidth={2} /> : null}
+      <FitLabel options={icon ? [...options, ''] : options} style={styles.label} />
     </View>
   );
 }
@@ -72,6 +87,7 @@ const styles = StyleSheet.create({
   tag: { alignSelf: 'flex-start', backgroundColor: colors.newsInk, paddingHorizontal: 4, height: 13, justifyContent: 'center', transform: [{ rotate: '-1.5deg' }] },
   tagText: { ...voice.loudKicker, fontSize: 10.5, lineHeight: 12, letterSpacing: 0.8, color: colors.newsPaper },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
+  labelRow: { flexDirection: 'row', alignItems: 'center', gap: 3, minWidth: 0 },
   // Track per shape: hairline (soft), an outlined gauge (blueprint), a chunky bar (hazard), a pill (candy).
   track: {
     flex: 1,

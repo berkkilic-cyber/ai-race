@@ -20,6 +20,15 @@ import { RegionStep } from './RegionStep';
 import { StepIndicator } from './StepIndicator';
 import { useWide } from './useWide';
 
+/** Runs `go` once `ready` settles (at once without it). */
+function enterWhenReady(ready: Promise<unknown> | undefined, go: () => void): Promise<void> {
+  if (!ready) {
+    go();
+    return Promise.resolve();
+  }
+  return ready.then(go, go);
+}
+
 const STEP_LABELS = ['ui.start.step.name', 'ui.start.step.founder', 'ui.start.step.region'] as const;
 const LAST = STEP_LABELS.length - 1;
 
@@ -27,7 +36,15 @@ const LAST = STEP_LABELS.length - 1;
  * Start flow in three steps on one route: name, founder, home region, then
  * Found the lab. `/?autostart=1` (optionally `&seed=`) starts a run at once with defaults.
  */
-export function StartScreen() {
+export interface StartScreenProps {
+  /**
+   * Resolves once the game screen's code is loaded (web splits routes into chunks); the
+   * screen waits for it before navigating so the router never requires a missing chunk.
+   */
+  beforeEnter?: Promise<unknown>;
+}
+
+export function StartScreen({ beforeEnter }: StartScreenProps = {}) {
   const router = useRouter();
   const params = useLocalSearchParams<{ autostart?: string; seed?: string }>();
   const { pack, geometry, labNames } = usePackEntry();
@@ -54,8 +71,14 @@ export function StartScreen() {
       homeRegion: defaultHomeRegion(pack),
       ...(seed !== undefined && Number.isFinite(seed) ? { seed } : {}),
     });
-    router.replace('/game');
-  }, [params.autostart, params.seed, newGame, pack, router]);
+    let live = true;
+    void enterWhenReady(beforeEnter, () => {
+      if (live) router.replace('/game');
+    });
+    return () => {
+      live = false;
+    };
+  }, [params.autostart, params.seed, newGame, pack, router, beforeEnter]);
 
   const goTo = useCallback((next: number) => {
     Keyboard.dismiss();
@@ -69,7 +92,7 @@ export function StartScreen() {
   const found = () => {
     if (missing || !nameCheck.ok || !founderId || !home) return;
     newGame({ playerName: nameCheck.name, founderId, homeRegion: home });
-    router.replace('/game');
+    void enterWhenReady(beforeEnter, () => router.replace('/game'));
   };
 
   const next = () => {

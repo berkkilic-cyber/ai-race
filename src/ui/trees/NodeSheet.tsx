@@ -1,18 +1,21 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useShallow } from 'zustand/react/shallow';
 
-import { canApply, getNodeCost, type ActionFailure, type NodeDef } from '@/engine';
+import { canApply, getComputeRequired, getNodeCost, type ActionFailure, type NodeDef } from '@/engine';
 
 import { Button } from '../components/Button';
 import { Sheet } from '../components/Sheet';
+import { describeNode } from '../explain/describe';
+import { haveText, needText } from '../explain/model';
+import { useModelStatus } from '../explain/useModelStatus';
+import { Icon } from '../icons';
 import { useTutorialTarget } from '../tutorial/targets';
 import { fmtCash, fmtCompact } from '../format';
 import { failureText, t } from '../i18n';
 import { useGameStore } from '../store/game';
-import { colors, radius, spacing, tabular, type, voice } from '../theme';
+import { colors, radius, shape, spacing, tabular, type, voice } from '../theme';
 import { TREE_ACCENT } from './accent';
-import { describeNode } from './describe';
 import { CheckGlyph, CrossGlyph, LockGlyph } from './Glyphs';
 import { nodeStatus, type NodeStatus } from './status';
 import { useWide } from './useWide';
@@ -30,7 +33,7 @@ export function NodeSheet({ nodeId, justBought, onClose, onBuy }: NodeSheetProps
   const node = useGameStore((s) => (nodeId ? s.pack.nodes.find((n) => n.id === nodeId) : undefined));
   return (
     <Sheet visible={!!node} onClose={onClose} maxHeight="90%" testID="node-sheet">
-      {node ? <NodeSheetBody node={node} justBought={justBought} onClose={onClose} onBuy={onBuy} /> : null}
+      {node ? <NodeSheetBody key={node.id} node={node} justBought={justBought} onClose={onClose} onBuy={onBuy} /> : null}
     </Sheet>
   );
 }
@@ -75,7 +78,13 @@ function NodeSheetBody({ node, justBought, onClose, onBuy }: { node: NodeDef; ju
   const tutorialRef = useTutorialTarget(`node.buy:${node.id}`);
   const pack = useGameStore((s) => s.pack);
   const view = useSheetView(node);
-  const lines = useMemo(() => describeNode(node), [node]);
+  const model = useModelStatus();
+  const lines = useMemo(() => describeNode(node, { channels: pack.channels, computeFor: (tier) => getComputeRequired(pack, tier) }), [node, pack]);
+  // Model nodes: the compute this tier needs to run, against what the player has.
+  const tier = node.capabilityLevel;
+  const need = tier !== undefined ? getComputeRequired(pack, tier) : 0;
+  const cantRun = tier !== undefined && need > model.compute;
+  const [confirming, setConfirming] = useState(false);
   const accent = TREE_ACCENT[node.tree];
   const owned = view.status === 'owned';
   const ownedReqs = view.ownedReqs ? view.ownedReqs.split(',') : [];
@@ -84,7 +93,8 @@ function NodeSheetBody({ node, justBought, onClose, onBuy }: { node: NodeDef; ju
   // Landscape side panel is short: cost and Buy go right under the name so they never need scrolling.
   const wide = useWide();
 
-  const costView = !owned ? (
+  // While confirming, the confirmation carries the numbers: the cost and compute rows step aside so its buttons stay in view.
+  const costView = !owned && !confirming ? (
     <View style={styles.costRow}>
       <View style={styles.flex}>
         <Text style={styles.sectionTitle}>{t('ui.trees.cost')}</Text>
@@ -108,6 +118,27 @@ function NodeSheetBody({ node, justBought, onClose, onBuy }: { node: NodeDef; ju
         {justBought ? t('ui.trees.bought') : t('ui.trees.state.owned')}
       </Text>
     </View>
+  ) : confirming && view.reason === null ? (
+    // Buying a model the player cannot run yet: say so plainly first.
+    <View style={styles.confirm} testID="node-buy-confirm">
+      <Text style={styles.confirmTitle}>{t('ui.trees2.confirmTitle')}</Text>
+      <Text style={styles.confirmBody}>
+        {t('ui.trees2.confirmBody', { node: t(node.nameKey), compute: needText(need), have: haveText(model.compute), running: model.running })}
+      </Text>
+      <View style={styles.confirmRow}>
+        <Button label={t('ui.trees2.cancel')} variant="secondary" onPress={() => setConfirming(false)} style={styles.flex} testID="node-buy-cancel" />
+        <Button
+          label={t('ui.trees2.buyAnyway')}
+          variant="primary"
+          onPress={() => {
+            setConfirming(false);
+            onBuy(node.id);
+          }}
+          style={styles.flex}
+          testID="node-buy-anyway"
+        />
+      </View>
+    </View>
   ) : (
     <View ref={tutorialRef}>
       <Button
@@ -115,11 +146,24 @@ function NodeSheetBody({ node, justBought, onClose, onBuy }: { node: NodeDef; ju
         variant="primary"
         disabled={view.reason !== null}
         sublabel={view.reason !== null ? failureText(view.reason) : undefined}
-        onPress={() => onBuy(node.id)}
+        onPress={() => (cantRun ? setConfirming(true) : onBuy(node.id))}
         testID="node-buy"
       />
     </View>
   );
+
+  const runRow =
+    tier !== undefined ? (
+      <View style={[styles.runRow, { borderColor: cantRun ? colors.bad : colors.border }]} testID="node-compute" accessibilityLabel={t('ui.trees2.computeA11y', { compute: needText(need), have: haveText(model.compute) })}>
+        <Icon name="compute" size={18} color={cantRun ? colors.bad : colors.text} accent={cantRun ? colors.bad : colors.info} />
+        <View style={styles.flex}>
+          <Text style={[styles.runText, { color: cantRun ? colors.bad : colors.text }]}>{t('ui.trees2.runRow', { compute: needText(need) })}</Text>
+          <Text style={[styles.have, cantRun && { color: colors.bad }]}>
+            {cantRun ? t('ui.trees2.runShort', { have: haveText(model.compute), more: needText(need - model.compute) }) : t('ui.trees2.runHave', { have: haveText(model.compute) })}
+          </Text>
+        </View>
+      </View>
+    ) : null;
 
   const purchase = (
     <View style={wide ? styles.purchaseWide : styles.purchase}>
@@ -140,7 +184,13 @@ function NodeSheetBody({ node, justBought, onClose, onBuy }: { node: NodeDef; ju
         <Button label={t('ui.trees.close')} variant="ghost" compact onPress={onClose} testID="node-sheet-close" />
       </View>
 
-      <Text style={styles.name}>{t(node.nameKey)}</Text>
+      <View style={styles.titleRow}>
+        <View style={[styles.iconBox, { borderColor: accent }]}>
+          <Icon name={node.id} size={40} color={colors.text} accent={accent} testID="node-sheet-icon" />
+        </View>
+        <Text style={[styles.name, styles.flex]}>{t(node.nameKey)}</Text>
+      </View>
+      {confirming ? null : runRow}
       {wide ? purchase : null}
       <Text style={styles.desc}>{t(node.descKey)}</Text>
 
@@ -201,6 +251,14 @@ const styles = StyleSheet.create({
   chipDot: { width: 6, height: 6, borderRadius: 3 },
   chipText: { fontSize: type.xs, fontWeight: '700' },
   name: { ...voice.calmHeading, color: colors.text, fontSize: type.l + 2 },
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.m },
+  iconBox: { width: 52, height: 52, alignItems: 'center', justifyContent: 'center', borderWidth: shape.hairline, borderRadius: radius.s, backgroundColor: colors.raised },
+  runRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.s, borderWidth: shape.hairline, borderRadius: radius.s, paddingHorizontal: spacing.s, paddingVertical: 6 },
+  runText: { ...voice.bodyStrong, fontSize: type.s },
+  confirm: { gap: spacing.s, borderWidth: shape.outline, borderColor: colors.bad, borderRadius: radius.s, padding: spacing.m, backgroundColor: colors.raised },
+  confirmTitle: { ...voice.calmHeading, color: colors.bad, fontSize: type.m },
+  confirmBody: { ...voice.body, color: colors.text, fontSize: type.s, lineHeight: 18 },
+  confirmRow: { flexDirection: 'row', gap: spacing.s },
   desc: { color: colors.dim, fontSize: type.s },
   section: { gap: spacing.xs },
   sectionTitle: { color: colors.dim, fontSize: type.xs, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 },

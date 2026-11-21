@@ -5,6 +5,7 @@ import Animated, { Easing, useAnimatedStyle, useSharedValue, withSequence, withT
 import { mixColor } from '../color';
 import { fmtCash, fmtCompact } from '../format';
 import { t } from '../i18n';
+import { Icon } from '../icons';
 import { useAmbientClock, wave } from '../motion/ambient';
 import { useTutorialTarget } from '../tutorial/targets';
 import { PanelDeco } from '../components/Deco';
@@ -24,6 +25,12 @@ export interface NodeTileProps {
   /** Changes to a new non-zero value to play the purchase highlight. */
   flashKey: number;
   onPress: (nodeId: string) => void;
+  /** Model nodes: compute the tier needs to run, as shown. */
+  computeNeed?: string;
+  /** The player has less compute than `computeNeed`. */
+  computeShort?: boolean;
+  /** The player's compute as shown (for the accessibility label). */
+  computeHave?: string;
 }
 
 export function priceText(hype: number, cash: number): string {
@@ -32,7 +39,7 @@ export function priceText(hype: number, cash: number): string {
   return parts.join(' + ');
 }
 
-function NodeTileImpl({ nodeId, name, status, costHype, costCash, accent, rect, flashKey, onPress }: NodeTileProps) {
+function NodeTileImpl({ nodeId, name, status, costHype, costCash, accent, rect, flashKey, onPress, computeNeed, computeShort = false, computeHave = '0' }: NodeTileProps) {
   const flash = useSharedValue(0);
   const buyable = status === 'buyable';
   // The glow breathes on the shell's shared ambient clock (still off screen, paused or with reduced motion).
@@ -67,7 +74,7 @@ function NodeTileImpl({ nodeId, name, status, costHype, costCash, accent, rect, 
         onPress={() => onPress(nodeId)}
         testID={`node-${nodeId}`}
         accessibilityRole="button"
-        accessibilityLabel={t('ui.trees.tileLabel', { name, state: t(`ui.trees.state.${status}`), cost: price })}
+        accessibilityLabel={`${t('ui.trees.tileLabel', { name, state: t(`ui.trees.state.${status}`), cost: price })}${computeNeed !== undefined ? `. ${t('ui.trees2.computeA11y', { compute: computeNeed, have: computeHave })}` : ''}`}
         style={({ pressed }) => [
           styles.tile,
           owned && (shape.tile === 'schematic' ? { backgroundColor: mixColor(colors.surface, accent, 0.28), borderColor: accent, borderWidth: 1.5 } : { backgroundColor: accent, borderColor: accent }),
@@ -77,18 +84,31 @@ function NodeTileImpl({ nodeId, name, status, costHype, costCash, accent, rect, 
         ]}
       >
         {shape.tile === 'plate' ? <Rivets color={owned ? colors.onPlayer : colors.border} /> : null}
-        <Text style={[styles.name, styles.nameRoom, { color: fg }]} numberOfLines={2}>
-          {name}
-        </Text>
-        {owned ? (
-          <Text style={[styles.cost, styles.ownedText, { color: shape.tile === 'schematic' ? accent : colors.onPlayer }]} numberOfLines={1}>
-            {t('ui.trees.state.owned')}
+        <View style={styles.head}>
+          <Icon name={nodeId} size={ICON} color={owned ? fg : locked ? colors.dim : colors.text} accent={owned && shape.tile !== 'schematic' ? fg : accent} />
+          <Text style={[styles.name, styles.nameRoom, { color: fg }]} numberOfLines={2}>
+            {name}
           </Text>
-        ) : (
-          <Text style={[styles.cost, { color: costColor }]} numberOfLines={1}>
-            {price}
-          </Text>
-        )}
+        </View>
+        <View style={styles.foot}>
+          {owned ? (
+            <Text style={[styles.cost, styles.ownedText, styles.footText, { color: shape.tile === 'schematic' ? accent : colors.onPlayer }]} numberOfLines={1}>
+              {t('ui.trees.state.owned')}
+            </Text>
+          ) : (
+            <Text style={[styles.cost, styles.footText, { color: costColor }]} numberOfLines={1}>
+              {price}
+            </Text>
+          )}
+          {computeNeed !== undefined ? (
+            <View style={[styles.need, computeShort && styles.needShort]} testID={`node-need-${nodeId}`}>
+              <Icon name="compute" size={11} color={computeShort ? needShortFg : owned ? fg : colors.dim} />
+              <Text style={[styles.needText, { color: computeShort ? needShortFg : owned ? fg : colors.dim }]} numberOfLines={1}>
+                {computeNeed}
+              </Text>
+            </View>
+          ) : null}
+        </View>
       </Pressable>
       {shape.tile === 'schematic' ? <Pins color={owned || buyable ? accent : colors.border} /> : null}
       {shape.tile === 'plate' ? <PanelDeco ground={colors.bg} color={owned ? accent : buyable ? accent : colors.border} edgeWidth={buyable ? 2 : shape.outline} clip={8} corners={['tr']} /> : null}
@@ -128,6 +148,10 @@ function Rivets({ color }: { color: string }) {
 }
 
 const PIN = 6;
+/** Node icon on the tile: big enough to read at a glance next to a two-line name. */
+const ICON = shape.tile === 'plate' ? 18 : 22;
+/** The "not enough compute" chip: the bad colour as a fill, readable text on it. */
+const needShortFg = colors.newsPaper;
 
 export const NodeTile = memo(NodeTileImpl);
 
@@ -154,10 +178,16 @@ const styles = StyleSheet.create({
     shape.tile === 'schematic'
       ? { ...voice.bodyStrong, fontSize: 12, lineHeight: 14, letterSpacing: 0.1 }
       : shape.tile === 'plate'
-        ? { ...voice.calmHeading, fontSize: 14, lineHeight: 15, letterSpacing: 0 }
+        ? { ...voice.calmHeading, fontSize: 13, lineHeight: 14, letterSpacing: 0 }
         : { ...voice.bodyStrong, fontSize: type.xs, lineHeight: 14 },
   // Keeps the name clear of the corner badge (owned check, lock).
-  nameRoom: { paddingRight: 12 },
+  nameRoom: { paddingRight: 10, flex: 1 },
+  head: { flexDirection: 'row', alignItems: 'flex-start', gap: 6 },
+  foot: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  footText: { flex: 1 },
+  need: { flexDirection: 'row', alignItems: 'center', gap: 2, paddingHorizontal: 3, borderRadius: radius.xs },
+  needShort: { backgroundColor: colors.alarm },
+  needText: { ...voice.calmNumber, fontSize: 10.5, lineHeight: 13, ...tabular },
   corner: {
     position: 'absolute',
     top: -6,

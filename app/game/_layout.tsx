@@ -19,6 +19,10 @@ import { colors } from '@/ui/theme';
 import { TreesTabBadge } from '@/ui/trees';
 import { TutorialHost } from '@/ui/tutorial';
 
+// Web splits routes into chunks: load the other tabs' code now, quietly, so switching tabs
+// never makes the router require a chunk that is not there yet (see app/index.tsx).
+void Promise.all([import('./trees'), import('./news'), import('./race')]).catch(() => undefined);
+
 /**
  * Game shell: header, tab content, ticker, tabs, event modal, game loop.
  * Wide (landscape): left tab rail, one top strip, ticker strip under the content.
@@ -66,13 +70,16 @@ function GameShell() {
           <TabList asChild style={shell.tabBar}>
             <View>
               <TabTrigger name="index" href="/game" asChild>
-                <TabButton label={t('ui.tab.map')} targetId="tab.map" />
+                <TabButton label={t('ui.tab.map')} targetId="tab.map" icon="map" />
               </TabTrigger>
               <TabTrigger name="trees" href="/game/trees" asChild>
-                <TabButton label={t('ui.tab.trees')} badge={<TreesTabBadge />} targetId="tab.trees" />
+                <TabButton label={t('ui.tab.trees')} badge={<TreesTabBadge />} targetId="tab.trees" icon="trees" />
               </TabTrigger>
               <TabTrigger name="news" href="/game/news" asChild>
-                <TabButton label={t('ui.tab.news')} targetId="tab.news" />
+                <TabButton label={t('ui.tab.news')} targetId="tab.news" icon="news" />
+              </TabTrigger>
+              <TabTrigger name="race" href="/game/race" asChild>
+                <TabButton label={t('ui.race.tab')} targetId="tab.race" icon="race" />
               </TabTrigger>
             </View>
           </TabList>

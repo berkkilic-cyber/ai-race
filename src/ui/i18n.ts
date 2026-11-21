@@ -20,7 +20,7 @@ const UI: Record<string, string> = { ...uiStrings, ...treesStrings, ...eventsStr
 /** Params whose values are lab ids, resolved to lab names. */
 const LAB_PARAMS = new Set(['lab', 'rival']);
 /** Params whose values are region ids, resolved to region names. */
-const REGION_PARAMS = new Set(['region']);
+const REGION_PARAMS = new Set(['region', 'from', 'via']);
 /** Params whose values are achievement ids, resolved to achievement names. */
 const ACHIEVEMENT_PARAMS = new Set(['achievement']);
 /** Engine-internal lab flags start with this; the UI ignores them. */
@@ -83,6 +83,9 @@ function resolveParam(name: string, value: string | number): string {
     const achievement = context.pack.achievements.find((a) => a.id === value);
     return achievement ? t(achievement.nameKey) : value;
   }
+  // Launch news carries the model's name as a string key; channel entries carry a channel id.
+  if (name === 'model') return hasString(value) ? t(value) : value;
+  if (name === 'channel') return hasString(`channel.${value}.name`) ? t(`channel.${value}.name`) : value;
   return value;
 }
 
