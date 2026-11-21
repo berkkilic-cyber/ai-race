@@ -2,7 +2,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { t } from '../i18n';
 import { SPEEDS, useGameStore } from '../store/game';
-import { colors, flatShadow, layout, radius, shape, touch, voice } from '../theme';
+import { colors, flatShadow, glow, layout, radius, shape, touch, voice } from '../theme';
 import { useTutorialTarget } from '../tutorial/targets';
 
 /** Extra hit area so each compact button still takes a 44-point touch. */
@@ -11,6 +11,8 @@ const SEGMENT = 28;
 /** Soft themes fill the active speed with ink; the others with the player's colour. */
 const SELECTED_BG = shape.panel === 'plain' ? colors.text : colors.player;
 const SELECTED_FG = shape.panel === 'plain' ? colors.bg : colors.onPlayer;
+/** Neon lights the active speed instead of filling it: a green hairline, green figure, faint inner glow. */
+const LIT = shape.panel === 'bracket';
 
 /** Pause glyph drawn from two bars (no font glyph, so it matches every face). */
 function PauseGlyph({ color }: { color: string }) {
@@ -32,7 +34,7 @@ export function SpeedControl() {
       {SPEEDS.map((s) => {
         const selected = speed === s;
         const label = s === 0 ? t('ui.speed.pause') : t('ui.speed.play', { speed: s });
-        const fg = selected ? SELECTED_FG : colors.dim;
+        const fg = selected ? (LIT ? colors.playerText : SELECTED_FG) : colors.dim;
         return (
           <Pressable
             key={s}
@@ -65,7 +67,7 @@ const styles = StyleSheet.create({
     ...flatShadow(2),
   },
   btn: { width: SEGMENT, height: 24, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
-  selected: { backgroundColor: SELECTED_BG },
+  selected: LIT ? { backgroundColor: colors.surface, borderWidth: shape.hairline, borderColor: colors.player, ...glow(colors.player, { inset: true, strength: 0.7 }) } : { backgroundColor: SELECTED_BG },
   pressed: { backgroundColor: colors.raised, transform: [{ scale: 0.94 }] },
   label: { ...voice.calmNumber, fontSize: 12, lineHeight: 14 },
   pause: { flexDirection: 'row', gap: 2.5 },

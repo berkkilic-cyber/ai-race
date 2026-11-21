@@ -1,18 +1,18 @@
 /**
  * Colours, type, shape, spacing, radius and motion. The only place UI colours are defined.
  *
- * Five themes with identical token names ("calm lab, loud world", docs/DESIGN.md), chosen
- * at build time by EXPO_PUBLIC_THEME: `blueprint` (the default), `hazard`, `candy`, and the
- * retired `paper` and `night`. A theme is a palette, a
+ * Six themes with identical token names ("calm lab, loud world", docs/DESIGN.md), chosen
+ * at build time by EXPO_PUBLIC_THEME: `neon` (the default), `blueprint`, `hazard`, `candy`,
+ * and the retired `paper` and `night`. A theme is a palette, a
  * shape language (corners, line weights, shadows, panel and tile decoration, how the
  * composure system shows) and a type pairing. Components stay shared: they read these
  * tokens instead of branching on the theme name.
  */
 import { Platform, StyleSheet, type TextStyle, type ViewStyle } from 'react-native';
 
-export type ThemeName = 'paper' | 'night' | 'blueprint' | 'hazard' | 'candy';
+export type ThemeName = 'paper' | 'night' | 'blueprint' | 'hazard' | 'candy' | 'neon';
 
-export const THEME_NAMES: readonly ThemeName[] = ['paper', 'night', 'blueprint', 'hazard', 'candy'];
+export const THEME_NAMES: readonly ThemeName[] = ['paper', 'night', 'blueprint', 'hazard', 'candy', 'neon'];
 
 export interface Palette {
   /** Page background. */
@@ -311,8 +311,56 @@ const candy: Palette = {
   chrome: '#E4D8FF',
 };
 
+/**
+ * A lab's control room: graphite ground with three clearly separated surface steps,
+ * near-white type, one neon green for the player (used sparingly: lines, lit dots, key
+ * numbers, the primary action), red for danger and nothing else, a pale teal for good news
+ * and a soft sky blue for information. News stays a stark pale card with black ink and red.
+ */
+const neon: Palette = {
+  bg: '#1B1C1F',
+  surface: '#24262A',
+  raised: '#2F3237',
+  border: '#3E4249',
+  text: '#EEF0F2',
+  dim: '#A0A7AF',
+  player: '#45FF5C',
+  accent: '#45FF5C',
+  onPlayer: '#06140A',
+  playerText: '#45FF5C',
+  playerDeep: '#1F9E34',
+  good: '#7FE6D2',
+  goodText: '#7FE6D2',
+  bad: '#FF6B6B',
+  alarm: '#FF2D3D',
+  info: '#8DB9FF',
+  amber: '#FFB21E',
+  newsInk: '#0B0B0C',
+  newsPaper: '#F6F6F2',
+  newsRed: '#CF0E25',
+  newsDim: '#4B4B50',
+  newsRule: '#D2D2CC',
+  newsGood: '#12784A',
+  newsWash: '#EFEFEA',
+  dotRest: '#3B3F45',
+  dotBanned: '#6E1C25',
+  offline: '#5F656D',
+  scrim: 'rgba(8, 9, 10, 0.7)',
+  scrimLight: 'rgba(8, 9, 10, 0.3)',
+  transparent: 'transparent',
+  grid: '#FFFFFF',
+  gridMajor: '#FFFFFF',
+  stripeA: '#FF2D3D',
+  stripeB: '#0B0B0C',
+  outline: '#6A7079',
+  shadow: '#000000',
+  mark: '#FF2D3D',
+  drain: '#2B1114',
+  chrome: '#131416',
+};
+
 /** Every palette (tests check contrast on each). */
-export const palettes: Record<ThemeName, Palette> = { paper, night, blueprint, hazard, candy };
+export const palettes: Record<ThemeName, Palette> = { paper, night, blueprint, hazard, candy, neon };
 
 /**
  * Shape language of a theme. Components read these instead of branching on the theme:
@@ -331,16 +379,16 @@ export interface Shape {
   buttonEdge: number;
   /** Size of the clipped corner on panels and buttons (clip panels). */
   clip: number;
-  /** Panel decoration: none, drafting corner ticks, clipped corners, sticker (outline + shadow). */
-  panel: 'plain' | 'ticks' | 'clip' | 'sticker';
-  /** Tree node tiles: plain cards, schematic components, stamped plates, stickers. */
-  tile: 'plain' | 'schematic' | 'plate' | 'sticker';
-  /** Ground behind the map and trees: flat, a drafting grid, or polka dots. */
-  ground: 'plain' | 'grid' | 'dots';
+  /** Panel decoration: none, drafting corner ticks, clipped corners, sticker (outline + shadow), viewfinder corner brackets. */
+  panel: 'plain' | 'ticks' | 'clip' | 'sticker' | 'bracket';
+  /** Tree node tiles: plain cards, schematic components, stamped plates, stickers, rack modules (status bar on the left). */
+  tile: 'plain' | 'schematic' | 'plate' | 'sticker' | 'module';
+  /** Ground behind the map and trees: flat, a drafting grid, polka dots, or a faint instrument dot grid. */
+  ground: 'plain' | 'grid' | 'dots' | 'scan';
   /** How the composure system shows (docs/DESIGN.md). */
-  composure: 'classic' | 'redline' | 'tape' | 'drain';
+  composure: 'classic' | 'redline' | 'tape' | 'drain' | 'alert';
   /** Mascot body. */
-  mascot: 'square' | 'node' | 'sign' | 'blob';
+  mascot: 'square' | 'node' | 'sign' | 'blob' | 'pixel';
   /** Event and composure stamps: solid blocks or outlined rubber stamps. */
   stamp: 'fill' | 'outline';
   /** Calm headings and tab labels in capitals. */
@@ -351,6 +399,12 @@ export interface Shape {
   rivalHue: number;
   /** Rival lab colours are lifted this far towards white (dark grounds) or ink (light ones). */
   rivalLift: number;
+  /** Rival lab colours keep at least this hue distance (degrees) from the alarm colour; 0 = no rule. */
+  rivalAlarmHue: number;
+  /** Rival lab colours are saturated to at least this (HSL, 0..1) so they stay vivid; 0 = as they are. */
+  rivalSat: number;
+  /** Blur radius of the faint glow on active elements (primary button, active tab and speed); 0 = none. */
+  glow: number;
 }
 
 const soft: Shape = {
@@ -370,6 +424,9 @@ const soft: Shape = {
   tilt: 0,
   rivalHue: 0,
   rivalLift: 0,
+  rivalAlarmHue: 0,
+  rivalSat: 0,
+  glow: 0,
 };
 
 export const shapes: Record<ThemeName, Shape> = {
@@ -392,6 +449,9 @@ export const shapes: Record<ThemeName, Shape> = {
     tilt: 0,
     rivalHue: 40,
     rivalLift: 0.3,
+    rivalAlarmHue: 0,
+    rivalSat: 0,
+    glow: 0,
   },
   hazard: {
     radius: { none: 0, xs: 0, s: 2, l: 2, pill: 2 },
@@ -410,6 +470,9 @@ export const shapes: Record<ThemeName, Shape> = {
     tilt: 0,
     rivalHue: 40,
     rivalLift: 0,
+    rivalAlarmHue: 0,
+    rivalSat: 0,
+    glow: 0,
   },
   candy: {
     radius: { none: 0, xs: 8, s: 14, l: 22, pill: 999 },
@@ -428,13 +491,38 @@ export const shapes: Record<ThemeName, Shape> = {
     tilt: -1.5,
     rivalHue: 45,
     rivalLift: 0.15,
+    rivalAlarmHue: 0,
+    rivalSat: 0,
+    glow: 0,
+  },
+  neon: {
+    radius: { none: 0, xs: 2, s: 3, l: 4, pill: 4 },
+    hairline: 1,
+    outline: 1,
+    shadow: 0,
+    buttonEdge: 0,
+    clip: 0,
+    panel: 'bracket',
+    tile: 'module',
+    ground: 'scan',
+    composure: 'alert',
+    mascot: 'pixel',
+    stamp: 'fill',
+    capsHeadings: true,
+    tilt: 0,
+    // Rivals sit far from the green (the green rival turns amber, the cyan one sky blue), away from the alarm red (pink turns magenta) and vivid.
+    rivalHue: 90,
+    rivalLift: 0.08,
+    rivalAlarmHue: 38,
+    rivalSat: 0.78,
+    glow: 8,
   },
 };
 
 const KNOWN = new Set<string>(THEME_NAMES);
 
 /** The build theme when EXPO_PUBLIC_THEME is unset or unknown (docs/DESIGN.md says why). */
-export const DEFAULT_THEME: ThemeName = 'blueprint';
+export const DEFAULT_THEME: ThemeName = 'neon';
 
 /** Resolves EXPO_PUBLIC_THEME; anything unknown is the default. */
 export function resolveThemeName(value: string | undefined): ThemeName {
@@ -449,7 +537,7 @@ export const colors: Palette = palettes[themeName];
 export const shape: Shape = shapes[themeName];
 
 /** True when the theme's ground is dark (status bar, readable-colour direction). */
-export const darkThemes: Record<ThemeName, boolean> = { paper: false, night: true, blueprint: true, hazard: true, candy: false };
+export const darkThemes: Record<ThemeName, boolean> = { paper: false, night: true, blueprint: true, hazard: true, candy: false, neon: true };
 export const isDark: boolean = darkThemes[themeName];
 
 export const spacing = { xs: 4, s: 8, m: 12, l: 16, xl: 24 } as const;
@@ -465,6 +553,16 @@ export const type = { xs: 11, s: 13, m: 15, l: 18, xl: 24, display: 40 } as cons
  */
 export function flatShadow(offset: number = shape.shadow, color: string = colors.shadow): ViewStyle {
   return offset > 0 ? { boxShadow: `${offset}px ${offset}px 0px ${color}` } : {};
+}
+
+/**
+ * A faint glow around an active element (neon: the primary button, the active tab and speed),
+ * or nothing when the theme has none. `inset` keeps it inside the element.
+ */
+export function glow(color: string = colors.player, opts: { inset?: boolean; strength?: number } = {}): ViewStyle {
+  if (shape.glow <= 0) return {};
+  const r = shape.glow * (opts.strength ?? 1);
+  return { boxShadow: `${opts.inset ? 'inset ' : ''}0px 0px ${r}px ${color}` };
 }
 
 /** Shell sizes for the wide (landscape) layout, in points. */
@@ -581,13 +679,22 @@ export const themeFontFaces: Record<ThemeName, FontRoles> = {
     news: 'Anton_400Regular',
     newsHeavy: 'Anton_400Regular',
   },
+  neon: {
+    heading: 'ChakraPetch_600SemiBold',
+    number: 'AzeretMono_500Medium',
+    label: 'AzeretMono_500Medium',
+    body: 'InstrumentSans_400Regular',
+    bodyBold: 'InstrumentSans_600SemiBold',
+    news: 'SairaExtraCondensed_700Bold',
+    newsHeavy: 'SairaExtraCondensed_800ExtraBold',
+  },
 };
 
 /** The active theme's faces by role ('' = the system face). */
 export const fontFaces: FontRoles = themeFontFaces[themeName];
 
 const FALLBACK: Record<keyof FontRoles, string> = {
-  heading: isDark || themeName === 'paper' ? 'Georgia, "Times New Roman", serif' : 'system-ui, sans-serif',
+  heading: themeName === 'night' || themeName === 'paper' ? 'Georgia, "Times New Roman", serif' : 'system-ui, sans-serif',
   number: 'ui-monospace, Menlo, monospace',
   label: 'system-ui, sans-serif',
   body: 'system-ui, sans-serif',
@@ -661,6 +768,16 @@ function voiceFor(name: ThemeName): VoiceSet {
         loudKicker: { ...base.loudKicker, letterSpacing: 2 },
         loudHeadline: { ...base.loudHeadline, fontSize: 36, lineHeight: 34, letterSpacing: 0.4 },
         loudBody: { ...base.loudBody, letterSpacing: 1 },
+      };
+    case 'neon':
+      return {
+        ...base,
+        calmHeading: { fontFamily: fonts.heading, fontSize: type.m, letterSpacing: 0.8, textTransform: 'uppercase' },
+        calmNumber: { fontFamily: fonts.number, fontSize: type.m, letterSpacing: -0.4, fontVariant: NUM },
+        calmLabel: { fontFamily: fonts.label, fontSize: type.xs - 2, letterSpacing: 0.3, textTransform: 'uppercase' },
+        loudKicker: { ...base.loudKicker, letterSpacing: 1.6 },
+        loudHeadline: { ...base.loudHeadline, fontSize: 36, lineHeight: 34, letterSpacing: 0.2 },
+        loudBody: { ...base.loudBody, letterSpacing: 0.8 },
       };
     case 'candy':
       return {

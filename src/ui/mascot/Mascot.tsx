@@ -119,6 +119,57 @@ function Face({ mood, blink, ink }: { mood: MascotMood; blink: boolean; ink: str
   }
 }
 
+/**
+ * Neon: the face as lit pixels on a small display, 10 columns by up to 6 rows ('#' = lit).
+ * The eyes are 2 or 3 pixels wide; the mouth sits two rows under them.
+ */
+const PIXEL_FACES: Record<MascotMood | 'blink' | 'blinkUneasy', readonly string[]> = {
+  calm: ['..........', '.##....##.', '.##....##.', '..........', '...####...'],
+  blink: ['..........', '..........', '.##....##.', '..........', '...####...'],
+  pleased: ['..#....#..', '.#.#..#.#.', '..........', '.#......#.', '..######..'],
+  smug: ['..........', '.###..###.', '..##...##.', '........#.', '....####..'],
+  uneasy: ['..........', '..##...##.', '..##...##.', '...#..#...', '..#.##.#..'],
+  blinkUneasy: ['..........', '..........', '..##...##.', '...#..#...', '..#.##.#..'],
+  sweating: ['..........', '.##....##.', '.##....##.', '..........', '....##....'],
+  panicking: ['.###..###.', '.#.#..#.#.', '.###..###.', '..........', '...####...', '...#..#...'],
+  asleep: ['..........', '..........', '.###..###.', '..........', '....##....'],
+};
+const PIXEL = 2;
+const PIXEL_X = 6;
+const PIXEL_Y = 9.5;
+
+/** The lit colour of the neon face: green while things are fine, amber when worried, red in a panic. */
+function pixelInk(mood: MascotMood): string {
+  if (mood === 'panicking') return colors.alarm;
+  if (mood === 'uneasy' || mood === 'sweating') return colors.amber;
+  if (mood === 'asleep') return colors.dim;
+  return colors.player;
+}
+
+/**
+ * Neon: a small display module with a pixel face, as if one of the control room's status
+ * screens had woken up: graphite screen, a hairline bezel and two feet, the face lit in the
+ * mood's colour (green, amber, red), a status pixel in the corner.
+ */
+function PixelBody({ mood, blink }: { mood: MascotMood; blink: boolean }) {
+  const ink = pixelInk(mood);
+  const rows = blink && mood === 'uneasy' ? PIXEL_FACES.blinkUneasy : blink && DOT_EYES.has(mood) ? PIXEL_FACES.blink : PIXEL_FACES[mood];
+  const top = PIXEL_Y - (rows.length > 5 ? PIXEL : 0);
+  return (
+    <G>
+      <Rect x={8.5} y={27.4} width={4} height={2.6} fill={colors.outline} />
+      <Rect x={19.5} y={27.4} width={4} height={2.6} fill={colors.outline} />
+      <Rect x={2.6} y={3.6} width={26.8} height={24.4} rx={3} fill={colors.surface} stroke={ink} strokeWidth={1.4} />
+      <Rect x={4.6} y={5.6} width={22.8} height={20.4} rx={1.5} fill={colors.chrome} />
+      {rows.flatMap((row, y) =>
+        row.split('').map((c, x) => (c === '#' ? <Rect key={`${x}-${y}`} x={PIXEL_X + x * PIXEL} y={top + y * PIXEL} width={PIXEL} height={PIXEL} fill={ink} /> : null)),
+      )}
+      {mood === 'sweating' ? <Rect x={24.2} y={7.4} width={1.6} height={3.2} fill={colors.info} /> : null}
+      <Rect x={24.4} y={23.2} width={1.6} height={1.6} fill={ink} opacity={mood === 'asleep' ? 0.5 : 1} />
+    </G>
+  );
+}
+
 /** Pin rows of the blueprint chip (y of each pin on both sides). */
 const PINS = [10.5, 16, 21.5] as const;
 
@@ -130,10 +181,13 @@ const BLOB = 'M15 3.4C19.4 2.4 22.2 4.4 25 5.9C28.9 8 29.9 12.2 29.1 16.8C28.2 2
  * - square: a soft rounded square in the accent (paper, night);
  * - node: a signal-yellow schematic chip with pin stubs and a pin-1 notch, the same symbol as the tree tiles (blueprint);
  * - sign: a warning-triangle face (hazard);
- * - blob: a magenta sticker blob with an ink outline and a flat shadow (candy).
+ * - blob: a magenta sticker blob with an ink outline and a flat shadow (candy);
+ * - pixel: a small display module with a pixel face lit green, amber or red by mood (neon).
  */
 function Body({ mood, blink }: { mood: MascotMood; blink: boolean }) {
   switch (shape.mascot) {
+    case 'pixel':
+      return <PixelBody mood={mood} blink={blink} />;
     case 'node':
       return (
         <G>

@@ -6,8 +6,8 @@ import { colors, shape, voice } from '../theme';
 
 /**
  * Theme decoration, drawn from the shape tokens so components stay shared:
- * drafting corner ticks (blueprint), clipped corners (hazard), hazard stripes, the
- * ground pattern behind the map and trees, and rubber stamps.
+ * drafting corner ticks (blueprint), clipped corners (hazard), viewfinder corner brackets
+ * (neon), hazard stripes, the ground pattern behind the map and trees, and rubber stamps.
  */
 
 /** Unique, SVG-safe id for a pattern on this screen. */
@@ -38,6 +38,32 @@ function Ticks({ color }: { color: string }) {
   );
 }
 
+/** Arm length and weight of the viewfinder brackets (neon). */
+const BRACKET = 6;
+const BRACKET_W = 1.5;
+
+/**
+ * Viewfinder brackets: a short L in each corner of the parent, laid over its hairline border,
+ * as on the frame of an instrument display.
+ */
+function Brackets({ color, size = BRACKET, weight = BRACKET_W }: { color: string; size?: number; weight?: number }) {
+  const o = -shape.hairline;
+  const h = { position: 'absolute' as const, width: size, height: weight, backgroundColor: color };
+  const v = { position: 'absolute' as const, width: weight, height: size, backgroundColor: color };
+  return (
+    <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+      <View style={[h, { top: o, left: o }]} />
+      <View style={[v, { top: o, left: o }]} />
+      <View style={[h, { top: o, right: o }]} />
+      <View style={[v, { top: o, right: o }]} />
+      <View style={[h, { bottom: o, left: o }]} />
+      <View style={[v, { bottom: o, left: o }]} />
+      <View style={[h, { bottom: o, right: o }]} />
+      <View style={[v, { bottom: o, right: o }]} />
+    </View>
+  );
+}
+
 /** One clipped corner: a triangle in the ground colour with the cut edge drawn in the border colour. */
 function ClipCorner({ size, ground, edge, edgeWidth, at }: { size: number; ground: string; edge: string; edgeWidth: number; at: 'tr' | 'bl' | 'tl' | 'br' }) {
   const s = size;
@@ -63,14 +89,17 @@ export interface PanelDecoProps {
   clip?: number;
   /** Which corners to clip (hazard). Default top-right and bottom-left. */
   corners?: ('tr' | 'bl' | 'tl' | 'br')[];
+  /** Bracket arm length (neon). */
+  size?: number;
 }
 
 /**
  * The theme's panel decoration, placed last inside a panel that has its own border:
- * corner ticks (blueprint), clipped corners (hazard), nothing elsewhere.
+ * corner ticks (blueprint), clipped corners (hazard), corner brackets (neon), nothing elsewhere.
  */
-export const PanelDeco = memo(function PanelDeco({ ground = colors.bg, color, edgeWidth = shape.hairline, clip = shape.clip, corners = ['tr', 'bl'] }: PanelDecoProps) {
+export const PanelDeco = memo(function PanelDeco({ ground = colors.bg, color, edgeWidth = shape.hairline, clip = shape.clip, corners = ['tr', 'bl'], size }: PanelDecoProps) {
   if (shape.panel === 'ticks') return <Ticks color={color ?? colors.outline} />;
+  if (shape.panel === 'bracket') return <Brackets color={color ?? colors.outline} size={size} />;
   if (shape.panel === 'clip' && clip > 0) {
     return (
       <View pointerEvents="none" style={StyleSheet.absoluteFill}>
@@ -123,9 +152,15 @@ const MAJOR = 5;
 const GRID_ALPHA = 0.08;
 const MAJOR_ALPHA = 0.13;
 
+/** Instrument dot grid (neon): pitch, dot radius and opacity; a brighter dot every few cells. */
+const SCAN = 16;
+const SCAN_MAJOR = 4;
+const SCAN_ALPHA = 0.07;
+const SCAN_MAJOR_ALPHA = 0.14;
+
 /**
  * The ground behind the map, trees and news: a drafting grid (blueprint), polka dots
- * (candy) or nothing. Fills its parent; never takes touches.
+ * (candy), a faint instrument dot grid (neon) or nothing. Fills its parent; never takes touches.
  */
 export const Ground = memo(function Ground() {
   const id = usePatternId('gr');
@@ -144,6 +179,25 @@ export const Ground = memo(function Ground() {
             ))}
             <Line x1={0.5} y1={0} x2={0.5} y2={big} stroke={colors.gridMajor} strokeOpacity={MAJOR_ALPHA} strokeWidth={1} />
             <Line x1={0} y1={0.5} x2={big} y2={0.5} stroke={colors.gridMajor} strokeOpacity={MAJOR_ALPHA} strokeWidth={1} />
+          </Pattern>
+        </Defs>
+        <Rect x={0} y={0} width="100%" height="100%" fill={`url(#${id})`} />
+      </Svg>
+    );
+  }
+  if (shape.ground === 'scan') {
+    // Tiny registration crosses at the major points and faint dots between them: an
+    // instrument's graticule, much finer and fainter than the map's dots so it never competes.
+    const big = SCAN * SCAN_MAJOR;
+    const cells = Array.from({ length: SCAN_MAJOR }, (_, i) => i * SCAN + SCAN / 2);
+    const c = SCAN / 2;
+    return (
+      <Svg pointerEvents="none" style={StyleSheet.absoluteFill} width="100%" height="100%">
+        <Defs>
+          <Pattern id={id} patternUnits="userSpaceOnUse" width={big} height={big}>
+            {cells.flatMap((x) => cells.map((y) => (x === c && y === c ? null : <Rect key={`${x}-${y}`} x={x - 0.5} y={y - 0.5} width={1} height={1} fill={colors.grid} fillOpacity={SCAN_ALPHA} />)))}
+            <Rect x={c - 3} y={c - 0.5} width={6} height={1} fill={colors.gridMajor} fillOpacity={SCAN_MAJOR_ALPHA} />
+            <Rect x={c - 0.5} y={c - 3} width={1} height={6} fill={colors.gridMajor} fillOpacity={SCAN_MAJOR_ALPHA} />
           </Pattern>
         </Defs>
         <Rect x={0} y={0} width="100%" height="100%" fill={`url(#${id})`} />

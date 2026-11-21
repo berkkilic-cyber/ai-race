@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, Text, View, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';
 
-import { colors, flatShadow, radius, shape, spacing, touch, type, voice } from '../theme';
+import { colors, flatShadow, glow, radius, shape, spacing, touch, type, voice } from '../theme';
 
 /** primary: the accent, weighted; secondary: quiet outline; ghost: text on a hairline; danger: alarm; ink: the loud voice (tabloid black). */
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'ink';
@@ -50,7 +50,9 @@ const LABEL: TextStyle =
       ? { ...voice.calmHeading, fontSize: type.l, letterSpacing: 1 }
       : shape.panel === 'sticker'
         ? { ...voice.bodyStrong, fontSize: type.m + 1 }
-        : { fontSize: type.m, fontWeight: '700' };
+        : shape.panel === 'bracket'
+          ? { ...voice.calmHeading, fontSize: type.s + 1, letterSpacing: 1.2 }
+          : { fontSize: type.m, fontWeight: '700' };
 
 export function Button({ label, onPress, variant = 'secondary', disabled, sublabel, compact, selected, accessibilityLabel, testID, style }: ButtonProps) {
   const weighted = variant === 'primary' || variant === 'ink';
@@ -74,8 +76,9 @@ export function Button({ label, onPress, variant = 'secondary', disabled, sublab
         variant === 'primary' && styles.primaryEdge,
         variant === 'ink' && styles.inkEdge,
         LIFT > 0 && variant !== 'ghost' && !disabled && styles.lifted,
+        variant === 'primary' && !disabled && styles.glow,
         disabled && styles.disabled,
-        pressed && !disabled && (LIFT > 0 ? styles.pressedLifted : weighted && EDGE > 0 ? styles.pressedWeighted : styles.pressed),
+        pressed && !disabled && (LIFT > 0 ? styles.pressedLifted : weighted && EDGE > 0 ? styles.pressedWeighted : variant === 'primary' && shape.glow > 0 ? styles.pressedGlow : styles.pressed),
         style,
       ]}
     >
@@ -118,6 +121,9 @@ const styles = StyleSheet.create({
   // Soft themes fade a disabled button; the others draw it as a dashed outline (no muddy half-tones).
   disabled: shape.panel === 'plain' ? { opacity: 0.55 } : { backgroundColor: colors.transparent, borderStyle: 'dashed', borderColor: colors.dim, borderBottomColor: colors.dim, borderBottomWidth: shape.outline },
   pressed: { backgroundColor: colors.raised, transform: [{ translateY: 1 }] },
+  // Neon: the primary action glows; pressed, it dims to its deeper green and the glow goes out.
+  glow: glow(colors.player, { strength: 1.2 }),
+  pressedGlow: { backgroundColor: colors.playerDeep, borderColor: colors.playerDeep, boxShadow: 'none', transform: [{ translateY: 1 }] },
   pressedWeighted: { borderBottomWidth: 0, marginTop: EDGE, transform: [{ translateY: 0 }] },
   inner: { alignItems: 'center' },
   label: LABEL,

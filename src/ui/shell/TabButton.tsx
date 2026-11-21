@@ -5,7 +5,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useLayoutMode } from '../hooks/useLayoutMode';
 import { Icon, type IconName } from '../icons';
 import { PanelDeco } from '../components/Deco';
-import { colors, flatShadow, layout, radius, shape, spacing, touch, type, voice } from '../theme';
+import { colors, flatShadow, glow, layout, radius, shape, spacing, touch, type, voice } from '../theme';
 import { useTutorialTarget } from '../tutorial/targets';
 
 export type TabButtonProps = TabTriggerSlotProps & {
@@ -42,7 +42,7 @@ export function TabButton({ label, badge, isFocused, targetId, icon, ref: _ref, 
       <View style={StyleSheet.absoluteFill} pointerEvents="none" ref={tutorialRef} />
       {isFocused && !BOXED ? <View style={wide ? styles.markWide : styles.markNarrow} /> : null}
       <View style={[wide ? styles.labelBoxWide : null, BOXED && styles.box, BOXED && isFocused && styles.boxFocused]}>
-        {BOXED && isFocused && shape.panel === 'ticks' ? <PanelDeco /> : null}
+        {BOXED && isFocused && (shape.panel === 'ticks' || shape.panel === 'bracket') ? <PanelDeco color={shape.panel === 'bracket' ? colors.player : undefined} size={5} /> : null}
         {icon ? (
           <View style={styles.icon}>
             <Icon name={icon} size={18} color={isFocused ? focusedColor : colors.dim} accent={isFocused ? accentFocused : colors.dim} />
@@ -70,12 +70,14 @@ const styles = StyleSheet.create({
   labelBoxWide: { maxWidth: layout.railWidth - 6, flexShrink: 0 },
   pressed: { opacity: 0.6 },
   icon: { alignItems: 'center', marginBottom: 1 },
-  label: { ...voice.calmHeading, color: colors.dim, fontSize: shape.panel === 'ticks' ? 10 : shape.panel === 'clip' ? type.m - 2 : shape.panel === 'sticker' ? type.s - 1 : type.s + 1, letterSpacing: shape.panel === 'plain' ? voice.calmHeading.letterSpacing : 0, lineHeight: type.s + 5, textAlign: 'center' },
+  label: { ...voice.calmHeading, color: colors.dim, fontSize: shape.panel === 'ticks' || shape.panel === 'bracket' ? 10 : shape.panel === 'clip' ? type.m - 2 : shape.panel === 'sticker' ? type.s - 1 : type.s + 1, letterSpacing: shape.panel === 'plain' ? voice.calmHeading.letterSpacing : 0, lineHeight: type.s + 5, textAlign: 'center' },
   focused: { color: shape.panel === 'clip' || shape.panel === 'sticker' ? colors.onPlayer : colors.text },
-  box: { paddingHorizontal: shape.panel === 'ticks' ? 3 : 5, paddingVertical: 3, borderRadius: radius.pill, borderWidth: shape.hairline, borderColor: colors.transparent },
+  box: { paddingHorizontal: shape.panel === 'ticks' || shape.panel === 'bracket' ? 3 : 5, paddingVertical: 3, borderRadius: radius.pill, borderWidth: shape.hairline, borderColor: colors.transparent },
   boxFocused:
     shape.panel === 'ticks'
       ? { borderColor: colors.border, backgroundColor: colors.surface }
+      : shape.panel === 'bracket'
+        ? { borderColor: colors.border, backgroundColor: colors.surface, ...glow(colors.player, { inset: true, strength: 0.9 }) }
       : shape.panel === 'clip'
         ? { backgroundColor: colors.player, borderColor: colors.player }
         : { backgroundColor: colors.player, borderColor: colors.outline, borderWidth: shape.outline, paddingHorizontal: 2, ...flatShadow(2) },

@@ -41,6 +41,7 @@ const TINT: Record<typeof shape.composure, [number, number, number]> = {
   redline: [0, 0.04, 0.14],
   tape: [0, 0.04, 0.07],
   drain: [0, 0, 0.04],
+  alert: [0, 0.02, 0.06],
 };
 
 /** Scallop radius of the revision cloud, and its inset from the edge. */
@@ -145,18 +146,51 @@ function PeelingSticker({ level }: { level: ComposureLevel }) {
   );
 }
 
-/** The ground per composure level: candy drains to grey; blueprint's sheet floods red at the end. */
+/** Neon: arm length and weight of the corner brackets that frame the main area. */
+const ALERT_ARM = 18;
+const ALERT_W = 2;
+/** Neon: the brackets' colour per level: a quiet green, then amber, then red. */
+const ALERT_STEPS = [mixColor(colors.bg, colors.player, 0.55), colors.amber, colors.alarm, colors.alarm];
+
+/**
+ * Neon: the control room's alert state. Corner brackets frame the main area in a quiet green
+ * and turn amber (level 1), then red (level 2); from level 2 a red glow creeps in from the
+ * edges and grows at level 3, where the hard red frame (shared with classic) pulses.
+ */
+function Alert({ progress }: { progress: ReturnType<typeof useComposureProgress> }) {
+  const bracket = useAnimatedStyle(() => ({ backgroundColor: interpolateColor(progress.get(), [0, 1, 2, 3], ALERT_STEPS) }));
+  const edge = useAnimatedStyle(() => ({ opacity: interpolate(progress.get(), [1, 2, 3], [0, 0.55, 1], 'clamp') }));
+  const corner = (pos: object, h: boolean) => <Animated.View style={[styles.alertArm, h ? styles.alertH : styles.alertV, pos, bracket]} />;
+  return (
+    <View pointerEvents="none" style={StyleSheet.absoluteFill} testID="composure-alert">
+      <Animated.View style={[StyleSheet.absoluteFill, styles.alertEdge, edge]} />
+      {corner({ top: 6, left: 6 }, true)}
+      {corner({ top: 6, left: 6 }, false)}
+      {corner({ top: 6, right: 6 }, true)}
+      {corner({ top: 6, right: 6 }, false)}
+      {corner({ bottom: 6, left: 6 }, true)}
+      {corner({ bottom: 6, left: 6 }, false)}
+      {corner({ bottom: 6, right: 6 }, true)}
+      {corner({ bottom: 6, right: 6 }, false)}
+    </View>
+  );
+}
+
+/** The ground per composure level: candy drains to grey; blueprint's sheet floods red at the end; neon's graphite warms towards red. */
 const DRAIN_STEPS =
   shape.composure === 'redline'
     ? [colors.bg, colors.bg, mixColor(colors.bg, colors.drain, 0.22), colors.drain]
-    : [colors.bg, mixColor(colors.bg, colors.drain, 0.3), mixColor(colors.bg, colors.drain, 0.7), colors.drain];
-const GROUND_SHIFTS = shape.composure === 'drain' || shape.composure === 'redline';
+    : shape.composure === 'alert'
+      ? [colors.bg, colors.bg, mixColor(colors.bg, colors.drain, 0.35), colors.drain]
+      : [colors.bg, mixColor(colors.bg, colors.drain, 0.3), mixColor(colors.bg, colors.drain, 0.7), colors.drain];
+const GROUND_SHIFTS = shape.composure === 'drain' || shape.composure === 'redline' || shape.composure === 'alert';
 
 /**
  * The main area with the composure overlays (docs/DESIGN.md), drawn the theme's way
  * (shape.composure): classic (thin alarm frame and a warm tint), redline (blueprint: red
  * correction marks and stamps, then a red flood), tape (hazard: warning-tape frame and
- * beacons), drain (candy: the pastel ground drains to grey and the sticker peels). At level 3
+ * beacons), drain (candy: the pastel ground drains to grey and the sticker peels), alert (neon:
+ * corner brackets go green to amber to red, a red glow creeps in from the edges). At level 3
  * the BREAKING band slides in across the top (in the flow, so it never covers a panel's
  * header). The theme's ground (drafting grid, dots) sits behind the content. Overlays never
  * take touches.
@@ -183,8 +217,9 @@ export function ComposureStage({ children }: { children: ReactNode }) {
         {shape.composure === 'redline' ? <Redline level={level} /> : null}
         {shape.composure === 'drain' ? <PeelingSticker level={level} /> : null}
         {shape.composure === 'tape' ? <Tape level={level} clock={clock} /> : null}
+        {shape.composure === 'alert' ? <Alert progress={progress} /> : null}
       </Animated.View>
-      {classic || (shape.composure === 'redline' && level >= 3) ? <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, styles.frame, frameStyle]} testID="composure-frame" /> : null}
+      {classic || ((shape.composure === 'redline' || shape.composure === 'alert') && level >= 3) ? <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, styles.frame, frameStyle]} testID="composure-frame" /> : null}
       {/* Panels opened from the top strip; nothing is mounted while they are closed. */}
       <StripPanels />
     </View>
@@ -228,7 +263,7 @@ const styles = StyleSheet.create({
   stage: { flex: 1, overflow: 'hidden' },
   main: { flex: 1 },
   tint: { backgroundColor: shape.composure === 'redline' ? colors.drain : colors.alarm },
-  frame: { borderWidth: shape.composure === 'redline' ? 3 : 2, borderColor: colors.alarm },
+  frame: { borderWidth: shape.composure === 'redline' || shape.composure === 'alert' ? 3 : 2, borderColor: colors.alarm },
   band: {
     height: BREAKING_BAND_HEIGHT,
     flexDirection: 'row',
@@ -239,6 +274,10 @@ const styles = StyleSheet.create({
   bandKicker: { backgroundColor: colors.newsInk, justifyContent: 'center', paddingHorizontal: spacing.s },
   bandKickerText: { ...voice.loudKicker, fontSize: 15, lineHeight: 17, color: colors.newsPaper },
   bandText: { ...voice.loudKicker, flex: 1, alignSelf: 'center', fontSize: 15, lineHeight: 17, letterSpacing: 1, color: colors.newsPaper, paddingHorizontal: spacing.s },
+  alertArm: { position: 'absolute' },
+  alertH: { width: ALERT_ARM, height: ALERT_W },
+  alertV: { width: ALERT_W, height: ALERT_ARM },
+  alertEdge: { boxShadow: `inset 0px 0px 36px ${colors.alarm}` },
   reviseWrap: { position: 'absolute', top: spacing.l + 4, right: spacing.xl },
   // Bottom centre: clear of the map's controls (bottom left) and standings strip (bottom right).
   rejectedWrap: { position: 'absolute', left: 0, right: 0, bottom: spacing.xl + 4, alignItems: 'center' },

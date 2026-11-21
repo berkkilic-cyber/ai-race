@@ -80,6 +80,33 @@ export function rotateHue(hex: string, degrees: number): string {
   return rgbToHex([channel(k + 1 / 3) * 255, channel(k) * 255, channel(k - 1 / 3) * 255]);
 }
 
+/** HSL saturation of a colour, 0..1. */
+export function saturationOf(hex: string): number {
+  const [r, g, b] = parseHex(hex).map((v) => v / 255);
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const l = (max + min) / 2;
+  const d = max - min;
+  if (d === 0) return 0;
+  return l > 0.5 ? d / (2 - max - min) : d / (max + min);
+}
+
+/**
+ * The colour with its HSL saturation raised to at least `min` (hue and lightness kept), so a
+ * muted pack colour stays vivid on a dark ground. Greys and colours already vivid are returned as is.
+ */
+export function saturateTo(hex: string, min: number): string {
+  const s = saturationOf(hex);
+  if (s === 0 || s >= min) return hex;
+  const rgb = parseHex(hex).map((v) => v / 255);
+  const l = (Math.max(...rgb) + Math.min(...rgb)) / 2;
+  // In HSL every channel sits at l + (c - l): scaling those distances changes saturation only.
+  const k = min / s;
+  // Never past the gamut: limit the scale so no channel leaves 0..1.
+  const fit = Math.min(k, ...rgb.map((c) => (c > l ? (1 - l) / (c - l) : c < l ? l / (l - c) : Infinity)));
+  return rgbToHex(rgb.map((c) => (l + (c - l) * fit) * 255) as RGB);
+}
+
 /** Hue of a colour in degrees (0..360), or null for greys. */
 export function hueOf(hex: string): number | null {
   const [r, g, b] = parseHex(hex).map((v) => v / 255);
@@ -116,19 +143,36 @@ export interface ReadableGround {
   bg: string;
   surface: string;
   player: string;
+  /** The danger colour, for `alarmHue`. */
+  alarm?: string;
+}
+
+export interface ReadableOptions {
+  rival: boolean;
+  /** Minimum hue distance of a rival from the player. */
+  minHue: number;
+  /** How far a rival is lifted towards `toward` first. */
+  lift: number;
+  /** Minimum hue distance of a rival from `ground.alarm` (0 or absent = no rule). */
+  alarmHue?: number;
+  /** Minimum HSL saturation of a rival (0 or absent = as it is). */
+  sat?: number;
 }
 
 /**
  * A lab colour adjusted for one theme: rivals are first lifted `lift` of the way towards
- * `toward` (light tints on a dark drawing) and moved away from the player's hue (at least
- * `minHue` degrees), then every colour is stepped towards `toward` until it
- * reaches `min` contrast on the theme's bg and surface. Pure.
+ * `toward` (light tints on a dark drawing), moved away from the alarm's hue (`alarmHue`),
+ * then from the player's hue (at least `minHue` degrees) and saturated to `sat`; then every
+ * colour is stepped towards `toward` until it reaches `min` contrast on the theme's bg and
+ * surface. Pure.
  */
-export function readableOn(base: string, ground: ReadableGround, min: number, toward: string, opts: { rival: boolean; minHue: number; lift: number }): string {
+export function readableOn(base: string, ground: ReadableGround, min: number, toward: string, opts: ReadableOptions): string {
   let c = base;
   if (opts.rival) {
     if (opts.lift > 0) c = mixColor(c, toward, opts.lift);
+    if (opts.alarmHue && ground.alarm) c = distinctFrom(c, ground.alarm, opts.alarmHue);
     c = distinctFrom(c, ground.player, opts.minHue);
+    if (opts.sat) c = saturateTo(c, opts.sat);
   }
   return ensureContrast(c, [ground.bg, ground.surface], min, toward);
 }

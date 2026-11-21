@@ -69,7 +69,7 @@ function WinCard({ win }: { win: WinBar }) {
       <Text style={styles.caption} numberOfLines={2}>
         {win.caption}
       </Text>
-      {shape.panel === 'ticks' ? <PanelDeco /> : null}
+      {shape.panel === 'ticks' || shape.panel === 'bracket' ? <PanelDeco /> : null}
     </View>
   );
 }

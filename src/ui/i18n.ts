@@ -161,7 +161,7 @@ export function readableLabColor(lab: Pick<LabState, 'color' | 'controller'>, us
   let out = readableCache.get(key);
   if (out === undefined) {
     const toward = isDark ? colors.newsPaper : colors.text;
-    out = readableOn(base, colors, LAB_CONTRAST[use], toward, { rival: lab.controller !== 'human', minHue: shape.rivalHue, lift: shape.rivalLift });
+    out = readableOn(base, colors, LAB_CONTRAST[use], toward, { rival: lab.controller !== 'human', minHue: shape.rivalHue, lift: shape.rivalLift, alarmHue: shape.rivalAlarmHue, sat: shape.rivalSat });
     readableCache.set(key, out);
   }
   return out;

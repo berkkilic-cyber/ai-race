@@ -9,7 +9,7 @@ import { Icon } from '../icons';
 import { useAmbientClock, wave } from '../motion/ambient';
 import { useTutorialTarget } from '../tutorial/targets';
 import { PanelDeco } from '../components/Deco';
-import { colors, flatShadow, radius, shape, spacing, tabular, type, voice } from '../theme';
+import { colors, flatShadow, glow, radius, shape, spacing, tabular, type, voice } from '../theme';
 import { CheckGlyph, LockGlyph } from './Glyphs';
 import type { TileRect } from './layout';
 import type { NodeStatus } from './status';
@@ -60,8 +60,8 @@ function NodeTileImpl({ nodeId, name, status, costHype, costCash, accent, rect, 
 
   const owned = status === 'owned';
   const locked = status === 'locked';
-  // Schematic tiles stay linework: owned ones are tinted, not filled, and keep white type.
-  const ownedFg = shape.tile === 'schematic' ? colors.text : colors.onPlayer;
+  // Schematic and module tiles stay linework: owned ones are tinted, not filled, and keep light type.
+  const ownedFg = LINEWORK ? colors.text : colors.onPlayer;
   const fg = owned ? ownedFg : colors.text;
   const costColor = status === 'expensive' ? colors.bad : buyable ? colors.text : colors.dim;
   const price = priceText(costHype, costCash);
@@ -77,7 +77,7 @@ function NodeTileImpl({ nodeId, name, status, costHype, costCash, accent, rect, 
         accessibilityLabel={`${t('ui.trees.tileLabel', { name, state: t(`ui.trees.state.${status}`), cost: price })}${computeNeed !== undefined ? `. ${t('ui.trees2.computeA11y', { compute: computeNeed, have: computeHave })}` : ''}`}
         style={({ pressed }) => [
           styles.tile,
-          owned && (shape.tile === 'schematic' ? { backgroundColor: mixColor(colors.surface, accent, 0.28), borderColor: accent, borderWidth: 1.5 } : { backgroundColor: accent, borderColor: accent }),
+          owned && (LINEWORK ? { backgroundColor: mixColor(colors.surface, accent, shape.tile === 'module' ? 0.14 : 0.28), borderColor: accent, borderWidth: shape.tile === 'module' ? 1 : 1.5 } : { backgroundColor: accent, borderColor: accent }),
           buyable && { borderColor: accent, borderWidth: 2 },
           locked && styles.locked,
           pressed && styles.pressed,
@@ -85,14 +85,14 @@ function NodeTileImpl({ nodeId, name, status, costHype, costCash, accent, rect, 
       >
         {shape.tile === 'plate' ? <Rivets color={owned ? colors.onPlayer : colors.border} /> : null}
         <View style={styles.head}>
-          <Icon name={nodeId} size={ICON} color={owned ? fg : locked ? colors.dim : colors.text} accent={owned && shape.tile !== 'schematic' ? fg : accent} />
+          <Icon name={nodeId} size={ICON} color={owned ? fg : locked ? colors.dim : colors.text} accent={owned && !LINEWORK ? fg : accent} />
           <Text style={[styles.name, styles.nameRoom, { color: fg }]} numberOfLines={2}>
             {name}
           </Text>
         </View>
         <View style={styles.foot}>
           {owned ? (
-            <Text style={[styles.cost, styles.ownedText, styles.footText, { color: shape.tile === 'schematic' ? accent : colors.onPlayer }]} numberOfLines={1}>
+            <Text style={[styles.cost, styles.ownedText, styles.footText, { color: LINEWORK ? accent : colors.onPlayer }]} numberOfLines={1}>
               {t('ui.trees.state.owned')}
             </Text>
           ) : (
@@ -111,6 +111,7 @@ function NodeTileImpl({ nodeId, name, status, costHype, costCash, accent, rect, 
         </View>
       </Pressable>
       {shape.tile === 'schematic' ? <Pins color={owned || buyable ? accent : colors.border} /> : null}
+      {shape.tile === 'module' && !locked ? <View pointerEvents="none" style={[styles.status, { backgroundColor: owned || buyable ? accent : colors.outline }, owned && glow(accent, { strength: 0.6 })]} /> : null}
       {shape.tile === 'plate' ? <PanelDeco ground={colors.bg} color={owned ? accent : buyable ? accent : colors.border} edgeWidth={buyable ? 2 : shape.outline} clip={8} corners={['tr']} /> : null}
       {owned ? (
         <View pointerEvents="none" style={[styles.corner, { backgroundColor: colors.onPlayer, borderColor: accent }]}>
@@ -148,6 +149,8 @@ function Rivets({ color }: { color: string }) {
 }
 
 const PIN = 6;
+/** Tiles drawn as linework (schematic, module): owned ones are tinted, not filled. */
+const LINEWORK = shape.tile === 'schematic' || shape.tile === 'module';
 /** Node icon on the tile: big enough to read at a glance next to a two-line name. */
 const ICON = shape.tile === 'plate' ? 18 : 22;
 /** The "not enough compute" chip: the bad colour as a fill, readable text on it. */
@@ -162,12 +165,15 @@ const styles = StyleSheet.create({
     borderRadius: radius.s,
     borderWidth: shape.tile === 'plain' ? 1 : shape.outline,
     borderColor: shape.tile === 'sticker' ? colors.outline : colors.border,
-    backgroundColor: shape.tile === 'schematic' ? colors.surface : colors.raised,
+    backgroundColor: LINEWORK ? colors.surface : colors.raised,
     paddingHorizontal: shape.tile === 'plate' ? spacing.s + 3 : spacing.s,
+    paddingLeft: shape.tile === 'module' ? spacing.s + 3 : undefined,
     paddingVertical: 6,
     justifyContent: 'space-between',
     ...flatShadow(),
   },
+  // Module: a status bar down the left edge (lit in the tree's accent when owned or buyable).
+  status: { position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, borderTopLeftRadius: radius.s, borderBottomLeftRadius: radius.s },
   pin: { position: 'absolute', top: '50%', width: PIN, height: shape.outline + 0.5, marginTop: -0.5 },
   rivet: { position: 'absolute', width: 4, height: 4, borderRadius: 2, borderWidth: 1 },
   glow: { position: 'absolute', top: -4, left: -4, right: -4, bottom: -4, borderRadius: radius.s + (radius.s ? 4 : 0), borderWidth: 2, borderStyle: shape.tile === 'schematic' ? 'dashed' : 'solid' },
@@ -175,7 +181,7 @@ const styles = StyleSheet.create({
   locked: { opacity: 0.5, backgroundColor: colors.surface, borderStyle: shape.tile === 'schematic' ? 'dashed' : 'solid', boxShadow: 'none' },
   pressed: { opacity: 0.75 },
   name:
-    shape.tile === 'schematic'
+    LINEWORK
       ? { ...voice.bodyStrong, fontSize: 12, lineHeight: 14, letterSpacing: 0.1 }
       : shape.tile === 'plate'
         ? { ...voice.calmHeading, fontSize: 13, lineHeight: 14, letterSpacing: 0 }
@@ -194,7 +200,7 @@ const styles = StyleSheet.create({
     right: shape.tile === 'plate' ? 6 : -6,
     width: 20,
     height: 20,
-    borderRadius: shape.tile === 'schematic' || shape.tile === 'plate' ? 0 : 10,
+    borderRadius: shape.tile === 'schematic' || shape.tile === 'plate' ? 0 : shape.tile === 'module' ? radius.xs : 10,
     borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',

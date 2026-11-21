@@ -2,13 +2,19 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 
-import { contrast, distinctFrom, ensureContrast, hueDistance, hueOf, mixColor, readableOn, rotateHue } from '../color';
+import { contrast, distinctFrom, ensureContrast, hueDistance, hueOf, mixColor, parseHex, readableOn, rotateHue, saturateTo, saturationOf } from '../color';
 import { themeFontSources } from '../fonts';
 import { LAB_CONTRAST, readableLabColor } from '../i18n';
 import { getPackEntry } from '../packs';
 import { colors, darkThemes, DEFAULT_THEME, palettes, resolveThemeName, shapes, THEME_NAMES, themeFontFaces, voice, type Palette, type ThemeName } from '../theme';
 
 const ROOT = path.join(__dirname, '..', '..', '..');
+
+/** Largest channel difference of a colour, 0..1 (0 = a pure grey). */
+function luminanceSpread(hex: string): number {
+  const [r, g, b] = parseHex(hex);
+  return (Math.max(r, g, b) - Math.min(r, g, b)) / 255;
+}
 
 function files(dir: string): string[] {
   const out: string[] = [];
@@ -28,13 +34,14 @@ describe('themes', () => {
     expect(Object.keys(shapes[name]).sort()).toEqual(Object.keys(shapes.paper).sort());
   });
 
-  it('EXPO_PUBLIC_THEME picks a known theme only when asked; blueprint is the default', () => {
+  it('EXPO_PUBLIC_THEME picks a known theme only when asked; neon is the default', () => {
     for (const name of THEME_NAMES) expect(resolveThemeName(name)).toBe(name);
-    expect(DEFAULT_THEME).toBe('blueprint');
-    expect(resolveThemeName(undefined)).toBe('blueprint');
-    expect(resolveThemeName('neon')).toBe('blueprint');
+    expect(DEFAULT_THEME).toBe('neon');
+    expect(resolveThemeName(undefined)).toBe('neon');
+    expect(resolveThemeName('')).toBe('neon');
+    expect(resolveThemeName('disco')).toBe('neon');
     // Tests run without the variable.
-    expect(colors).toBe(palettes.blueprint);
+    expect(colors).toBe(palettes.neon);
   });
 
   it.each(Object.entries(palettes))('%s: text tokens reach 4.5:1 on bg and surface', (_name, p: Palette) => {
@@ -70,7 +77,7 @@ describe('themes', () => {
     }
   });
 
-  it.each([undefined, 'neon'])('with EXPO_PUBLIC_THEME=%s the default theme\'s faces are loaded', (value) => {
+  it.each([undefined, 'disco'])('with EXPO_PUBLIC_THEME=%s the default theme\'s faces are loaded', (value) => {
     const before = process.env.EXPO_PUBLIC_THEME;
     if (value === undefined) delete process.env.EXPO_PUBLIC_THEME;
     else process.env.EXPO_PUBLIC_THEME = value;
@@ -84,11 +91,31 @@ describe('themes', () => {
   });
 
   it('new themes leave the retired look behind: no cream ground, no orange accent, no serif headings', () => {
-    for (const name of ['blueprint', 'hazard', 'candy'] as const) {
+    for (const name of ['blueprint', 'hazard', 'candy', 'neon'] as const) {
       const hue = hueOf(palettes[name].player);
       expect(hue === null || hueDistance(hue, 20) > 25).toBe(true);
       expect(Object.values(themeFontFaces[name]).some((f) => f.startsWith('Fraunces'))).toBe(false);
       expect(palettes[name].bg).not.toBe(palettes.paper.bg);
+    }
+  });
+
+  it('neon: one green for the player, red only for danger, supporting tints that cannot pass for either', () => {
+    const p = palettes.neon;
+    const hp = hueOf(p.player)!;
+    // Greys stay neutral: no blue-black ground, no pure black.
+    for (const c of [p.bg, p.surface, p.raised, p.chrome]) {
+      expect(luminanceSpread(c)).toBeLessThan(0.04);
+      expect(c.toUpperCase()).not.toBe('#000000');
+    }
+    // Surface steps are clearly separated.
+    expect(contrast(p.surface, p.bg)).toBeGreaterThanOrEqual(1.12);
+    expect(contrast(p.raised, p.surface)).toBeGreaterThanOrEqual(1.12);
+    expect(contrast(p.bg, p.chrome)).toBeGreaterThanOrEqual(1.08);
+    expect(hueDistance(hp, 120)).toBeLessThan(25);
+    for (const c of [p.alarm, p.bad, p.mark, p.newsRed]) expect(hueDistance(hueOf(c)!, 0)).toBeLessThan(15);
+    for (const c of [p.good, p.info, p.amber]) {
+      expect(hueDistance(hueOf(c)!, hp)).toBeGreaterThanOrEqual(35);
+      expect(hueDistance(hueOf(c)!, hueOf(p.alarm)!)).toBeGreaterThanOrEqual(35);
     }
   });
 
@@ -116,6 +143,15 @@ describe('colour helpers', () => {
     expect(mixColor('#000000', '#ffffff', 0.5)).toBe('#808080');
   });
 
+  it('saturateTo raises saturation and keeps the hue; greys and vivid colours stay', () => {
+    const muted = '#66BB6A';
+    const vivid = saturateTo(muted, 0.8);
+    expect(saturationOf(vivid)).toBeGreaterThanOrEqual(0.79);
+    expect(hueDistance(hueOf(vivid)!, hueOf(muted)!)).toBeLessThan(2);
+    expect(saturateTo('#808080', 0.8)).toBe('#808080');
+    expect(saturateTo('#FF0000', 0.8)).toBe('#FF0000');
+  });
+
   it('rotateHue and distinctFrom move colours around the wheel', () => {
     expect(hueOf(rotateHue('#FF0000', 120))).toBeCloseTo(120, 0);
     expect(rotateHue('#808080', 90)).toBe('#808080');
@@ -129,7 +165,8 @@ describe('colour helpers', () => {
     const s = shapes[name];
     const toward = darkThemes[name] ? p.newsPaper : p.text;
     const { pack } = getPackEntry();
-    const rivals = pack.rivals.map((r) => readableOn(r.color, p, LAB_CONTRAST.graphic, toward, { rival: true, minHue: s.rivalHue, lift: s.rivalLift }));
+    const opts = { rival: true, minHue: s.rivalHue, lift: s.rivalLift, alarmHue: s.rivalAlarmHue, sat: s.rivalSat };
+    const rivals = pack.rivals.map((r) => readableOn(r.color, p, LAB_CONTRAST.graphic, toward, opts));
     const player = readableOn(p.player, p, LAB_CONTRAST.graphic, toward, { rival: false, minHue: 0, lift: 0 });
     expect(player).toBe(p.player);
     for (const c of [...rivals, player]) {
@@ -141,8 +178,10 @@ describe('colour helpers', () => {
     const hp = hueOf(player)!;
     // Lifting and the contrast step can drift the hue a few degrees after the rotation.
     if (s.rivalHue > 0) for (const c of rivals) expect(hueDistance(hueOf(c)!, hp)).toBeGreaterThanOrEqual(s.rivalHue - 5);
+    if (s.rivalAlarmHue > 0) for (const c of rivals) expect(hueDistance(hueOf(c)!, hueOf(p.alarm)!)).toBeGreaterThanOrEqual(s.rivalAlarmHue - 5);
+    if (s.rivalSat > 0) for (const c of rivals) expect(saturationOf(c)).toBeGreaterThanOrEqual(s.rivalSat - 0.02);
     for (let i = 0; i < rivals.length; i++)
-      for (let j = i + 1; j < rivals.length; j++) expect(hueDistance(hueOf(rivals[i])!, hueOf(rivals[j])!)).toBeGreaterThanOrEqual(20);
+      for (let j = i + 1; j < rivals.length; j++) expect(hueDistance(hueOf(rivals[i])!, hueOf(rivals[j])!)).toBeGreaterThanOrEqual(name === 'neon' ? 40 : 20);
   });
 
   it('readableLabColor makes every rival colour read on the current theme', () => {

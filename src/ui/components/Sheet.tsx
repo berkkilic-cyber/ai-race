@@ -87,7 +87,7 @@ export function Sheet({ visible, onClose, title, headerRight, children, maxHeigh
           <ScrollView style={styles.scroll} contentContainerStyle={styles.panelContent} {...KEYBOARD_SCROLL}>
             {children}
           </ScrollView>
-          {shape.panel === 'ticks' ? <PanelDeco /> : null}
+          {shape.panel === 'ticks' || shape.panel === 'bracket' ? <PanelDeco /> : null}
         </Animated.View>
       </View>
     );
@@ -163,12 +163,12 @@ const styles = StyleSheet.create({
   // edges (blueprint), a plate under a stripe band (hazard), a floating sticker (candy).
   panel: {
     position: 'absolute',
-    top: shape.panel === 'sticker' ? spacing.s : shape.panel === 'ticks' ? spacing.m : 0,
-    right: shape.panel === 'sticker' ? spacing.s : shape.panel === 'ticks' ? spacing.m : 0,
-    bottom: shape.panel === 'sticker' ? spacing.s + shape.shadow : shape.panel === 'ticks' ? spacing.m : 0,
+    top: shape.panel === 'sticker' || shape.panel === 'bracket' ? spacing.s : shape.panel === 'ticks' ? spacing.m : 0,
+    right: shape.panel === 'sticker' || shape.panel === 'bracket' ? spacing.s : shape.panel === 'ticks' ? spacing.m : 0,
+    bottom: shape.panel === 'sticker' || shape.panel === 'bracket' ? spacing.s + shape.shadow : shape.panel === 'ticks' ? spacing.m : 0,
     backgroundColor: colors.surface,
     borderLeftWidth: shape.panel === 'clip' ? 0 : shape.panel === 'plain' ? StyleSheet.hairlineWidth : shape.outline,
-    borderWidth: shape.panel === 'sticker' || shape.panel === 'ticks' ? shape.outline : 0,
+    borderWidth: shape.panel === 'sticker' || shape.panel === 'ticks' || shape.panel === 'bracket' ? shape.outline : 0,
     borderColor: shape.panel === 'sticker' ? colors.outline : colors.border,
     borderRadius: radius.l,
     ...flatShadow(),
@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
   panelContent: { padding: spacing.l, paddingTop: spacing.m, gap: spacing.m },
   handle: { alignSelf: 'center', width: 40, height: 4, borderRadius: 2, backgroundColor: colors.border, marginBottom: spacing.s },
   header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: spacing.l, gap: spacing.s },
-  title: { ...voice.calmHeading, flex: 1, color: colors.text, fontSize: shape.panel === 'ticks' ? type.m : shape.panel === 'clip' ? type.xl : type.l + 2 },
+  title: { ...voice.calmHeading, flex: 1, color: colors.text, fontSize: shape.panel === 'ticks' || shape.panel === 'bracket' ? type.m : shape.panel === 'clip' ? type.xl : type.l + 2 },
   content: { padding: spacing.l, paddingTop: spacing.s, gap: spacing.m },
   close: { width: touch, height: touch, alignItems: 'center', justifyContent: 'center' },
   closeLabel: { color: colors.text, fontSize: type.m, fontWeight: '700', fontFamily: voice.bodyStrong.fontFamily },
