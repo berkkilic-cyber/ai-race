@@ -29,6 +29,8 @@ export interface SheetProps {
    * a tap on its scrim. Android back closes every sheet.
    */
   dismissOnOutsidePress?: boolean;
+  /** Ref (callback) for the panel view, e.g. to register it as a tutorial target. */
+  panelRef?: (node: unknown) => void | (() => void);
   testID?: string;
 }
 
@@ -45,7 +47,7 @@ export function sheetPanelWidth(windowWidth: number): number {
  *   panel), unless `dismissOnOutsidePress` is off, as for the map's region panel.
  * - Narrow (portrait): a bottom sheet over a light scrim; tapping the scrim closes it.
  */
-export function Sheet({ visible, onClose, title, headerRight, children, maxHeight = '70%', safeArea = false, dismissOnOutsidePress = true, testID }: SheetProps) {
+export function Sheet({ visible, onClose, title, headerRight, children, maxHeight = '70%', safeArea = false, dismissOnOutsidePress = true, panelRef, testID }: SheetProps) {
   const { width, height } = useWindowDimensions();
   const insets = useInsets();
   useBackToClose(visible, onClose);
@@ -66,6 +68,8 @@ export function Sheet({ visible, onClose, title, headerRight, children, maxHeigh
           <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel={t('ui.sheet.close')} testID="sheet-outside" {...NOT_FOCUSABLE} />
         ) : null}
         <Animated.View
+          ref={panelRef as never}
+          collapsable={false}
           entering={SlideInRight.duration(200)}
           style={[styles.panel, { width: sheetPanelWidth(width) + edge.right, paddingTop: edge.top, paddingRight: edge.right, paddingBottom: edge.bottom }]}
           testID={testID}
@@ -86,7 +90,7 @@ export function Sheet({ visible, onClose, title, headerRight, children, maxHeigh
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
       <Pressable style={styles.scrim} onPress={onClose} accessibilityRole="button" accessibilityLabel="close" />
-      <View style={[styles.sheet, { maxHeight, paddingBottom: edge.bottom, paddingLeft: edge.left, paddingRight: edge.right }]} testID={testID}>
+      <View ref={panelRef as never} collapsable={false} style={[styles.sheet, { maxHeight, paddingBottom: edge.bottom, paddingLeft: edge.left, paddingRight: edge.right }]} testID={testID}>
         <View style={styles.handle} />
         {title || headerRight ? (
           <View style={styles.header}>
