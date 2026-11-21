@@ -38,7 +38,8 @@ export const FitLabel = memo(function FitLabel({ options, style, testID }: FitLa
   if (!known) pick = 0;
   else {
     for (let i = 0; i < options.length; i++) {
-      if (widths[i] <= box + 0.5) {
+      // A point of slack: sub-pixel rounding must not leave a label that ellipsizes.
+      if (widths[i] + 1 <= box) {
         pick = i;
         break;
       }

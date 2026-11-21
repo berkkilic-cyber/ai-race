@@ -5,6 +5,7 @@ import { useShallow } from 'zustand/react/shallow';
 
 import { getComputeRequired, getNodeCost, type TreeId } from '@/engine';
 
+import { haveText, needText } from '../explain/model';
 import { useModelStatus } from '../explain/useModelStatus';
 import { t } from '../i18n';
 import { useGameStore } from '../store/game';
@@ -143,9 +144,9 @@ function TreeGraphImpl({ tree, flash, onSelect, horizontal, selected, insetRight
             rect={rect}
             flashKey={flash?.nodeId === node.id ? flash.key : 0}
             onPress={onSelect}
-            computeNeed={node.capabilityLevel !== undefined ? getComputeRequired(pack, node.capabilityLevel) : undefined}
+            computeNeed={node.capabilityLevel !== undefined ? needText(getComputeRequired(pack, node.capabilityLevel)) : undefined}
             computeShort={node.capabilityLevel !== undefined && getComputeRequired(pack, node.capabilityLevel) > compute}
-            computeHave={compute}
+            computeHave={haveText(compute)}
           />
         );
       })}

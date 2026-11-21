@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 
 import { explainIncome, fmtIncome, type IncomeKind } from '../../explain/income';
-import { lineStyles, Note, SectionTitle, ValueLine } from '../../explain/Lines';
+import { lineStyles, SectionTitle, ValueLine } from '../../explain/Lines';
 import { fmtPerDay } from '../../format';
 import { t } from '../../i18n';
 import { Icon } from '../../icons';
@@ -44,27 +44,22 @@ export function IncomeSheetBody({ kind }: { kind: IncomeKind }) {
   return (
     <View style={styles.body} testID={`income-sheet-${kind}`}>
       <View style={styles.hero}>
-        <Icon name={kind} size={30} color={colors.text} accent={colors.player} />
-        <View style={styles.flex}>
-          <Text style={lineStyles.dim}>{t('ui.explain.income.total')}</Text>
-          <Text style={[styles.big, { color: v.positive ? colors.goodText : colors.bad }]}>{fmtPerDay(v.total)}</Text>
-        </View>
+        <Icon name={kind} size={22} color={colors.text} accent={colors.player} />
+        <Text style={lineStyles.dim}>{t('ui.explain.income.total')}</Text>
+        <Text style={[styles.big, { color: v.positive ? colors.goodText : colors.bad }]}>{fmtPerDay(v.total)}</Text>
       </View>
       <View style={styles.rows}>
         {v.rows.map((r) => (
           <ValueLine key={r.key} icon={r.icon} text={r.text} value={r.amount} tone={r.good ? 'good' : 'bad'} />
         ))}
       </View>
-      <SectionTitle>{t('ui.explain.income.biggestCost')}</SectionTitle>
-      {v.cost ? <ValueLine icon="datacentre" text={v.cost.text} value={fmtPerDay(v.cost.amount)} tone="bad" accent={colors.bad} /> : <Text style={lineStyles.dim}>{t('ui.explain.income.noCost')}</Text>}
+      <Text style={lineStyles.dim}>{v.cost ? t('ui.explain.income.biggestCostIs', { what: v.cost.text, amount: fmtPerDay(v.cost.amount) }) : t('ui.explain.income.noCost')}</Text>
       {v.tips.length > 0 ? <SectionTitle>{t('ui.explain.income.tips')}</SectionTitle> : null}
       {v.tips.map((tip) => (
-        <Note key={tip.key} testID={`income-tip-${tip.key}`}>
-          <View style={styles.tip}>
-            <Icon name={tip.icon} size={20} color={colors.text} accent={colors.player} />
-            <Text style={[lineStyles.body, styles.flex]}>{tip.text}</Text>
-          </View>
-        </Note>
+        <View key={tip.key} style={styles.tip} testID={`income-tip-${tip.key}`}>
+          <Icon name={tip.icon} size={20} color={colors.text} accent={colors.player} />
+          <Text style={[lineStyles.body, styles.flex]}>{tip.text}</Text>
+        </View>
       ))}
       <Text style={lineStyles.dim}>{t(`ui.explain.income.spend.${kind}`)}</Text>
     </View>
@@ -74,8 +69,8 @@ export function IncomeSheetBody({ kind }: { kind: IncomeKind }) {
 const styles = StyleSheet.create({
   body: { gap: spacing.s },
   flex: { flex: 1 },
-  hero: { flexDirection: 'row', alignItems: 'center', gap: spacing.m },
-  big: { ...voice.calmNumber, fontSize: type.l + 2 },
-  rows: { gap: 2 },
-  tip: { flexDirection: 'row', alignItems: 'center', gap: spacing.s },
+  hero: { flexDirection: 'row', alignItems: 'baseline', gap: spacing.s },
+  big: { ...voice.calmNumber, fontSize: type.l },
+  rows: { gap: 0 },
+  tip: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.s, borderLeftWidth: 2, borderColor: colors.player, paddingLeft: spacing.s, paddingVertical: 2 },
 });

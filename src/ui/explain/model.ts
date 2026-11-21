@@ -16,6 +16,16 @@ import {
   type NodeDef,
 } from '@/engine';
 
+/** Compute a tier needs, as shown: rounded up, so "needs 42" never reads as met by 41.7. */
+export function needText(compute: number): string {
+  return String(Math.ceil(compute - 1e-9));
+}
+
+/** Compute the player has, as shown: rounded down. */
+export function haveText(compute: number): string {
+  return String(Math.floor(compute + 1e-9));
+}
+
 export interface TierRow {
   tier: number;
   nodeId: string;

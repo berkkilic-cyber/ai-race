@@ -226,7 +226,7 @@ export function describeNode(node: NodeDef, options: NodeDescribeOptions = {}): 
   const lines: DescribedLine[] = [];
   if (node.capabilityLevel !== undefined) {
     const need = options.computeFor?.(node.capabilityLevel);
-    const params = { model: t('term.capability'), tier: node.capabilityLevel, compute: need !== undefined ? fmtCompact(need) : '' };
+    const params = { model: t('term.capability'), tier: node.capabilityLevel, compute: need !== undefined ? String(Math.ceil(need - 1e-9)) : '' };
     lines.push({ text: t(need !== undefined ? 'ui.explain.tierNeeds' : 'ui.explain.tier', params), tone: 'good' });
   }
   for (const channel of node.channels ?? []) lines.push(describeChannel(channel, options.channels));

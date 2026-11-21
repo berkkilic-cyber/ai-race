@@ -36,6 +36,15 @@ function RivalBody({ detail }: { detail: RivalDetail }) {
         </View>
       </View>
 
+      <SectionTitle>{t('ui.race.detail.buyout')}</SectionTitle>
+      <Note tone={detail.buyout.ok ? 'info' : 'bad'} testID="rival-buyout">
+        <View style={styles.line}>
+          <Icon name={detail.buyout.ok ? 'check' : 'lock'} size={16} color={detail.buyout.ok ? colors.good : colors.bad} />
+          <Text style={[lineStyles.body, styles.flex]}>{detail.buyout.text}</Text>
+        </View>
+      </Note>
+      {detail.buyout.ok ? <Button label={t('ui.race.detail.buy', { price: detail.buyout.price })} variant="primary" onPress={buy} testID="rival-buy" /> : null}
+
       <SectionTitle>{t('ui.race.detail.strong')}</SectionTitle>
       {detail.strongIn.length === 0 ? <Text style={lineStyles.dim}>{t('ui.race.detail.noRegions')}</Text> : null}
       <View style={styles.chips}>
@@ -61,15 +70,6 @@ function RivalBody({ detail }: { detail: RivalDetail }) {
           <Text style={[lineStyles.body, styles.flex]}>{line}</Text>
         </View>
       ))}
-
-      <SectionTitle>{t('ui.race.detail.buyout')}</SectionTitle>
-      <Note tone={detail.buyout.ok ? 'info' : 'bad'} testID="rival-buyout">
-        <View style={styles.line}>
-          <Icon name={detail.buyout.ok ? 'check' : 'lock'} size={16} color={detail.buyout.ok ? colors.good : colors.bad} />
-          <Text style={[lineStyles.body, styles.flex]}>{detail.buyout.text}</Text>
-        </View>
-      </Note>
-      {detail.buyout.ok ? <Button label={t('ui.race.detail.buy', { price: detail.buyout.price })} variant="primary" onPress={buy} testID="rival-buy" /> : null}
     </View>
   );
 }

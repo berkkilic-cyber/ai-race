@@ -18,25 +18,28 @@ import { useGameStore, type GameStore } from '../store/game';
 import { PanelDeco, Stripes } from '../components/Deco';
 import { colors, flatShadow, layout, radius, shape, spacing, voice } from '../theme';
 import { useTutorialTarget } from '../tutorial/targets';
+import { haveText, needText } from '../explain/model';
 import { isStuck, useModelStatus } from '../explain/useModelStatus';
 import { Icon, type IconName } from '../icons';
 import { useStripPanel, type StripPanel } from './panels/store';
-import { FitLabel } from './FitLabel';
 import { RaceMeter } from './RaceMeter';
 import { wideShellLayout } from './shellLayout';
 import { StripMeter } from './StripMeter';
 
-/** Smallest meter width that still shows a full label like "Regulation" at the strip's label size. */
-const METER_MIN = 54;
+/**
+ * Room the three meters always keep: two plain meters (an abbreviated label over a track and
+ * "100%") and the race bar (a track and "100 vs 100%"), with the gaps between them.
+ */
+const METERS_MIN = 274;
 
 /** Below this strip width the cash income sub-label is dropped so nothing wraps or clips. */
 const ROOM_FOR_INCOME = 880;
 
-/** Below this strip width the resource figures drop their icons (labels and numbers stay). */
-const ROOM_FOR_ICONS = 700;
-
-/** Room for the model readout's warning label ("owns 5 · needs compute"); it abbreviates to "owns 5" below that. */
-const WARN_LABEL_WIDTH = 104;
+/**
+ * From this strip width the resource figures carry their icons. Below it (phones in landscape)
+ * the room goes to the labels and numbers, which must never clip.
+ */
+const ROOM_FOR_ICONS = 860;
 
 /** Hazard: the strip stands on a thin band of warning stripes. */
 const TAPE = 4;
@@ -107,7 +110,7 @@ export function TopStrip({ right }: { right?: ReactNode }) {
           <HypeStat icons={icons} />
           <CashStat showIncome={showIncome} icons={icons} />
           <ComputeStat icons={icons} />
-          <TierStat icons={icons} />
+          <TierStat icons={icons} roomy={showIncome} />
         </View>
       </Animated.View>
       <View style={styles.rule} />
@@ -203,11 +206,12 @@ function ComputeStat({ icons }: { icons: boolean }) {
  * compute lets them run, the label says so ("owns 5 · needs compute") in the bad colour and a
  * badge marks the figure; tapping opens the explanation with the numbers.
  */
-function TierStat({ icons }: { icons: boolean }) {
+function TierStat({ icons, roomy }: { icons: boolean; roomy: boolean }) {
   const m = useModelStatus();
   const stuck = isStuck(m);
-  const label = stuck ? [t('ui.strip.owns', { tier: m.owned }), t('ui.strip.ownsShort', { tier: m.owned })] : [t('term.capability')];
-  const a11y = stuck ? `${fmtTier(m.running)}. ${t('ui.explain.model.stuck', { owned: m.owned, required: m.required, compute: m.compute })}` : fmtTier(m.running);
+  // "owns 5 · needs compute" where the strip has room, "owns 5" and the badge where it does not.
+  const label = stuck ? t(roomy ? 'ui.strip.owns' : 'ui.strip.ownsShort', { tier: m.owned }) : t('term.capability');
+  const a11y = stuck ? `${fmtTier(m.running)}. ${t('ui.explain.model.stuck', { owned: m.owned, required: needText(m.required), compute: haveText(m.compute) })}` : fmtTier(m.running);
   return (
     <Stat label={label} icon={icons ? 'tier' : undefined} panel="model" target="shell.tier" testID="res-tier" a11y={a11y} warn={stuck}>
       <View style={styles.valueRow}>
@@ -228,8 +232,7 @@ function MeterSlot({ meter, ...rest }: { meter: keyof typeof meterSelectors; lab
 }
 
 interface StatProps {
-  /** One label, or candidates longest first (the first that fits is shown). */
-  label: string | readonly string[];
+  label: string;
   a11y: string;
   children: ReactNode;
   icon?: IconName;
@@ -244,7 +247,6 @@ interface StatProps {
 function Stat({ label, a11y, children, icon, panel, warn, target, testID }: StatProps) {
   const tutorialRef = useTutorialTarget(target ?? null);
   const show = useStripPanel((s) => s.show);
-  const labels = typeof label === 'string' ? [label] : label;
   const labelStyle = [styles.statLabel, warn && styles.statWarn];
   return (
     <Pressable
@@ -254,20 +256,14 @@ function Stat({ label, a11y, children, icon, panel, warn, target, testID }: Stat
       onPress={panel ? () => show(panel) : undefined}
       disabled={!panel}
       accessibilityRole={panel ? 'button' : undefined}
-      accessibilityLabel={`${labels[0]} ${a11y}`}
+      accessibilityLabel={`${label} ${a11y}`}
       accessibilityHint={panel ? t('ui.strip.tapHint') : undefined}
     >
       {icon ? <Icon name={icon} size={16} color={colors.dim} accent={warn ? colors.bad : colors.player} /> : null}
       <View style={styles.statText}>
-        {labels.length > 1 ? (
-          <View style={styles.warnBox}>
-            <FitLabel options={labels} style={labelStyle} />
-          </View>
-        ) : (
-          <Text style={labelStyle} numberOfLines={1}>
-            {labels[0]}
-          </Text>
-        )}
+        <Text style={labelStyle} numberOfLines={1}>
+          {label}
+        </Text>
         {children}
       </View>
     </Pressable>
@@ -285,7 +281,8 @@ const styles = StyleSheet.create({
     paddingBottom: shape.composure === 'tape' ? TAPE : 0,
     backgroundColor: colors.chrome,
   },
-  brand: { flexDirection: 'row', alignItems: 'center', gap: 7, flexShrink: 1, minWidth: 90, maxWidth: 196 },
+  // Wide enough that the day number ("Day 3600") never clips; the lab name gives way first.
+  brand: { flexDirection: 'row', alignItems: 'center', gap: 7, flexShrink: 1, minWidth: 104, maxWidth: 196 },
   // Blueprint: the lab sits in a drawing's title block.
   brandBox: (shape.panel === 'ticks' ? { borderWidth: shape.hairline, borderColor: colors.border, paddingHorizontal: 6, paddingVertical: 2, marginVertical: 4, alignSelf: 'stretch' } : {}) as ViewStyle,
   title: { flexShrink: 1, minWidth: 0 },
@@ -301,8 +298,6 @@ const styles = StyleSheet.create({
   statText: { justifyContent: 'center', gap: 1 },
   pressed: { opacity: 0.6 },
   statWarn: { color: colors.bad },
-  // The warning label may be wider than the figure but never wider than this: it abbreviates first.
-  warnBox: { width: WARN_LABEL_WIDTH, flexDirection: 'row' },
   badge: { width: 13, height: 13, borderRadius: 7, backgroundColor: colors.alarm, alignItems: 'center', justifyContent: 'center', alignSelf: 'center' },
   badgeText: { ...voice.bodyStrong, color: colors.newsPaper, fontSize: 10, lineHeight: 12 },
   statLabel: { ...voice.calmLabel, color: colors.dim, fontSize: 9.5, lineHeight: 11, letterSpacing: voice.calmLabel.letterSpacing },
@@ -312,7 +307,7 @@ const styles = StyleSheet.create({
   sub: { ...voice.body, fontSize: 10, fontVariant: ['tabular-nums'] },
   // The lab name gives way before the meters do.
   statsBox: { justifyContent: 'center', flexShrink: 0 },
-  metersBox: { flex: 1, minWidth: 3 * METER_MIN + 2 * spacing.s, justifyContent: 'center' },
+  metersBox: { flex: 1, minWidth: METERS_MIN, justifyContent: 'center' },
   meters: { flexDirection: 'row', gap: spacing.s + 2 },
   tape: { position: 'absolute', left: 0, right: 0, bottom: 0 },
   composureRule: { position: 'absolute', left: 0, right: 0, bottom: shape.composure === 'tape' ? TAPE : 0 },

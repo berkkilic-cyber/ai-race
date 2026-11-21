@@ -25,12 +25,12 @@ export interface NodeTileProps {
   /** Changes to a new non-zero value to play the purchase highlight. */
   flashKey: number;
   onPress: (nodeId: string) => void;
-  /** Model nodes: compute the tier needs to run. */
-  computeNeed?: number;
+  /** Model nodes: compute the tier needs to run, as shown. */
+  computeNeed?: string;
   /** The player has less compute than `computeNeed`. */
   computeShort?: boolean;
-  /** The player's compute (for the accessibility label). */
-  computeHave?: number;
+  /** The player's compute as shown (for the accessibility label). */
+  computeHave?: string;
 }
 
 export function priceText(hype: number, cash: number): string {
@@ -39,7 +39,7 @@ export function priceText(hype: number, cash: number): string {
   return parts.join(' + ');
 }
 
-function NodeTileImpl({ nodeId, name, status, costHype, costCash, accent, rect, flashKey, onPress, computeNeed, computeShort = false, computeHave = 0 }: NodeTileProps) {
+function NodeTileImpl({ nodeId, name, status, costHype, costCash, accent, rect, flashKey, onPress, computeNeed, computeShort = false, computeHave = '0' }: NodeTileProps) {
   const flash = useSharedValue(0);
   const buyable = status === 'buyable';
   // The glow breathes on the shell's shared ambient clock (still off screen, paused or with reduced motion).

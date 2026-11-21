@@ -20,7 +20,7 @@ import type { IconName } from '../icons';
 import { fmtCash, fmtCompact } from '../format';
 import { t } from '../i18n';
 import { describeModifier } from './describe';
-import { modelFacts, ownsMoreThanRuns } from './model';
+import { modelFacts, needText, ownsMoreThanRuns } from './model';
 
 export type IncomeKind = 'hype' | 'cash';
 
@@ -149,7 +149,7 @@ function launchTip(state: GameState, pack: ContentPack, labId: string, kind: Inc
 function modelTips(state: GameState, pack: ContentPack, labId: string): IncomeTip[] {
   const facts = modelFacts(state, pack, labId);
   if (ownsMoreThanRuns(facts)) {
-    return [{ key: 'model-stuck', text: t('ui.explain.tip.modelStuck', { owned: facts.owned, running: facts.running, more: fmtCompact(facts.shortfall) }), icon: 'compute' }];
+    return [{ key: 'model-stuck', text: t('ui.explain.tip.modelStuck', { owned: facts.owned, running: facts.running, more: needText(facts.shortfall) }), icon: 'compute' }];
   }
   const next = facts.tiers.find((tier) => !tier.owned);
   if (!next) return [];
@@ -157,7 +157,7 @@ function modelTips(state: GameState, pack: ContentPack, labId: string): IncomeTi
   if (!node) return [];
   const price = getNodeCost(state, pack, labId, node.id);
   const key = next.required > facts.compute ? 'ui.explain.tip.nextModelCompute' : 'ui.explain.tip.nextModel';
-  return [{ key: 'model-next', text: t(key, { node: t(node.nameKey), tier: next.tier, price: fmtCompact(price.hype), compute: fmtCompact(next.required) }), icon: node.id as IconName }];
+  return [{ key: 'model-next', text: t(key, { node: t(node.nameKey), tier: next.tier, price: fmtCompact(price.hype), compute: needText(next.required) }), icon: node.id as IconName }];
 }
 
 /** Hype or Cash: the lines of today's income, the biggest cost and a few tips. */

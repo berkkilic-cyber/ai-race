@@ -9,11 +9,11 @@ import { useGameStore, type GameStore } from '../store/game';
 export interface ModelStatus {
   running: number;
   owned: number;
-  /** Whole compute units. */
+  /** Compute now (to two decimals, so tiny float noise does not re-render). */
   compute: number;
   /** Compute needed for the highest owned tier. */
   required: number;
-  /** Compute missing for the highest owned tier (rounded up). */
+  /** Compute missing for the highest owned tier. */
   shortfall: number;
 }
 
@@ -27,9 +27,9 @@ export function selectModelStatus(s: GameStore): ModelStatus {
   return {
     running: getCapabilityLevel(state, s.pack, id),
     owned,
-    compute: Math.floor(getCompute(state, s.pack, id)),
+    compute: Math.round(getCompute(state, s.pack, id) * 100) / 100,
     required: owned > 0 ? getComputeRequired(s.pack, owned) : 0,
-    shortfall: Math.ceil(getComputeShortfall(state, s.pack, id)),
+    shortfall: getComputeShortfall(state, s.pack, id),
   };
 }
 

@@ -35,7 +35,8 @@ function ChoiceInfoBody({ choice, state, pack }: { choice: EventChoiceDef; state
   const info = useMemo(() => explainChoice(state, pack, choice), [state, pack, choice]);
   return (
     <View style={styles.body}>
-      {info.blocker ? (
+      {/* The first thing in the way, unless it is already the (only) requirement listed below. */}
+      {info.blocker && !info.requirements.some((r) => !r.met && r.text === info.blocker) ? (
         <View style={styles.blocked} testID="choice-info-blocker">
           <Text style={lineStyles.bad}>{info.blocker}</Text>
         </View>

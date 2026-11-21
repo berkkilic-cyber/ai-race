@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { haveText, needText } from '../explain/model';
 import { isStuck, useModelStatus, useNudgeStore } from '../explain/useModelStatus';
 import { t } from '../i18n';
 import { Icon } from '../icons';
@@ -21,7 +22,7 @@ export function ModelNudge() {
     <View style={styles.box} testID="model-nudge" accessibilityRole="alert">
       <Icon name="compute" size={20} color={colors.bad} accent={colors.bad} />
       <Text style={styles.text} numberOfLines={2}>
-        {t('ui.trees2.nudge', { owned: m.owned, running: m.running, required: m.required, compute: m.compute })}
+        {t('ui.trees2.nudge', { owned: m.owned, running: m.running, required: needText(m.required), compute: haveText(m.compute) })}
       </Text>
       <Pressable onPress={() => show('model')} style={({ pressed }) => [styles.more, pressed && styles.pressed]} accessibilityRole="button" testID="model-nudge-more">
         <Text style={styles.moreText}>{t('ui.trees2.nudgeMore')}</Text>

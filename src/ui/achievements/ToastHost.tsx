@@ -8,7 +8,7 @@ import { useInsets } from '../hooks/useInsets';
 import { wideShellLayout } from '../shell/shellLayout';
 import { useGameStore } from '../store/game';
 import { useTutorialStore } from '../tutorial/store';
-import { colors, layer, radius, spacing, type, voice } from '../theme';
+import { colors, layer, layout, radius, spacing, type, voice } from '../theme';
 import { currentToast, dismissToast, EMPTY_QUEUE, enqueueToasts, newAchievementIds, type Toast, type ToastQueue } from './queue';
 
 /** How long a toast stays up. */
@@ -29,7 +29,8 @@ function AchievementToast({ toast, onDone, wide }: { toast: Toast; onDone: (key:
     };
   }, [toast.key, onDone, v]);
 
-  const style = useAnimatedStyle(() => ({ opacity: v.get(), transform: [{ translateY: (1 - v.get()) * -80 }] }));
+  // Wide: drops in from under the top strip; narrow: rises from above the tab bar.
+  const style = useAnimatedStyle(() => ({ opacity: v.get(), transform: [{ translateY: (1 - v.get()) * (wide ? -24 : 60) }] }));
   if (!def) return null;
   const secret = def.secret;
   return (
@@ -96,11 +97,19 @@ export function ToastHost() {
   );
 }
 
+/**
+ * Where the toast sits: never over the resource figures and meters. Wide: just under the top
+ * strip, centred in the main column. Narrow (the header is three rows of numbers): at the
+ * bottom, above the ticker and the tab bar.
+ */
 function hostFrame(wide: boolean, width: number, height: number, insets: ReturnType<typeof useInsets>) {
-  if (!wide) return { top: insets.top + spacing.s, left: insets.left + spacing.m, right: insets.right + spacing.m };
+  if (!wide) return { bottom: insets.bottom + NARROW_BOTTOM, left: insets.left + spacing.m, right: insets.right + spacing.m };
   const main = wideShellLayout(width, height, insets).main;
-  return { top: insets.top + spacing.xs, left: main.left + spacing.s, right: main.right + spacing.s };
+  return { top: main.top + layout.stripHeight + spacing.s, left: main.left + spacing.s, right: main.right + spacing.s };
 }
+
+/** Narrow mode: room for the tab bar and the ticker under the toast. */
+const NARROW_BOTTOM = 44 + 28 + spacing.l;
 
 const styles = StyleSheet.create({
   // Above the shell, below the tutorial and the event card (and hidden while a card is up).
@@ -108,8 +117,8 @@ const styles = StyleSheet.create({
   toast: { width: '100%', maxWidth: 440, borderRadius: radius.l, borderWidth: 2, backgroundColor: colors.raised },
   normal: { borderColor: colors.player },
   secret: { borderColor: colors.info, borderStyle: 'dashed', backgroundColor: colors.surface },
-  toastWide: { maxWidth: 380 },
-  innerWide: { paddingVertical: spacing.s },
+  toastWide: { maxWidth: 340 },
+  innerWide: { paddingVertical: 6, gap: spacing.s },
   inner: { flexDirection: 'row', alignItems: 'center', gap: spacing.m, padding: spacing.m },
   badge: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
   badgeNormal: { backgroundColor: colors.player },

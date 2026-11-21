@@ -19,6 +19,10 @@ import { colors } from '@/ui/theme';
 import { TreesTabBadge } from '@/ui/trees';
 import { TutorialHost } from '@/ui/tutorial';
 
+// Web splits routes into chunks: load the other tabs' code now, quietly, so switching tabs
+// never makes the router require a chunk that is not there yet (see app/index.tsx).
+void Promise.all([import('./trees'), import('./news'), import('./race')]).catch(() => undefined);
+
 /**
  * Game shell: header, tab content, ticker, tabs, event modal, game loop.
  * Wide (landscape): left tab rail, one top strip, ticker strip under the content.

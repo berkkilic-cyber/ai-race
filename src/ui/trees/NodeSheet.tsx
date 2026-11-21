@@ -7,6 +7,7 @@ import { canApply, getComputeRequired, getNodeCost, type ActionFailure, type Nod
 import { Button } from '../components/Button';
 import { Sheet } from '../components/Sheet';
 import { describeNode } from '../explain/describe';
+import { haveText, needText } from '../explain/model';
 import { useModelStatus } from '../explain/useModelStatus';
 import { Icon } from '../icons';
 import { useTutorialTarget } from '../tutorial/targets';
@@ -92,7 +93,8 @@ function NodeSheetBody({ node, justBought, onClose, onBuy }: { node: NodeDef; ju
   // Landscape side panel is short: cost and Buy go right under the name so they never need scrolling.
   const wide = useWide();
 
-  const costView = !owned ? (
+  // While confirming, the confirmation carries the numbers: the cost and compute rows step aside so its buttons stay in view.
+  const costView = !owned && !confirming ? (
     <View style={styles.costRow}>
       <View style={styles.flex}>
         <Text style={styles.sectionTitle}>{t('ui.trees.cost')}</Text>
@@ -121,7 +123,7 @@ function NodeSheetBody({ node, justBought, onClose, onBuy }: { node: NodeDef; ju
     <View style={styles.confirm} testID="node-buy-confirm">
       <Text style={styles.confirmTitle}>{t('ui.trees2.confirmTitle')}</Text>
       <Text style={styles.confirmBody}>
-        {t('ui.trees2.confirmBody', { node: t(node.nameKey), compute: need, have: model.compute, running: model.running })}
+        {t('ui.trees2.confirmBody', { node: t(node.nameKey), compute: needText(need), have: haveText(model.compute), running: model.running })}
       </Text>
       <View style={styles.confirmRow}>
         <Button label={t('ui.trees2.cancel')} variant="secondary" onPress={() => setConfirming(false)} style={styles.flex} testID="node-buy-cancel" />
@@ -152,12 +154,12 @@ function NodeSheetBody({ node, justBought, onClose, onBuy }: { node: NodeDef; ju
 
   const runRow =
     tier !== undefined ? (
-      <View style={[styles.runRow, { borderColor: cantRun ? colors.bad : colors.border }]} testID="node-compute" accessibilityLabel={t('ui.trees2.computeA11y', { compute: need, have: model.compute })}>
+      <View style={[styles.runRow, { borderColor: cantRun ? colors.bad : colors.border }]} testID="node-compute" accessibilityLabel={t('ui.trees2.computeA11y', { compute: needText(need), have: haveText(model.compute) })}>
         <Icon name="compute" size={18} color={cantRun ? colors.bad : colors.text} accent={cantRun ? colors.bad : colors.info} />
         <View style={styles.flex}>
-          <Text style={[styles.runText, { color: cantRun ? colors.bad : colors.text }]}>{t('ui.trees2.runRow', { compute: need })}</Text>
+          <Text style={[styles.runText, { color: cantRun ? colors.bad : colors.text }]}>{t('ui.trees2.runRow', { compute: needText(need) })}</Text>
           <Text style={[styles.have, cantRun && { color: colors.bad }]}>
-            {cantRun ? t('ui.trees2.runShort', { have: model.compute, more: need - model.compute }) : t('ui.trees2.runHave', { have: model.compute })}
+            {cantRun ? t('ui.trees2.runShort', { have: haveText(model.compute), more: needText(need - model.compute) }) : t('ui.trees2.runHave', { have: haveText(model.compute) })}
           </Text>
         </View>
       </View>
@@ -188,7 +190,7 @@ function NodeSheetBody({ node, justBought, onClose, onBuy }: { node: NodeDef; ju
         </View>
         <Text style={[styles.name, styles.flex]}>{t(node.nameKey)}</Text>
       </View>
-      {runRow}
+      {confirming ? null : runRow}
       {wide ? purchase : null}
       <Text style={styles.desc}>{t(node.descKey)}</Text>
 

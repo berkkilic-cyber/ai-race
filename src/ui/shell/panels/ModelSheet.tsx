@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 
-import { computeUpgrades, modelFacts, ownsMoreThanRuns } from '../../explain/model';
+import { computeUpgrades, haveText, modelFacts, needText, ownsMoreThanRuns } from '../../explain/model';
 import { lineStyles, Note, SectionTitle } from '../../explain/Lines';
 import { fmtCash, fmtCompact } from '../../format';
 import { t } from '../../i18n';
@@ -11,10 +11,9 @@ import { colors, radius, shape, spacing, tabular, type, voice } from '../../them
 interface ModelView {
   running: number;
   owned: number;
-  compute: number;
-  required: number;
-  shortfall: number;
-  tiers: { tier: number; nodeId: string; name: string; required: number; owned: boolean; running: boolean }[];
+  compute: string;
+  required: string;
+  tiers: { tier: number; nodeId: string; name: string; required: string; short: boolean; owned: boolean; running: boolean }[];
   sources: { nodeId: string; text: string }[];
 }
 
@@ -25,12 +24,11 @@ function selectView(s: GameStore): string {
   const view: ModelView = {
     running: facts.running,
     owned: facts.owned,
-    compute: Math.floor(facts.compute),
-    required: facts.required,
-    shortfall: Math.ceil(facts.shortfall),
+    compute: haveText(facts.compute),
+    required: needText(facts.required),
     tiers: facts.tiers.map((row) => {
       const node = s.pack.nodes.find((n) => n.id === row.nodeId);
-      return { ...row, name: node ? t(node.nameKey) : row.nodeId };
+      return { ...row, required: needText(row.required), short: row.required > facts.compute, name: node ? t(node.nameKey) : row.nodeId };
     }),
     sources: computeUpgrades(st, s.pack, st.playerLabId)
       .filter((c) => c.open)
@@ -56,11 +54,9 @@ export function ModelSheetBody() {
   return (
     <View style={styles.body} testID="model-sheet">
       <View style={styles.hero}>
-        <Icon name="tier" size={30} color={colors.text} accent={colors.player} />
-        <View style={styles.flex}>
-          <Text style={styles.big}>{t('ui.strip.tier', { tier: v.running })}</Text>
-          <Text style={lineStyles.dim}>{t('ui.explain.model.youHave', { compute: v.compute })}</Text>
-        </View>
+        <Icon name="tier" size={22} color={colors.text} accent={colors.player} />
+        <Text style={styles.big}>{t('ui.strip.tier', { tier: v.running })}</Text>
+        <Text style={[lineStyles.dim, styles.flex]}>{t('ui.explain.model.youHave', { compute: v.compute })}</Text>
       </View>
       {stuck ? (
         <Note tone="bad" testID="model-stuck">
@@ -81,14 +77,14 @@ export function ModelSheetBody() {
       <SectionTitle>{t('ui.explain.model.tiers')}</SectionTitle>
       <View style={styles.table}>
         {v.tiers.map((row) => {
-          const short = row.required > v.compute;
+          const short = row.short;
           const state = row.running ? 'stateRunning' : row.owned ? 'stateIdle' : 'stateNot';
           return (
             <View key={row.nodeId} style={[styles.tierRow, row.running && styles.tierRunning]} testID={`model-tier-${row.tier}`}>
               <Icon name={row.nodeId} size={20} color={row.owned ? colors.text : colors.dim} accent={row.running ? colors.player : colors.dim} />
               <View style={styles.flex}>
                 <Text style={[styles.tierName, !row.owned && { color: colors.dim }]} numberOfLines={1}>
-                  {`${t('ui.explain.model.tierRow', { tier: row.tier })} · ${row.name}`}
+                  {row.name}
                 </Text>
                 <Text style={[styles.tierState, row.owned && !row.running && { color: colors.bad }]}>{t(`ui.explain.model.${state}`)}</Text>
               </View>
@@ -119,8 +115,8 @@ export function ModelSheetBody() {
 const styles = StyleSheet.create({
   body: { gap: spacing.s },
   flex: { flex: 1 },
-  hero: { flexDirection: 'row', alignItems: 'center', gap: spacing.m },
-  big: { ...voice.calmHeading, color: colors.playerText, fontSize: type.l + 2 },
+  hero: { flexDirection: 'row', alignItems: 'center', gap: spacing.s },
+  big: { ...voice.calmHeading, color: colors.playerText, fontSize: type.l },
   table: { gap: 2 },
   tierRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.s, paddingVertical: 4, paddingHorizontal: 6, borderRadius: radius.s, borderWidth: shape.hairline, borderColor: colors.transparent },
   tierRunning: { borderColor: colors.player },

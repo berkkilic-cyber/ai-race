@@ -14,7 +14,6 @@
   "ui.explain.who.randomRival": "A random rival",
   "ui.explain.tier": "Your {model} tier {tier}",
   "ui.explain.tierNeeds": "Your {model} tier {tier}: needs {compute} compute to run",
-
   "ui.explain.channel.viral": "Spreads by word of mouth: can skip a neighbouring region",
   "ui.explain.channel.ocean": "Your model crosses oceans",
   "ui.explain.channel.strict": "Strict regulators let you in",
@@ -25,7 +24,6 @@
   "ui.explain.channel.kind.open": "Spreads more easily everywhere, rivals too",
   "ui.explain.channel.kind.clear": "Gets past {barrier}",
   "ui.explain.flag.canAcquire": "Lets you buy out rival labs",
-
   "ui.explain.fx.gain.self": "Get {amount} now",
   "ui.explain.fx.gain.other": "{who} gets {amount}",
   "ui.explain.fx.lose.self": "Lose {amount} now",
@@ -64,7 +62,6 @@
   "ui.explain.fx.dcOfflineOpen.other": "{who}'s {dataCentres} in {where} go offline",
   "ui.explain.fx.dcDestroy.self": "Your {dataCentres} in {where} are destroyed",
   "ui.explain.fx.dcDestroy.other": "{who}'s {dataCentres} in {where} are destroyed",
-
   "ui.explain.cond.fromDay": "Only from day {day} (today is day {today})",
   "ui.explain.cond.untilDay": "Only until day {day} (today is day {today})",
   "ui.explain.cond.hasNode": "Needs the {name} upgrade ({tree} tree)",
@@ -108,7 +105,6 @@
   "ui.explain.help.cash": "Cash comes from paying users; tap Cash at the top to see more",
   "ui.explain.help.dataCentres": "Build them on the map: tap a region you are in",
   "ui.explain.help.launch": "Launch there from the map",
-
   "ui.explain.income.hype.base": "Steady buzz",
   "ui.explain.income.hype.newUsers": "New users",
   "ui.explain.income.hype.modifiers": "Upgrades and effects",
@@ -126,7 +122,6 @@
   "ui.explain.tip.launch.cashLater": "More users pay more: save for {region} ({cost}, you have {cash})",
   "ui.explain.tip.upgrade": "{node} ({tree} tree, {price}): {effect}",
   "ui.explain.tip.losingCash": "Your data centres cost more than you earn: launch in wealthy regions before building more",
-
   "ui.strip.race": "AGI race",
   "ui.strip.raceShort": "Race",
   "ui.strip.raceA11y": "AGI race: you {you}, leading rival {rival} {them}",
@@ -142,7 +137,6 @@
   "ui.strip.ownsShort": "owns {tier}",
   "ui.strip.tier": "Tier {tier}",
   "ui.strip.tapHint": "Tap for details",
-
   "ui.explain.model.title": "Your model",
   "ui.explain.model.running": "You run Model {tier}.",
   "ui.explain.model.none": "You have no model yet. Buy {node} in the Capability tree to ship your first one.",
@@ -160,7 +154,6 @@
   "ui.explain.model.fromDataCentres": "Data centres: tap a region you are in on the map to build one, or upgrade one you have",
   "ui.explain.model.fromUpgrade": "{node} ({tree} tree, {price})",
   "ui.explain.model.youHave": "You have {compute} compute",
-
   "ui.explain.income.title.hype": "Where Hype comes from",
   "ui.explain.income.title.cash": "Where Cash comes from",
   "ui.explain.income.perDay": "per day",
@@ -170,7 +163,6 @@
   "ui.explain.income.tips": "How to get more",
   "ui.explain.income.spend.hype": "Spend Hype on upgrades in the Trees tab.",
   "ui.explain.income.spend.cash": "Spend Cash on launches and data centres on the map, and on some upgrades.",
-
   "ui.trees2.computeNeed": "needs {compute}",
   "ui.trees2.computeA11y": "Needs {compute} compute to run, you have {have}",
   "ui.trees2.runRow": "Needs {compute} compute to run",
@@ -183,7 +175,6 @@
   "ui.trees2.nudge": "You own Model {owned} but run Model {running}: it needs {required} compute and you have {compute}. Build or upgrade data centres on the map.",
   "ui.trees2.nudgeMore": "Details",
   "ui.trees2.nudgeDismiss": "Dismiss",
-
   "ui.events2.info": "Details",
   "ui.events2.infoA11y": "What {choice} needs and does",
   "ui.events2.requires": "Requires",
@@ -209,7 +200,6 @@
   "ui.events2.meaning.rivalsDown": "Rivals are held back: good for you",
   "ui.events2.lasting": "Also",
   "ui.events2.close": "Close",
-
   "ui.race.tab": "Race",
   "ui.race.title": "The race",
   "ui.race.howToWin": "Three ways to win",
@@ -260,5 +250,6 @@
   "ui.race.detail.needCash": "Costs {price}. You have {cash}.",
   "ui.race.detail.inactive": "{lab} is out of the race.",
   "ui.race.detail.pending": "{lab} has not entered the race yet.",
-  "ui.race.detail.bought": "You bought out {lab}."
+  "ui.race.detail.bought": "You bought out {lab}.",
+  "ui.explain.income.biggestCostIs": "Biggest cost: {what}, {amount}"
 }
