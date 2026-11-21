@@ -1,6 +1,98 @@
 # Balance
 
-## Task 12b: moments retune (current numbers)
+## Task 17: difficulty levels (current numbers)
+
+Why: the first full phone run was "easily won". The sensible bot won 45.6% at one fixed difficulty and a person plays better than the bot. Four levels now live in `src/content/packs/ai-lab/difficulties.json` (`ContentPack.difficulties`, default `frontier`); each is a balance override merged over the pack's `balance` (engine defaults ← pack ← level) plus a score multiplier. The "Task 12b" numbers below are the pack balance with no level, i.e. the game as it was.
+
+### Levers and values
+
+New `BalanceConfig` levers (neutral defaults, see `docs/ARCHITECTURE.md`): player start factors, rival entry and expansion factors, player meter gain factors, moment boost / threat weight factors and a moment lifetime factor. Existing ones used: `aiAgiFactor`, `acquireBaseCost`, `acquirePerAgi`, `dataCentreUpkeep`, `backlashPerDataCentreLevel`. Blank = the pack value (in brackets).
+
+| Lever | Sandbox | Frontier (default) | Arms Race | Hard Takeoff |
+| --- | --- | --- | --- | --- |
+| Score multiplier | ×0.75 | ×1 | ×1.35 | ×1.75 |
+| `aiAgiFactor` (1.18): rivals' AGI clock | 1.16 | | 1.31 | 1.36 |
+| `rivalEntryTickFactor`: rivals enter at entryTick × | 1.15 | 0.9 | 0.85 | 0.7 |
+| `aiExpansionFactor`: rivals launch / build × | 0.95 | 1.1 | 1.0 | 1.1 |
+| `playerStartHypeFactor` / `playerStartCashFactor` | 1.15 / 1.15 | | 0.85 / 0.85 | 0.7 / 0.7 |
+| `playerRegulationGainFactor` | 0.95 | 1.1 | 1.15 | 1.3 |
+| `playerBacklashGainFactor` | 0.95 | 1.1 | 1.25 | 1.4 |
+| `momentThreatWeightFactor` (boosts stay ×1) | 0.7 | 1.2 | 1.6 | 2.2 |
+| `momentLifetimeFactor` | 1.2 | | 0.85 | 0.7 |
+| `acquireBaseCost` (550) / `acquirePerAgi` (7) | | 600 / | 700 / | 850 / 9 |
+| `dataCentreUpkeep` (0.06) / `backlashPerDataCentreLevel` (0.003) | | | 0.08 / 0.0045 | 0.09 / 0.006 |
+
+How the levels feel: Sandbox gives later, lazier rivals, a fatter start, calmer meters and mostly friendly moments that stay longer. Frontier keeps the original rival clock but rivals arrive sooner and spread wider, meters climb 10% faster and threats are more common: the old "sensible" play no longer wins half the time. Arms Race and Hard Takeoff push the player's own Backlash and Regulation (so safety upgrades, the compliance and lobbying nodes and event choices that calm the meters are needed, not optional), make every data-centre level cost more upkeep and more backlash (cheap-power, quiet sites matter), start the player poorer, make threats the common moment and give less time to tap them, and price buy-outs higher.
+
+Not used: `dependenceShare`. Rivals that enter earlier and expand harder already squeeze the dependence path (reach policy: 54.6% dependence on Sandbox, 5.1% on Arms Race); a lower threshold on Sandbox would make it a spreading game, a higher one on Arms Race would close the path. Also, the race screen's dependence caption reads `pack.balance.dependenceShare` (`src/ui/race/logic.ts`); if a level ever overrides it, that line must read `getBalance(state, pack)` instead. The compute curve is pack-only by validation (`getComputeRequired` is called without a state).
+
+### Calibration (seed 2031, 1,000 runs per policy and level, never used for tuning)
+
+Tuning used seed 1 at 300 runs per step. Command: `npm run balance -- --runs 1000 --difficulty all --seed 2031` (24,000 runs, about 37 min on 2 shared workers); Sandbox was rerun alone after its final step (`aiAgiFactor` 1.14 → 1.16; 70.1% before).
+
+| Difficulty | Sensible win | Target | Sensible ticks p10/p50/p90 | Best focused | capability agi | reach dependence | shadow monopoly | Random | Idle | Endings (sensible) | Weakest founder | Weakest home |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Sandbox | 68.1% | 60–70% | 1587 / 2751 / 3221 | shadow 83.8% | 31.4% | 54.5% | 39.4% | 16.5% | 0.0% | 6/6 | hustler 57.7% | turkiye 56.0% |
+| Frontier | 33.6% | 30–40% | 1743 / 2820 / 3196 | shadow 51.8% | 23.2% | 16.6% | 19.6% | 3.9% | 0.0% | 6/6 | hustler 25.5% | nordics 19.0% |
+| Arms Race | 18.8% | 15–22% | 1893 / 2776 / 3002 | shadow 21.3% | 11.5% | 5.1% | 4.9% | 1.3% | 0.0% | 5/6 | hustler 9.0% | india 6.0% |
+| Hard Takeoff | 9.4% | 5–10% | 1864 / 2710 / 2909 | capability 6.2% | 6.2% | 0.4% | 0.3% | 0.1% | 0.0% | 5/6 | hustler 2.4% | brazil 3.6% |
+
+All policies per level:
+
+| Policy | Win | agi | dependence | monopoly | banned | revolt | rivalAgi | Ticks p10/p50/p90 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| sandbox/sensible | 68.1% | 27.7% | 31.9% | 8.5% | 6.4% | 10.0% | 15.5% | 1587 / 2751 / 3221 |
+| sandbox/capability | 52.8% | 31.4% | 21.3% | 0.1% | 14.2% | 14.4% | 18.6% | 1578 / 2681 / 3264 |
+| sandbox/reach | 73.2% | 14.1% | 54.5% | 4.6% | 12.6% | 7.2% | 7.0% | 1334 / 1728 / 3093 |
+| sandbox/shadow | 83.8% | 18.0% | 26.4% | 39.4% | 6.3% | 4.0% | 5.9% | 1532 / 2386 / 2941 |
+| sandbox/random | 16.5% | 1.6% | 14.9% | 0.0% | 72.4% | 10.6% | 0.5% | 1377 / 1733 / 2425 |
+| sandbox/idle | 0.0% | 0.0% | 0.0% | 0.0% | 0.0% | 0.0% | 100.0% | 2965 / 3279 / 3386 |
+| frontier/sensible | 33.6% | 24.4% | 7.1% | 2.1% | 14.1% | 11.1% | 41.2% | 1743 / 2820 / 3196 |
+| frontier/capability | 26.0% | 23.2% | 2.8% | 0.0% | 24.0% | 12.7% | 37.3% | 1678 / 2743 / 3210 |
+| frontier/reach | 31.1% | 12.5% | 16.6% | 2.0% | 24.4% | 15.1% | 29.4% | 1412 / 2555 / 3174 |
+| frontier/shadow | 51.8% | 23.1% | 9.1% | 19.6% | 15.2% | 13.9% | 19.1% | 1673 / 2571 / 3069 |
+| frontier/random | 3.9% | 1.0% | 2.9% | 0.0% | 82.6% | 11.7% | 1.8% | 1367 / 1748 / 2454 |
+| frontier/idle | 0.0% | 0.0% | 0.0% | 0.0% | 0.0% | 0.0% | 100.0% | 2533 / 3156 / 3272 |
+| arms-race/sensible | 18.8% | 16.4% | 2.4% | 0.0% | 13.7% | 13.7% | 53.8% | 1893 / 2776 / 3002 |
+| arms-race/capability | 12.5% | 11.5% | 1.0% | 0.0% | 20.6% | 12.3% | 54.6% | 1749 / 2717 / 2989 |
+| arms-race/reach | 10.9% | 5.4% | 5.1% | 0.4% | 26.6% | 18.8% | 43.7% | 1477 / 2531 / 3005 |
+| arms-race/shadow | 21.3% | 13.3% | 3.1% | 4.9% | 14.0% | 23.8% | 40.9% | 1784 / 2665 / 2973 |
+| arms-race/random | 1.3% | 0.3% | 1.0% | 0.0% | 81.7% | 14.9% | 2.1% | 1358 / 1784 / 2312 |
+| arms-race/idle | 0.0% | 0.0% | 0.0% | 0.0% | 0.0% | 0.0% | 100.0% | 2419 / 2878 / 3037 |
+| hard-takeoff/sensible | 9.4% | 9.1% | 0.3% | 0.0% | 12.5% | 12.8% | 65.3% | 1864 / 2710 / 2909 |
+| hard-takeoff/capability | 6.2% | 6.2% | 0.0% | 0.0% | 17.9% | 11.7% | 64.2% | 1749 / 2628 / 2849 |
+| hard-takeoff/reach | 1.8% | 1.4% | 0.4% | 0.0% | 26.9% | 21.3% | 50.0% | 1472 / 2462 / 2902 |
+| hard-takeoff/shadow | 5.2% | 4.8% | 0.1% | 0.3% | 9.9% | 26.3% | 58.6% | 1788 / 2631 / 2869 |
+| hard-takeoff/random | 0.1% | 0.1% | 0.0% | 0.0% | 80.5% | 16.9% | 2.5% | 1372 / 1787 / 2299 |
+| hard-takeoff/idle | 0.0% | 0.0% | 0.0% | 0.0% | 0.0% | 0.0% | 100.0% | 2248 / 2750 / 2936 |
+
+Frontier, sensible, by founder: researcher 46.1%, insider 29.1%, hustler 25.5%; by home region from nordics 19.0% to nigeria 62.2% (none under 8%). Ending variants on Frontier (sensible): agi-aligned 24.4%, rival-agi 24.4%, rival-agi-close 16.8%, banned 12.2%, revolt 8.5%, dependence 7.1%, revolt-robots 2.6%, banned-captured 1.7%, monopoly 1.5%, monopoly-hostile 0.6%, banned-home-defiant 0.2%. Peak player Backlash p50 rises from 56 (Sandbox) to 66 (Hard Takeoff).
+
+### Against the targets
+
+| Target | Result | Met |
+| --- | --- | --- |
+| Sensible at momentSkill 0.7: Sandbox 60–70%, Frontier 30–40%, Arms Race 15–22%, Hard Takeoff 5–10% | 68.1%, 33.6%, 18.8%, 9.4% | yes |
+| Idle never wins | 0.0% on every level | yes |
+| Median run 2,200–3,600 ticks on every level (sensible, as target 1) | sensible 2,710–2,820; focused policies 2,462–2,743 except Sandbox reach 1,728 | yes for sensible |
+| All six endings occur on Frontier | 6/6 (lowest monopoly 2.1%) | yes |
+| Each win type reachable on Arms Race by its focused policy | agi 11.5% (capability), dependence 5.1% (reach), monopoly 4.9% (shadow) | yes, but dependence and monopoly are rare |
+| No founder or home under 8% on Frontier | lowest hustler 25.5%, nordics 19.0% | yes |
+| Hard Takeoff: best focused policy under about 35% | capability 6.2% (sensible 9.4%) | yes |
+
+### In tension
+
+- **Best focused vs sensible.** On Sandbox and Frontier the shadow policy is the best bot (83.8%, 51.8%): a player who goes for buy-outs finds Frontier much easier than 33.6%. On the two hard levels the focused bots do worse than sensible (they over-commit while rivals are fast and meters bite), so "best focused" there underestimates a good human; Hard Takeoff's ceiling for a strong player is unknown but every bot is under 10%.
+- **Hard levels narrow to the AGI race.** On Arms Race dependence and monopoly are reachable but rare (about 5% for their focused policy); on Hard Takeoff nearly every win is AGI. Earlier, wider rivals squeeze the share paths and higher buy-out prices the monopoly path.
+- **Founders and homes on the hard levels.** Hustler (spread perk) falls to 9.0% on Arms Race and 2.4% on Hard Takeoff; india 6.0% on Arms Race and brazil 3.6% on Hard Takeoff. Only Frontier has a floor target; these are flagged, not fixed.
+- **Revolt rises with difficulty** (shadow policy revolt 4.0% → 26.3%): intended (Backlash is the "engage with safety" lever) but the bots do not seek safety nodes until meters pass 50, so humans should fare relatively better here.
+- **Rival expansion is not monotonic** (Frontier ×1.1, Arms Race ×1.0, Hard Takeoff ×1.1): at ×1.2 on Arms Race the reach policy's dependence fell to 2%, so Arms Race gets its pressure from earlier entry, the AGI clock and the player's meters instead.
+- **Sandbox reach runs are short** (median 1,728 ticks): late, lazy rivals leave the map open, so the spreading bot hits 43% world share early. Random runs are short on every level (about 1,750: banned), as before.
+- **The rival AGI clock is noisy to tune**: ±0.02 on `aiAgiFactor` moves Sandbox by about 2 points, inside seed noise (±1.5 points at 1,000 runs).
+
+---
+
+## Task 12b: moments retune (pack balance without a difficulty level)
 
 Goal: tapping should feel rewarding but not decide the run. The first moments pass let tap skill swing the sensible bot from 21.1% (never taps) to 59.1% (taps everything), 38 points. Target: at most about 20 to 25 points across `momentSkill` 0 / 0.4 / 0.7 / 1.0, skill 0 at about 30% or more, skill 1.0 at about 55% or less, every target below still met at 0.7.
 

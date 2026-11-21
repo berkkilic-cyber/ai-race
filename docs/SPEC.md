@@ -30,6 +30,10 @@ Background parody brands: besides the four fictional rival labs, the world winks
 - **Losses:** banned worldwide; public revolt; a rival reaches AGI first.
 - **Easter eggs:** secret lab names with a perk or headline, very rare event cards, secret achievements, parody nods to AI history and sci-fi. At least 10. None needed to win, none explained in the game.
 
+## Difficulty
+
+Four levels, picked on the founder step (the last choice is remembered; before the tutorial is done the easiest is preselected): **Sandbox** (a first run, a little kinder than the original tuning), **Frontier** (the default, clearly harder), **Arms Race** and **Hard Takeoff** (for people who have won an Arms Race). Harder levels change how a run feels, not one number: rivals enter earlier, spread faster and reach AGI sooner; Regulation and Backlash build faster for the player, so safety and compliance upgrades and cheap, quiet data-centre sites matter; the player starts poorer; threats outnumber boosts among moments and moments vanish sooner; buy-outs cost more. The score is multiplied by the level's multiplier (×0.75 to ×1.75) and the end screen names the level. Levels are pack data (`difficulties`), so another theme brings its own.
+
 ## Milestone 1: one playable run
 
 English only, placeholder art, no ads or purchases. Out of scope on purpose: IPO and shareholder pressure, Rogue mode (play as the escaped AI), multiplayer, idle/offline progress.

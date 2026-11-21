@@ -5,15 +5,15 @@
     "descKey": "difficulty.sandbox.desc",
     "scoreMultiplier": 0.75,
     "balance": {
-      "aiAgiFactor": 1.27,
-      "rivalEntryTickFactor": 1.1,
-      "aiExpansionFactor": 0.9,
-      "playerStartHypeFactor": 1.2,
-      "playerStartCashFactor": 1.2,
-      "playerRegulationGainFactor": 0.9,
-      "playerBacklashGainFactor": 0.9,
-      "momentThreatWeightFactor": 0.6,
-      "momentLifetimeFactor": 1.25
+      "aiAgiFactor": 1.16,
+      "rivalEntryTickFactor": 1.15,
+      "aiExpansionFactor": 0.95,
+      "playerStartHypeFactor": 1.15,
+      "playerStartCashFactor": 1.15,
+      "playerRegulationGainFactor": 0.95,
+      "playerBacklashGainFactor": 0.95,
+      "momentThreatWeightFactor": 0.7,
+      "momentLifetimeFactor": 1.2
     }
   },
   {
@@ -22,7 +22,6 @@
     "descKey": "difficulty.frontier.desc",
     "scoreMultiplier": 1,
     "balance": {
-      "aiAgiFactor": 1.16,
       "rivalEntryTickFactor": 0.9,
       "aiExpansionFactor": 1.1,
       "playerRegulationGainFactor": 1.1,

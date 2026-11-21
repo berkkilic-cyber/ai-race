@@ -66,6 +66,13 @@ runHeadless(pack, setup, opts): GameState                   // plays a whole run
                                                             // onMomentCollected? }; policies: sensible, random, idle,
                                                             // and capability / reach / shadow (tree-focused)
 defaultBalance: BalanceConfig                               // src/engine/balance.ts
+
+// difficulty
+getDifficulties(pack): DifficultyDef[]                      // the pack's levels, easiest first ([] if none)
+getDifficulty(state, pack): DifficultyDef | undefined       // the run's level after fallback
+getBalance(state, pack): BalanceConfig                      // the merged balance the run plays with
+getFounderStart(pack, founderId, difficulty?): { hype, cash } // a founder's start at a level (start screen)
+resolveDifficulty(pack, id?): DifficultyDef | undefined     // named -> pack default -> none
 ```
 
 - State is immutable from the caller's point of view: `step` and `applyAction` return a new state and never mutate their input. Internally the engine may clone once and mutate.
@@ -109,9 +116,15 @@ Then, once per tick:
 
 **Actions.** `buyNode` needs all `requires`, Hype (and Cash if `cashCost`); node prices rise by `nodeCostGrowth` per node already owned, and data centre upgrades by `dataCentreUpgradeGrowth` per level already owned. `buildDataCentre` needs presence in the region, no ban, Cash, and fewer than `maxDataCentresPerRegion` there. `collectMoment` needs an existing, unexpired moment of that lab (`unknownId` otherwise, `notAllowed` for another lab's) and fails with `eventPending` while a card is up. `acquireRival` needs the `canAcquire` flag and Cash ≥ a price that grows with the rival's users, compute and AGI progress; the buyer takes over a share of the rival's adoption. `resolveEvent` pays the choice cost, applies effects, rolls the optional risk and fills `lastEventResult`.
 
+## Difficulty
+
+A pack may define `difficulties` (`DifficultyDef`: id, name and description keys, a `balance` override and a `scoreMultiplier`) and a `defaultDifficulty`. `GameSetup.difficulty` picks one; an unknown or missing id falls back to the pack default, then to no override. `createGame` stores the resolved id in `GameState.difficulty`, and every engine entry point that gets a state reads the run's context through `getContext(pack, state.difficulty)`: one context per pack and level, sharing the pack's lookup tables, with the balance merged as engine defaults ← pack `balance` ← difficulty `balance`. Selectors keep their signatures. `getComputeRequired(pack, level, state?)` is the only one without a state; `validatePack` therefore keeps the compute curve (`computePerCapabilityLevel`, `capabilityComputeExponent`) out of difficulty overrides. The final score is multiplied by `scoreMultiplier` (rounded once). UI code that needs a balance number must read `getBalance(state, pack)`, never `pack.balance`.
+
+Balance levers added for difficulty (all neutral at their defaults): `playerStartHypeFactor` / `playerStartCashFactor` (founder start × factor), `rivalEntryTickFactor` (every rival's `entryTick` ×, rounded), `aiExpansionFactor` (rivals' personality `expansion` ×), `playerRegulationGainFactor` / `playerBacklashGainFactor` (human labs' per-tick meter gains ×), `momentBoostWeightFactor` / `momentThreatWeightFactor` (spawn weight by moment kind ×) and `momentLifetimeFactor` (moment lifetime ×, at least 1 tick). Levels and their numbers: `docs/BALANCE.md`.
+
 ## Bots and balance tooling
 
-`runHeadless` plays the player's seat with a `BotPolicy`. Its `momentSkill` option (0..1, default `DEFAULT_MOMENT_SKILL`: 0.7 for sensible and the focused policies, 0.3 random, 0 idle) is the chance the bot taps a moment before it expires, rolled when the moment appears with a generator of its own (so the roll never shifts the game's random stream); a tapped moment is collected after a reaction delay of up to 60% of its lifetime. Policies: `sensible` (the same planner as the rivals, default personality), `random`, `idle`, and the tree-focused `capability`, `reach` and `shadow` policies, which plan like `sensible` with their own personality and a push towards their win (model tiers and spare compute; launches every decision; buy-out tools and saving cash for acquisitions). `scripts/balance/` plays many runs per policy across founders and home regions and prints a report (`npm run balance`, see `docs/BALANCE.md`; `--moment-skill` plays each policy at several tap skills, `--moments file.json` swaps the pack's moments for a sweep).
+`runHeadless` plays the player's seat with a `BotPolicy`. Its `momentSkill` option (0..1, default `DEFAULT_MOMENT_SKILL`: 0.7 for sensible and the focused policies, 0.3 random, 0 idle) is the chance the bot taps a moment before it expires, rolled when the moment appears with a generator of its own (so the roll never shifts the game's random stream); a tapped moment is collected after a reaction delay of up to 60% of its lifetime. Policies: `sensible` (the same planner as the rivals, default personality), `random`, `idle`, and the tree-focused `capability`, `reach` and `shadow` policies, which plan like `sensible` with their own personality and a push towards their win (model tiers and spare compute; launches every decision; buy-out tools and saving cash for acquisitions). `scripts/balance/` plays many runs per policy across founders and home regions and prints a report (`npm run balance`, see `docs/BALANCE.md`; `--moment-skill` plays each policy at several tap skills, `--moments file.json` swaps the pack's moments for a sweep; `--difficulty id,id|all` plays each policy at each level and adds a table across levels; `--brief` prints only the summary tables).
 
 ## UI state
 
