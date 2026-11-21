@@ -115,9 +115,11 @@ async function touchPage(context, errors) {
     /** The map's view transform and the map box. */
     view: () =>
       page.evaluate(() => {
-        const svg = [...document.querySelectorAll('svg')].sort((a, b) => b.getBoundingClientRect().width - a.getBoundingClientRect().width)[0];
+        // Only SVGs that belong to the map (themes may draw other large SVGs, such as a background grid).
+        const touch = document.querySelector('[data-testid="map-touch"]');
+        const svg = [...touch.parentElement.querySelectorAll('svg')].sort((a, b) => b.getBoundingClientRect().width - a.getBoundingClientRect().width)[0];
         const layer = svg.parentElement;
-        const box = document.querySelector('[data-testid="map-touch"]').getBoundingClientRect();
+        const box = touch.getBoundingClientRect();
         const t = getComputedStyle(layer).transform;
         const m = new DOMMatrixReadOnly(t === 'none' ? undefined : t);
         return { s: m.a, tx: m.e, ty: m.f, box: { x: box.x, y: box.y, w: box.width, h: box.height } };
@@ -126,7 +128,7 @@ async function touchPage(context, errors) {
     at: (mx, my) =>
       page.evaluate(
         (mx, my) => {
-          const svg = [...document.querySelectorAll('svg')].sort((a, b) => b.getBoundingClientRect().width - a.getBoundingClientRect().width)[0];
+          const svg = [...document.querySelector('[data-testid="map-touch"]').parentElement.querySelectorAll('svg')].sort((a, b) => b.getBoundingClientRect().width - a.getBoundingClientRect().width)[0];
           const vb = svg.viewBox.baseVal;
           const r = svg.getBoundingClientRect();
           const k = Math.min(r.width / vb.width, r.height / vb.height);
@@ -201,7 +203,7 @@ async function mapChecks(context, errors) {
   const before = await h.view();
   const mapPt = await page.evaluate(
     (cx, cy) => {
-      const svg = [...document.querySelectorAll('svg')].sort((a, b) => b.getBoundingClientRect().width - a.getBoundingClientRect().width)[0];
+      const svg = [...document.querySelector('[data-testid="map-touch"]').parentElement.querySelectorAll('svg')].sort((a, b) => b.getBoundingClientRect().width - a.getBoundingClientRect().width)[0];
       const vb = svg.viewBox.baseVal;
       const r = svg.getBoundingClientRect();
       const k = Math.min(r.width / vb.width, r.height / vb.height);
