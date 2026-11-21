@@ -62,7 +62,7 @@ export const useGameStore = create<GameStore>()((set, get) => ({
     const { pack } = getPackEntry(packId);
     const state = createGame(pack, { ...rest, seed });
     set({ packId, pack, state, speed: 1, eventResult: null });
-    logLifecycle('run started', { seed, founder: rest.founderId, home: rest.homeRegion });
+    logLifecycle('run started', { seed, founder: rest.founderId, home: rest.homeRegion, difficulty: state.difficulty ?? '-' });
   },
 
   dispatch(action) {

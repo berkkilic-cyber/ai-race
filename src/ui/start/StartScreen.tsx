@@ -13,6 +13,7 @@ import { colors, shape, spacing } from '../theme';
 import { FounderStep } from './FounderStep';
 import { BuildStamp } from '../diagnostics/BuildStamp';
 import { HowToSheet } from './HowToSheet';
+import { difficultyOptions, difficultyParam, loadDifficultyChoice, saveDifficultyChoice } from './difficulty';
 import { defaultHomeRegion, missingText, randomLabName, validateLabName } from './logic';
 import { NameStep } from './NameStep';
 import { RegionListSheet } from './RegionListSheet';
@@ -46,7 +47,7 @@ export interface StartScreenProps {
 
 export function StartScreen({ beforeEnter }: StartScreenProps = {}) {
   const router = useRouter();
-  const params = useLocalSearchParams<{ autostart?: string; seed?: string }>();
+  const params = useLocalSearchParams<{ autostart?: string; seed?: string; difficulty?: string }>();
   const { pack, geometry, labNames } = usePackEntry();
   const newGame = useGameStore((s) => s.newGame);
 
@@ -54,6 +55,7 @@ export function StartScreen({ beforeEnter }: StartScreenProps = {}) {
   const [name, setName] = useState('');
   const [founderId, setFounderId] = useState<string | null>(pack.founders[0]?.id ?? null);
   const [home, setHome] = useState<string | null>(null);
+  const [difficulty, setDifficulty] = useState<string | undefined>(undefined);
   const [howTo, setHowTo] = useState(false);
   const [list, setList] = useState(false);
   const [focus, setFocus] = useState<{ regionId: string; nonce: number } | null>(null);
@@ -62,14 +64,31 @@ export function StartScreen({ beforeEnter }: StartScreenProps = {}) {
   const insets = useInsets();
   const keyboard = useKeyboardVisible();
 
+  // Preselect the remembered level (the easiest before the tutorial is done).
+  useEffect(() => {
+    let live = true;
+    void loadDifficultyChoice(pack).then((id) => {
+      if (live) setDifficulty((current) => current ?? id);
+    });
+    return () => {
+      live = false;
+    };
+  }, [pack]);
+  const pickDifficulty = useCallback((id: string) => {
+    setDifficulty(id);
+    saveDifficultyChoice(id);
+  }, []);
+
   useEffect(() => {
     if (params.autostart !== '1') return;
     const seed = params.seed ? Number(params.seed) : undefined;
+    const level = difficultyParam(pack, params.difficulty);
     newGame({
       playerName: t('ui.start.defaultName'),
       founderId: pack.founders[0].id,
       homeRegion: defaultHomeRegion(pack),
       ...(seed !== undefined && Number.isFinite(seed) ? { seed } : {}),
+      ...(level ? { difficulty: level } : {}),
     });
     let live = true;
     void enterWhenReady(beforeEnter, () => {
@@ -78,7 +97,7 @@ export function StartScreen({ beforeEnter }: StartScreenProps = {}) {
     return () => {
       live = false;
     };
-  }, [params.autostart, params.seed, newGame, pack, router, beforeEnter]);
+  }, [params.autostart, params.seed, params.difficulty, newGame, pack, router, beforeEnter]);
 
   const goTo = useCallback((next: number) => {
     Keyboard.dismiss();
@@ -91,7 +110,7 @@ export function StartScreen({ beforeEnter }: StartScreenProps = {}) {
 
   const found = () => {
     if (missing || !nameCheck.ok || !founderId || !home) return;
-    newGame({ playerName: nameCheck.name, founderId, homeRegion: home });
+    newGame({ playerName: nameCheck.name, founderId, homeRegion: home, ...(difficulty ? { difficulty } : {}) });
     void enterWhenReady(beforeEnter, () => router.replace('/game'));
   };
 
@@ -151,7 +170,15 @@ export function StartScreen({ beforeEnter }: StartScreenProps = {}) {
         compact={wide && keyboard}
       />
     ) : step === 1 ? (
-      <FounderStep founders={pack.founders} selected={founderId} onSelect={setFounderId} wide={wide} />
+      <FounderStep
+        founders={pack.founders}
+        selected={founderId}
+        onSelect={setFounderId}
+        wide={wide}
+        difficulties={difficultyOptions(pack)}
+        difficulty={difficulty}
+        onDifficulty={pickDifficulty}
+      />
     ) : (
       <RegionStep
         pack={pack}

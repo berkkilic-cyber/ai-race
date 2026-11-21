@@ -4,6 +4,8 @@ import type { FounderDef } from '@/engine';
 
 import { t } from '../i18n';
 import { colors, radius, spacing, type, voice } from '../theme';
+import type { DifficultyOption } from './difficulty';
+import { DifficultyPicker } from './DifficultyPicker';
 import { founderPerkLines } from './logic';
 
 export interface FounderStepProps {
@@ -12,12 +14,16 @@ export interface FounderStepProps {
   onSelect: (id: string) => void;
   /** The cards side by side in one row. */
   wide?: boolean;
+  /** Difficulty levels under the founders (none: no picker). */
+  difficulties?: readonly DifficultyOption[];
+  difficulty?: string;
+  onDifficulty?: (id: string) => void;
 }
 
 const TONE = { good: colors.good, bad: colors.bad, neutral: colors.text } as const;
 
 /** Step 2: the founders as selectable cards with their perks. */
-export function FounderStep({ founders, selected, onSelect, wide }: FounderStepProps) {
+export function FounderStep({ founders, selected, onSelect, wide, difficulties = [], difficulty, onDifficulty }: FounderStepProps) {
   return (
     <View style={[styles.wrap, wide && styles.wrapWide]}>
       <View style={[styles.head, wide && styles.headWide]}>
@@ -56,6 +62,7 @@ export function FounderStep({ founders, selected, onSelect, wide }: FounderStepP
           );
         })}
       </View>
+      {onDifficulty ? <DifficultyPicker options={difficulties} selected={difficulty} onSelect={onDifficulty} wide={wide} /> : null}
     </View>
   );
 }
