@@ -1,9 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, StyleSheet, View, type HostInstance, type LayoutChangeEvent } from 'react-native';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import Animated, { cancelAnimation, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import Svg from 'react-native-svg';
-import { scheduleOnRN } from 'react-native-worklets';
 
 import type { MapGeometry } from '@/content/packs/ai-lab/geometry';
 
@@ -11,8 +9,12 @@ import { Button } from '../components/Button';
 import { logLifecycle } from '../diagnostics/log';
 import { t } from '../i18n';
 import { createHitTester } from '../map/hitTest';
+import { MapDebugOverlay } from '../map/MapDebugOverlay';
 import { mixColor } from '../map/mapColors';
-import { centreOn, clampScale, clampTranslate, fit, panBy, toMapPoint, zoomAbout, type Layout } from '../map/viewTransform';
+import { recordTouch } from '../map/touchDebug';
+import type { MapView } from '../map/touchController';
+import { WEB_TOUCH, useMapTouch } from '../map/useMapTouch';
+import { centreOn, clampScale, clampTranslate, fit, toMapPoint, zoomAbout, type Layout } from '../map/viewTransform';
 import { colors, radius, spacing } from '../theme';
 import { MapShapes, type MapDot, type MapOutline } from './MapShapes';
 
@@ -46,52 +48,62 @@ const FOCUS_MAX_AREA = 1200;
 /**
  * World map in picker mode: tap a region to choose it; the chosen one is filled
  * in the player colour. Pan and pinch (drag and wheel on web), +/− buttons,
- * double tap to reset. No game state is read.
+ * double tap to reset. No game state is read. Touches as on the game map (useMapTouch).
  */
 export function RegionPickerMap({ geometry, selected, onSelect, rivalHomes, focus, fill }: RegionPickerMapProps) {
   const hitTester = useMemo(() => createHitTester(geometry, SMALL_REGION_AREA, HIT_RADIUS), [geometry]);
   const [size, setSize] = useState({ w: 0, h: 0 });
-  const layout = useSharedValue<Layout>({ cw: 1, ch: 1, mw: geometry.width, mh: geometry.height });
+  const layout = useRef<Layout>({ cw: 1, ch: 1, mw: geometry.width, mh: geometry.height });
+  const view = useRef<MapView>({ s: 1, tx: 0, ty: 0 });
   const scale = useSharedValue(1);
   const tx = useSharedValue(0);
   const ty = useSharedValue(0);
-  const startScale = useSharedValue(1);
-  const lastPan = useSharedValue<[number, number]>([0, 0]);
-  const panAnchor = useSharedValue<[number, number]>([0, 0]);
+  const animatingUntil = useRef(0);
+
+  const applyView = useCallback(
+    (v: MapView, animateMs = 0) => {
+      view.current = v;
+      if (animateMs > 0) {
+        animatingUntil.current = Date.now() + animateMs + 50;
+        scale.set(withTiming(v.s, { duration: animateMs }));
+        tx.set(withTiming(v.tx, { duration: animateMs }));
+        ty.set(withTiming(v.ty, { duration: animateMs }));
+        return;
+      }
+      scale.set(v.s);
+      tx.set(v.tx);
+      ty.set(v.ty);
+    },
+    [scale, tx, ty],
+  );
 
   const onLayout = useCallback(
     (e: LayoutChangeEvent) => {
       const { width, height } = e.nativeEvent.layout;
-      // Ignore the zero-sized first layout: the view maths needs a real size.
-      if (!(width > 0 && height > 0) || (width === size.w && height === size.h)) return;
+      // Ignore the zero-sized first layout and repeats of the same size: the view maths needs a real size.
+      if (!(width > 0 && height > 0) || (Math.round(width) === Math.round(layout.current.cw) && Math.round(height) === Math.round(layout.current.ch))) return;
       setSize({ w: width, h: height });
       const l: Layout = { cw: width, ch: height, mw: geometry.width, mh: geometry.height };
-      layout.set(l);
-      const [x, y] = clampTranslate(l, scale.get(), tx.get(), ty.get());
-      tx.set(x);
-      ty.set(y);
+      layout.current = l;
+      const v = view.current;
+      const [x, y] = clampTranslate(l, v.s, v.tx, v.ty);
+      applyView({ s: v.s, tx: x, ty: y });
     },
-    [size, geometry, layout, scale, tx, ty],
+    [geometry, applyView],
   );
 
-  const resetView = useCallback(() => {
-    scale.set(withTiming(1));
-    tx.set(withTiming(0));
-    ty.set(withTiming(0));
-  }, [scale, tx, ty]);
+  const resetView = useCallback(() => applyView({ s: 1, tx: 0, ty: 0 }, 300), [applyView]);
 
   const zoomBy = useCallback(
     (factor: number, fx?: number, fy?: number) => {
-      const l = layout.get();
-      const s0 = scale.get();
-      const s1 = clampScale(s0 * factor);
-      const [zx, zy] = zoomAbout(l, s0, s1, tx.get(), ty.get(), fx ?? l.cw / 2, fy ?? l.ch / 2);
+      const l = layout.current;
+      const v = view.current;
+      const s1 = clampScale(v.s * factor);
+      const [zx, zy] = zoomAbout(l, v.s, s1, v.tx, v.ty, fx ?? l.cw / 2, fy ?? l.ch / 2);
       const [x, y] = clampTranslate(l, s1, zx, zy);
-      scale.set(s1);
-      tx.set(x);
-      ty.set(y);
+      applyView({ s: s1, tx: x, ty: y });
     },
-    [layout, scale, tx, ty],
+    [applyView],
   );
 
   // Centre on a region chosen elsewhere; zoom in when it is small.
@@ -100,90 +112,47 @@ export function RegionPickerMap({ geometry, selected, onSelect, rivalHomes, focu
     const g = geometry.regions[focus.regionId];
     // Large regions are easy to see on the whole map: leave the view alone.
     if (!g || g.area >= FOCUS_MAX_AREA) return;
-    const l = layout.get();
+    const l = layout.current;
     const { k } = fit(l);
     const [x0, y0, x1, y1] = g.bbox;
     const fitScale = Math.min(l.cw / ((x1 - x0) * k * 1.6), l.ch / ((y1 - y0) * k * 1.6));
-    const s = clampScale(Math.max(scale.get(), Math.min(FOCUS_SCALE, fitScale)));
+    const s = clampScale(Math.max(view.current.s, Math.min(FOCUS_SCALE, fitScale)));
     const [x, y] = centreOn(l, s, (x0 + x1) / 2, (y0 + y1) / 2);
-    scale.set(withTiming(s));
-    tx.set(withTiming(x));
-    ty.set(withTiming(y));
+    applyView({ s, tx: x, ty: y }, 300);
     // Only a new nonce should move the map.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [focus?.nonce, size.w]);
 
-  // The tap arrives in map units, converted on the UI thread with the transform of that moment.
+  // A tap in touch-view points, converted with the view of this moment and hit-tested.
   const select = useCallback(
-    (x: number, y: number) => {
+    (px: number, py: number) => {
+      const v = view.current;
+      const [x, y] = toMapPoint(layout.current, v.s, v.tx, v.ty, px, py);
       const id = hitTester.at(x, y);
-      logLifecycle('region tapped', { region: id ?? 'none', where: 'start' });
+      recordTouch({ region: id ?? 'none' });
+      logLifecycle('region tapped', { region: id ?? 'none', where: 'start', x: Math.round(px), y: Math.round(py) });
       if (id) onSelect(id);
     },
     [hitTester, onSelect],
   );
 
-  // Same structure as the game map (src/ui/map/WorldMap.tsx): pan and pinch on the UI thread,
-  // racing against the taps; the double tap is two short one-finger taps that stay put.
-  const gesture = useMemo(() => {
-    const pan = Gesture.Pan()
-      .minDistance(8)
-      .averageTouches(true)
-      .onBegin((e) => {
-        panAnchor.set([e.absoluteX, e.absoluteY]);
-        lastPan.set([0, 0]);
-      })
-      .onStart((e) => {
-        // The travel before activation (the slop) is left out of the translation on some
-        // platforms: add it once, so the content stays under a single finger from touch-down.
-        lastPan.set([e.translationX, e.translationY]);
-        if (e.numberOfPointers !== 1) return;
-        const [ax, ay] = panAnchor.get();
-        const [x, y] = panBy(layout.get(), scale.get(), tx.get(), ty.get(), e.absoluteX - ax, e.absoluteY - ay);
-        tx.set(x);
-        ty.set(y);
-      })
-      .onUpdate((e) => {
-        // Applied as deltas, so a pinch's focal correction in between is kept.
-        const [lx, ly] = lastPan.get();
-        lastPan.set([e.translationX, e.translationY]);
-        const [x, y] = panBy(layout.get(), scale.get(), tx.get(), ty.get(), e.translationX - lx, e.translationY - ly);
-        tx.set(x);
-        ty.set(y);
-      });
-    const pinch = Gesture.Pinch()
-      .onStart(() => {
-        startScale.set(scale.get());
-      })
-      .onUpdate((e) => {
-        const l = layout.get();
-        const s1 = clampScale(startScale.get() * e.scale);
-        const [zx, zy] = zoomAbout(l, scale.get(), s1, tx.get(), ty.get(), e.focalX, e.focalY);
-        const [x, y] = clampTranslate(l, s1, zx, zy);
-        scale.set(s1);
-        tx.set(x);
-        ty.set(y);
-      });
-    const doubleTap = Gesture.Tap()
-      .numberOfTaps(2)
-      .maxDistance(10)
-      .maxDuration(250)
-      .maxDelay(300)
-      .onStart((e) => {
-        if (e.numberOfPointers > 1) return;
-        scale.set(withTiming(1));
-        tx.set(withTiming(0));
-        ty.set(withTiming(0));
-      });
-    const tap = Gesture.Tap()
-      .maxDistance(10)
-      .onStart((e) => {
-        if (e.numberOfPointers > 1) return;
-        const [x, y] = toMapPoint(layout.get(), scale.get(), tx.get(), ty.get(), e.x, e.y);
-        scheduleOnRN(select, x, y);
-      });
-    return Gesture.Race(Gesture.Simultaneous(pan, pinch), Gesture.Exclusive(doubleTap, tap));
-  }, [layout, scale, tx, ty, startScale, lastPan, panAnchor, select]);
+  // The same touch controller as the game map (src/ui/map/useMapTouch.ts): core responder
+  // touches on a plain view above the drawing; pan, pinch, tap and double tap in JS.
+  const mapTouch = useMapTouch('picker', {
+    layout: () => layout.current,
+    view: () => view.current,
+    setView: (v) => applyView(v),
+    begin: () => {
+      if (Date.now() > animatingUntil.current) return;
+      animatingUntil.current = 0;
+      cancelAnimation(scale);
+      cancelAnimation(tx);
+      cancelAnimation(ty);
+      view.current = { s: scale.get(), tx: tx.get(), ty: ty.get() };
+    },
+    tap: select,
+    doubleTap: resetView,
+  });
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: tx.get() }, { translateY: ty.get() }, { scale: scale.get() }],
   }));
@@ -221,17 +190,17 @@ export function RegionPickerMap({ geometry, selected, onSelect, rivalHomes, focu
   const [, , vw, vh] = geometry.viewBox;
   return (
     <View style={[styles.root, fill ? styles.rootFill : { aspectRatio: geometry.width / geometry.height }]}>
-      <GestureDetector gesture={gesture}>
-        <View ref={container} style={styles.container} onLayout={onLayout} collapsable={false} testID="picker-map">
-          {size.w > 0 ? (
-            <Animated.View style={[styles.fill, animatedStyle]} pointerEvents="none">
-              <Svg width={size.w} height={size.h} viewBox={`0 0 ${vw} ${vh}`} preserveAspectRatio="xMidYMid meet" pointerEvents="none">
-                <MapShapes geometry={geometry} fills={fills} outlines={outlines} dots={dots} />
-              </Svg>
-            </Animated.View>
-          ) : null}
-        </View>
-      </GestureDetector>
+      <View ref={container} style={styles.container} onLayout={onLayout} collapsable={false} pointerEvents="box-none" testID="picker-map">
+        {size.w > 0 ? (
+          <Animated.View style={[styles.fill, animatedStyle]} pointerEvents="none">
+            <Svg width={size.w} height={size.h} viewBox={`0 0 ${vw} ${vh}`} preserveAspectRatio="xMidYMid meet" pointerEvents="none">
+              <MapShapes geometry={geometry} fills={fills} outlines={outlines} dots={dots} />
+            </Svg>
+          </Animated.View>
+        ) : null}
+        <View style={[styles.fill, WEB_TOUCH]} collapsable={false} testID="picker-touch" {...mapTouch.props} />
+        <MapDebugOverlay />
+      </View>
       <View style={styles.controls} pointerEvents="box-none">
         <Button label="+" compact onPress={() => zoomBy(BUTTON_ZOOM)} accessibilityLabel={t('ui.map.zoomIn')} style={styles.ctrl} />
         <Button label="−" compact onPress={() => zoomBy(1 / BUTTON_ZOOM)} accessibilityLabel={t('ui.map.zoomOut')} style={styles.ctrl} />

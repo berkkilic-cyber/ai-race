@@ -183,6 +183,7 @@ async function main() {
     check(!!(await page.$('[data-testid="region-sheet"]')), `tap on the home region (${home}) opens its panel`);
     // Empty sea: the middle of the Pacific in map units, as a fraction of the map.
     const sea = await at(geometry.width * 0.02, geometry.height * 0.55);
+    if (process.env.VERBOSE) console.log("sea point", sea);
     await page.mouse.click(sea.x, sea.y);
     await sleep(900);
     check(!(await page.$('[data-testid="region-sheet"]')), 'tap on empty sea closes the panel');
