@@ -11,8 +11,17 @@
       {
         "type": "resource",
         "resource": "hype",
-        "amount": 5.5,
-        "scaleWithIncome": 11.1
+        "amount": 2.2,
+        "scaleWithIncome": 4.5
+      },
+      {
+        "type": "timedModifier",
+        "modifier": {
+          "stat": "spreadRate",
+          "op": "mul",
+          "value": 1.2
+        },
+        "durationTicks": 20
       }
     ],
     "collectTextKey": "moment.viral-post.collect"
@@ -29,8 +38,13 @@
       {
         "type": "resource",
         "resource": "hype",
-        "amount": 3.7,
-        "scaleWithIncome": 9.2
+        "amount": 1.5,
+        "scaleWithIncome": 3.8
+      },
+      {
+        "type": "meter",
+        "meter": "backlash",
+        "amount": -0.6
       }
     ],
     "collectTextKey": "moment.glowing-review.collect"
@@ -52,8 +66,8 @@
       {
         "type": "resource",
         "resource": "cash",
-        "amount": 11.0,
-        "scaleWithIncome": 8.8
+        "amount": 14.0,
+        "scaleWithIncome": 10.0
       }
     ],
     "collectTextKey": "moment.angel-wire.collect"
@@ -75,8 +89,8 @@
       {
         "type": "resource",
         "resource": "cash",
-        "amount": 6.6,
-        "scaleWithIncome": 6.6
+        "amount": 8.0,
+        "scaleWithIncome": 8.0
       }
     ],
     "collectTextKey": "moment.intern-bugfix.collect"
@@ -98,8 +112,16 @@
       {
         "type": "resource",
         "resource": "hype",
-        "amount": 7.4,
-        "scaleWithIncome": 14.8
+        "amount": 3.0,
+        "scaleWithIncome": 6.0
+      },
+      {
+        "type": "adoption",
+        "scope": {
+          "kind": "home"
+        },
+        "factor": 1.03,
+        "atMoment": true
       }
     ],
     "collectTextKey": "moment.celebrity-mention.collect"
@@ -123,14 +145,14 @@
         "scope": {
           "kind": "home"
         },
-        "factor": 1.04,
+        "factor": 1.06,
         "atMoment": true
       },
       {
         "type": "resource",
         "resource": "hype",
-        "amount": 1.8,
-        "scaleWithIncome": 5.5
+        "amount": 0.8,
+        "scaleWithIncome": 2.2
       }
     ],
     "collectTextKey": "moment.campus-adoption.collect"
@@ -173,13 +195,13 @@
       {
         "type": "resource",
         "resource": "hype",
-        "amount": 5.5,
-        "scaleWithIncome": 11.1
+        "amount": 1.9,
+        "scaleWithIncome": 3.8
       },
       {
         "type": "meter",
         "meter": "backlash",
-        "amount": -1
+        "amount": -1.5
       }
     ],
     "collectTextKey": "moment.mascot-meme.collect"
@@ -206,8 +228,17 @@
       {
         "type": "resource",
         "resource": "hype",
-        "amount": 9.2,
-        "scaleWithIncome": 16.6
+        "amount": 2.2,
+        "scaleWithIncome": 4.5
+      },
+      {
+        "type": "timedModifier",
+        "modifier": {
+          "stat": "hypeIncome",
+          "op": "mul",
+          "value": 1.5
+        },
+        "durationTicks": 20
       }
     ],
     "collectTextKey": "moment.keynote-slot.collect"
@@ -230,12 +261,12 @@
       {
         "type": "resource",
         "resource": "hype",
-        "amount": 5.5,
-        "scaleWithIncome": 11.1
+        "amount": 1.9,
+        "scaleWithIncome": 3.8
       },
       {
         "type": "agiProgress",
-        "amount": 0.3
+        "amount": 0.4
       }
     ],
     "collectTextKey": "moment.leaderboard-win.collect"
@@ -257,8 +288,8 @@
       {
         "type": "resource",
         "resource": "cash",
-        "amount": 4.4,
-        "scaleWithIncome": 11.0
+        "amount": 6.0,
+        "scaleWithIncome": 12.0
       }
     ],
     "collectTextKey": "moment.cheap-power.collect"
@@ -280,8 +311,8 @@
       {
         "type": "resource",
         "resource": "cash",
-        "amount": 11.0,
-        "scaleWithIncome": 15.4
+        "amount": 14.0,
+        "scaleWithIncome": 16.0
       }
     ],
     "collectTextKey": "moment.sovereign-fund.collect"
@@ -345,8 +376,13 @@
     "onCollect": [],
     "onExpire": [
       {
-        "type": "agiProgress",
-        "amount": -0.3
+        "type": "timedModifier",
+        "modifier": {
+          "stat": "agiRate",
+          "op": "mul",
+          "value": 0.85
+        },
+        "durationTicks": 40
       }
     ],
     "collectTextKey": "moment.rival-recruiter.collect",
@@ -468,7 +504,7 @@
         "scope": {
           "kind": "home"
         },
-        "factor": 0.93,
+        "factor": 0.95,
         "atMoment": true
       }
     ],
@@ -530,7 +566,7 @@
       {
         "type": "resourcePercent",
         "resource": "hype",
-        "percent": -8
+        "percent": -5
       }
     ],
     "collectTextKey": "moment.prompt-injection.collect",

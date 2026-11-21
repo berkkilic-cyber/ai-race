@@ -118,7 +118,7 @@ export function policyReport(policy: string, runs: RunRecord[]): string {
     return pct(a, a + b);
   };
   out.push(
-    `Moments: ${fmt(median(runs.map((r) => r.momentsCollected)))} tapped and ${fmt(median(runs.map((r) => r.momentsMissed)))} missed per run (median); moment income is ${share(
+    `Moments: ${fmt(median(runs.map((r) => r.momentsCollected)))} tapped and ${fmt(median(runs.map((r) => r.momentsMissed)))} missed per run (median), one every ${fmt(median(runs.map((r) => r.ticks / Math.max(1, r.momentsCollected + r.momentsMissed))))} ticks (median run; 2 ticks a second at 1x); moment income is ${share(
       runs.map((r) => r.momentHype),
       runs.map((r) => r.hypeEarned),
     )} of all Hype and ${share(

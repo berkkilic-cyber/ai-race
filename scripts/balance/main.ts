@@ -6,15 +6,16 @@
  *   npm run balance -- [--runs 1000] [--policies sensible,idle] [--seed 1]
  *                      [--coverage] [--workers 2] [--out report.md]
  *                      [--moment-skill 0,0.4,0.7,1]   (each policy once per skill)
+ *                      [--moments file.json]          (replace the pack's moments for a sweep)
  *
  * Seeds are base + run index, so a report is reproducible; tune on one --seed
  * and confirm on another.
  */
-import { writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { availableParallelism } from 'node:os';
 import { isMainThread, parentPort, Worker, workerData } from 'node:worker_threads';
 
-import type { BotPolicy } from '@/engine';
+import type { BotPolicy, ContentPack } from '@/engine';
 
 import { coverageReport } from './coverage';
 import { FOUNDERS, HOME_REGIONS } from './jobs';
@@ -33,6 +34,8 @@ interface Options {
   balance: Record<string, unknown>;
   /** Play every policy once per skill (labelled policy@skill); default: each policy's own skill. */
   momentSkills?: number[];
+  /** Replacement moment list (JSON file) for sweeps. */
+  moments?: ContentPack['moments'];
 }
 
 function parseArgs(argv: string[]): Options {
@@ -48,6 +51,7 @@ function parseArgs(argv: string[]): Options {
     else if (arg === '--out') options.out = next();
     else if (arg === '--balance') options.balance = JSON.parse(next()) as Record<string, unknown>;
     else if (arg === '--moment-skill') options.momentSkills = next().split(',').map(Number);
+    else if (arg === '--moments') options.moments = JSON.parse(readFileSync(next(), 'utf8')) as ContentPack['moments'];
     else throw new Error(`Unknown argument ${arg}`);
   }
   return options;
@@ -78,7 +82,7 @@ export function jobsFor(policy: BotPolicy, runs: number, seed: number, coverage:
   return jobs;
 }
 
-function runInWorkers(jobs: Job[], workers: number, balance: Record<string, unknown>): Promise<RunRecord[]> {
+function runInWorkers(jobs: Job[], workers: number, balance: Record<string, unknown>, moments?: ContentPack['moments']): Promise<RunRecord[]> {
   const results: RunRecord[] = new Array(jobs.length);
   if (workers <= 1) {
     jobs.forEach((job, i) => (results[i] = simulate(job)));
@@ -96,7 +100,7 @@ function runInWorkers(jobs: Job[], workers: number, balance: Record<string, unkn
       worker.postMessage({ index, job: jobs[index] });
     };
     for (let w = 0; w < Math.min(workers, jobs.length); w++) {
-      const worker = new Worker(new URL(import.meta.url), { workerData: { worker: true, balance } });
+      const worker = new Worker(new URL(import.meta.url), { workerData: { worker: true, balance, moments } });
       worker.on('message', (msg: { index: number; record: RunRecord }) => {
         results[msg.index] = msg.record;
         done++;
@@ -114,8 +118,8 @@ async function main(): Promise<void> {
   const start = performance.now();
   const skills: (number | undefined)[] = options.momentSkills ?? [undefined];
   const jobs = options.policies.flatMap((p) => skills.flatMap((skill) => jobsFor(p, options.runs, options.seed, options.coverage, skill)));
-  setBalanceOverrides(options.balance);
-  const records = await runInWorkers(jobs, options.workers, options.balance);
+  setBalanceOverrides(options.balance, options.moments);
+  const records = await runInWorkers(jobs, options.workers, options.balance, options.moments);
   const seconds = (performance.now() - start) / 1000;
   const byPolicy = new Map<string, RunRecord[]>();
   const labelOf = (job: Job): string => (job.momentSkill === undefined ? job.policy : `${job.policy}@${job.momentSkill}`);
@@ -128,6 +132,7 @@ async function main(): Promise<void> {
     `${records.length} runs (${options.runs} per policy, seed ${options.seed}, ${FOUNDERS.length} founders x ${HOME_REGIONS.length} home regions) in ${seconds.toFixed(1)} s with ${options.workers} worker(s); ${(records.length / seconds).toFixed(1)} runs/s.`,
   );
   if (Object.keys(options.balance).length > 0) out.push(`\nBalance overrides: \`${JSON.stringify(options.balance)}\``);
+  if (options.moments) out.push(`\nMoments replaced (${options.moments.length} from --moments).`);
   out.push('');
   out.push(summaryTable(byPolicy));
   out.push('');
@@ -147,7 +152,7 @@ if (isMainThread) {
     process.exit(1);
   });
 } else if (workerData?.worker) {
-  setBalanceOverrides(workerData.balance as Record<string, unknown>);
+  setBalanceOverrides(workerData.balance as Record<string, unknown>, workerData.moments as ContentPack['moments'] | undefined);
   parentPort?.on('message', (msg: { index: number; job: Job }) => {
     parentPort?.postMessage({ index: msg.index, record: simulate(msg.job) });
   });

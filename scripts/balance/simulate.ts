@@ -66,10 +66,10 @@ export interface RunRecord {
   purchases: number;
   dataCentresBuilt: number;
   achievements: string[];
-  /** Hype and cash income over the run (stats.hypeEarned / cashEarned, not counting moments). */
+  /** Hype and cash income over the run (stats.hypeEarned / cashEarned, not counting moments or their Hype-rate buffs). */
   hypeEarned: number;
   cashEarned: number;
-  /** What the bot's moment taps gained. */
+  /** What the bot's moment taps gained (with the extra income from Hype-rate buffs they gave). */
   momentHype: number;
   momentCash: number;
   momentsCollected: number;
@@ -86,9 +86,12 @@ export interface RunRecord {
 
 export let PACK: ContentPack = aiLabPack;
 
-/** Balance overrides on top of the pack's own (for quick sweeps: --balance '{"key":1}'). */
-export function setBalanceOverrides(overrides: Record<string, unknown>): void {
-  PACK = { ...aiLabPack, balance: { ...aiLabPack.balance, ...overrides } };
+/**
+ * Balance overrides on top of the pack's own (for quick sweeps: --balance '{"key":1}'), and
+ * optionally a replacement moment list (--moments file.json) to try moment changes side by side.
+ */
+export function setBalanceOverrides(overrides: Record<string, unknown>, moments?: ContentPack['moments']): void {
+  PACK = { ...aiLabPack, balance: { ...aiLabPack.balance, ...overrides }, ...(moments ? { moments } : {}) };
 }
 const MAX_TICKS = 8000;
 
@@ -136,7 +139,32 @@ export function simulate(job: Job): RunRecord {
   let peakBacklash = 0;
   let rivalPeakRegulation = 0;
   let rivalPeakBacklash = 0;
+  let momentHype = 0;
+  let momentCash = 0;
+  // Hype-rate buffs from tapped moments: the extra income they cause counts as moment Hype.
+  const hypeBuffs: { until: number; value: number }[] = [];
+  let buffHype = 0;
+  let lastTick = 0;
+  let lastHypeEarned = 0;
+  const onMomentCollected = (gain: { defId: string; hype: number; cash: number }): void => {
+    momentHype += gain.hype;
+    momentCash += gain.cash;
+    for (const effect of PACK.moments.find((m) => m.id === gain.defId)?.onCollect ?? []) {
+      if (effect.type === 'timedModifier' && effect.modifier.stat === 'hypeIncome' && effect.modifier.op === 'mul' && effect.modifier.regionTag === undefined) {
+        hypeBuffs.push({ until: lastTick + effect.durationTicks, value: effect.modifier.value });
+      }
+    }
+  };
+  const trackHypeBuffs = (state: GameState): void => {
+    const earned = state.labs[state.playerLabId].stats.hypeEarned;
+    let factor = 1;
+    for (const buff of hypeBuffs) if (buff.until >= state.tick) factor *= buff.value;
+    if (factor !== 1) buffHype += (earned - lastHypeEarned) * (1 - 1 / factor);
+    lastHypeEarned = earned;
+    lastTick = state.tick;
+  };
   const onTick = (state: GameState): void => {
+    trackHypeBuffs(state);
     const player = state.labs[state.playerLabId];
     const tick = state.tick;
     peakRegulation = Math.max(peakRegulation, player.regulation);
@@ -191,12 +219,6 @@ export function simulate(job: Job): RunRecord {
     }
   };
 
-  let momentHype = 0;
-  let momentCash = 0;
-  const onMomentCollected = (gain: { hype: number; cash: number }): void => {
-    momentHype += gain.hype;
-    momentCash += gain.cash;
-  };
   let state: GameState;
   try {
     state = runHeadless(
@@ -247,9 +269,9 @@ export function simulate(job: Job): RunRecord {
     purchases,
     dataCentresBuilt: player.stats.dataCentresBuilt,
     achievements: state.achievements.slice(),
-    hypeEarned: player.stats.hypeEarned,
+    hypeEarned: player.stats.hypeEarned - buffHype,
     cashEarned: player.stats.cashEarned,
-    momentHype,
+    momentHype: momentHype + buffHype,
     momentCash,
     momentsCollected: player.stats.momentsCollected,
     momentsMissed: player.stats.momentsMissed,

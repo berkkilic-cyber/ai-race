@@ -148,6 +148,24 @@ describe('ai-lab content pack', () => {
       }
     });
 
+    it('keeps boost Hype small so tapping is rewarding but not decisive (docs/BALANCE.md, task 12 retune)', () => {
+      for (const m of boosts) {
+        for (const e of m.onCollect) {
+          if (e.type !== 'resource' || e.resource !== 'hype') continue;
+          expect(e.amount).toBeLessThanOrEqual(4);
+          expect(e.scaleWithIncome ?? 0).toBeLessThanOrEqual(8);
+        }
+        // Every boost gives something noticeable: never an empty or zero reward.
+        expect(m.onCollect.some((e) => !(e.type === 'resource' && e.amount === 0 && !e.scaleWithIncome))).toBe(true);
+      }
+      for (const m of threats) {
+        for (const e of m.onExpire ?? []) {
+          if (e.type === 'timedModifier' || e.type === 'dataCentre') expect(e.durationTicks ?? 0).toBeLessThanOrEqual(60);
+          if (e.type === 'resourcePercent') expect(e.percent).toBeGreaterThanOrEqual(-5);
+        }
+      }
+    });
+
     it('has two visible and one secret moment achievement', () => {
       const usesMoments = pack.achievements.filter((a) => a.conditions.some((c) => (c.type === 'statAtLeast' || c.type === 'statAtMost') && c.stat.startsWith('moments')));
       expect(usesMoments.filter((a) => !a.secret).length).toBeGreaterThanOrEqual(2);
