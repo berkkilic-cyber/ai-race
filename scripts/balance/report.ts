@@ -191,3 +191,51 @@ export function summaryTable(byPolicy: Map<string, RunRecord[]>): string {
   });
   return table(['Policy', 'Runs', 'Win', ...TRIGGERS, 'Ticks p10/p50/p90'], rows);
 }
+
+const FOCUSED: Record<string, string> = { capability: 'agi', reach: 'dependence', shadow: 'monopoly' };
+const GROUP_FLAG = 0.08;
+
+/**
+ * One row per difficulty: sensible win rate and run length, idle / random, the best focused
+ * policy (a good human plays closer to it), each focused policy's own win type, how many of
+ * the six endings sensible saw, and the weakest founder and home region for sensible.
+ */
+export function difficultyTable(records: RunRecord[], levels: string[], defaultLevel: string): string {
+  const rows = levels.map((level) => {
+    const at = records.filter((r) => (r.job.difficulty ?? defaultLevel) === level);
+    const of = (policy: string) => at.filter((r) => r.job.policy === policy && r.job.momentSkill === undefined);
+    const winRate = (runs: RunRecord[]) => (runs.length === 0 ? null : runs.filter((r) => r.kind === 'win').length / runs.length);
+    const show = (v: number | null) => (v === null ? '-' : `${(v * 100).toFixed(1)}%`);
+    const sensible = of('sensible');
+    const focused = Object.keys(FOCUSED)
+      .map((p) => ({ p, rate: winRate(of(p)) }))
+      .filter((x): x is { p: string; rate: number } => x.rate !== null)
+      .sort((a, b) => b.rate - a.rate)[0];
+    const own = Object.entries(FOCUSED).map(([p, trigger]) => {
+      const runs = of(p);
+      return runs.length === 0 ? '-' : pct(runs.filter((r) => r.trigger === trigger).length, runs.length);
+    });
+    const endings = new Set(sensible.map((r) => r.trigger).filter((t) => t !== null)).size;
+    const weakest = (key: (r: RunRecord) => string) => {
+      const groups = [...countBy(sensible, key).keys()].map((g) => ({ g, rate: winRate(sensible.filter((r) => key(r) === g)) ?? 0 }));
+      const low = groups.sort((a, b) => a.rate - b.rate)[0];
+      return low ? `${low.g} ${show(low.rate)}${low.rate < GROUP_FLAG ? ' (!)' : ''}` : '-';
+    };
+    return [
+      level,
+      show(winRate(sensible)),
+      fmt(median(sensible.map((r) => r.ticks))),
+      focused ? `${focused.p} ${show(focused.rate)}` : '-',
+      ...own,
+      show(winRate(of('random'))),
+      show(winRate(of('idle'))),
+      sensible.length === 0 ? '-' : `${endings}/6`,
+      weakest((r) => r.job.founderId),
+      weakest((r) => r.job.homeRegion),
+    ];
+  });
+  return table(
+    ['Difficulty', 'Sensible win', 'Sensible ticks p50', 'Best focused', 'capability agi', 'reach dependence', 'shadow monopoly', 'Random win', 'Idle win', 'Endings (sensible)', 'Weakest founder', 'Weakest home'],
+    rows,
+  );
+}
