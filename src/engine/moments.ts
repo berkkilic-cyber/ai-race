@@ -41,12 +41,13 @@ function spawnFor(state: GameState, context: EngineContext, lab: LabState): void
   const open = openRegions(state, context, lab);
   if (open.length === 0) return;
   const eligible = context.pack.moments.filter((def) => checkAll(state, context, lab, def.conditions) && regionsFor(def, lab, open).length > 0);
-  const def = weightedPick(state, eligible, (d) => d.weight);
+  const { momentBoostWeightFactor, momentThreatWeightFactor, momentLifetimeFactor } = context.balance;
+  const def = weightedPick(state, eligible, (d) => d.weight * (d.kind === 'threat' ? momentThreatWeightFactor : momentBoostWeightFactor));
   if (!def) return;
   // Weighted by the lab's users there: moments show up where the lab's people are.
   const region = weightedPick(state, regionsFor(def, lab, open), (r) => adoptionIn(lab, r.id) * r.population);
   if (!region) return;
-  const lifetime = max(1, round(def.lifetimeTicks));
+  const lifetime = max(1, round(def.lifetimeTicks * momentLifetimeFactor));
   state.moments.push({
     uid: `m${state.tick}-${lab.id}`,
     defId: def.id,

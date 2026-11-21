@@ -13,6 +13,14 @@ export interface BalanceConfig {
   rivalStartHype: number;
   /** Cash an AI rival starts with (millions). */
   rivalStartCash: number;
+  /** The player's starting Hype is the founder's × this (difficulty). */
+  playerStartHypeFactor: number;
+  /** The player's starting Cash is the founder's × this (difficulty). */
+  playerStartCashFactor: number;
+  /** Every rival's entryTick is multiplied by this (rounded; below 1 = rivals enter earlier). */
+  rivalEntryTickFactor: number;
+  /** AI rivals' personality `expansion` is multiplied by this (how readily they launch and build). */
+  aiExpansionFactor: number;
 
   // ── Spread ──
   /** Base logistic growth rate of adoption per tick. */
@@ -123,6 +131,10 @@ export interface BalanceConfig {
   aiBacklashDecay: number;
   /** AI labs' per-tick regulation and backlash gains are multiplied by this (1 = same as the player). */
   aiMeterGainFactor: number;
+  /** Human labs' per-tick regulation gain is multiplied by this (difficulty). */
+  playerRegulationGainFactor: number;
+  /** Human labs' per-tick backlash gain is multiplied by this (difficulty). */
+  playerBacklashGainFactor: number;
 
   // ── Bans ──
   /** Regulation thresholds that trigger bans (ascending). */
@@ -185,6 +197,12 @@ export interface BalanceConfig {
   momentIntervalFloor: number;
   /** Most moments one lab can have on the map at once. */
   maxActiveMoments: number;
+  /** Spawn weight of 'boost' moments × this. */
+  momentBoostWeightFactor: number;
+  /** Spawn weight of 'threat' moments × this. */
+  momentThreatWeightFactor: number;
+  /** Every moment's lifetimeTicks × this (rounded, at least 1 tick). */
+  momentLifetimeFactor: number;
 
   // ── Endings and score ──
   /** World share that triggers the dependence ending. */
@@ -207,6 +225,10 @@ export const defaultBalance: BalanceConfig = {
   startAdoption: 0.01,
   rivalStartHype: 15,
   rivalStartCash: 150,
+  playerStartHypeFactor: 1,
+  playerStartCashFactor: 1,
+  rivalEntryTickFactor: 1,
+  aiExpansionFactor: 1,
 
   baseSpread: 0.003,
   appealPerCapability: 0.25,
@@ -262,6 +284,8 @@ export const defaultBalance: BalanceConfig = {
   aiRegulationDecay: 0,
   aiBacklashDecay: 0.01,
   aiMeterGainFactor: 0.6,
+  playerRegulationGainFactor: 1,
+  playerBacklashGainFactor: 1,
 
   banThresholds: [25, 50, 75],
   banRegionsPerThreshold: 1,
@@ -293,6 +317,9 @@ export const defaultBalance: BalanceConfig = {
   momentShareSpeedup: 1.5,
   momentIntervalFloor: 16,
   maxActiveMoments: 3,
+  momentBoostWeightFactor: 1,
+  momentThreatWeightFactor: 1,
+  momentLifetimeFactor: 1,
 
   dependenceShare: 0.5,
   scoreWin: 1000,
@@ -303,7 +330,7 @@ export const defaultBalance: BalanceConfig = {
   scorePerTickSaved: 0.5,
 };
 
-/** Defaults with the pack's overrides applied. */
-export function mergeBalance(overrides: Partial<BalanceConfig>): BalanceConfig {
-  return { ...defaultBalance, ...overrides };
+/** Defaults with the pack's overrides applied, then any further layers (a difficulty's) in order. */
+export function mergeBalance(overrides: Partial<BalanceConfig>, ...more: Partial<BalanceConfig>[]): BalanceConfig {
+  return Object.assign({ ...defaultBalance, ...overrides }, ...more);
 }

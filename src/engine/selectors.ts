@@ -18,7 +18,8 @@ import {
 } from './derived';
 import { cashIncomeOf, dataCentreUpkeepOf, hypeIncomeOf, upkeepOf } from './economy';
 import { labModifierTable, statMultiplier } from './modifiers';
-import type { Condition, ContentPack, GameState, LabState, Meters, MomentState, Stat } from './types';
+import type { BalanceConfig } from './balance';
+import type { Condition, ContentPack, DifficultyDef, GameState, LabState, Meters, MomentState, Stat } from './types';
 import { max } from './natives';
 
 function labOrThrow(state: GameState, labId: string): LabState {
@@ -35,22 +36,22 @@ export function getMeters(state: GameState, labId: string): Meters {
 }
 
 export function getCompute(state: GameState, pack: ContentPack, labId: string): number {
-  return computeOf(labOrThrow(state, labId), getContext(pack), state.tick);
+  return computeOf(labOrThrow(state, labId), getContext(pack, state.difficulty), state.tick);
 }
 
 /** Effective model tier: highest owned capability level, capped by compute. */
 export function getCapabilityLevel(state: GameState, pack: ContentPack, labId: string): number {
-  return capabilityOf(labOrThrow(state, labId), getContext(pack), state.tick);
+  return capabilityOf(labOrThrow(state, labId), getContext(pack, state.difficulty), state.tick);
 }
 
 /** Users in millions. */
 export function getUsers(state: GameState, pack: ContentPack, labId: string): number {
-  return usersOf(labOrThrow(state, labId), getContext(pack));
+  return usersOf(labOrThrow(state, labId), getContext(pack, state.difficulty));
 }
 
 /** Share of world population using the lab, 0..1. */
 export function getWorldShare(state: GameState, pack: ContentPack, labId: string): number {
-  return worldShareOf(labOrThrow(state, labId), getContext(pack));
+  return worldShareOf(labOrThrow(state, labId), getContext(pack, state.difficulty));
 }
 
 /**
@@ -58,7 +59,7 @@ export function getWorldShare(state: GameState, pack: ContentPack, labId: string
  * counts only the base rate (new-user hype depends on next tick's growth).
  */
 export function getIncome(state: GameState, pack: ContentPack, labId: string): { cash: number; hype: number } {
-  const context = getContext(pack);
+  const context = getContext(pack, state.difficulty);
   const lab = labOrThrow(state, labId);
   const mods = labModifierTable(lab, context, state.tick);
   return {
@@ -68,14 +69,14 @@ export function getIncome(state: GameState, pack: ContentPack, labId: string): {
 }
 
 export function getNodeCost(state: GameState, pack: ContentPack, labId: string, nodeId: string): Price {
-  const context = getContext(pack);
+  const context = getContext(pack, state.difficulty);
   const node = context.nodes.get(nodeId);
   if (!node) throw new Error(`Unknown node: ${nodeId}`);
   return nodePrice(labOrThrow(state, labId), context, node, state.tick);
 }
 
 export function getDataCentreCost(state: GameState, pack: ContentPack, labId: string, regionId: string): number {
-  const context = getContext(pack);
+  const context = getContext(pack, state.difficulty);
   const region = context.regions.get(regionId);
   if (!region) throw new Error(`Unknown region: ${regionId}`);
   return dataCentrePrice(labOrThrow(state, labId), context, region, state.tick);
@@ -85,23 +86,23 @@ export function getUpgradeCost(state: GameState, pack: ContentPack, labId: strin
   const lab = labOrThrow(state, labId);
   const dc = lab.dataCentres.find((d) => d.id === dataCentreId);
   if (!dc) throw new Error(`Unknown data centre: ${dataCentreId}`);
-  return upgradePrice(lab, getContext(pack), dc, state.tick);
+  return upgradePrice(lab, getContext(pack, state.difficulty), dc, state.tick);
 }
 
 export function getLaunchCost(state: GameState, pack: ContentPack, labId: string, regionId: string): number {
-  const context = getContext(pack);
+  const context = getContext(pack, state.difficulty);
   const region = context.regions.get(regionId);
   if (!region) throw new Error(`Unknown region: ${regionId}`);
   return launchPrice(labOrThrow(state, labId), context, region, state.tick);
 }
 
 export function getAcquirePrice(state: GameState, pack: ContentPack, labId: string, targetLabId: string): number {
-  return acquirePrice(labOrThrow(state, labId), labOrThrow(state, targetLabId), getContext(pack), state.tick);
+  return acquirePrice(labOrThrow(state, labId), labOrThrow(state, targetLabId), getContext(pack, state.difficulty), state.tick);
 }
 
 /** Multiplier for a stat, (1 + Σadd) × Πmul; with a region, its tagged modifiers count too. */
 export function getModifierTotal(state: GameState, pack: ContentPack, labId: string, stat: Stat, regionId?: string): number {
-  const context = getContext(pack);
+  const context = getContext(pack, state.difficulty);
   const region = regionId === undefined ? undefined : context.regions.get(regionId);
   return statMultiplier(labModifierTable(labOrThrow(state, labId), context, state.tick), stat, region);
 }
@@ -111,12 +112,12 @@ export function isBanned(state: GameState, labId: string, regionId: string): boo
 }
 
 export function checkConditions(state: GameState, pack: ContentPack, labId: string, conditions: readonly Condition[]): boolean {
-  return checkAll(state, getContext(pack), labOrThrow(state, labId), conditions);
+  return checkAll(state, getContext(pack, state.difficulty), labOrThrow(state, labId), conditions);
 }
 
 /** The strongest other active lab (highest AGI progress), if any. */
 export function getLeadRival(state: GameState, pack: ContentPack, labId: string): string | undefined {
-  return leadRivalOf(state, getContext(pack), labId)?.id;
+  return leadRivalOf(state, getContext(pack, state.difficulty), labId)?.id;
 }
 
 /**
@@ -144,21 +145,42 @@ export function getMomentProgress(state: GameState, uid: string): number {
   return lifetime <= 0 ? 1 : clamp((state.tick - moment.spawnTick) / lifetime, 0, 1);
 }
 
+// ───────────────────────── Difficulty ─────────────────────────
+
+/** The pack's difficulty levels, easiest first (empty when it has none). */
+export function getDifficulties(pack: ContentPack): DifficultyDef[] {
+  return pack.difficulties ?? [];
+}
+
+/** The run's difficulty level after fallback (named → pack default → none). */
+export function getDifficulty(state: GameState, pack: ContentPack): DifficultyDef | undefined {
+  return getContext(pack, state.difficulty).difficulty;
+}
+
+/** The balance the run plays with: engine defaults ← pack balance ← difficulty balance. */
+export function getBalance(state: GameState, pack: ContentPack): Readonly<BalanceConfig> {
+  return getContext(pack, state.difficulty).balance;
+}
+
 // ───────────────────────── Clarity selectors (tiers, wins, standings, income, reach) ─────────────────────────
 
 /** Highest model tier among owned nodes, whatever the compute (the effective tier may be lower). */
 export function getOwnedCapabilityLevel(state: GameState, pack: ContentPack, labId: string): number {
-  return ownedCapability(labOrThrow(state, labId), getContext(pack));
+  return ownedCapability(labOrThrow(state, labId), getContext(pack, state.difficulty));
 }
 
-/** Compute needed to run model tier `level` (0 for level ≤ 0). */
-export function getComputeRequired(pack: ContentPack, level: number): number {
-  return computeForCapability(level, getContext(pack).balance);
+/**
+ * Compute needed to run model tier `level` (0 for level ≤ 0). Without `state` it uses the
+ * pack's default difficulty; `validatePack` keeps the compute curve out of difficulty
+ * overrides, so the answer is the same for every run of the pack.
+ */
+export function getComputeRequired(pack: ContentPack, level: number, state?: GameState): number {
+  return computeForCapability(level, getContext(pack, state?.difficulty).balance);
 }
 
 /** Compute still missing to run the highest owned tier: required − current, 0 when enough or nothing owned. */
 export function getComputeShortfall(state: GameState, pack: ContentPack, labId: string): number {
-  const context = getContext(pack);
+  const context = getContext(pack, state.difficulty);
   const lab = labOrThrow(state, labId);
   const owned = ownedCapability(lab, context);
   if (owned <= 0) return 0;
@@ -176,7 +198,7 @@ export interface WinProgress {
 
 /** How close the lab is to each win. */
 export function getWinProgress(state: GameState, pack: ContentPack, labId: string): WinProgress {
-  const context = getContext(pack);
+  const context = getContext(pack, state.difficulty);
   const lab = labOrThrow(state, labId);
   const threshold = context.balance.dependenceShare;
   const others = state.labOrder.filter((id) => id !== labId);
@@ -211,7 +233,7 @@ export interface StandingRow {
 
 /** One row per lab, sorted by world share (highest first, then lab order). */
 export function getStandings(state: GameState, pack: ContentPack): StandingRow[] {
-  const context = getContext(pack);
+  const context = getContext(pack, state.difficulty);
   const rows = state.labOrder.map((id, order) => {
     const lab = state.labs[id];
     let bannedRegions = 0;
@@ -257,7 +279,7 @@ export interface IncomeBreakdown {
 
 /** Where the lab's Hype and Cash come from per tick (the lines of each add up to its total). */
 export function getIncomeBreakdown(state: GameState, pack: ContentPack, labId: string): IncomeBreakdown {
-  const context = getContext(pack);
+  const context = getContext(pack, state.difficulty);
   const lab = labOrThrow(state, labId);
   const mods = labModifierTable(lab, context, state.tick);
   const { hypeBase, hypePerNewUser, cashBase, cashPerUser } = context.balance;
@@ -317,7 +339,7 @@ export interface RegionReach {
  * barrier blocks the best route and which nodes would clear it.
  */
 export function getReachableRegions(state: GameState, pack: ContentPack, labId: string): RegionReach[] {
-  const context = getContext(pack);
+  const context = getContext(pack, state.difficulty);
   const lab = labOrThrow(state, labId);
   const regions = pack.regions;
   const channels = channelSetOf(lab, context);

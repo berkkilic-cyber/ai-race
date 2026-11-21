@@ -45,7 +45,7 @@ export function computeScore(state: GameState, context: EngineContext, kind: 'wi
   const peakShare = max(player.stats.peakWorldShare, worldShareOf(player, context));
   let score = peakShare * 100 * b.scorePerSharePoint + player.agiProgress * b.scorePerAgi + player.stats.nodesBought * b.scorePerNode;
   if (kind === 'win') score += b.scoreWin + max(0, b.scoreTargetTicks - state.tick) * b.scorePerTickSaved;
-  return round(score);
+  return round(score * max(0, context.difficulty?.scoreMultiplier ?? 1));
 }
 
 /** Tests not-yet-earned achievements with the given checkAt for the player. */

@@ -1,6 +1,7 @@
 import type { EngineContext } from './context';
-import { getContext } from './context';
+import { getContext, resolveDifficulty } from './context';
 import { scheduleNextHeadline } from './events';
+import { max, round } from './natives';
 import { seedToRng } from './rng';
 import type { ContentPack, GameSetup, GameState, LabState, RivalDef } from './types';
 
@@ -41,8 +42,8 @@ function createPlayer(context: EngineContext, setup: GameSetup): LabState {
     color: DEFAULT_PLAYER_COLOR,
     controller: 'human',
     founderId: founder.id,
-    hype: founder.startHype,
-    cash: founder.startCash,
+    hype: founder.startHype * max(0, context.balance.playerStartHypeFactor),
+    cash: founder.startCash * max(0, context.balance.playerStartCashFactor),
     active: true,
     adoption: { [setup.homeRegion]: context.balance.startAdoption },
   };
@@ -53,18 +54,23 @@ function createPlayer(context: EngineContext, setup: GameSetup): LabState {
  * and empty and enter during step(). Its name is its nameKey, for the UI to translate.
  */
 function createRival(context: EngineContext, rival: RivalDef): LabState {
-  const entersNow = rival.entryTick <= 0;
+  const entersNow = rivalEntryTick(context, rival) <= 0;
   return {
     ...baseLab(rival.id, rival.homeRegion),
     name: rival.nameKey,
     color: rival.color,
     controller: 'ai',
-    personality: { ...rival.personality },
+    personality: { ...rival.personality, expansion: max(0, rival.personality.expansion * context.balance.aiExpansionFactor) },
     hype: context.balance.rivalStartHype,
     cash: context.balance.rivalStartCash,
     active: entersNow,
     adoption: entersNow ? { [rival.homeRegion]: context.balance.startAdoption } : {},
   };
+}
+
+/** The tick a rival enters in this run: its entryTick × rivalEntryTickFactor, rounded. */
+export function rivalEntryTick(context: EngineContext, rival: RivalDef): number {
+  return rival.entryTick <= 0 ? rival.entryTick : max(0, round(rival.entryTick * context.balance.rivalEntryTickFactor));
 }
 
 function selectedRivals(context: EngineContext, setup: GameSetup): RivalDef[] {
@@ -77,7 +83,8 @@ function selectedRivals(context: EngineContext, setup: GameSetup): RivalDef[] {
 }
 
 export function createGame(pack: ContentPack, setup: GameSetup): GameState {
-  const context = getContext(pack);
+  const difficulty = resolveDifficulty(pack, setup.difficulty);
+  const context = getContext(pack, difficulty?.id);
   const player = createPlayer(context, setup);
   const rivals = selectedRivals(context, setup).map((rival) => createRival(context, rival));
   const labs: Record<string, LabState> = { [player.id]: player };
@@ -102,6 +109,7 @@ export function createGame(pack: ContentPack, setup: GameSetup): GameState {
     moments: [],
     nextMomentTick: context.balance.momentFirstTick,
   };
+  if (difficulty) state.difficulty = difficulty.id;
   scheduleNextHeadline(state, context);
   return state;
 }
