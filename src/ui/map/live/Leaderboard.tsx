@@ -1,5 +1,5 @@
-import { memo } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { memo, useCallback, useEffect } from 'react';
+import { StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 
 import { getStandings } from '@/engine';
 
@@ -8,6 +8,7 @@ import { useKeyedSelector } from '../../hooks/useKeyedSelector';
 import { labName, readableLabColor, t } from '../../i18n';
 import { useGameStore, type GameStore } from '../../store/game';
 import { colors, flatShadow, radius, shape, spacing, voice } from '../../theme';
+import { useProjection } from './projection';
 
 /** Below this visible map width the strip shows colour dots only. */
 export const LEADERBOARD_DOTS_BELOW = 520;
@@ -45,6 +46,20 @@ export function shortName(name: string): string {
 export const Leaderboard = memo(function Leaderboard({ insetRight, visibleWidth }: { insetRight: number; visibleWidth: number }) {
   const key = useKeyedSelector(selectRows, ident);
   const playerId = useGameStore((s) => s.state?.playerLabId);
+  // Bubbles and edge indicators keep clear of the strip.
+  const p = useProjection();
+  const setObstacle = p?.setObstacle;
+  const onLayout = useCallback(
+    (e: LayoutChangeEvent) => {
+      const { x, y, width, height } = e.nativeEvent.layout;
+      setObstacle?.('standings', { x, y, w: width, h: height });
+    },
+    [setObstacle],
+  );
+  useEffect(() => () => setObstacle?.('standings', null), [setObstacle]);
+  useEffect(() => {
+    if (!key) setObstacle?.('standings', null);
+  }, [key, setObstacle]);
   if (!key) return null;
   const labs = useGameStore.getState().state?.labs;
   const rows: Row[] = key.split('|').map((part) => {
@@ -54,7 +69,7 @@ export const Leaderboard = memo(function Leaderboard({ insetRight, visibleWidth 
   });
   const dots = visibleWidth < LEADERBOARD_DOTS_BELOW;
   return (
-    <View style={[styles.wrap, { right: insetRight + spacing.m }, dots && styles.wrapDots]} pointerEvents="none" testID="map-leaderboard" accessibilityLabel={t('ui.map.leaderboard')}>
+    <View style={[styles.wrap, { right: insetRight + spacing.m }, dots && styles.wrapDots]} pointerEvents="none" testID="map-leaderboard" accessibilityLabel={t('ui.map.leaderboard')} onLayout={onLayout}>
       {!dots ? <Text style={styles.title}>{t('ui.map.leaderboard')}</Text> : null}
       {rows.map((r, i) => {
         const lab = labs?.[r.labId];

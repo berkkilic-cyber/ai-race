@@ -19,9 +19,10 @@ import { colors } from '@/ui/theme';
 import { TreesTabBadge } from '@/ui/trees';
 import { TutorialHost } from '@/ui/tutorial';
 
-// Web splits routes into chunks: load the other tabs' code now, quietly, so switching tabs
-// never makes the router require a chunk that is not there yet (see app/index.tsx).
-void Promise.all([import('./trees'), import('./news'), import('./race')]).catch(() => undefined);
+// Web splits routes into chunks: load the other tabs' code and the end screen now, quietly,
+// so switching tabs or finishing the run never makes the router require a chunk that is not
+// there yet (see app/index.tsx). Native has one bundle; these resolve at once.
+void Promise.all([import('./trees'), import('./news'), import('./race'), import('../end')]).catch(() => undefined);
 
 /**
  * Game shell: header, tab content, ticker, tabs, event modal, game loop.

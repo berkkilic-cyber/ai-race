@@ -78,7 +78,8 @@ async function main() {
     /** The map's view transform (scale, tx, ty) read from the moving layer, and the container box. */
     const view = () =>
       page.evaluate(() => {
-        const svg = [...document.querySelectorAll('svg')].sort((a, b) => b.getBoundingClientRect().width - a.getBoundingClientRect().width)[0];
+        // The map's own canvas: a world-map SVG with the geometry's viewBox (not an icon, bubble or overlay SVG).
+          const svg = [...document.querySelectorAll('[data-testid="world-map"] svg')].filter((s) => s.viewBox && s.viewBox.baseVal && s.viewBox.baseVal.width > 200).sort((a, b) => b.getBoundingClientRect().width - a.getBoundingClientRect().width)[0];
         const layer = svg.parentElement;
         const box = layer.parentElement.getBoundingClientRect();
         const m = new DOMMatrixReadOnly(getComputedStyle(layer).transform === 'none' ? undefined : getComputedStyle(layer).transform);
@@ -167,7 +168,8 @@ async function main() {
     const at = async (mx, my) =>
       page.evaluate(
         (mx, my) => {
-          const svg = [...document.querySelectorAll('svg')].sort((a, b) => b.getBoundingClientRect().width - a.getBoundingClientRect().width)[0];
+          // The map's own canvas: a world-map SVG with the geometry's viewBox (not an icon, bubble or overlay SVG).
+          const svg = [...document.querySelectorAll('[data-testid="world-map"] svg')].filter((s) => s.viewBox && s.viewBox.baseVal && s.viewBox.baseVal.width > 200).sort((a, b) => b.getBoundingClientRect().width - a.getBoundingClientRect().width)[0];
           const vb = svg.viewBox.baseVal;
           const r = svg.getBoundingClientRect();
           const k = Math.min(r.width / vb.width, r.height / vb.height);
@@ -177,6 +179,13 @@ async function main() {
         my,
       );
     const [hx, hy] = geometry.regions[home].centroid;
+    // A moment bubble over the region would (rightly) take the tap: clear them for this check.
+    await page.evaluate(() => {
+      const st = window.__game.store;
+      const s = st.getState().state;
+      st.setState({ state: { ...s, moments: [] } });
+    });
+    await sleep(300);
     const p = await at(hx, hy);
     await page.mouse.click(p.x, p.y);
     await sleep(900);

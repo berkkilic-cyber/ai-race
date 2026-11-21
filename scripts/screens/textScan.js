@@ -5,7 +5,7 @@
  * after each shot and `textScanSummary()` at the end (non-zero exit code when anything
  * was found). Reads the visible text and accessibility labels.
  */
-const KEY = /\b(?:ui|term|node|engine|stat|barrier|channel|moment|headline|event|ending|achievement|region|brand|founder|rival|tutorial)\.[a-z][\w-]*(?:\.[\w-]+)*/;
+const KEY = /\b(?:ui|term|node|engine|stat|barrier|channel|moment|headline|event|ending|achievement|region|brand|founder|rival|tutorial)\.[a-z][\w-]*(?:\.[\w-]+)*/i;
 const PLACEHOLDER = /\{[A-Za-z_]\w*\}/;
 
 const found = new Map();

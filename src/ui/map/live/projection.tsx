@@ -17,6 +17,7 @@ import Animated, { useAnimatedStyle, type SharedValue } from 'react-native-reani
 import { finiteOr } from '../svgSafe';
 import type { MapView } from '../touchController';
 import { toScreenPoint, type Layout } from '../viewTransform';
+import type { Rect } from '../../moments/relax';
 import type { TapTargets } from './targets';
 
 export { EDGE_INSET, EDGE_MARGIN, TapTargets, edgePoint, type TapTarget } from './targets';
@@ -41,6 +42,13 @@ export interface MapProjection {
   targets: TapTargets;
   /** Bring a region into view (centred). */
   focus(regionId: string): void;
+  /**
+   * Screen rects (container coordinates) of things over the map that bubbles and edge
+   * indicators keep clear of: the controls and the standings strip (src/ui/moments/relax.ts).
+   */
+  obstacles: SharedValue<Rect[]>;
+  /** Sets or clears (null) one obstacle rect by id, e.g. from an onLayout. */
+  setObstacle(id: string, rect: Rect | null): void;
 }
 
 const ProjectionContext = createContext<MapProjection | null>(null);

@@ -13,6 +13,7 @@ import { asDotGeometry } from './dotGeometry';
 import { DotLayer } from './DotLayer';
 import { BannerHost } from '../banners/BannerHost';
 import { MomentLayer } from '../moments/MomentLayer';
+import type { Rect } from '../moments/relax';
 import { Leaderboard } from './live/Leaderboard';
 import { ObjectsLayer } from './live/ObjectsLayer';
 import { ProjectionProvider, type Frame, type MapProjection } from './live/projection';
@@ -141,6 +142,24 @@ export function WorldMap({
   const frame = useSharedValue<Frame>({ cw: 1, ch: 1, mw: geometry.width, mh: geometry.height, insetRight: 0 });
   /** Things on the map that take taps before the regions (moment bubbles, their edge indicators). */
   const targets = useMemo(() => new TapTargets(), []);
+  /** Rects of the controls and the standings strip, which bubbles and edge indicators keep clear of. */
+  const obstacles = useSharedValue<Rect[]>([]);
+  const obstacleRects = useRef(new Map<string, Rect>());
+  const setObstacle = useCallback(
+    (id: string, rect: Rect | null) => {
+      const prev = obstacleRects.current.get(id);
+      if (rect && prev && Math.abs(prev.x - rect.x) < 0.5 && Math.abs(prev.y - rect.y) < 0.5 && Math.abs(prev.w - rect.w) < 0.5 && Math.abs(prev.h - rect.h) < 0.5) return;
+      if (!rect && !prev) return;
+      if (rect && [rect.x, rect.y, rect.w, rect.h].every(Number.isFinite) && rect.w > 0 && rect.h > 0) obstacleRects.current.set(id, rect);
+      else obstacleRects.current.delete(id);
+      obstacles.set([...obstacleRects.current.values()]);
+    },
+    [obstacles],
+  );
+  const onControlsLayout = useCallback((e: LayoutChangeEvent) => {
+    const { x, y, width, height } = e.nativeEvent.layout;
+    setObstacle('controls', { x, y, w: width, h: height });
+  }, [setObstacle]);
   /** Until when an animation set by applyView may still be running (ms, Date.now). */
   const animatingUntil = useRef(0);
   const home = useRef<[number, number, number]>([1, 0, 0]);
@@ -398,8 +417,8 @@ export function WorldMap({
   useTutorialTargetMeasure('map.home', measureHome);
 
   const projection = useMemo<MapProjection>(
-    () => ({ scale, tx, ty, frame, view: () => view.current, layout: () => layout.current, targets, focus: (id) => focusOn(id, true, 'map-object') }),
-    [scale, tx, ty, frame, targets, focusOn],
+    () => ({ scale, tx, ty, frame, view: () => view.current, layout: () => layout.current, targets, focus: (id) => focusOn(id, true, 'map-object'), obstacles, setObstacle }),
+    [scale, tx, ty, frame, targets, focusOn, obstacles, setObstacle],
   );
 
   const [, , vw, vh] = geometry.viewBox;
@@ -445,7 +464,7 @@ export function WorldMap({
         <MapDebugOverlay />
       </View>
       {/* Controls sit above the touch view and keep their own Pressables. The extra control (Regions) sits beside the zoom column, towards the map. */}
-      <View style={[styles.controls, controls === 'bottomLeft' ? styles.bottomLeft : styles.topRight]} pointerEvents="box-none">
+      <View style={[styles.controls, controls === 'bottomLeft' ? styles.bottomLeft : styles.topRight]} pointerEvents="box-none" onLayout={onControlsLayout}>
         {controls === 'topRight' ? extraControl : null}
         <View style={styles.column} pointerEvents="box-none">
           <MapControl glyph="+" onPress={() => zoomButton(BUTTON_ZOOM)} label={t('ui.map.zoomIn')} testID="map-zoom-in" />

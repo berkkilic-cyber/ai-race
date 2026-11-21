@@ -96,7 +96,8 @@ async function main() {
     });
     const geometry = JSON.parse(fs.readFileSync(path.join(ROOT, 'src/content/packs/ai-lab/geometry.json'), 'utf8'));
     const box = await page.evaluate(() => {
-      const svg = [...document.querySelectorAll('svg')].sort((a, b) => b.getBoundingClientRect().width - a.getBoundingClientRect().width)[0];
+      // The map's own canvas: a world-map SVG with the geometry's viewBox (not an icon, bubble or overlay SVG).
+          const svg = [...document.querySelectorAll('[data-testid="world-map"] svg')].filter((s) => s.viewBox && s.viewBox.baseVal && s.viewBox.baseVal.width > 200).sort((a, b) => b.getBoundingClientRect().width - a.getBoundingClientRect().width)[0];
       const r = svg.getBoundingClientRect();
       const vb = svg.viewBox.baseVal;
       return { x: r.x, y: r.y, width: r.width, height: r.height, vw: vb.width, vh: vb.height };
@@ -104,6 +105,13 @@ async function main() {
     const k = Math.min(box.width / box.vw, box.height / box.vh);
     const [cx, cy] = geometry.regions[home].centroid;
     const target = { x: box.x + (box.width - box.vw * k) / 2 + cx * k - 6, y: box.y + (box.height - box.vh * k) / 2 + cy * k - 6 };
+    // A moment bubble over the region would (rightly) take the tap: clear them for this check.
+    await page.evaluate(() => {
+      const st = window.__game.store;
+      const s = st.getState().state;
+      st.setState({ state: { ...s, moments: [] } });
+    });
+    await sleep(300);
     await page.mouse.click(target.x + 6, target.y + 6);
     await sleep(800);
     console.log(`home region: ${home}`);

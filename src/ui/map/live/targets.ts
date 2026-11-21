@@ -20,6 +20,12 @@ export interface TapTarget {
    * from the nearest edge); a tap on the indicator calls this instead.
    */
   onEdgeTap?(): void;
+  /**
+   * Where the thing is actually drawn now, when it is kept apart from others (moment
+   * bubbles, src/ui/moments/relax.ts): a nudge in points added to the anchor and offset,
+   * and the edge indicator's centre (null while the thing is on screen).
+   */
+  place?(): { nudge: [number, number]; edge: [number, number] | null } | null;
 }
 
 /** Indicators of off-screen things sit this far in from the edge (centre, points). */
@@ -56,9 +62,10 @@ export class TapTargets {
     const right = Math.max(1, layout.cw - (layout.insetRight ?? 0));
     for (const [id, t] of this.items) {
       const [sx, sy] = toScreenPoint(layout, v.s, v.tx, v.ty, t.mx, t.my);
-      const x = sx + t.dx;
-      const y = sy + t.dy;
-      const edge = t.onEdgeTap ? edgePoint(x, y, right, layout.ch) : null;
+      const placed = t.place ? t.place() : null;
+      const x = sx + t.dx + (placed && Number.isFinite(placed.nudge[0]) ? placed.nudge[0] : 0);
+      const y = sy + t.dy + (placed && Number.isFinite(placed.nudge[1]) ? placed.nudge[1] : 0);
+      const edge = t.onEdgeTap ? (placed ? placed.edge : edgePoint(x, y, right, layout.ch)) : null;
       const d = edge ? Math.hypot(edge[0] - px, edge[1] - py) : Math.hypot(x - px, y - py);
       if (d <= (edge ? EDGE_HIT : t.r) && d < bestD) {
         bestD = d;

@@ -1,6 +1,6 @@
 import { Redirect, useRouter } from 'expo-router';
-import { useState, type ReactNode } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useState, type ReactNode } from 'react';
+import { Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import type { GameState, NewsItem } from '@/engine';
 
@@ -66,8 +66,20 @@ export function EndScreen() {
     const s = useGameStore.getState().state;
     return s && s.status === 'ended' && s.ending ? s : null;
   });
-  if (!state) return <Redirect href="/" />;
+  if (!state) return Platform.OS === 'web' ? <WebHome /> : <Redirect href="/" />;
   return <EndView state={state} />;
+}
+
+/**
+ * Web, /end opened with no finished run (a reload or a typed URL): a full load of the start
+ * page. The client-side redirect would require the start route's chunk, which a fresh /end
+ * page has not loaded ("Requiring unknown module"). Native has one bundle and redirects.
+ */
+function WebHome() {
+  useEffect(() => {
+    if (typeof window !== 'undefined') window.location.replace('/');
+  }, []);
+  return null;
 }
 
 function EndView({ state }: { state: GameState }) {

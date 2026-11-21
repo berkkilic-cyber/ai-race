@@ -1,6 +1,6 @@
-import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import Animated, { Easing, cancelAnimation, useAnimatedProps, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
+import Animated, { Easing, cancelAnimation, useAnimatedProps, useAnimatedStyle, useDerivedValue, useReducedMotion, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
 import Svg, { Circle, G } from 'react-native-svg';
 
 import type { MapGeometry } from '@/content/packs/ai-lab/geometry';
@@ -10,7 +10,7 @@ import { t } from '../i18n';
 import { hasIcon } from '../icons';
 import { fallbackGlyph, registry } from '../icons/registry';
 import { useAmbientClock, wave } from '../motion/ambient';
-import { AnchorPlane, MOVING, edgePoint, local, project, useProjection, type MapProjection } from '../map/live/projection';
+import { AnchorPlane, EDGE_INSET, MOVING, edgePoint, local, project, useProjection, type MapProjection } from '../map/live/projection';
 import { allFinite, nonNegative, unitInterval } from '../map/svgSafe';
 import { useGameStore, type GameStore } from '../store/game';
 import { Mascot } from '../mascot';
@@ -19,6 +19,7 @@ import { useCoachStore } from './coach';
 import { installMapLiveDebug } from './debug';
 import { collectHaptic, landHaptic } from './haptics';
 import { BUBBLE, BUBBLE_HIT, BUBBLE_RISE, assignSlots, bubbleOffset, collectLines, effectLines, snapshot, type DeltaLine } from './logic';
+import { placeEdgeMarkers, pointAngle, relaxBubbles } from './relax';
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
@@ -188,20 +189,86 @@ export const MomentLayer = memo(function MomentLayer({ geometry }: { geometry: M
   }, []);
 
   if (!p || items.length === 0) return null;
+  return <MomentItems p={p} items={items} reduced={reduced} coachUid={coach?.uid ?? null} onCollect={collect} />;
+});
+
+/** The bubbles, their floating lines, edge markers and the coach line, placed together each frame. */
+function MomentItems({ p, items, reduced, coachUid, onCollect }: { p: MapProjection; items: BubbleItem[]; reduced: boolean; coachUid: string | null; onCollect: (uid: string) => void }) {
+  const placement = usePlacement(p, items);
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="none" testID="moment-layer">
       {/* Floating lines under the bubbles, so a line never hides a bubble still to tap. */}
       {items.map((b) => (b.phase !== 'live' && (b.lines.length > 0 || b.caption) ? <Floater key={`f-${b.uid}`} p={p} item={b} reduced={reduced} /> : null))}
       <AnchorPlane p={p}>
-        {items.map((b) => (
-          <Bubble key={b.uid} p={p} item={b} reduced={reduced} onCollect={collect} />
+        {items.map((b, i) => (
+          <Bubble key={b.uid} p={p} item={b} index={i} placement={placement} reduced={reduced} onCollect={onCollect} />
         ))}
       </AnchorPlane>
-      {items.map((b) => (b.phase === 'live' ? <EdgeIndicator key={`e-${b.uid}`} p={p} item={b} /> : null))}
-      {coach ? items.map((b) => (b.uid === coach.uid && b.phase === 'live' ? <CoachCaption key={`c-${b.uid}`} p={p} item={b} /> : null)) : null}
+      {items.map((b, i) => (b.phase === 'live' ? <EdgeIndicator key={`e-${b.uid}`} item={b} index={i} placement={placement} /> : null))}
+      {coachUid ? items.map((b) => (b.uid === coachUid && b.phase === 'live' ? <CoachCaption key={`c-${b.uid}`} p={p} item={b} /> : null)) : null}
     </View>
   );
-});
+}
+
+/** Where each bubble is drawn this frame: its nudge (points) and, when it is off screen, its edge marker. */
+export interface Placed {
+  /** Nudge added to the bubble's slot position (src/ui/moments/relax.ts). */
+  nx: number;
+  ny: number;
+  /** Centre of the edge marker standing for it, or -1 when it is on screen. */
+  ex: number;
+  ey: number;
+  /** Where the bubble would be (container coordinates), for the marker's arrow. */
+  bx: number;
+  by: number;
+}
+
+/**
+ * One worklet per frame for all bubbles: projects each, keeps them apart and clear of the
+ * controls and the standings strip, and places edge markers for those off screen. At most
+ * a few bubbles, so the pairwise relaxation costs next to nothing.
+ */
+function usePlacement(p: MapProjection, items: readonly BubbleItem[]): SharedValue<Placed[]> {
+  const specs = useMemo(
+    () =>
+      items.map((b) => {
+        const [dx, dy] = bubbleOffset(b.slot);
+        return { mx: b.x, my: b.y, dx, dy };
+      }),
+    [items],
+  );
+  const { scale, tx, ty, frame, obstacles } = p;
+  const placed = useDerivedValue(() => {
+    const f = frame.get();
+    const s = scale.get();
+    const x = tx.get();
+    const y = ty.get();
+    const right = Math.max(1, f.cw - f.insetRight);
+    const pts: [number, number][] = [];
+    const on: boolean[] = [];
+    const edges: ([number, number] | null)[] = [];
+    for (let i = 0; i < specs.length; i++) {
+      const sp = specs[i];
+      const [sx, sy] = project(f, s, x, y, sp.mx, sp.my);
+      const bx = sx + sp.dx;
+      const by = sy + sp.dy;
+      const e = edgePoint(bx, by, right, f.ch);
+      pts.push([bx, by]);
+      on.push(!e);
+      edges.push(e);
+    }
+    const rects = obstacles.get();
+    const nudges = relaxBubbles(pts, on, rects, right, f.ch, BUBBLE / 2);
+    const marks = placeEdgeMarkers(edges, rects, right, f.ch, EDGE, EDGE_INSET);
+    const out: Placed[] = [];
+    for (let i = 0; i < specs.length; i++) {
+      const m = marks[i];
+      out.push({ nx: nudges[i][0], ny: nudges[i][1], ex: m ? m[0] : -1, ey: m ? m[1] : -1, bx: pts[i][0], by: pts[i][1] });
+    }
+    return out;
+  }, [specs]);
+  return placed;
+}
 
 /** Lines an expired threat shows: the cost read from its pack definition. */
 export function expiryLinesFor(pack: GameStore['pack'], defId: string): DeltaLine[] {
@@ -245,7 +312,21 @@ function useLifetime(uid: string, live: boolean): SharedValue<number> {
   return progress;
 }
 
-const Bubble = memo(function Bubble({ p, item, reduced, onCollect }: { p: MapProjection; item: BubbleItem; reduced: boolean; onCollect: (uid: string) => void }) {
+const Bubble = memo(function Bubble({
+  p,
+  item,
+  index,
+  placement,
+  reduced,
+  onCollect,
+}: {
+  p: MapProjection;
+  item: BubbleItem;
+  index: number;
+  placement: SharedValue<Placed[]>;
+  reduced: boolean;
+  onCollect: (uid: string) => void;
+}) {
   const live = item.phase === 'live';
   const [dx, dy] = bubbleOffset(item.slot);
   const still = useGameStore(selectStill);
@@ -270,16 +351,25 @@ const Bubble = memo(function Bubble({ p, item, reduced, onCollect }: { p: MapPro
   // The tap target: the bubble while it is live, or its edge indicator when it is off screen.
   useEffect(() => {
     if (!live) return;
-    p.targets.set(item.uid, { mx: item.x, my: item.y, dx, dy, r: BUBBLE_HIT, onTap: () => onCollect(item.uid), onEdgeTap: () => p.focus(item.regionId) });
+    // The hit test uses where the bubble (or its edge marker) is actually drawn after the relaxation.
+    const place = () => {
+      const pl = placement.get()[index];
+      if (!pl) return null;
+      return { nudge: [pl.nx, pl.ny] as [number, number], edge: pl.ex >= 0 ? ([pl.ex, pl.ey] as [number, number]) : null };
+    };
+    p.targets.set(item.uid, { mx: item.x, my: item.y, dx, dy, r: BUBBLE_HIT, onTap: () => onCollect(item.uid), onEdgeTap: () => p.focus(item.regionId), place });
     return () => p.targets.delete(item.uid);
-  }, [live, p, item.uid, item.x, item.y, item.regionId, dx, dy, onCollect]);
+  }, [live, p, item.uid, item.x, item.y, item.regionId, dx, dy, onCollect, placement, index]);
 
   const { scale, frame } = p;
   const mx = item.x;
   const my = item.y;
   // Inside the moment layer's anchor plane: only the zoom (and the pulse) move the bubble itself.
   const style = useAnimatedStyle(() => {
-    const [sx, sy] = local(frame.get(), scale.get(), mx, my);
+    const [lx, ly] = local(frame.get(), scale.get(), mx, my);
+    const pl = placement.get()[index];
+    const sx = lx + (pl ? pl.nx : 0);
+    const sy = ly + (pl ? pl.ny : 0);
     const k = leave.get();
     const t = clock ? clock.get() : 0;
     const pr = progress.get();
@@ -312,6 +402,11 @@ const Bubble = memo(function Bubble({ p, item, reduced, onCollect }: { p: MapPro
     const b = phase === 3 ? Math.max(0, (k - 0.45) / 0.55) : k;
     return { opacity: unitInterval(phase === 1 || phase === 3 ? (1 - b) * 0.9 : 0), transform: [{ scale: 1 + b * 1.6 }] };
   });
+  // The stem points at the region's marker: only while the bubble sits in its own slot.
+  const stemStyle = useAnimatedStyle(() => {
+    const pl = placement.get()[index];
+    return { opacity: pl && Math.abs(pl.nx) + Math.abs(pl.ny) > 3 ? 0 : 1 };
+  });
   const ringProps = useAnimatedProps(() => ({ strokeDashoffset: CIRC * unitInterval(progress.get()) }));
 
   const c = bubbleColors(item.kind);
@@ -322,7 +417,7 @@ const Bubble = memo(function Bubble({ p, item, reduced, onCollect }: { p: MapPro
     <Animated.View style={[styles.bubble, MOVING, style]} pointerEvents="none" testID={`moment-${item.kind}-${item.uid}`}>
       <View style={[styles.halo, { backgroundColor: threat ? colors.alarm : colors.good, opacity: threat ? 0.35 : 0.25 }]} />
       <Animated.View style={[styles.burst, { borderColor: threat ? colors.alarm : colors.player }, burstStyle]} />
-      {item.slot === 0 ? <View style={[styles.stem, { backgroundColor: c.edge }]} /> : null}
+      {item.slot === 0 ? <Animated.View style={[styles.stem, { backgroundColor: c.edge }, stemStyle]} /> : null}
       <Svg width={BUBBLE} height={BUBBLE} viewBox={`0 0 ${BUBBLE} ${BUBBLE}`}>
         <Circle cx={BUBBLE / 2} cy={BUBBLE / 2} r={RING_R} fill={c.track} fillOpacity={0.55} stroke={c.track} strokeOpacity={0.5} strokeWidth={RING_W} />
         <AnimatedCircle
@@ -346,25 +441,30 @@ const Bubble = memo(function Bubble({ p, item, reduced, onCollect }: { p: MapPro
   );
 });
 
-/** A small marker at the visible map's edge standing for a bubble that is off screen (on the side nearest to it; tap it to go there). */
-const EdgeIndicator = memo(function EdgeIndicator({ p, item }: { p: MapProjection; item: BubbleItem }) {
-  const [dx, dy] = bubbleOffset(item.slot);
-  const { scale, tx, ty, frame } = p;
-  const mx = item.x;
-  const my = item.y;
+/**
+ * A small marker at the visible map's edge standing for a bubble that is off screen (on the
+ * side nearest to it, slid clear of the controls and other markers; tap it to go there),
+ * with a small arrow pointing towards the bubble.
+ */
+const EdgeIndicator = memo(function EdgeIndicator({ item, index, placement }: { item: BubbleItem; index: number; placement: SharedValue<Placed[]> }) {
   const style = useAnimatedStyle(() => {
-    const f = frame.get();
-    const [sx, sy] = project(f, scale.get(), tx.get(), ty.get(), mx, my);
-    const right = Math.max(1, f.cw - f.insetRight);
-    const at = edgePoint(sx + dx, sy + dy, right, f.ch);
-    if (!at) return { opacity: 0, transform: [{ translateX: -999 }, { translateY: -999 }] };
-    return { opacity: 1, transform: [{ translateX: at[0] - EDGE / 2 }, { translateY: at[1] - EDGE / 2 }] };
+    const pl = placement.get()[index];
+    if (!pl || pl.ex < 0) return { opacity: 0, transform: [{ translateX: -999 }, { translateY: -999 }] };
+    return { opacity: 1, transform: [{ translateX: pl.ex - EDGE / 2 }, { translateY: pl.ey - EDGE / 2 }] };
+  });
+  const arrowStyle = useAnimatedStyle(() => {
+    const pl = placement.get()[index];
+    const a = pl && pl.ex >= 0 ? pointAngle(pl.ex, pl.ey, pl.bx, pl.by) : 0;
+    return { transform: [{ rotate: `${a}rad` }] };
   });
   const c = bubbleColors(item.kind);
   const Glyph = hasIcon(item.icon) ? registry[item.icon] : fallbackGlyph;
   return (
     <Animated.View style={[styles.edge, style]} pointerEvents="none" testID={`moment-edge-${item.uid}`}>
       <View style={[styles.edgeRing, { borderColor: c.disc }]} />
+      <Animated.View style={[styles.edgeArrowTrack, arrowStyle]}>
+        <View style={[styles.edgeArrow, { borderLeftColor: c.disc }]} />
+      </Animated.View>
       <View style={[styles.edgeDisc, { backgroundColor: c.disc, borderColor: c.edge }]}>
         <Svg width={16} height={16} viewBox="0 0 24 24">
           <G stroke={c.icon} strokeWidth={2.4} fill="none" strokeLinecap="round" strokeLinejoin="round">
@@ -484,6 +584,20 @@ const styles = StyleSheet.create({
   stem: { position: 'absolute', left: BUBBLE / 2 - 1, top: BUBBLE / 2 + RING_R, width: 2, height: STEM - RING_R + BUBBLE / 2 },
   edge: { position: 'absolute', left: 0, top: 0, width: EDGE, height: EDGE, alignItems: 'center', justifyContent: 'center' },
   edgeRing: { position: 'absolute', left: 0, top: 0, width: EDGE, height: EDGE, borderRadius: EDGE / 2, borderWidth: 2, borderStyle: 'dashed' },
+  // The arrow: a fixed-size track the size of the marker, rotated towards the bubble, with a triangle at its right end.
+  edgeArrowTrack: { position: 'absolute', left: 0, top: 0, width: EDGE, height: EDGE },
+  edgeArrow: {
+    position: 'absolute',
+    left: EDGE - 1,
+    top: EDGE / 2 - 5,
+    width: 0,
+    height: 0,
+    borderTopWidth: 5,
+    borderBottomWidth: 5,
+    borderLeftWidth: 7,
+    borderTopColor: colors.transparent,
+    borderBottomColor: colors.transparent,
+  },
   edgeDisc: { width: 26, height: 26, borderRadius: 13, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
   floater: { position: 'absolute', left: 0, top: 0, width: FLOAT_W, height: FLOAT_H, alignItems: 'center', justifyContent: 'flex-end', gap: 3 },
   floaterBelow: { justifyContent: 'flex-start' },

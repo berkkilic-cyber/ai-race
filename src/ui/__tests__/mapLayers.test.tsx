@@ -47,6 +47,8 @@ jest.mock('react-native-reanimated', () => {
     interpolateColor: (_v: unknown, _i: unknown, out: string[]) => out[0],
     useAnimatedProps: () => ({}),
     useAnimatedStyle: () => ({}),
+    // Runs the worklet on every render (the bubble placement really runs in this test).
+    useDerivedValue: (fn: () => unknown) => sharedValue(fn()),
     useReducedMotion: () => false,
     useSharedValue: (v: unknown) => jest.requireActual('react').useState(() => sharedValue(v))[0],
     withRepeat: identity,
