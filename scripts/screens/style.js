@@ -18,7 +18,11 @@
  * captures into docs/screenshots/themes/<theme>-<name>.png, and finally writes
  * docs/screenshots/themes/compare-<name>.png (the themes stacked vertically, each labelled)
  * for map-midgame and event-card. SKIP_BUILD=1 reuses the dist/ already there (one theme only).
- * COMPARE_ONLY=1 only recomposes the comparison sheets from existing shots. Serves dist/ in-process and drives headless
+ * COMPARE_ONLY=1 only recomposes the comparison sheets from existing shots; COMPARE picks the
+ * screens and COMPARE_AS names the sheet of a single screen:
+ *
+ *   COMPARE_ONLY=1 THEMES=neon,blueprint COMPARE=map-midgame COMPARE_AS=compare-neon-vs-blueprint SCALE=2 node scripts/screens/style.js
+ * Serves dist/ in-process and drives headless
  * Chrome through the `?debug=1` handle (window.__game); the server and browser are closed
  * before exiting. Env: CHROME (default /usr/bin/google-chrome), PORT (default 8767),
  * SEED (default 7), SCALE (device pixel ratio, default 1), MEASURE=0 to skip the render measurement.
@@ -34,10 +38,12 @@ const DIST = path.join(ROOT, 'dist');
 const OUT = path.resolve(process.argv[2] || path.join(ROOT, 'docs', 'screenshots', 'style'));
 const { spawnSync } = require('node:child_process');
 
-let THEME = process.env.THEME || 'blueprint';
+let THEME = process.env.THEME || 'neon';
 const THEMES = (process.env.THEMES || '').split(',').map((s) => s.trim()).filter(Boolean);
-/** Screens stacked into comparison sheets in theme mode. */
-const COMPARE = ['map-midgame', 'event-card'];
+/** Screens stacked into comparison sheets in theme mode (COMPARE=map-midgame,trees to choose). */
+const COMPARE = (process.env.COMPARE || 'map-midgame,event-card').split(',').map((s) => s.trim()).filter(Boolean);
+/** File name (without .png) of the sheet when one screen is compared, e.g. compare-neon-vs-blueprint. */
+const COMPARE_AS = process.env.COMPARE_AS || '';
 const PORT = Number(process.env.PORT || 8767);
 const SEED = Number(process.env.SEED || 7);
 const CHROME = process.env.CHROME || '/usr/bin/google-chrome';
@@ -284,7 +290,7 @@ async function compose(dir, themes) {
       </style></head><body>${rows}</body></html>`;
       await page.setViewport({ width: VIEW.width * SCALE, height: 100, deviceScaleFactor: 1 });
       await page.setContent(html, { waitUntil: 'load' });
-      const file = path.join(dir, `compare-${name}.png`);
+      const file = path.join(dir, `${COMPARE_AS && COMPARE.length === 1 ? COMPARE_AS : `compare-${name}`}.png`);
       await page.screenshot({ path: file, fullPage: true });
       await scanText(page, path.basename(String(file)));
       console.log(`saved ${path.relative(ROOT, file)}`);
@@ -304,7 +310,8 @@ async function main() {
       await capture(dir);
     }
   }
-  await compose(dir, THEMES);
+  // One theme alone has nothing to compare with (and must not overwrite the sheets).
+  if (THEMES.length > 1) await compose(dir, THEMES);
 }
 
 main()

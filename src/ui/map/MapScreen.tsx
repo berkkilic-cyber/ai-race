@@ -9,7 +9,7 @@ import { t } from '../i18n';
 import { AmbientGate } from '../motion/ambient';
 import { useGameStore } from '../store/game';
 import { useTutorialTarget } from '../tutorial/targets';
-import { colors, radius, spacing, touch, type } from '../theme';
+import { colors, radius, spacing, touch, type, voice } from '../theme';
 import { RegionSheet } from './RegionSheet';
 import { RegionsSheet } from './RegionsSheet';
 import { WorldMap } from './WorldMap';
@@ -106,5 +106,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   regionsOn: { backgroundColor: colors.raised, borderColor: colors.player },
-  regionsLabel: { color: colors.text, fontSize: type.s, fontWeight: '700' },
+  regionsLabel: { ...voice.bodyStrong, color: colors.text, fontSize: type.s },
 });

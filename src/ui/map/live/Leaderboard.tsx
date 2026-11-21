@@ -7,6 +7,7 @@ import { fmtPct } from '../../format';
 import { useKeyedSelector } from '../../hooks/useKeyedSelector';
 import { labName, readableLabColor, t } from '../../i18n';
 import { useGameStore, type GameStore } from '../../store/game';
+import { mixColor } from '../../color';
 import { colors, flatShadow, radius, shape, spacing, voice } from '../../theme';
 import { useProjection } from './projection';
 
@@ -93,6 +94,9 @@ export const Leaderboard = memo(function Leaderboard({ insetRight, visibleWidth 
   );
 });
 
+/** Neon lights the player's row (a green edge on a faint green tint) instead of filling it. */
+const LIT = shape.glow > 0;
+
 const styles = StyleSheet.create({
   wrap: {
     position: 'absolute',
@@ -111,12 +115,14 @@ const styles = StyleSheet.create({
   wrapDots: { width: 'auto', flexDirection: 'row', gap: 5, paddingHorizontal: 6, paddingVertical: 6 },
   title: { ...voice.calmLabel, color: colors.dim, marginBottom: 1 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 3, minHeight: 17 },
-  rowMine: { backgroundColor: colors.player, marginHorizontal: -3, paddingHorizontal: 6 },
+  rowMine: LIT
+    ? { backgroundColor: mixColor(colors.surface, colors.player, 0.14), borderLeftWidth: 2, borderColor: colors.player, marginHorizontal: -3, paddingLeft: 4, paddingRight: 6 }
+    : { backgroundColor: colors.player, marginHorizontal: -3, paddingHorizontal: 6 },
   rank: { ...voice.calmNumber, fontSize: 11, color: colors.dim, width: 9 },
   swatch: { width: 8, height: 8, borderRadius: shape.radius.s > 0 ? 4 : 0 },
   name: { ...voice.bodyStrong, flex: 1, fontSize: 12, color: colors.text },
   share: { ...voice.calmNumber, fontSize: 12, color: colors.text },
-  textMine: { color: colors.onPlayer },
+  textMine: { color: LIT ? colors.playerText : colors.onPlayer },
   dot: { width: 10, height: 10, borderRadius: 5 },
-  dotMine: { width: 14, height: 14, borderRadius: 7, borderWidth: 2, borderColor: colors.onPlayer },
+  dotMine: { width: 14, height: 14, borderRadius: 7, borderWidth: 2, borderColor: LIT ? colors.text : colors.onPlayer },
 });

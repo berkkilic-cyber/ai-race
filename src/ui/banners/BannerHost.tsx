@@ -11,7 +11,7 @@ import { Icon } from '../icons';
 import { MOVING } from '../map/live/projection';
 import { launchHaptic } from '../moments/haptics';
 import { useGameStore } from '../store/game';
-import { colors, fonts, spacing, voice } from '../theme';
+import { colors, fonts, glow, shape, spacing, voice } from '../theme';
 import { BANNER_MS, bannerFor, enqueue, nextBanner, type LaunchBanner } from './queue';
 
 const IN_MS = 360;
@@ -127,7 +127,7 @@ function Banner({ banner, insetRight }: { banner: LaunchBanner; insetRight: numb
             </Text>
           ) : null}
         </View>
-        <View style={[styles.rule, { backgroundColor: banner.mine ? colors.newsInk : color }]} />
+        <View style={[styles.rule, { backgroundColor: banner.mine ? (LIT ? colors.player : colors.newsInk) : color }]} />
       </Animated.View>
     </View>
   );
@@ -135,6 +135,9 @@ function Banner({ banner, insetRight }: { banner: LaunchBanner; insetRight: numb
 
 /** Widest a banner gets; beside the side panel it fits the map part left visible (the headline ellipsizes). */
 const BAND_MAX = 500;
+
+/** Neon keeps the player's banner dark and lights it green (a glowing edge, green kicker) instead of filling it. */
+const LIT = shape.glow > 0;
 
 const styles = StyleSheet.create({
   wrap: { position: 'absolute', left: 0, top: spacing.s, alignItems: 'center', overflow: 'hidden', paddingHorizontal: spacing.m },
@@ -148,16 +151,16 @@ const styles = StyleSheet.create({
     borderColor: colors.newsPaper,
     boxShadow: `3px 3px 0px ${colors.shadow}`,
   },
-  bandMine: { backgroundColor: colors.player, borderColor: colors.newsInk, borderWidth: 2 },
+  bandMine: LIT ? { backgroundColor: colors.newsInk, borderColor: colors.player, borderWidth: 1.5, ...glow(colors.player) } : { backgroundColor: colors.player, borderColor: colors.newsInk, borderWidth: 2 },
   block: { width: 40, alignItems: 'center', justifyContent: 'center', gap: 1, paddingVertical: 4 },
   tier: { fontFamily: fonts.newsHeavy, fontSize: 13, lineHeight: 14 },
   texts: { flexShrink: 1, paddingHorizontal: spacing.s, paddingVertical: 4, gap: 1, justifyContent: 'center' },
   kicker: { ...voice.loudKicker, fontSize: 11, lineHeight: 12 },
-  kickerMine: { color: colors.newsInk },
+  kickerMine: { color: LIT ? colors.player : colors.newsInk },
   headline: { ...voice.loudHeadline, fontSize: 18, lineHeight: 20, color: colors.newsPaper },
-  headlineMine: { color: colors.onPlayer },
+  headlineMine: { color: LIT ? colors.newsPaper : colors.onPlayer },
   second: { ...voice.loudBody, fontSize: 12, lineHeight: 14 },
   secondAhead: { color: colors.newsPaper, backgroundColor: colors.newsRed, alignSelf: 'flex-start', paddingHorizontal: 4, overflow: 'hidden' },
-  secondMine: { color: colors.onPlayer },
+  secondMine: { color: LIT ? colors.dim : colors.onPlayer },
   rule: { position: 'absolute', left: 0, right: 0, bottom: -4, height: 3 },
 });

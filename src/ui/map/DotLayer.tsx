@@ -8,7 +8,7 @@ import type { GameState } from '@/engine';
 import { useRegionFlashes, type FlashTone } from '../hooks/useRegionFlashes';
 import { readableLabColor } from '../i18n';
 import { useGameStore } from '../store/game';
-import { colors } from '../theme';
+import { colors, shape } from '../theme';
 import { drawableDots, type DotMapGeometry } from './dotGeometry';
 import { regionDotColors } from './mapColors';
 import { isDrawablePath } from './svgSafe';
@@ -26,10 +26,22 @@ interface BucketProps {
   size: number;
 }
 
+/** Themes with a glow (neon) light the player's dots: a faint halo under them. */
+const HALO = shape.glow > 0;
+const HALO_SIZE = 2.1;
+const HALO_OPACITY = 0.2;
+
 /** One bucket of a region's dots: a single path. Memoised: re-renders only when its colour or size changes. */
 const Bucket = memo(function Bucket({ d, color, size }: BucketProps) {
   countRender('dotBucket');
-  return <Path d={d} fill="none" stroke={color} strokeWidth={size} strokeLinecap="round" />;
+  const dots = <Path d={d} fill="none" stroke={color} strokeWidth={size} strokeLinecap="round" />;
+  if (!HALO || color !== colors.player) return dots;
+  return (
+    <G>
+      <Path d={d} fill="none" stroke={color} strokeWidth={size * HALO_SIZE} strokeLinecap="round" strokeOpacity={HALO_OPACITY} />
+      {dots}
+    </G>
+  );
 });
 
 interface RegionDotsProps {

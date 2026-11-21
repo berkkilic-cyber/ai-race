@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 
 import { getCompute, getIncome, getMeters } from '@/engine';
 import { Pressable, StyleSheet, Text, View, useWindowDimensions, type ViewStyle } from 'react-native';
-import Animated, { interpolate, interpolateColor, useAnimatedStyle } from 'react-native-reanimated';
+import Animated, { interpolate, interpolateColor, useAnimatedStyle, useReducedMotion } from 'react-native-reanimated';
 
 import { mixColor } from '../color';
 import { CountingNumber } from '../components/CountingNumber';
@@ -21,6 +21,7 @@ import { useTutorialTarget } from '../tutorial/targets';
 import { haveText, needText } from '../explain/model';
 import { isStuck, useModelStatus } from '../explain/useModelStatus';
 import { Icon, type IconName } from '../icons';
+import { useAmbientClock } from '../motion/ambient';
 import { useStripPanel, type StripPanel } from './panels/store';
 import { RaceMeter } from './RaceMeter';
 import { wideShellLayout } from './shellLayout';
@@ -52,6 +53,18 @@ const sticker = shape.panel === 'sticker';
 /** Candy composure: the strip's stickers lose their colour as the meters rise (level 0..3). */
 const STICKER_DRAIN = [colors.surface, colors.surface, mixColor(colors.surface, colors.drain, 0.55), colors.drain];
 
+/** Neon composure: the strip's figures flicker now and then from level 2 (more often at 3). */
+const FLICKER = shape.composure === 'alert';
+
+/** Opacity of the flickering figures at ambient time t (seconds): mostly 1, a brief dip at random slots. */
+function flickerAt(t: number, level: number): number {
+  'worklet';
+  if (level < 2 || !Number.isFinite(t) || t <= 0) return 1;
+  const slot = Math.floor(t * 12);
+  const r = Math.abs(Math.sin(slot * 12.9898) * 43758.5453) % 1;
+  return r > (level >= 3 ? 0.92 : 0.965) ? 0.4 : 1;
+}
+
 const fmtTier = (tier: number) => t('ui.strip.tier', { tier: Math.round(tier) });
 
 /**
@@ -72,6 +85,10 @@ export function TopStrip({ right }: { right?: ReactNode }) {
   const icons = stripWidth >= ROOM_FOR_ICONS;
   const resourcesRef = useTutorialTarget('shell.resources');
   const metersRef = useTutorialTarget('shell.meters');
+  const reduced = useReducedMotion();
+  const flickerClock = useAmbientClock(FLICKER && composure.level >= 2 && !reduced);
+  const level = composure.level;
+  const flicker = useAnimatedStyle(() => (FLICKER && flickerClock ? { opacity: flickerAt(flickerClock.get(), level) } : {}));
   const tagFor = (key: 'regulation' | 'backlash' | 'rival') => (composure.level >= 2 && composure.driver === key ? t(dangerKey(key)) : null);
 
   const ruleStyle = useAnimatedStyle(() => {
@@ -109,7 +126,7 @@ export function TopStrip({ right }: { right?: ReactNode }) {
         {shape.panel === 'ticks' ? <PanelDeco /> : null}
       </View>
       <View style={styles.rule} />
-      <Animated.View style={[styles.statsBox, styles.group, stickerA]}>
+      <Animated.View style={[styles.statsBox, styles.group, stickerA, flicker]}>
         <View style={styles.stats} ref={resourcesRef}>
           <HypeStat icons={icons} />
           <CashStat showIncome={showIncome} icons={icons} />

@@ -155,8 +155,8 @@ const MAJOR_ALPHA = 0.13;
 /** Instrument dot grid (neon): pitch, dot radius and opacity; a brighter dot every few cells. */
 const SCAN = 16;
 const SCAN_MAJOR = 4;
-const SCAN_ALPHA = 0.07;
-const SCAN_MAJOR_ALPHA = 0.14;
+const SCAN_ALPHA = 0.08;
+const SCAN_MAJOR_ALPHA = 0.085;
 
 /**
  * The ground behind the map, trees and news: a drafting grid (blueprint), polka dots
@@ -196,8 +196,8 @@ export const Ground = memo(function Ground() {
         <Defs>
           <Pattern id={id} patternUnits="userSpaceOnUse" width={big} height={big}>
             {cells.flatMap((x) => cells.map((y) => (x === c && y === c ? null : <Rect key={`${x}-${y}`} x={x - 0.5} y={y - 0.5} width={1} height={1} fill={colors.grid} fillOpacity={SCAN_ALPHA} />)))}
-            <Rect x={c - 3} y={c - 0.5} width={6} height={1} fill={colors.gridMajor} fillOpacity={SCAN_MAJOR_ALPHA} />
-            <Rect x={c - 0.5} y={c - 3} width={1} height={6} fill={colors.gridMajor} fillOpacity={SCAN_MAJOR_ALPHA} />
+            <Rect x={c - 2.5} y={c - 0.5} width={5} height={1} fill={colors.gridMajor} fillOpacity={SCAN_MAJOR_ALPHA} />
+            <Rect x={c - 0.5} y={c - 2.5} width={1} height={5} fill={colors.gridMajor} fillOpacity={SCAN_MAJOR_ALPHA} />
           </Pattern>
         </Defs>
         <Rect x={0} y={0} width="100%" height="100%" fill={`url(#${id})`} />
