@@ -54,9 +54,10 @@ export function useProjection(): MapProjection | null {
 }
 
 /**
- * Web: things moved every frame (anchors while panning, pulsing bubbles) get a compositor
- * layer of their own, so moving them never repaints the map under them. Native moves views
- * on the UI thread anyway.
+ * Web: things that change every frame on their own (pulsing bubbles, banners and floating
+ * lines on the move) get a compositor layer, so they never repaint the map under them. The
+ * anchor plane and edge markers do not (they move only while panning, and extra layers
+ * cost more there than they save). Native moves views on the UI thread anyway.
  */
 export const MOVING: ViewStyle | null = Platform.OS === 'web' ? ({ willChange: 'transform, opacity' } as unknown as ViewStyle) : null;
 
@@ -97,7 +98,7 @@ export function AnchorPlane({ p, children }: { p: MapProjection; children: React
     return { transform: [{ translateX: x }, { translateY: y }] };
   });
   return (
-    <Animated.View style={[styles.plane, MOVING, style]} pointerEvents="none">
+    <Animated.View style={[styles.plane, style]} pointerEvents="none">
       {children}
     </Animated.View>
   );

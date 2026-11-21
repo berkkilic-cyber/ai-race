@@ -287,10 +287,9 @@ const Bubble = memo(function Bubble({ p, item, reduced, onCollect }: { p: MapPro
     let s = appear.get();
     let o = 1;
     let shake = 0;
-    let bob = 0;
     if (phase === 0) {
-      s *= 1 + (threat ? (urgent ? 0.11 * wave(t, 0.5) : 0.05 * wave(t, 1.5)) : 0.04 * wave(t, 2.2));
-      bob = threat ? 0 : -2.5 * wave(t, 2.2);
+      // One pulse per bubble (a single style write per frame): gentle for boosts, urgent for a threat's last third.
+      s *= 1 + (threat ? (urgent ? 0.13 * wave(t, 0.5) : 0.06 * wave(t, 1.5)) : 0.07 * wave(t, 1.8));
     } else if (phase === 1) {
       s *= 1 + 0.55 * k;
       o = 1 - k;
@@ -306,13 +305,7 @@ const Bubble = memo(function Bubble({ p, item, reduced, onCollect }: { p: MapPro
         o = 1 - b;
       }
     }
-    return { opacity: unitInterval(o), transform: [{ translateX: sx + dx - BUBBLE / 2 + shake }, { translateY: sy + dy - BUBBLE / 2 + bob }, { scale: nonNegative(s) }] };
-  });
-  const haloStyle = useAnimatedStyle(() => {
-    const t = clock ? clock.get() : 0;
-    const urgent = threat && progress.get() > 2 / 3;
-    const w = urgent ? wave(t, 0.5) : wave(t, threat ? 1.5 : 2.2);
-    return { opacity: unitInterval((threat ? (urgent ? 0.55 : 0.3) : 0.22) * (1 - w * 0.6)), transform: [{ scale: 1 + w * (urgent ? 0.5 : 0.28) }] };
+    return { opacity: unitInterval(o), transform: [{ translateX: sx + dx - BUBBLE / 2 + shake }, { translateY: sy + dy - BUBBLE / 2 }, { scale: nonNegative(s) }] };
   });
   const burstStyle = useAnimatedStyle(() => {
     const k = leave.get();
@@ -327,7 +320,7 @@ const Bubble = memo(function Bubble({ p, item, reduced, onCollect }: { p: MapPro
   const o = (BUBBLE - ICON) / 2;
   return (
     <Animated.View style={[styles.bubble, MOVING, style]} pointerEvents="none" testID={`moment-${item.kind}-${item.uid}`}>
-      <Animated.View style={[styles.halo, { backgroundColor: threat ? colors.alarm : colors.good }, MOVING, haloStyle]} />
+      <View style={[styles.halo, { backgroundColor: threat ? colors.alarm : colors.good, opacity: threat ? 0.35 : 0.25 }]} />
       <Animated.View style={[styles.burst, { borderColor: threat ? colors.alarm : colors.player }, burstStyle]} />
       {item.slot === 0 ? <View style={[styles.stem, { backgroundColor: c.edge }]} /> : null}
       <Svg width={BUBBLE} height={BUBBLE} viewBox={`0 0 ${BUBBLE} ${BUBBLE}`}>
@@ -353,7 +346,7 @@ const Bubble = memo(function Bubble({ p, item, reduced, onCollect }: { p: MapPro
   );
 });
 
-/** A small marker at the visible map's edge pointing to a bubble that is off screen. */
+/** A small marker at the visible map's edge standing for a bubble that is off screen (on the side nearest to it; tap it to go there). */
 const EdgeIndicator = memo(function EdgeIndicator({ p, item }: { p: MapProjection; item: BubbleItem }) {
   const [dx, dy] = bubbleOffset(item.slot);
   const { scale, tx, ty, frame } = p;
@@ -367,21 +360,11 @@ const EdgeIndicator = memo(function EdgeIndicator({ p, item }: { p: MapProjectio
     if (!at) return { opacity: 0, transform: [{ translateX: -999 }, { translateY: -999 }] };
     return { opacity: 1, transform: [{ translateX: at[0] - EDGE / 2 }, { translateY: at[1] - EDGE / 2 }] };
   });
-  const arrowStyle = useAnimatedStyle(() => {
-    const f = frame.get();
-    const [sx, sy] = project(f, scale.get(), tx.get(), ty.get(), mx, my);
-    const right = Math.max(1, f.cw - f.insetRight);
-    const at = edgePoint(sx + dx, sy + dy, right, f.ch) ?? [sx + dx, sy + dy];
-    const angle = Math.atan2(sy + dy - at[1], sx + dx - at[0]);
-    return { transform: [{ rotate: `${Number.isFinite(angle) ? angle : 0}rad` }] };
-  });
   const c = bubbleColors(item.kind);
   const Glyph = hasIcon(item.icon) ? registry[item.icon] : fallbackGlyph;
   return (
-    <Animated.View style={[styles.edge, MOVING, style]} pointerEvents="none" testID={`moment-edge-${item.uid}`}>
-      <Animated.View style={[StyleSheet.absoluteFill, arrowStyle]}>
-        <View style={[styles.arrow, { borderLeftColor: c.disc }]} />
-      </Animated.View>
+    <Animated.View style={[styles.edge, style]} pointerEvents="none" testID={`moment-edge-${item.uid}`}>
+      <View style={[styles.edgeRing, { borderColor: c.disc }]} />
       <View style={[styles.edgeDisc, { backgroundColor: c.disc, borderColor: c.edge }]}>
         <Svg width={16} height={16} viewBox="0 0 24 24">
           <G stroke={c.icon} strokeWidth={2.4} fill="none" strokeLinecap="round" strokeLinejoin="round">
@@ -496,22 +479,11 @@ const styles = StyleSheet.create({
   },
   coachText: { ...voice.calmHeading, flex: 1, color: colors.text, fontSize: type.m, lineHeight: 20 },
   bubble: { position: 'absolute', left: 0, top: 0, width: BUBBLE, height: BUBBLE, overflow: 'visible' },
-  halo: { position: 'absolute', left: 0, top: 0, width: BUBBLE, height: BUBBLE, borderRadius: BUBBLE / 2 },
+  halo: { position: 'absolute', left: -5, top: -5, width: BUBBLE + 10, height: BUBBLE + 10, borderRadius: BUBBLE / 2 + 5 },
   burst: { position: 'absolute', left: 0, top: 0, width: BUBBLE, height: BUBBLE, borderRadius: BUBBLE / 2, borderWidth: 3 },
   stem: { position: 'absolute', left: BUBBLE / 2 - 1, top: BUBBLE / 2 + RING_R, width: 2, height: STEM - RING_R + BUBBLE / 2 },
   edge: { position: 'absolute', left: 0, top: 0, width: EDGE, height: EDGE, alignItems: 'center', justifyContent: 'center' },
-  arrow: {
-    position: 'absolute',
-    right: -7,
-    top: EDGE / 2 - 6,
-    width: 0,
-    height: 0,
-    borderTopWidth: 6,
-    borderBottomWidth: 6,
-    borderLeftWidth: 9,
-    borderTopColor: colors.transparent,
-    borderBottomColor: colors.transparent,
-  },
+  edgeRing: { position: 'absolute', left: 0, top: 0, width: EDGE, height: EDGE, borderRadius: EDGE / 2, borderWidth: 2, borderStyle: 'dashed' },
   edgeDisc: { width: 26, height: 26, borderRadius: 13, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
   floater: { position: 'absolute', left: 0, top: 0, width: FLOAT_W, height: FLOAT_H, alignItems: 'center', justifyContent: 'flex-end', gap: 3 },
   floaterBelow: { justifyContent: 'flex-start' },

@@ -1,12 +1,13 @@
 import { memo, useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import Animated, { Easing, cancelAnimation, useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
+import Animated, { Easing, cancelAnimation, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { getCapabilityLevel } from '@/engine';
 
 import { freshNews } from '../hooks/useRegionFlashes';
 import { labName, readableLabColor, t } from '../i18n';
 import { Icon } from '../icons';
+import { MOVING } from '../map/live/projection';
 import { launchHaptic } from '../moments/haptics';
 import { useGameStore } from '../store/game';
 import { colors, fonts, spacing, voice } from '../theme';
@@ -82,9 +83,13 @@ function Banner({ banner, insetRight }: { banner: LaunchBanner; insetRight: numb
   const k = useSharedValue(0);
   const [width, setWidth] = useState(600);
   useEffect(() => {
-    const hold = BANNER_MS - IN_MS - OUT_MS;
-    k.set(withSequence(withTiming(1, { duration: IN_MS, easing: Easing.out(Easing.cubic) }), withTiming(1, { duration: hold }), withTiming(2, { duration: OUT_MS, easing: Easing.in(Easing.cubic) })));
-    return () => cancelAnimation(k);
+    // In, then (a timer, so nothing animates while it holds) out.
+    k.set(withTiming(1, { duration: IN_MS, easing: Easing.out(Easing.cubic) }));
+    const timer = setTimeout(() => k.set(withTiming(2, { duration: OUT_MS, easing: Easing.in(Easing.cubic) })), BANNER_MS - OUT_MS);
+    return () => {
+      clearTimeout(timer);
+      cancelAnimation(k);
+    };
   }, [k]);
   const slide = reduced ? 0 : 1;
   const style = useAnimatedStyle(() => {
@@ -102,7 +107,7 @@ function Banner({ banner, insetRight }: { banner: LaunchBanner; insetRight: numb
   const second = banner.mine ? t('ui.banner.mineLine', { tier: banner.tier }) : banner.ahead > 0 ? t(banner.ahead === 1 ? 'ui.banner.ahead' : 'ui.banner.aheadMany', { n: banner.ahead }) : null;
   return (
     <View style={[styles.wrap, { right: insetRight }]} pointerEvents="none" onLayout={(e) => setWidth(Math.max(200, e.nativeEvent.layout.width))}>
-      <Animated.View style={[styles.band, banner.mine ? styles.bandMine : null, style]} testID={banner.mine ? 'launch-banner-mine' : 'launch-banner'}>
+      <Animated.View style={[styles.band, banner.mine ? styles.bandMine : null, MOVING, style]} testID={banner.mine ? 'launch-banner-mine' : 'launch-banner'}>
         <View style={[styles.block, { backgroundColor: banner.mine ? colors.newsInk : color }]}>
           <Icon name="launch" size={18} color={banner.mine ? colors.player : colors.newsInk} accent={banner.mine ? colors.newsPaper : colors.newsInk} strokeWidth={2.2} />
           <Text style={[styles.tier, { color: banner.mine ? colors.player : colors.newsInk }]}>{t('ui.banner.tierShort', { tier: banner.tier })}</Text>
