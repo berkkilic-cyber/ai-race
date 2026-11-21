@@ -1686,9 +1686,9 @@
   },
   {
    "id": "frenzyExtend",
-   "cooldownMs": 600000,
+   "cooldownMs": 900000,
    "dailyCap": 6,
-   "extendMs": 30000
+   "extendMs": 20000
   },
   {
    "id": "incidentFix",
