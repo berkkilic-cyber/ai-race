@@ -17,6 +17,7 @@ import { useGameStore, type GameStore } from '../store/game';
 import { Mascot } from '../mascot';
 import { colors, fonts, radius, spacing, type, voice } from '../theme';
 import { useCoachStore } from './coach';
+import { installMapLiveDebug } from './debug';
 import { collectHaptic, landHaptic } from './haptics';
 import { BUBBLE, BUBBLE_HIT, BUBBLE_RISE, assignSlots, bubbleOffset, collectLines, effectLines, snapshot, type DeltaLine } from './logic';
 
@@ -77,6 +78,7 @@ export const MomentLayer = memo(function MomentLayer({ geometry }: { geometry: M
   const slots = useRef(new Map<string, number>());
   const coach = useCoachStore((s) => s.active);
   useEffect(() => {
+    installMapLiveDebug();
     void useCoachStore.getState().load();
     return () => useCoachStore.getState().end();
   }, []);
@@ -188,11 +190,12 @@ export const MomentLayer = memo(function MomentLayer({ geometry }: { geometry: M
   if (!p || items.length === 0) return null;
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="none" testID="moment-layer">
+      {/* Floating lines under the bubbles, so a line never hides a bubble still to tap. */}
+      {items.map((b) => (b.phase !== 'live' && (b.lines.length > 0 || b.caption) ? <Floater key={`f-${b.uid}`} p={p} item={b} reduced={reduced} /> : null))}
       {items.map((b) => (
         <Bubble key={b.uid} p={p} item={b} reduced={reduced} onCollect={collect} />
       ))}
       {items.map((b) => (b.phase === 'live' ? <EdgeIndicator key={`e-${b.uid}`} p={p} item={b} /> : null))}
-      {items.map((b) => (b.phase !== 'live' && (b.lines.length > 0 || b.caption) ? <Floater key={`f-${b.uid}`} p={p} item={b} reduced={reduced} /> : null))}
       {coach ? items.map((b) => (b.uid === coach.uid && b.phase === 'live' ? <CoachCaption key={`c-${b.uid}`} p={p} item={b} /> : null)) : null}
     </View>
   );
@@ -391,10 +394,10 @@ const EdgeIndicator = memo(function EdgeIndicator({ p, item }: { p: MapProjectio
   );
 });
 
-const FLOAT_W = 230;
+const FLOAT_W = 210;
 const FLOAT_H = 120;
 
-/** The line that floats up from a collected or landed moment. */
+/** The line that floats up from a collected or landed moment (below it when there is no room above). */
 const Floater = memo(function Floater({ p, item, reduced }: { p: MapProjection; item: BubbleItem; reduced: boolean }) {
   const [dx, dy] = bubbleOffset(item.slot);
   const rise = useSharedValue(0);
@@ -405,6 +408,13 @@ const Floater = memo(function Floater({ p, item, reduced }: { p: MapProjection; 
   const { scale, tx, ty, frame } = p;
   const mx = item.x;
   const my = item.y;
+  // Decided once, where the bubble is now: above it, or below its region's marks near the top edge.
+  const [below] = useState(() => {
+    const l = p.layout();
+    const v = p.view();
+    const [, sy] = project({ cw: l.cw, ch: l.ch, mw: l.mw, mh: l.mh, insetRight: l.insetRight ?? 0 }, v.s, v.tx, v.ty, mx, my);
+    return sy + dy - BUBBLE / 2 < FLOAT_H - 30;
+  });
   const motion = reduced ? 0 : 1;
   const style = useAnimatedStyle(() => {
     const f = frame.get();
@@ -412,13 +422,13 @@ const Floater = memo(function Floater({ p, item, reduced }: { p: MapProjection; 
     const k = rise.get();
     const right = Math.max(FLOAT_W + 8, f.cw - f.insetRight);
     const x = Math.min(Math.max(sx + dx - FLOAT_W / 2, 4), right - FLOAT_W - 4);
-    const top = Math.max(4 - FLOAT_H + 60, sy + dy - BUBBLE / 2 - FLOAT_H + 6);
+    const top = below ? sy + 34 : sy + dy - BUBBLE / 2 - FLOAT_H + 6;
     const o = k < 0.06 ? k / 0.06 : k > 0.72 ? 1 - (k - 0.72) / 0.28 : 1;
-    return { opacity: unitInterval(o), transform: [{ translateX: x }, { translateY: top - motion * k * 26 }] };
+    return { opacity: unitInterval(o), transform: [{ translateX: x }, { translateY: top + (below ? 1 : -1) * motion * k * 22 }] };
   });
   const lost = item.phase === 'expired';
   return (
-    <Animated.View style={[styles.floater, style]} pointerEvents="none" testID={`moment-float-${item.phase}`}>
+    <Animated.View style={[styles.floater, below && styles.floaterBelow, style]} pointerEvents="none" testID={`moment-float-${item.phase}`}>
       {item.avoided || lost ? <Text style={[styles.kicker, lost ? styles.kickerLost : styles.kickerAvoided]}>{t(lost ? 'ui.moments.landed' : 'ui.moments.avoided')}</Text> : null}
       <View style={styles.lines}>
         {item.lines.slice(0, 3).map((l, i) => (
@@ -505,6 +515,7 @@ const styles = StyleSheet.create({
   },
   edgeDisc: { width: 26, height: 26, borderRadius: 13, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
   floater: { position: 'absolute', left: 0, top: 0, width: FLOAT_W, height: FLOAT_H, alignItems: 'center', justifyContent: 'flex-end', gap: 3 },
+  floaterBelow: { justifyContent: 'flex-start' },
   kicker: { ...voice.loudKicker, fontSize: 11, paddingHorizontal: 5, overflow: 'hidden' },
   kickerLost: { color: colors.newsPaper, backgroundColor: colors.newsRed },
   kickerAvoided: { color: colors.newsPaper, backgroundColor: colors.newsInk },

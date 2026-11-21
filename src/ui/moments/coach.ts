@@ -24,11 +24,15 @@ export interface CoachStore {
   end(): void;
 }
 
-/** Web debug pages (the screenshot scripts) skip coach lines unless the URL has `coach=1`. */
+/**
+ * Web debug pages (the screenshot scripts, which have `window.__game`; the URL's query is
+ * gone by the time the game route shows) skip coach lines unless a script sets
+ * `window.__mapLiveCoach = true`.
+ */
 function suppressed(): boolean {
-  if (typeof window === 'undefined' || typeof window.location?.search !== 'string') return false;
-  const q = window.location.search;
-  return /[?&]debug=1\b/.test(q) && !/[?&]coach=1\b/.test(q);
+  if (typeof window === 'undefined') return false;
+  const w = window as unknown as { __game?: unknown; __mapLiveCoach?: boolean };
+  return !!w.__game && w.__mapLiveCoach !== true;
 }
 
 let timer: ReturnType<typeof setTimeout> | null = null;
@@ -46,7 +50,7 @@ export const useCoachStore = create<CoachStore>()((set, get) => ({
   active: null,
   load() {
     if (!loading) {
-      loading = (suppressed() ? Promise.resolve(['1', '1']) : Promise.all([readValue(COACH_KEYS.boost), readValue(COACH_KEYS.threat)]))
+      loading = Promise.all([readValue(COACH_KEYS.boost), readValue(COACH_KEYS.threat)])
         .then(([b, th]) => set({ seen: { boost: b === '1', threat: th === '1' } }))
         .catch(() => set({ seen: { boost: false, threat: false } }));
     }
@@ -54,7 +58,7 @@ export const useCoachStore = create<CoachStore>()((set, get) => ({
   },
   consider(kind, uid) {
     const { seen, active } = get();
-    if (!seen || seen[kind] || active) return;
+    if (!seen || seen[kind] || active || suppressed()) return;
     const tutorial = useTutorialStore.getState();
     if (tutorial.tutorial.status !== 'done' || tutorial.showing) return;
     const game = useGameStore.getState();

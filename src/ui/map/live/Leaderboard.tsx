@@ -93,7 +93,7 @@ const styles = StyleSheet.create({
     opacity: 0.94,
     ...flatShadow(),
   },
-  wrapDots: { width: undefined, flexDirection: 'row', gap: 5, paddingHorizontal: 6, paddingVertical: 6 },
+  wrapDots: { width: 'auto', flexDirection: 'row', gap: 5, paddingHorizontal: 6, paddingVertical: 6 },
   title: { ...voice.calmLabel, color: colors.dim, marginBottom: 1 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 3, minHeight: 17 },
   rowMine: { backgroundColor: colors.player, marginHorizontal: -3, paddingHorizontal: 6 },

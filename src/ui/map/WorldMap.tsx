@@ -15,7 +15,8 @@ import { BannerHost } from '../banners/BannerHost';
 import { MomentLayer } from '../moments/MomentLayer';
 import { Leaderboard } from './live/Leaderboard';
 import { ObjectsLayer } from './live/ObjectsLayer';
-import { ProjectionProvider, TapTargets, type Frame, type MapProjection } from './live/projection';
+import { ProjectionProvider, type Frame, type MapProjection } from './live/projection';
+import { TapTargets } from './live/targets';
 import { LaunchPulses, ReachHints, RouteArcs, RouteRunners } from './live/RouteLayer';
 import { MapDebugOverlay } from './MapDebugOverlay';
 import { OverlayLayer } from './OverlayLayer';
@@ -435,11 +436,12 @@ export function WorldMap({
         {size.w > 0 && live ? (
           // Screen-space things pinned to the map at a constant size. All below the touch view and pointerEvents none.
           <ProjectionProvider value={projection}>
+            {/* Bottom to top: banners, objects, route icons, standings, bubbles (always on top: they are what the player taps). */}
+            <BannerHost insetRight={insetRight > 0 ? insetRight : controls === 'topRight' ? CONTROL + spacing.m * 2 : 0} />
             <ObjectsLayer geometry={geometry} selected={selected} />
             <RouteRunners geometry={geometry} />
-            <MomentLayer geometry={geometry} />
-            <BannerHost insetRight={insetRight > 0 ? insetRight : controls === 'topRight' ? CONTROL + spacing.m * 2 : 0} />
             <Leaderboard insetRight={insetRight} visibleWidth={size.w - insetRight} />
+            <MomentLayer geometry={geometry} />
           </ProjectionProvider>
         ) : null}
         {/* The touch view: a real native view (collapsable false) with no children, above the drawing. */}

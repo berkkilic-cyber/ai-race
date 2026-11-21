@@ -9,6 +9,7 @@ import { act, type ReactElement } from 'react';
 import { createRoot, type Root, type TestInstance } from 'test-renderer';
 
 import { createHitTester } from '../map/hitTest';
+import { bubbleOffset } from '../moments/logic';
 import { getPackEntry } from '../packs';
 import { useGameStore } from '../store/game';
 import { useTutorialStore } from '../tutorial/store';
@@ -249,6 +250,70 @@ describe('nothing covers the map touch view', () => {
     const button = find(root.container, (n) => (n.props as { testID?: string }).testID === 'map-regions')!;
     await press(button);
     expect(find(root.container, (n) => (n.props as { testID?: string }).testID === 'regions-sheet')).not.toBeNull();
+    expect(blockersAbove(root.container, touchView)).toEqual([]);
+  });
+
+  it('with live layers up (bubbles, a banner, a route, racks, objects, standings) nothing covers the map; a bubble tap collects it and a region tap still opens the region', async () => {
+    const touchView = await renderShell();
+    const container = find(root.container, (n) => (n.props as { testID?: string }).testID === 'world-map')!;
+    const W = 776;
+    const H = 339;
+    await act(async () => {
+      (container.props as { onLayout: (e: unknown) => void }).onLayout({ nativeEvent: { layout: { x: 0, y: 0, width: W, height: H } } });
+    });
+    const store = useGameStore.getState();
+    const s0 = store.state!;
+    const me = s0.labs[s0.playerLabId];
+    const home = me.homeRegion;
+    const rival = s0.labOrder.find((id) => id !== s0.playerLabId)!;
+    const boost = pack.moments.find((d) => d.kind === 'boost' && d.onCollect.some((e) => e.type === 'resource' && e.resource === 'cash'))!;
+    const capNode = pack.nodes.find((n) => (n.capabilityLevel ?? 0) > 0)!;
+    const neighbour = pack.regions.find((r) => r.id === home)!.neighbors[0];
+    await act(async () => {
+      useGameStore.setState({
+        state: {
+          ...s0,
+          labs: {
+            ...s0.labs,
+            [me.id]: { ...me, ownedNodes: [...me.ownedNodes, 'cap-robotics'], dataCentres: [{ id: 't-dc1', regionId: home, level: 2 }], adoption: { ...me.adoption, [home]: 0.2 } },
+          },
+          moments: [{ uid: 'test-m1', defId: boost.id, labId: me.id, regionId: home, spawnTick: s0.tick, expiresTick: s0.tick + 30 }],
+          news: [
+            ...s0.news,
+            { tick: s0.tick, kind: 'launch', tier: 1, nodeId: capNode.id, textKey: 'engine.news.launch.rival', tone: 'bad', params: { lab: rival, model: capNode.nameKey, tier: 1 }, labId: rival, regionId: s0.labs[rival].homeRegion },
+            { tick: s0.tick, kind: 'entry', textKey: 'engine.news.entry.channel', tone: 'good', params: { lab: me.id, region: neighbour, from: home, channel: 'viral' }, labId: me.id, regionId: neighbour },
+          ],
+        },
+      });
+    });
+    const has = (id: string) => find(root.container, (n) => (n.props as { testID?: string }).testID === id) !== null;
+    for (const id of ['moment-layer', 'moment-boost-test-m1', 'launch-banner', 'map-objects', 'map-object-robot', 'map-leaderboard', 'route-runner-viral', 'rack-player:t-dc1-l2']) expect([id, has(id)]).toEqual([id, true]);
+    expect(blockersAbove(root.container, touchView)).toEqual([]);
+
+    // A tap on the bubble collects it and opens no region panel.
+    const l: Layout = { cw: W, ch: H, mw: geometry.width, mh: geometry.height };
+    const c = geometry.regions[home].centroid;
+    const [mx, my] = toScreenPoint(l, 1, 0, 0, c[0], c[1]);
+    const [dx, dy] = bubbleOffset(0);
+    const p = touchView.props as Record<string, (e: unknown) => void>;
+    const tapAt = async (x: number, y: number, t: number) => {
+      const touch = { identifier: 1, pageX: 103 + x, pageY: 40 + y, locationX: x, locationY: y, timestamp: t };
+      await act(async () => {
+        p.onResponderGrant({ nativeEvent: { ...touch, touches: [touch], changedTouches: [touch] } });
+        p.onResponderRelease({ nativeEvent: { ...touch, timestamp: t + 60, touches: [], changedTouches: [touch] } });
+      });
+    };
+    const cashBefore = useGameStore.getState().state!.labs[me.id].cash;
+    await tapAt(mx + dx, my + dy, 1000);
+    const after = useGameStore.getState().state!;
+    expect(after.moments.find((m) => m.uid === 'test-m1')).toBeUndefined();
+    expect(after.labs[me.id].stats.momentsCollected).toBe(1);
+    expect(after.labs[me.id].cash).toBeGreaterThan(cashBefore);
+    expect(has('region-sheet')).toBe(false);
+    expect(has('moment-float-collected')).toBe(true);
+    // The region under the marker point still opens on a tap (outside the double-tap window).
+    await tapAt(mx, my, 2000);
+    expect(has('region-sheet')).toBe(true);
     expect(blockersAbove(root.container, touchView)).toEqual([]);
   });
 
