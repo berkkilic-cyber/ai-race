@@ -64,6 +64,30 @@ module.exports = defineConfig([
     },
   },
   {
+    // The idle economy (Garage) is pure like the engine: imports nothing outside src/idle.
+    files: ['src/idle/**/*.{ts,tsx,js,jsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: nodeBuiltins.map((name) => ({ name, message: 'No Node APIs in the idle engine.' })),
+          patterns: [
+            ...reactAndExpo,
+            { group: ['zustand', 'zustand/*'], message: 'No state libraries in the idle engine.' },
+            { group: ['node:*'], message: 'No Node APIs in the idle engine.' },
+            { group: ['@/*', '!@/idle', '!@/idle/*'], message: 'The idle engine imports nothing outside src/idle.' },
+          ],
+        },
+      ],
+      'import/no-restricted-paths': [
+        'error',
+        {
+          zones: [{ target: './src/idle', from: './', except: ['./src/idle', './node_modules'], message: 'The idle engine imports nothing outside src/idle.' }],
+        },
+      ],
+    },
+  },
+  {
     // Content packs: data, strings and validation only. May use engine types.
     files: ['src/content/**/*.{ts,tsx,js,jsx}'],
     rules: {

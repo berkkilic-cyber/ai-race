@@ -4,6 +4,7 @@ import { Keyboard, StyleSheet, Text, TextInput, View, type ViewStyle } from 'rea
 import { Button } from '../components/Button';
 import { PanelDeco, Stripes } from '../components/Deco';
 import { t } from '../i18n';
+import { ModeChoice } from '../garage/ModeChoice';
 import { Mascot } from '../mascot';
 import { colors, flatShadow, radius, shape, spacing, tabular, touch, type, voice } from '../theme';
 import { MAX_LAB_NAME, missingText } from './logic';
@@ -45,6 +46,7 @@ export function NameStep({ name, onName, onDice, onHowTo, onSubmit, wide, compac
       )}
 
       <View style={[styles.right, wide && styles.pane]}>
+        {compact ? null : <ModeChoice />}
         <View style={styles.field}>
           <Text style={styles.label}>{t('ui.start.nameLabel')}</Text>
           <View style={styles.inputRow}>
