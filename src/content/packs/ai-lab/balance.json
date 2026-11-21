@@ -23,7 +23,7 @@
   "acquirePerCompute": 1,
   "acquirePerAgi": 7,
   "nodeCostGrowth": 0.04,
-  "dependenceShare": 0.45,
+  "dependenceShare": 0.43,
   "viralSeedFactor": 0.25,
   "acquireAdoptionShare": 0.3,
   "momentIntervalMin": 36,
