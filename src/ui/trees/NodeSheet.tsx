@@ -183,7 +183,8 @@ function NodeSheetBody({ node, justBought, onClose, onBuy }: { node: NodeDef; ju
         </View>
         <StatusChip status={view.status} accent={accent} />
         <View style={styles.flex} />
-        <Button label={t('ui.trees.close')} variant="ghost" compact onPress={onClose} testID="node-sheet-close" />
+        {/* The side panel has its own close button in its title row. */}
+        {wide ? null : <Button label={t('ui.trees.close')} variant="ghost" compact onPress={onClose} testID="node-sheet-close" />}
       </View>
 
       <View style={styles.titleRow}>
@@ -192,8 +193,10 @@ function NodeSheetBody({ node, justBought, onClose, onBuy }: { node: NodeDef; ju
         </View>
         <Text style={[styles.name, styles.flex]}>{t(node.nameKey)}</Text>
       </View>
-      {confirming ? null : runRow}
+      {/* Wide: the Buy button comes before the compute row so it is never below the panel's fold
+          (the tutorial's buy step points at it before the panel has been scrolled). */}
       {wide ? purchase : null}
+      {confirming ? null : runRow}
       <Text style={styles.desc}>{t(node.descKey)}</Text>
 
       <View style={styles.section}>

@@ -109,7 +109,7 @@ async function main() {
         const sheet = document.querySelector('[data-testid="node-sheet"]');
         if (sheet) Object.assign(sheet.style, { left: 'auto', width: '360px', top: '0px', maxHeight: 'none', borderTopRightRadius: '0px', borderBottomLeftRadius: '16px' });
       });
-    const closeSheet = () => click('[data-testid="node-sheet-close"]');
+    const closeSheet = async () => click((await page.$('[data-testid="node-sheet-close"]')) ? '[data-testid="node-sheet-close"]' : '[data-testid="sheet-close"]');
     const resolvePending = () =>
       store(() => {
         // Resolve any pending event so the screen is not covered by it.
