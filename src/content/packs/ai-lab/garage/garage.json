@@ -1,0 +1,2144 @@
+{
+ "id": "ai-lab-garage",
+ "generators": [
+  {
+   "id": "intern",
+   "nameKey": "garage.gen.intern.name",
+   "descKey": "garage.gen.intern.desc",
+   "icon": "mortarboard",
+   "baseCost": 15,
+   "costGrowth": 1.15,
+   "baseRate": 0.5,
+   "unlockGeneration": 0
+  },
+  {
+   "id": "gpu",
+   "nameKey": "garage.gen.gpu.name",
+   "descKey": "garage.gen.gpu.desc",
+   "icon": "cap-gpu-lease",
+   "baseCost": 120,
+   "costGrowth": 1.15,
+   "baseRate": 4,
+   "unlockGeneration": 0
+  },
+  {
+   "id": "closet",
+   "nameKey": "garage.gen.closet.name",
+   "descKey": "garage.gen.closet.desc",
+   "icon": "rack-1",
+   "baseCost": 1300,
+   "costGrowth": 1.15,
+   "baseRate": 30,
+   "unlockGeneration": 0
+  },
+  {
+   "id": "scraper",
+   "nameKey": "garage.gen.scraper.name",
+   "descKey": "garage.gen.scraper.desc",
+   "icon": "bug",
+   "baseCost": 14000,
+   "costGrowth": 1.15,
+   "baseRate": 200,
+   "unlockGeneration": 0
+  },
+  {
+   "id": "hall",
+   "nameKey": "garage.gen.hall.name",
+   "descKey": "garage.gen.hall.desc",
+   "icon": "datacentre",
+   "baseCost": 160000,
+   "costGrowth": 1.15,
+   "baseRate": 1200,
+   "unlockGeneration": 0
+  },
+  {
+   "id": "chips",
+   "nameKey": "garage.gen.chips.name",
+   "descKey": "garage.gen.chips.desc",
+   "icon": "cap-own-chips",
+   "baseCost": 2000000.0,
+   "costGrowth": 1.15,
+   "baseRate": 8000,
+   "unlockGeneration": 1
+  },
+  {
+   "id": "power",
+   "nameKey": "garage.gen.power.name",
+   "descKey": "garage.gen.power.desc",
+   "icon": "bolt",
+   "baseCost": 30000000.0,
+   "costGrowth": 1.15,
+   "baseRate": 55000,
+   "unlockGeneration": 2
+  },
+  {
+   "id": "robotics",
+   "nameKey": "garage.gen.robotics.name",
+   "descKey": "garage.gen.robotics.desc",
+   "icon": "robot",
+   "baseCost": 500000000.0,
+   "costGrowth": 1.15,
+   "baseRate": 400000.0,
+   "unlockGeneration": 4
+  },
+  {
+   "id": "orbital",
+   "nameKey": "garage.gen.orbital.name",
+   "descKey": "garage.gen.orbital.desc",
+   "icon": "launch",
+   "baseCost": 9000000000.0,
+   "costGrowth": 1.15,
+   "baseRate": 3000000.0,
+   "unlockGeneration": 6
+  },
+  {
+   "id": "universe",
+   "nameKey": "garage.gen.universe.name",
+   "descKey": "garage.gen.universe.desc",
+   "icon": "star",
+   "baseCost": 200000000000.0,
+   "costGrowth": 1.15,
+   "baseRate": 25000000.0,
+   "unlockGeneration": 8
+  }
+ ],
+ "upgrades": [
+  {
+   "id": "intern-a",
+   "nameKey": "garage.up.intern-a.name",
+   "descKey": "garage.up.intern-a.desc",
+   "icon": "mortarboard",
+   "cost": 300.0,
+   "effects": [
+    {
+     "kind": "generatorMult",
+     "generator": "intern",
+     "mult": 2
+    }
+   ],
+   "requires": [
+    {
+     "type": "owned",
+     "generator": "intern",
+     "count": 5
+    }
+   ]
+  },
+  {
+   "id": "intern-b",
+   "nameKey": "garage.up.intern-b.name",
+   "descKey": "garage.up.intern-b.desc",
+   "icon": "mortarboard",
+   "cost": 2250.0,
+   "effects": [
+    {
+     "kind": "generatorMult",
+     "generator": "intern",
+     "mult": 2
+    }
+   ],
+   "requires": [
+    {
+     "type": "owned",
+     "generator": "intern",
+     "count": 15
+    }
+   ]
+  },
+  {
+   "id": "intern-c",
+   "nameKey": "garage.up.intern-c.name",
+   "descKey": "garage.up.intern-c.desc",
+   "icon": "mortarboard",
+   "cost": 75000.0,
+   "effects": [
+    {
+     "kind": "generatorMult",
+     "generator": "intern",
+     "mult": 2
+    }
+   ],
+   "requires": [
+    {
+     "type": "owned",
+     "generator": "intern",
+     "count": 40
+    }
+   ]
+  },
+  {
+   "id": "intern-d",
+   "nameKey": "garage.up.intern-d.name",
+   "descKey": "garage.up.intern-d.desc",
+   "icon": "mortarboard",
+   "cost": 6000000.0,
+   "effects": [
+    {
+     "kind": "generatorMult",
+     "generator": "intern",
+     "mult": 3
+    }
+   ],
+   "requires": [
+    {
+     "type": "owned",
+     "generator": "intern",
+     "count": 80
+    }
+   ]
+  },
+  {
+   "id": "gpu-a",
+   "nameKey": "garage.up.gpu-a.name",
+   "descKey": "garage.up.gpu-a.desc",
+   "icon": "gpu-crate",
+   "cost": 2400.0,
+   "effects": [
+    {
+     "kind": "generatorMult",
+     "generator": "gpu",
+     "mult": 2
+    }
+   ],
+   "requires": [
+    {
+     "type": "owned",
+     "generator": "gpu",
+     "count": 5
+    }
+   ]
+  },
+  {
+   "id": "gpu-b",
+   "nameKey": "garage.up.gpu-b.name",
+   "descKey": "garage.up.gpu-b.desc",
+   "icon": "gpu-crate",
+   "cost": 18000.0,
+   "effects": [
+    {
+     "kind": "generatorMult",
+     "generator": "gpu",
+     "mult": 2
+    }
+   ],
+   "requires": [
+    {
+     "type": "owned",
+     "generator": "gpu",
+     "count": 15
+    }
+   ]
+  },
+  {
+   "id": "gpu-c",
+   "nameKey": "garage.up.gpu-c.name",
+   "descKey": "garage.up.gpu-c.desc",
+   "icon": "gpu-crate",
+   "cost": 600000.0,
+   "effects": [
+    {
+     "kind": "generatorMult",
+     "generator": "gpu",
+     "mult": 2
+    }
+   ],
+   "requires": [
+    {
+     "type": "owned",
+     "generator": "gpu",
+     "count": 40
+    }
+   ]
+  },
+  {
+   "id": "gpu-d",
+   "nameKey": "garage.up.gpu-d.name",
+   "descKey": "garage.up.gpu-d.desc",
+   "icon": "gpu-crate",
+   "cost": 48000000.0,
+   "effects": [
+    {
+     "kind": "generatorMult",
+     "generator": "gpu",
+     "mult": 3
+    }
+   ],
+   "requires": [
+    {
+     "type": "owned",
+     "generator": "gpu",
+     "count": 80
+    }
+   ]
+  },
+  {
+   "id": "closet-a",
+   "nameKey": "garage.up.closet-a.name",
+   "descKey": "garage.up.closet-a.desc",
+   "icon": "rack-2",
+   "cost": 26000.0,
+   "effects": [
+    {
+     "kind": "generatorMult",
+     "generator": "closet",
+     "mult": 2
+    }
+   ],
+   "requires": [
+    {
+     "type": "owned",
+     "generator": "closet",
+     "count": 5
+    }
+   ]
+  },
+  {
+   "id": "closet-b",
+   "nameKey": "garage.up.closet-b.name",
+   "descKey": "garage.up.closet-b.desc",
+   "icon": "rack-2",
+   "cost": 195000.0,
+   "effects": [
+    {
+     "kind": "generatorMult",
+     "generator": "closet",
+     "mult": 2
+    }
+   ],
+   "requires": [
+    {
+     "type": "owned",
+     "generator": "closet",
+     "count": 15
+    }
+   ]
+  },
+  {
+   "id": "closet-c",
+   "nameKey": "garage.up.closet-c.name",
+   "descKey": "garage.up.closet-c.desc",
+   "icon": "rack-2",
+   "cost": 6500000.0,
+   "effects": [
+    {
+     "kind": "generatorMult",
+     "generator": "closet",
+     "mult": 2
+    }
+   ],
+   "requires": [
+    {
+     "type": "owned",
+     "generator": "closet",
+     "count": 40
+    }
+   ]
+  },
+  {
+   "id": "closet-d",
+   "nameKey": "garage.up.closet-d.name",
+   "descKey": "garage.up.closet-d.desc",
+   "icon": "rack-2",
+   "cost": 520000000.0,
+   "effects": [
+    {
+     "kind": "generatorMult",
+     "generator": "closet",
+     "mult": 3
+    }
+   ],
+   "requires": [
+    {
+     "type": "owned",
+     "generator": "closet",
+     "count": 80
+    }
+   ]
+  },
+  {
+   "id": "scraper-a",
+   "nameKey": "garage.up.scraper-a.name",
+   "descKey": "garage.up.scraper-a.desc",
+   "icon": "bug",
+   "cost": 280000.0,
+   "effects": [
+    {
+     "kind": "generatorMult",
+     "generator": "scraper",
+     "mult": 2
+    }
+   ],
+   "requires": [
+    {
+     "type": "owned",
+     "generator": "scraper",
+     "count": 5
+    }
+   ]
+  },
+  {
+   "id": "scraper-b",
+   "nameKey": "garage.up.scraper-b.name",
+   "descKey": "garage.up.scraper-b.desc",
+   "icon": "bug",
+   "cost": 2100000.0,
+   "effects": [
+    {
+     "kind": "generatorMult",
+     "generator": "scraper",
+     "mult": 2
+    }
+   ],
+   "requires": [
+    {
+     "type": "owned",
+     "generator": "scraper",
+     "count": 15
+    }
+   ]
+  },
+  {
+   "id": "scraper-c",
+   "nameKey": "garage.up.scraper-c.name",
+   "descKey": "garage.up.scraper-c.desc",
+   "icon": "bug",
+   "cost": 70000000.0,
+   "effects": [
+    {
+     "kind": "generatorMult",
+     "generator": "scraper",
+     "mult": 2
+    }
+   ],
+   "requires": [
+    {
+     "type": "owned",
+     "generator": "scraper",
+     "count": 40
+    }
+   ]
+  },
+  {
+   "id": "scraper-d",
+   "nameKey": "garage.up.scraper-d.name",
+   "descKey": "garage.up.scraper-d.desc",
+   "icon": "bug",
+   "cost": 5600000000.0,
+   "effects": [
+    {
+     "kind": "generatorMult",
+     "generator": "scraper",
+     "mult": 3
+    }
+   ],
+   "requires": [
+    {
+     "type": "owned",
+     "generator": "scraper",
+     "count": 80
+    }
+   ]
+  },
+  {
+   "id": "hall-a",
+   "nameKey": "garage.up.hall-a.name",
+   "descKey": "garage.up.hall-a.desc",
+   "icon": "rack-3",
+   "cost": 3200000.0,
+   "effects": [
+    {
+     "kind": "generatorMult",
+     "generator": "hall",
+     "mult": 2
+    }
+   ],
+   "requires": [
+    {
+     "type": "owned",
+     "generator": "hall",
+     "count": 5
+    }
+   ]
+  },
+  {
+   "id": "hall-b",
+   "nameKey": "garage.up.hall-b.name",
+   "descKey": "garage.up.hall-b.desc",
+   "icon": "rack-3",
+   "cost": 24000000.0,
+   "effects": [
+    {
+     "kind": "generatorMult",
+     "generator": "hall",
+     "mult": 2
+    }
+   ],
+   "requires": [
+    {
+     "type": "owned",
+     "generator": "hall",
+     "count": 15
+    }
+   ]
+  },
+  {
+   "id": "hall-c",
+   "nameKey": "garage.up.hall-c.name",
+   "descKey": "garage.up.hall-c.desc",
+   "icon": "rack-3",
+   "cost": 800000000.0,
+   "effects": [
+    {
+     "kind": "generatorMult",
+     "generator": "hall",
+     "mult": 2
+    }
+   ],
+   "requires": [
+    {
+     "type": "owned",
+     "generator": "hall",
+     "count": 40
+    }
+   ]
+  },
+  {
+   "id": "hall-d",
+   "nameKey": "garage.up.hall-d.name",
+   "descKey": "garage.up.hall-d.desc",
+   "icon": "rack-3",
+   "cost": 64000000000.0,
+   "effects": [
+    {
+     "kind": "generatorMult",
+     "generator": "hall",
+     "mult": 3
+    }
+   ],
+   "requires": [
+    {
+     "type": "owned",
+     "generator": "hall",
+     "count": 80
+    }
+   ]
+  },
+  {
+   "id": "chips-a",
+   "nameKey": "garage.up.chips-a.name",
+   "descKey": "garage.up.chips-a.desc",
+   "icon": "chip",
+   "cost": 40000000.0,
+   "effects": [
+    {
+     "kind": "generatorMult",
+     "generator": "chips",
+     "mult": 2
+    }
+   ],
+   "requires": [
+    {
+     "type": "owned",
+     "generator": "chips",
+     "count": 5
+    }
+   ]
+  },
+  {
+   "id": "chips-b",
+   "nameKey": "garage.up.chips-b.name",
+   "descKey": "garage.up.chips-b.desc",
+   "icon": "chip",
+   "cost": 300000000.0,
+   "effects": [
+    {
+     "kind": "generatorMult",
+     "generator": "chips",
+     "mult": 2
+    }
+   ],
+   "requires": [
+    {
+     "type": "owned",
+     "generator": "chips",
+     "count": 15
+    }
+   ]
+  },
+  {
+   "id": "chips-c",
+   "nameKey": "garage.up.chips-c.name",
+   "descKey": "garage.up.chips-c.desc",
+   "icon": "chip",
+   "cost": 10000000000.0,
+   "effects": [
+    {
+     "kind": "generatorMult",
+     "generator": "chips",
+     "mult": 2
+    }
+   ],
+   "requires": [
+    {
+     "type": "owned",
+     "generator": "chips",
+     "count": 40
+    }
+   ]
+  },
+  {
+   "id": "chips-d",
+   "nameKey": "garage.up.chips-d.name",
+   "descKey": "garage.up.chips-d.desc",
+   "icon": "chip",
+   "cost": 800000000000.0,
+   "effects": [
+    {
+     "kind": "generatorMult",
+     "generator": "chips",
+     "mult": 3
+    }
+   ],
+   "requires": [
+    {
+     "type": "owned",
+     "generator": "chips",
+     "count": 80
+    }
+   ]
+  },
+  {
+   "id": "power-a",
+   "nameKey": "garage.up.power-a.name",
+   "descKey": "garage.up.power-a.desc",
+   "icon": "bolt",
+   "cost": 600000000.0,
+   "effects": [
+    {
+     "kind": "generatorMult",
+     "generator": "power",
+     "mult": 2
+    }
+   ],
+   "requires": [
+    {
+     "type": "owned",
+     "generator": "power",
+     "count": 5
+    }
+   ]
+  },
+  {
+   "id": "power-b",
+   "nameKey": "garage.up.power-b.name",
+   "descKey": "garage.up.power-b.desc",
+   "icon": "bolt",
+   "cost": 4500000000.0,
+   "effects": [
+    {
+     "kind": "generatorMult",
+     "generator": "power",
+     "mult": 2
+    }
+   ],
+   "requires": [
+    {
+     "type": "owned",
+     "generator": "power",
+     "count": 15
+    }
+   ]
+  },
+  {
+   "id": "power-c",
+   "nameKey": "garage.up.power-c.name",
+   "descKey": "garage.up.power-c.desc",
+   "icon": "bolt",
+   "cost": 150000000000.0,
+   "effects": [
+    {
+     "kind": "generatorMult",
+     "generator": "power",
+     "mult": 2
+    }
+   ],
+   "requires": [
+    {
+     "type": "owned",
+     "generator": "power",
+     "count": 40
+    }
+   ]
+  },
+  {
+   "id": "power-d",
+   "nameKey": "garage.up.power-d.name",
+   "descKey": "garage.up.power-d.desc",
+   "icon": "bolt",
+   "cost": 12000000000000.0,
+   "effects": [
+    {
+     "kind": "generatorMult",
+     "generator": "power",
+     "mult": 3
+    }
+   ],
+   "requires": [
+    {
+     "type": "owned",
+     "generator": "power",
+     "count": 80
+    }
+   ]
+  },
+  {
+   "id": "robotics-a",
+   "nameKey": "garage.up.robotics-a.name",
+   "descKey": "garage.up.robotics-a.desc",
+   "icon": "cap-robotics",
+   "cost": 10000000000.0,
+   "effects": [
+    {
+     "kind": "generatorMult",
+     "generator": "robotics",
+     "mult": 2
+    }
+   ],
+   "requires": [
+    {
+     "type": "owned",
+     "generator": "robotics",
+     "count": 5
+    }
+   ]
+  },
+  {
+   "id": "robotics-b",
+   "nameKey": "garage.up.robotics-b.name",
+   "descKey": "garage.up.robotics-b.desc",
+   "icon": "cap-robotics",
+   "cost": 75000000000.0,
+   "effects": [
+    {
+     "kind": "generatorMult",
+     "generator": "robotics",
+     "mult": 2
+    }
+   ],
+   "requires": [
+    {
+     "type": "owned",
+     "generator": "robotics",
+     "count": 15
+    }
+   ]
+  },
+  {
+   "id": "robotics-c",
+   "nameKey": "garage.up.robotics-c.name",
+   "descKey": "garage.up.robotics-c.desc",
+   "icon": "cap-robotics",
+   "cost": 2500000000000.0,
+   "effects": [
+    {
+     "kind": "generatorMult",
+     "generator": "robotics",
+     "mult": 2
+    }
+   ],
+   "requires": [
+    {
+     "type": "owned",
+     "generator": "robotics",
+     "count": 40
+    }
+   ]
+  },
+  {
+   "id": "robotics-d",
+   "nameKey": "garage.up.robotics-d.name",
+   "descKey": "garage.up.robotics-d.desc",
+   "icon": "cap-robotics",
+   "cost": 200000000000000.0,
+   "effects": [
+    {
+     "kind": "generatorMult",
+     "generator": "robotics",
+     "mult": 3
+    }
+   ],
+   "requires": [
+    {
+     "type": "owned",
+     "generator": "robotics",
+     "count": 80
+    }
+   ]
+  },
+  {
+   "id": "orbital-a",
+   "nameKey": "garage.up.orbital-a.name",
+   "descKey": "garage.up.orbital-a.desc",
+   "icon": "launch",
+   "cost": 180000000000.0,
+   "effects": [
+    {
+     "kind": "generatorMult",
+     "generator": "orbital",
+     "mult": 2
+    }
+   ],
+   "requires": [
+    {
+     "type": "owned",
+     "generator": "orbital",
+     "count": 5
+    }
+   ]
+  },
+  {
+   "id": "orbital-b",
+   "nameKey": "garage.up.orbital-b.name",
+   "descKey": "garage.up.orbital-b.desc",
+   "icon": "launch",
+   "cost": 1350000000000.0,
+   "effects": [
+    {
+     "kind": "generatorMult",
+     "generator": "orbital",
+     "mult": 2
+    }
+   ],
+   "requires": [
+    {
+     "type": "owned",
+     "generator": "orbital",
+     "count": 15
+    }
+   ]
+  },
+  {
+   "id": "orbital-c",
+   "nameKey": "garage.up.orbital-c.name",
+   "descKey": "garage.up.orbital-c.desc",
+   "icon": "launch",
+   "cost": 45000000000000.0,
+   "effects": [
+    {
+     "kind": "generatorMult",
+     "generator": "orbital",
+     "mult": 2
+    }
+   ],
+   "requires": [
+    {
+     "type": "owned",
+     "generator": "orbital",
+     "count": 40
+    }
+   ]
+  },
+  {
+   "id": "orbital-d",
+   "nameKey": "garage.up.orbital-d.name",
+   "descKey": "garage.up.orbital-d.desc",
+   "icon": "launch",
+   "cost": 3600000000000000.0,
+   "effects": [
+    {
+     "kind": "generatorMult",
+     "generator": "orbital",
+     "mult": 3
+    }
+   ],
+   "requires": [
+    {
+     "type": "owned",
+     "generator": "orbital",
+     "count": 80
+    }
+   ]
+  },
+  {
+   "id": "universe-a",
+   "nameKey": "garage.up.universe-a.name",
+   "descKey": "garage.up.universe-a.desc",
+   "icon": "star",
+   "cost": 4000000000000.0,
+   "effects": [
+    {
+     "kind": "generatorMult",
+     "generator": "universe",
+     "mult": 2
+    }
+   ],
+   "requires": [
+    {
+     "type": "owned",
+     "generator": "universe",
+     "count": 5
+    }
+   ]
+  },
+  {
+   "id": "universe-b",
+   "nameKey": "garage.up.universe-b.name",
+   "descKey": "garage.up.universe-b.desc",
+   "icon": "star",
+   "cost": 30000000000000.0,
+   "effects": [
+    {
+     "kind": "generatorMult",
+     "generator": "universe",
+     "mult": 2
+    }
+   ],
+   "requires": [
+    {
+     "type": "owned",
+     "generator": "universe",
+     "count": 15
+    }
+   ]
+  },
+  {
+   "id": "universe-c",
+   "nameKey": "garage.up.universe-c.name",
+   "descKey": "garage.up.universe-c.desc",
+   "icon": "star",
+   "cost": 1000000000000000.0,
+   "effects": [
+    {
+     "kind": "generatorMult",
+     "generator": "universe",
+     "mult": 2
+    }
+   ],
+   "requires": [
+    {
+     "type": "owned",
+     "generator": "universe",
+     "count": 40
+    }
+   ]
+  },
+  {
+   "id": "universe-d",
+   "nameKey": "garage.up.universe-d.name",
+   "descKey": "garage.up.universe-d.desc",
+   "icon": "star",
+   "cost": 8e+16,
+   "effects": [
+    {
+     "kind": "generatorMult",
+     "generator": "universe",
+     "mult": 3
+    }
+   ],
+   "requires": [
+    {
+     "type": "owned",
+     "generator": "universe",
+     "count": 80
+    }
+   ]
+  },
+  {
+   "id": "tap-1",
+   "nameKey": "garage.up.tap-1.name",
+   "descKey": "garage.up.tap-1.desc",
+   "icon": "speech",
+   "cost": 60,
+   "effects": [
+    {
+     "kind": "tapMult",
+     "mult": 2
+    }
+   ],
+   "requires": [
+    {
+     "type": "taps",
+     "count": 30
+    }
+   ]
+  },
+  {
+   "id": "tap-2",
+   "nameKey": "garage.up.tap-2.name",
+   "descKey": "garage.up.tap-2.desc",
+   "icon": "speech",
+   "cost": 2500,
+   "effects": [
+    {
+     "kind": "tapMult",
+     "mult": 2
+    }
+   ],
+   "requires": [
+    {
+     "type": "taps",
+     "count": 300
+    }
+   ]
+  },
+  {
+   "id": "tap-rate-1",
+   "nameKey": "garage.up.tap-rate-1.name",
+   "descKey": "garage.up.tap-rate-1.desc",
+   "icon": "megaphone",
+   "cost": 8000,
+   "effects": [
+    {
+     "kind": "tapFromRate",
+     "share": 0.02
+    }
+   ],
+   "requires": [
+    {
+     "type": "owned",
+     "generator": "intern",
+     "count": 10
+    }
+   ]
+  },
+  {
+   "id": "tap-rate-2",
+   "nameKey": "garage.up.tap-rate-2.name",
+   "descKey": "garage.up.tap-rate-2.desc",
+   "icon": "megaphone",
+   "cost": 5000000.0,
+   "effects": [
+    {
+     "kind": "tapFromRate",
+     "share": 0.02
+    }
+   ],
+   "requires": [
+    {
+     "type": "lifetime",
+     "tokens": 3000000.0
+    }
+   ]
+  },
+  {
+   "id": "tap-rate-3",
+   "nameKey": "garage.up.tap-rate-3.name",
+   "descKey": "garage.up.tap-rate-3.desc",
+   "icon": "megaphone",
+   "cost": 5000000000.0,
+   "effects": [
+    {
+     "kind": "tapFromRate",
+     "share": 0.03
+    }
+   ],
+   "requires": [
+    {
+     "type": "lifetime",
+     "tokens": 3000000000.0
+    }
+   ]
+  },
+  {
+   "id": "tap-3",
+   "nameKey": "garage.up.tap-3.name",
+   "descKey": "garage.up.tap-3.desc",
+   "icon": "speech",
+   "cost": 200000000.0,
+   "effects": [
+    {
+     "kind": "tapMult",
+     "mult": 3
+    }
+   ],
+   "requires": [
+    {
+     "type": "taps",
+     "count": 3000
+    }
+   ]
+  },
+  {
+   "id": "global-1",
+   "nameKey": "garage.up.global-1.name",
+   "descKey": "garage.up.global-1.desc",
+   "icon": "trophy",
+   "cost": 50000.0,
+   "effects": [
+    {
+     "kind": "globalMult",
+     "mult": 1.25
+    }
+   ],
+   "requires": [
+    {
+     "type": "lifetime",
+     "tokens": 30000.0
+    }
+   ]
+  },
+  {
+   "id": "global-2",
+   "nameKey": "garage.up.global-2.name",
+   "descKey": "garage.up.global-2.desc",
+   "icon": "trophy",
+   "cost": 2000000.0,
+   "effects": [
+    {
+     "kind": "globalMult",
+     "mult": 1.5
+    }
+   ],
+   "requires": [
+    {
+     "type": "lifetime",
+     "tokens": 1000000.0
+    }
+   ]
+  },
+  {
+   "id": "global-3",
+   "nameKey": "garage.up.global-3.name",
+   "descKey": "garage.up.global-3.desc",
+   "icon": "trophy",
+   "cost": 300000000.0,
+   "effects": [
+    {
+     "kind": "globalMult",
+     "mult": 1.5
+    }
+   ],
+   "requires": [
+    {
+     "type": "lifetime",
+     "tokens": 100000000.0
+    }
+   ]
+  },
+  {
+   "id": "global-4",
+   "nameKey": "garage.up.global-4.name",
+   "descKey": "garage.up.global-4.desc",
+   "icon": "trophy",
+   "cost": 80000000000.0,
+   "effects": [
+    {
+     "kind": "globalMult",
+     "mult": 2
+    }
+   ],
+   "requires": [
+    {
+     "type": "lifetime",
+     "tokens": 30000000000.0
+    }
+   ]
+  },
+  {
+   "id": "global-5",
+   "nameKey": "garage.up.global-5.name",
+   "descKey": "garage.up.global-5.desc",
+   "icon": "trophy",
+   "cost": 30000000000000.0,
+   "effects": [
+    {
+     "kind": "globalMult",
+     "mult": 2
+    }
+   ],
+   "requires": [
+    {
+     "type": "lifetime",
+     "tokens": 10000000000000.0
+    }
+   ]
+  },
+  {
+   "id": "combo-1",
+   "nameKey": "garage.up.combo-1.name",
+   "descKey": "garage.up.combo-1.desc",
+   "icon": "heart",
+   "cost": 20000.0,
+   "effects": [
+    {
+     "kind": "comboStacks",
+     "add": 5
+    }
+   ],
+   "requires": [
+    {
+     "type": "taps",
+     "count": 1000
+    }
+   ]
+  },
+  {
+   "id": "golden-1",
+   "nameKey": "garage.up.golden-1.name",
+   "descKey": "garage.up.golden-1.desc",
+   "icon": "star",
+   "cost": 1000000.0,
+   "effects": [
+    {
+     "kind": "goldenMult",
+     "mult": 2
+    }
+   ],
+   "requires": [
+    {
+     "type": "generation",
+     "min": 1
+    },
+    {
+     "type": "lifetime",
+     "tokens": 300000.0
+    }
+   ]
+  },
+  {
+   "id": "golden-2",
+   "nameKey": "garage.up.golden-2.name",
+   "descKey": "garage.up.golden-2.desc",
+   "icon": "star",
+   "cost": 500000000.0,
+   "effects": [
+    {
+     "kind": "goldenInterval",
+     "mult": 0.75
+    }
+   ],
+   "requires": [
+    {
+     "type": "generation",
+     "min": 2
+    },
+    {
+     "type": "lifetime",
+     "tokens": 100000000.0
+    }
+   ]
+  },
+  {
+   "id": "offline-1",
+   "nameKey": "garage.up.offline-1.name",
+   "descKey": "garage.up.offline-1.desc",
+   "icon": "document",
+   "cost": 500000.0,
+   "effects": [
+    {
+     "kind": "offlineCap",
+     "hours": 2
+    }
+   ],
+   "requires": [
+    {
+     "type": "generation",
+     "min": 1
+    },
+    {
+     "type": "lifetime",
+     "tokens": 200000.0
+    }
+   ],
+   "keep": true
+  },
+  {
+   "id": "offline-2",
+   "nameKey": "garage.up.offline-2.name",
+   "descKey": "garage.up.offline-2.desc",
+   "icon": "document",
+   "cost": 2000000000.0,
+   "effects": [
+    {
+     "kind": "offlineRate",
+     "add": 0.15
+    }
+   ],
+   "requires": [
+    {
+     "type": "generation",
+     "min": 3
+    },
+    {
+     "type": "lifetime",
+     "tokens": 1000000000.0
+    }
+   ],
+   "keep": true
+  },
+  {
+   "id": "offline-3",
+   "nameKey": "garage.up.offline-3.name",
+   "descKey": "garage.up.offline-3.desc",
+   "icon": "document",
+   "cost": 5000000000000.0,
+   "effects": [
+    {
+     "kind": "offlineCap",
+     "hours": 4
+    }
+   ],
+   "requires": [
+    {
+     "type": "generation",
+     "min": 6
+    },
+    {
+     "type": "lifetime",
+     "tokens": 1000000000000.0
+    }
+   ],
+   "keep": true
+  },
+  {
+   "id": "desks",
+   "nameKey": "garage.up.desks.name",
+   "descKey": "garage.up.desks.desc",
+   "icon": "trophy",
+   "cost": 300000.0,
+   "effects": [
+    {
+     "kind": "globalMult",
+     "mult": 1.2
+    }
+   ],
+   "requires": [
+    {
+     "type": "lifetime",
+     "tokens": 150000.0
+    }
+   ]
+  },
+  {
+   "id": "second-phone",
+   "nameKey": "garage.up.second-phone.name",
+   "descKey": "garage.up.second-phone.desc",
+   "icon": "speech",
+   "cost": 40000.0,
+   "effects": [
+    {
+     "kind": "tapMult",
+     "mult": 2
+    }
+   ],
+   "requires": [
+    {
+     "type": "taps",
+     "count": 1500
+    }
+   ]
+  },
+  {
+   "id": "coffee",
+   "nameKey": "garage.up.coffee.name",
+   "descKey": "garage.up.coffee.desc",
+   "icon": "trophy",
+   "cost": 8000000.0,
+   "effects": [
+    {
+     "kind": "globalMult",
+     "mult": 1.25
+    }
+   ],
+   "requires": [
+    {
+     "type": "lifetime",
+     "tokens": 4000000.0
+    }
+   ]
+  },
+  {
+   "id": "sticky-notes",
+   "nameKey": "garage.up.sticky-notes.name",
+   "descKey": "garage.up.sticky-notes.desc",
+   "icon": "document",
+   "cost": 6000.0,
+   "effects": [
+    {
+     "kind": "globalMult",
+     "mult": 1.1
+    }
+   ],
+   "requires": [
+    {
+     "type": "lifetime",
+     "tokens": 3000.0
+    }
+   ]
+  },
+  {
+   "id": "group-chat",
+   "nameKey": "garage.up.group-chat.name",
+   "descKey": "garage.up.group-chat.desc",
+   "icon": "speech",
+   "cost": 700000.0,
+   "effects": [
+    {
+     "kind": "tapFromRate",
+     "share": 0.01
+    }
+   ],
+   "requires": [
+    {
+     "type": "lifetime",
+     "tokens": 400000.0
+    }
+   ]
+  }
+ ],
+ "generations": [
+  {
+   "id": "autocomplete",
+   "nameKey": "garage.model.autocomplete.name",
+   "headlineKey": "garage.model.autocomplete.headline",
+   "unlockKey": "garage.model.autocomplete.unlock",
+   "shipAt": 0,
+   "perks": []
+  },
+  {
+   "id": "chatty",
+   "nameKey": "garage.model.chatty.name",
+   "headlineKey": "garage.model.chatty.headline",
+   "unlockKey": "garage.model.chatty.unlock",
+   "shipAt": 1000000000.0,
+   "perks": []
+  },
+  {
+   "id": "turbo",
+   "nameKey": "garage.model.turbo.name",
+   "headlineKey": "garage.model.turbo.headline",
+   "unlockKey": "garage.model.turbo.unlock",
+   "shipAt": 4000000000.0,
+   "perks": []
+  },
+  {
+   "id": "final",
+   "nameKey": "garage.model.final.name",
+   "headlineKey": "garage.model.final.headline",
+   "unlockKey": "garage.model.final.unlock",
+   "shipAt": 23200000000.0,
+   "perks": [
+    {
+     "kind": "offlineCap",
+     "hours": 2
+    }
+   ]
+  },
+  {
+   "id": "omni",
+   "nameKey": "garage.model.omni.name",
+   "headlineKey": "garage.model.omni.headline",
+   "unlockKey": "garage.model.omni.unlock",
+   "shipAt": 195000000000.0,
+   "perks": []
+  },
+  {
+   "id": "reasoner",
+   "nameKey": "garage.model.reasoner.name",
+   "headlineKey": "garage.model.reasoner.headline",
+   "unlockKey": "garage.model.reasoner.unlock",
+   "shipAt": 2380000000000.0,
+   "perks": [
+    {
+     "kind": "comboStacks",
+     "add": 5
+    },
+    {
+     "kind": "goldenInterval",
+     "mult": 0.8
+    }
+   ]
+  },
+  {
+   "id": "agentic",
+   "nameKey": "garage.model.agentic.name",
+   "headlineKey": "garage.model.agentic.headline",
+   "unlockKey": "garage.model.agentic.unlock",
+   "shipAt": 42100000000000.0,
+   "perks": []
+  },
+  {
+   "id": "feelings",
+   "nameKey": "garage.model.feelings.name",
+   "headlineKey": "garage.model.feelings.headline",
+   "unlockKey": "garage.model.feelings.unlock",
+   "shipAt": 1080000000000000.0,
+   "perks": [
+    {
+     "kind": "offlineRate",
+     "add": 0.1
+    }
+   ]
+  },
+  {
+   "id": "bigone",
+   "nameKey": "garage.model.bigone.name",
+   "headlineKey": "garage.model.bigone.headline",
+   "unlockKey": "garage.model.bigone.unlock",
+   "shipAt": 4.01e+16,
+   "perks": []
+  },
+  {
+   "id": "ultralite",
+   "nameKey": "garage.model.ultralite.name",
+   "headlineKey": "garage.model.ultralite.headline",
+   "unlockKey": "garage.model.ultralite.unlock",
+   "shipAt": 1.8e+18,
+   "perks": [
+    {
+     "kind": "tapFromRate",
+     "share": 0.03
+    }
+   ]
+  },
+  {
+   "id": "preview",
+   "nameKey": "garage.model.preview.name",
+   "headlineKey": "garage.model.preview.headline",
+   "unlockKey": "garage.model.preview.unlock",
+   "shipAt": 8.12e+19,
+   "perks": [
+    {
+     "kind": "globalMult",
+     "mult": 2
+    }
+   ]
+  },
+  {
+   "id": "super",
+   "nameKey": "garage.model.super.name",
+   "headlineKey": "garage.model.super.headline",
+   "unlockKey": "garage.model.super.unlock",
+   "shipAt": 3.65e+21,
+   "perks": [
+    {
+     "kind": "globalMult",
+     "mult": 3
+    }
+   ]
+  }
+ ],
+ "endlessNameKey": "garage.model.endless.name",
+ "endlessHeadlineKey": "garage.model.endless.headline",
+ "prestige": {
+  "scale": 64200000.0,
+  "exponent": 0.4,
+  "hypePerPoint": 0.1,
+  "endlessGrowth": 10
+ },
+ "tap": {
+  "base": 1,
+  "comboWindowMs": 600,
+  "comboStep": 10,
+  "comboMaxStacks": 10,
+  "comboStackBonus": 0.1
+ },
+ "golden": {
+  "firstAfterMs": 45000,
+  "intervalMinMs": 120000,
+  "intervalMaxMs": 300000,
+  "lifetimeMs": 12000,
+  "defs": [
+   {
+    "id": "viral-demo",
+    "textKey": "garage.golden.viral-demo.text",
+    "labelKey": "garage.golden.viral-demo.label",
+    "icon": "megaphone",
+    "weight": 4,
+    "reward": {
+     "kind": "burst",
+     "seconds": 600,
+     "minTaps": 40
+    }
+   },
+   {
+    "id": "angel",
+    "textKey": "garage.golden.angel.text",
+    "labelKey": "garage.golden.angel.label",
+    "icon": "cash",
+    "weight": 3,
+    "reward": {
+     "kind": "burst",
+     "seconds": 900,
+     "minTaps": 60
+    }
+   },
+   {
+    "id": "keynote",
+    "textKey": "garage.golden.keynote.text",
+    "labelKey": "garage.golden.keynote.label",
+    "icon": "star",
+    "weight": 3,
+    "reward": {
+     "kind": "frenzy",
+     "mult": 7,
+     "seconds": 30
+    }
+   },
+   {
+    "id": "leaderboard",
+    "textKey": "garage.golden.leaderboard.text",
+    "labelKey": "garage.golden.leaderboard.label",
+    "icon": "trophy",
+    "weight": 2,
+    "reward": {
+     "kind": "tapFrenzy",
+     "mult": 10,
+     "seconds": 15
+    }
+   },
+   {
+    "id": "podcast",
+    "textKey": "garage.golden.podcast.text",
+    "labelKey": "garage.golden.podcast.label",
+    "icon": "speech",
+    "weight": 2,
+    "reward": {
+     "kind": "frenzy",
+     "mult": 3,
+     "seconds": 77
+    },
+    "minGeneration": 1
+   }
+  ]
+ },
+ "incidents": {
+  "firstAfterMs": 180000,
+  "intervalMinMs": 240000,
+  "intervalMaxMs": 480000,
+  "minOwned": 5,
+  "minGeneration": 1,
+  "defs": [
+   {
+    "id": "gpu-shortage",
+    "textKey": "garage.incident.gpu-shortage.text",
+    "fixKey": "garage.incident.gpu-shortage.fix",
+    "icon": "chip",
+    "weight": 3,
+    "mult": 0.5,
+    "durationMs": 60000,
+    "tapsToFix": 5
+   },
+   {
+    "id": "overheat",
+    "textKey": "garage.incident.overheat.text",
+    "fixKey": "garage.incident.overheat.fix",
+    "icon": "thermometer",
+    "weight": 3,
+    "mult": 0.5,
+    "durationMs": 60000,
+    "tapsToFix": 5
+   },
+   {
+    "id": "prod-push",
+    "textKey": "garage.incident.prod-push.text",
+    "fixKey": "garage.incident.prod-push.fix",
+    "icon": "bug",
+    "weight": 2,
+    "mult": 0.5,
+    "durationMs": 60000,
+    "tapsToFix": 5
+   },
+   {
+    "id": "lawyer-letter",
+    "textKey": "garage.incident.lawyer-letter.text",
+    "fixKey": "garage.incident.lawyer-letter.fix",
+    "icon": "gavel",
+    "weight": 2,
+    "mult": 0.5,
+    "durationMs": 60000,
+    "tapsToFix": 5,
+    "minGeneration": 2
+   },
+   {
+    "id": "union",
+    "textKey": "garage.incident.union.text",
+    "fixKey": "garage.incident.union.fix",
+    "icon": "crowd",
+    "weight": 1,
+    "mult": 0.5,
+    "durationMs": 60000,
+    "tapsToFix": 5,
+    "minGeneration": 4
+   }
+  ]
+ },
+ "offline": {
+  "thresholdMs": 60000,
+  "rate": 0.5,
+  "capHours": 4,
+  "reportMinMs": 120000
+ },
+ "offers": [
+  {
+   "id": "offlineDouble",
+   "cooldownMs": 0,
+   "dailyCap": 6,
+   "offlineMult": 2
+  },
+  {
+   "id": "boost",
+   "cooldownMs": 0,
+   "dailyCap": 12,
+   "boostMult": 2,
+   "boostMs": 1800000,
+   "boostCapMs": 14400000
+  },
+  {
+   "id": "frenzyExtend",
+   "cooldownMs": 600000,
+   "dailyCap": 6,
+   "extendMs": 30000
+  },
+  {
+   "id": "incidentFix",
+   "cooldownMs": 300000,
+   "dailyCap": 10
+  },
+  {
+   "id": "crate",
+   "cooldownMs": 10800000,
+   "dailyCap": 4,
+   "crateSeconds": 600,
+   "crateMinTaps": 40
+  },
+  {
+   "id": "prestigeBonus",
+   "cooldownMs": 0,
+   "dailyCap": 3,
+   "prestigeBonus": 0.25
+  }
+ ],
+ "achievements": [
+  {
+   "id": "first-tap",
+   "nameKey": "garage.ach.first-tap.name",
+   "descKey": "garage.ach.first-tap.desc",
+   "icon": "speech",
+   "rule": {
+    "type": "stat",
+    "stat": "taps",
+    "gte": 1
+   }
+  },
+  {
+   "id": "taps-1k",
+   "nameKey": "garage.ach.taps-1k.name",
+   "descKey": "garage.ach.taps-1k.desc",
+   "icon": "speech",
+   "rule": {
+    "type": "stat",
+    "stat": "taps",
+    "gte": 1000
+   }
+  },
+  {
+   "id": "taps-10k",
+   "nameKey": "garage.ach.taps-10k.name",
+   "descKey": "garage.ach.taps-10k.desc",
+   "icon": "speech",
+   "rule": {
+    "type": "stat",
+    "stat": "taps",
+    "gte": 10000
+   }
+  },
+  {
+   "id": "taps-100k",
+   "nameKey": "garage.ach.taps-100k.name",
+   "descKey": "garage.ach.taps-100k.desc",
+   "icon": "speech",
+   "rule": {
+    "type": "stat",
+    "stat": "taps",
+    "gte": 100000
+   }
+  },
+  {
+   "id": "tokens-1m",
+   "nameKey": "garage.ach.tokens-1m.name",
+   "descKey": "garage.ach.tokens-1m.desc",
+   "icon": "hype",
+   "rule": {
+    "type": "stat",
+    "stat": "tokensAllTime",
+    "gte": 1000000.0
+   }
+  },
+  {
+   "id": "tokens-1b",
+   "nameKey": "garage.ach.tokens-1b.name",
+   "descKey": "garage.ach.tokens-1b.desc",
+   "icon": "hype",
+   "rule": {
+    "type": "stat",
+    "stat": "tokensAllTime",
+    "gte": 1000000000.0
+   }
+  },
+  {
+   "id": "tokens-1t",
+   "nameKey": "garage.ach.tokens-1t.name",
+   "descKey": "garage.ach.tokens-1t.desc",
+   "icon": "hype",
+   "rule": {
+    "type": "stat",
+    "stat": "tokensAllTime",
+    "gte": 1000000000000.0
+   }
+  },
+  {
+   "id": "tokens-1qa",
+   "nameKey": "garage.ach.tokens-1qa.name",
+   "descKey": "garage.ach.tokens-1qa.desc",
+   "icon": "hype",
+   "rule": {
+    "type": "stat",
+    "stat": "tokensAllTime",
+    "gte": 1000000000000000.0
+   }
+  },
+  {
+   "id": "tokens-1qi",
+   "nameKey": "garage.ach.tokens-1qi.name",
+   "descKey": "garage.ach.tokens-1qi.desc",
+   "icon": "hype",
+   "rule": {
+    "type": "stat",
+    "stat": "tokensAllTime",
+    "gte": 1e+18
+   }
+  },
+  {
+   "id": "ship-1",
+   "nameKey": "garage.ach.ship-1.name",
+   "descKey": "garage.ach.ship-1.desc",
+   "icon": "launch",
+   "rule": {
+    "type": "stat",
+    "stat": "modelsShipped",
+    "gte": 1
+   }
+  },
+  {
+   "id": "ship-3",
+   "nameKey": "garage.ach.ship-3.name",
+   "descKey": "garage.ach.ship-3.desc",
+   "icon": "launch",
+   "rule": {
+    "type": "stat",
+    "stat": "modelsShipped",
+    "gte": 3
+   }
+  },
+  {
+   "id": "ship-6",
+   "nameKey": "garage.ach.ship-6.name",
+   "descKey": "garage.ach.ship-6.desc",
+   "icon": "launch",
+   "rule": {
+    "type": "stat",
+    "stat": "modelsShipped",
+    "gte": 6
+   }
+  },
+  {
+   "id": "ship-12",
+   "nameKey": "garage.ach.ship-12.name",
+   "descKey": "garage.ach.ship-12.desc",
+   "icon": "launch",
+   "rule": {
+    "type": "stat",
+    "stat": "modelsShipped",
+    "gte": 12
+   }
+  },
+  {
+   "id": "combo-50",
+   "nameKey": "garage.ach.combo-50.name",
+   "descKey": "garage.ach.combo-50.desc",
+   "icon": "heart",
+   "rule": {
+    "type": "stat",
+    "stat": "bestCombo",
+    "gte": 50
+   }
+  },
+  {
+   "id": "combo-150",
+   "nameKey": "garage.ach.combo-150.name",
+   "descKey": "garage.ach.combo-150.desc",
+   "icon": "heart",
+   "rule": {
+    "type": "stat",
+    "stat": "bestCombo",
+    "gte": 150
+   }
+  },
+  {
+   "id": "golden-1",
+   "nameKey": "garage.ach.golden-1.name",
+   "descKey": "garage.ach.golden-1.desc",
+   "icon": "star",
+   "rule": {
+    "type": "stat",
+    "stat": "goldenCaught",
+    "gte": 1
+   }
+  },
+  {
+   "id": "golden-25",
+   "nameKey": "garage.ach.golden-25.name",
+   "descKey": "garage.ach.golden-25.desc",
+   "icon": "star",
+   "rule": {
+    "type": "stat",
+    "stat": "goldenCaught",
+    "gte": 25
+   }
+  },
+  {
+   "id": "fix-10",
+   "nameKey": "garage.ach.fix-10.name",
+   "descKey": "garage.ach.fix-10.desc",
+   "icon": "bug",
+   "rule": {
+    "type": "stat",
+    "stat": "incidentsFixed",
+    "gte": 10
+   }
+  },
+  {
+   "id": "interns-100",
+   "nameKey": "garage.ach.interns-100.name",
+   "descKey": "garage.ach.interns-100.desc",
+   "icon": "mortarboard",
+   "rule": {
+    "type": "owned",
+    "generator": "intern",
+    "gte": 100
+   }
+  },
+  {
+   "id": "crate-10",
+   "nameKey": "garage.ach.crate-10.name",
+   "descKey": "garage.ach.crate-10.desc",
+   "icon": "gpu-crate",
+   "rule": {
+    "type": "stat",
+    "stat": "cratesOpened",
+    "gte": 10
+   }
+  },
+  {
+   "id": "secret-pure",
+   "nameKey": "garage.ach.secret-pure.name",
+   "descKey": "garage.ach.secret-pure.desc",
+   "icon": "speech",
+   "rule": {
+    "type": "pureTaps",
+    "gte": 200
+   },
+   "secret": true
+  },
+  {
+   "id": "secret-clean",
+   "nameKey": "garage.ach.secret-clean.name",
+   "descKey": "garage.ach.secret-clean.desc",
+   "icon": "launch",
+   "rule": {
+    "type": "shipNoUpgrades"
+   },
+   "secret": true
+  },
+  {
+   "id": "secret-fast",
+   "nameKey": "garage.ach.secret-fast.name",
+   "descKey": "garage.ach.secret-fast.desc",
+   "icon": "bolt",
+   "rule": {
+    "type": "fastFix",
+    "ms": 2000
+   },
+   "secret": true
+  },
+  {
+   "id": "secret-42",
+   "nameKey": "garage.ach.secret-42.name",
+   "descKey": "garage.ach.secret-42.desc",
+   "icon": "help",
+   "rule": {
+    "type": "exactOwned",
+    "count": 42
+   },
+   "secret": true
+  },
+  {
+   "id": "secret-missed",
+   "nameKey": "garage.ach.secret-missed.name",
+   "descKey": "garage.ach.secret-missed.desc",
+   "icon": "star",
+   "rule": {
+    "type": "stat",
+    "stat": "goldenMissed",
+    "gte": 10
+   },
+   "secret": true
+  }
+ ],
+ "labRep": {
+  "perShip": 1,
+  "perGeneration": 0,
+  "perks": [
+   {
+    "id": "seed-round",
+    "rep": 1,
+    "textKey": "garage.perk.seed-round",
+    "effect": {
+     "kind": "startCash",
+     "amount": 50
+    }
+   },
+   {
+    "id": "press-list",
+    "rep": 3,
+    "textKey": "garage.perk.press-list",
+    "effect": {
+     "kind": "startHype",
+     "amount": 20
+    }
+   },
+   {
+    "id": "fan-club",
+    "rep": 6,
+    "textKey": "garage.perk.fan-club",
+    "effect": {
+     "kind": "hypeIncome",
+     "amount": 0.05
+    }
+   },
+   {
+    "id": "lucky-breaks",
+    "rep": 10,
+    "textKey": "garage.perk.lucky-breaks",
+    "effect": {
+     "kind": "momentRate",
+     "amount": 0.1
+    }
+   },
+   {
+    "id": "old-friends",
+    "rep": 15,
+    "textKey": "garage.perk.old-friends",
+    "effect": {
+     "kind": "cashIncome",
+     "amount": 0.05
+    }
+   }
+  ]
+ },
+ "news": {
+  "intervalMinMs": 25000,
+  "intervalMaxMs": 55000,
+  "keep": 8,
+  "achievementKey": "garage.news.achievement",
+  "headlines": [
+   {
+    "key": "garage.headline.h01"
+   },
+   {
+    "key": "garage.headline.h02"
+   },
+   {
+    "key": "garage.headline.h03"
+   },
+   {
+    "key": "garage.headline.h04"
+   },
+   {
+    "key": "garage.headline.h05"
+   },
+   {
+    "key": "garage.headline.h06"
+   },
+   {
+    "key": "garage.headline.h07"
+   },
+   {
+    "key": "garage.headline.h08"
+   },
+   {
+    "key": "garage.headline.h09"
+   },
+   {
+    "key": "garage.headline.h10"
+   },
+   {
+    "key": "garage.headline.h11"
+   },
+   {
+    "key": "garage.headline.h12"
+   },
+   {
+    "key": "garage.headline.h13"
+   },
+   {
+    "key": "garage.headline.h14"
+   },
+   {
+    "key": "garage.headline.h15"
+   },
+   {
+    "key": "garage.headline.h16"
+   },
+   {
+    "key": "garage.headline.h17",
+    "minGeneration": 1
+   },
+   {
+    "key": "garage.headline.h18",
+    "minGeneration": 1
+   },
+   {
+    "key": "garage.headline.h19",
+    "minGeneration": 2
+   },
+   {
+    "key": "garage.headline.h20",
+    "minGeneration": 2
+   },
+   {
+    "key": "garage.headline.h21",
+    "minGeneration": 3
+   },
+   {
+    "key": "garage.headline.h22",
+    "minGeneration": 4
+   },
+   {
+    "key": "garage.headline.h23",
+    "minGeneration": 5
+   },
+   {
+    "key": "garage.headline.h24",
+    "minGeneration": 6
+   },
+   {
+    "key": "garage.headline.h25",
+    "minGeneration": 7
+   },
+   {
+    "key": "garage.headline.h26",
+    "minGeneration": 8
+   },
+   {
+    "key": "garage.headline.h27",
+    "minGeneration": 10
+   },
+   {
+    "key": "garage.headline.h28",
+    "minGeneration": 11
+   }
+  ]
+ }
+}

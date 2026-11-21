@@ -23,15 +23,22 @@ export interface GeneratorRow {
  */
 export function generatorRows(state: GarageState, content: GarageContent): GeneratorRow[] {
   const rows: GeneratorRow[] = [];
-  let teasers = 0;
+  let next = false;
+  let teaser = false;
+  let locked = false;
   for (const def of content.generators) {
     const owned = state.generators[def.id] ?? 0;
     const unlocked = isGeneratorUnlocked(state, content, def.id);
-    const revealed = unlocked && (owned > 0 || teasers === 0);
-    if (!revealed) {
-      if (teasers >= 2) break;
-      teasers += 1;
-    } else if (owned === 0) teasers += 1;
+    let revealed: boolean;
+    if (owned > 0) revealed = true;
+    else if (unlocked && !next) revealed = next = true;
+    else if (unlocked && !teaser) {
+      revealed = false;
+      teaser = true;
+    } else if (!unlocked && !locked) {
+      revealed = false;
+      locked = true;
+    } else continue;
     rows.push({ def, owned, unlocked, revealed, cost: unitCost(def, owned), rate: generatorRate(state, content, def.id) });
   }
   return rows;
