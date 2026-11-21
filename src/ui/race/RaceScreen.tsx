@@ -103,7 +103,7 @@ function HeaderRow() {
       <Text style={[styles.colHead, { width: COL.share }]}>{t('ui.race.col.share')}</Text>
       <Text style={[styles.colHead, { width: COL.agi }]}>{t('ui.race.col.agi')}</Text>
       <Text style={[styles.colHead, { width: COL.model }]}>{t('ui.race.col.model')}</Text>
-      <Text style={[styles.colHead, { width: COL.compute }]} numberOfLines={1}>
+      <Text style={[styles.colHead, { width: COL.compute }]} numberOfLines={2}>
         {t('ui.race.col.compute')}
       </Text>
       <Text style={[styles.colHead, { width: COL.status + COL.trend }]}>{t('ui.race.col.status')}</Text>
