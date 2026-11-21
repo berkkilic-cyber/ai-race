@@ -10,6 +10,7 @@ import { regionName, t } from '../i18n';
 import { useGameStore } from '../store/game';
 import { colors, spacing } from '../theme';
 import { FounderStep } from './FounderStep';
+import { BuildStamp } from '../diagnostics/BuildStamp';
 import { HowToSheet } from './HowToSheet';
 import { defaultHomeRegion, missingText, randomLabName, validateLabName } from './logic';
 import { NameStep } from './NameStep';
@@ -190,6 +191,8 @@ export function StartScreen() {
           )}
         </KeyboardAvoidingView>
       </View>
+      {/* Which build is running (long-press two seconds: touch diagnostics on the map). */}
+      <BuildStamp style={[styles.stamp, { top: insets.top + 2, right: insets.right + spacing.s }]} />
       <HowToSheet visible={howTo} onClose={() => setHowTo(false)} />
       <RegionListSheet visible={list} regions={pack.regions} selected={home} onSelect={pickFromList} onClose={() => setList(false)} />
     </View>
@@ -229,4 +232,5 @@ const styles = StyleSheet.create({
   },
   side: { width: 200, flexDirection: 'row' },
   sideRight: { justifyContent: 'flex-end' },
+  stamp: { position: 'absolute' },
 });

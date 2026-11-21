@@ -1,6 +1,6 @@
 import tutorialStrings from '../../strings/tutorial.en.json';
 import { INITIAL, loaded, next, observe, replayNextRun, skip, start, STEPS, view, type Observation, type TutorialState } from '../machine';
-import { blockersAround, dimPath, holeFor, placeCaption } from '../placement';
+import { blockersAround, blockersAroundAll, dimPath, holeFor, placeCaption } from '../placement';
 
 const BASE: Observation = {
   running: true,
@@ -106,7 +106,7 @@ describe('tutorial machine', () => {
     expect(s.dcBaseline).toBe(2);
     expect(stepOf(observe(s, o({ dataCentres: 2 })))).toBe('buildDc');
     expect(stepOf(observe(s, o({ dataCentres: 3 })))).toBe('compute');
-    expect(view(s, o({ homeSheetOpen: false }))?.targets).toEqual(['map.home']);
+    expect(view(s, o({ homeSheetOpen: false }))?.targets).toEqual(['map.home', 'map.regions', 'map.regionList']);
     expect(view(s, o({ homeSheetOpen: true }))?.targets).toEqual(['region.build.home']);
     expect(view(s, o({ route: 'news' }))?.targets).toEqual(['tab.map']);
   });
@@ -241,5 +241,26 @@ describe('coach mark placement', () => {
     const blockers = blockersAround(hole, screen);
     const area = blockers.reduce((sum, b) => sum + b.width * b.height, 0);
     expect(area + hole.width * hole.height).toBeCloseTo(screen.width * screen.height);
+  });
+
+  it('blocks everything but several holes (map cut-out, Regions button, the list)', () => {
+    const holes = [
+      { x: 100, y: 120, width: 60, height: 60 },
+      { x: 10, y: 330, width: 90, height: 44 },
+      { x: 480, y: 0, width: 364, height: 390 },
+      { x: 140, y: 150, width: 40, height: 40 }, // overlaps the first
+    ];
+    const blockers = blockersAroundAll(holes, screen);
+    const inside = (b: { x: number; y: number; width: number; height: number }, x: number, y: number) => x >= b.x && x < b.x + b.width && y >= b.y && y < b.y + b.height;
+    const blocked = (x: number, y: number) => blockers.some((b) => inside(b, x, y));
+    for (const [x, y] of [[130, 150], [50, 350], [600, 200], [170, 185]]) expect(blocked(x, y)).toBe(false);
+    for (const [x, y] of [[5, 5], [300, 200], [130, 100], [470, 389], [50, 300]]) expect(blocked(x, y)).toBe(true);
+    // No blocker overlaps a hole.
+    for (const b of blockers) for (const h of holes) {
+      const ox = Math.min(b.x + b.width, h.x + h.width) - Math.max(b.x, h.x);
+      const oy = Math.min(b.y + b.height, h.y + h.height) - Math.max(b.y, h.y);
+      expect(ox > 0 && oy > 0).toBe(false);
+    }
+    expect(blockersAroundAll([], screen)).toEqual([{ x: 0, y: 0, width: 844, height: 390 }]);
   });
 });

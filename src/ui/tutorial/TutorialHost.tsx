@@ -9,6 +9,8 @@ import { canApply, type ContentPack } from '@/engine';
 
 import { Button } from '../components/Button';
 import { Overlay } from '../components/Overlay';
+import { Sheet } from '../components/Sheet';
+import { BuildStamp } from '../diagnostics/BuildStamp';
 import { useInsets } from '../hooks/useInsets';
 import { useLayoutMode } from '../hooks/useLayoutMode';
 import { t } from '../i18n';
@@ -19,12 +21,14 @@ import { wideShellLayout } from '../shell/shellLayout';
 import { useGameStore } from '../store/game';
 import { colors, layer, layout, radius, spacing, touch, type, voice } from '../theme';
 import { COUNTED_STEPS, view, type Observation, type StepId, type TutorialView } from './machine';
-import { blockersAround, dimPath, holeFor, placeCaption } from './placement';
+import { blockersAroundAll, dimPath, holeFor, placeCaption } from './placement';
 import { useTutorialStore } from './store';
 import { hasTarget, measureTarget, useTargetsVersion, validRect, type TargetRect } from './targets';
 
 /** How often the cut-outs are re-measured while a step shows (sheets slide, the map pans). */
 const REMEASURE_MS = 400;
+/** "Tap your home region" also names the Regions button after this long without the tap. */
+const HOME_HINT_MS = 4000;
 const CARD_MAX_WIDTH = 320;
 const CARD_EST_HEIGHT = 112;
 
@@ -225,6 +229,18 @@ export function TutorialHost() {
     if (wantsHomeTap && game.home) requestMapFocus(game.home);
   }, [wantsHomeTap, game.home]);
 
+  // If the map tap has not arrived after a few seconds, the caption mentions the Regions button too.
+  const [homeLate, setHomeLate] = useState(false);
+  useEffect(() => {
+    if (!wantsHomeTap) return;
+    const timer = setTimeout(() => setHomeLate(true), HOME_HINT_MS);
+    return () => {
+      clearTimeout(timer);
+      setHomeLate(false);
+    };
+  }, [wantsHomeTap]);
+  const listOpen = hasTarget('map.regionList');
+
   const ids = useMemo(() => (v ? v.targets.map((spec) => resolveTarget(spec, game.rootId, game.home)) : []), [v, game.rootId, game.home, targetsVersion]); // eslint-disable-line react-hooks/exhaustive-deps
   const rects = useTargetRects(ids);
 
@@ -234,7 +250,8 @@ export function TutorialHost() {
   if (!v) return <HelpButton />;
   // Targets inside the side panel or the event card: put the caption beside them, over the dimmed rest.
   const side = v.overEvent || /^(node\.buy|region\.build):/.test(ids[0] ?? '');
-  return <CoachMark view={v} rects={rects} home={game.home} side={side} onNext={onNext} onSkip={onSkip} />;
+  const shown = wantsHomeTap && (listOpen || homeLate) ? { ...v, captionKey: listOpen ? 'ui.tutorial.buildDc.pickHome' : 'ui.tutorial.buildDc.tapHomeOrList' } : v;
+  return <CoachMark view={shown} rects={rects} home={game.home} side={side} onNext={onNext} onSkip={onSkip} />;
 }
 
 interface CoachMarkProps {
@@ -257,7 +274,8 @@ function CoachMark({ view: v, rects, home, side, onNext, onSkip }: CoachMarkProp
   const cardWidth = Math.max(200, Math.min(CARD_MAX_WIDTH, width - insets.left - insets.right - 2 * spacing.m));
   const pos = placeCaption({ holes, screen, insets, card: { width: cardWidth, height: cardHeight }, prefer: side ? 'side' : 'vertical', sideAlign: v.overEvent ? 'end' : 'centre' });
   const d = dimPath(screen, holes);
-  const blockers = v.action === 'do' && primary ? blockersAround(primary, screen) : [{ x: 0, y: 0, width, height }];
+  // A "do" step leaves every cut-out open (the home region on the map, the Regions button and its list); other steps block everything.
+  const blockers = v.action === 'do' && primary ? blockersAroundAll(holes, screen) : [{ x: 0, y: 0, width, height }];
   const onCardLayout = (e: LayoutChangeEvent) => {
     const h = e.nativeEvent.layout.height;
     if (h > 0 && Math.abs(h - cardHeight) > 1) setCardHeight(h);
@@ -329,15 +347,22 @@ function CoachMark({ view: v, rects, home, side, onNext, onSkip }: CoachMarkProp
 
 const takeTouch = () => true;
 
-/** Small "?" that replays the tutorial: at the foot of the rail (wide) or above the ticker on the right (narrow). */
+/**
+ * Small "?" at the foot of the rail (wide) or above the ticker on the right (narrow). Opens
+ * the help panel: replay the tutorial, and the build stamp (long-press it for touch diagnostics).
+ */
 function HelpButton() {
   const mode = useLayoutMode();
   const { width, height } = useWindowDimensions();
   const insets = useInsets();
+  const [open, setOpen] = useState(false);
   const seed = useGameStore((s) => s.state?.seed ?? null);
   const blocked = useGameStore((s) => !s.state || s.state.status !== 'running' || !!s.state.pendingEvent || s.eventResult !== null);
   if (blocked) return null;
-  const replay = () => useTutorialStore.getState().replayNow(seed);
+  const replay = () => {
+    setOpen(false);
+    useTutorialStore.getState().replayNow(seed);
+  };
   const frame =
     mode === 'wide'
       ? (() => {
@@ -346,11 +371,18 @@ function HelpButton() {
         })()
       : { right: insets.right + spacing.s, bottom: insets.bottom + touch * 2 + spacing.m };
   return (
-    <Pressable onPress={replay} accessibilityRole="button" accessibilityLabel={t('ui.tutorial.help')} style={[styles.help, frame]} testID="tutorial-help">
-      <View style={styles.helpDot}>
-        <Text style={styles.helpGlyph}>?</Text>
-      </View>
-    </Pressable>
+    <>
+      <Pressable onPress={() => setOpen(true)} accessibilityRole="button" accessibilityLabel={t('ui.help.title')} style={[styles.help, frame]} testID="tutorial-help">
+        <View style={styles.helpDot}>
+          <Text style={styles.helpGlyph}>?</Text>
+        </View>
+      </Pressable>
+      <Sheet visible={open} onClose={() => setOpen(false)} title={t('ui.help.title')} safeArea testID="help-sheet">
+        <Button label={t('ui.help.replay')} onPress={replay} testID="help-replay" />
+        <Text style={styles.helpNote}>{t('ui.help.debugHint')}</Text>
+        <BuildStamp />
+      </Sheet>
+    </>
   );
 }
 
@@ -392,4 +424,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   helpGlyph: { ...voice.calmHeading, color: colors.dim, fontSize: 15, lineHeight: 18 },
+  helpNote: { color: colors.dim, fontSize: type.s },
 });

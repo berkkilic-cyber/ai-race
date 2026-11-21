@@ -1,8 +1,10 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '../components/Button';
 import { fmtDay } from '../format';
 import { labName, t } from '../i18n';
+import { DEBUG_LONG_PRESS_MS } from '../diagnostics/BuildStamp';
+import { toggleTouchDebug } from '../map/touchDebug';
 import { Mascot, useMascotMood } from '../mascot';
 import { SPEEDS, useGameStore } from '../store/game';
 import { colors, spacing, tabular, type, voice } from '../theme';
@@ -18,7 +20,9 @@ export function TopBar() {
   const speedRef = useTutorialTarget('shell.speed');
   return (
     <View style={styles.bar}>
-      <Mascot mood={mood} size={30} testID="mascot" />
+      <Pressable onLongPress={toggleTouchDebug} delayLongPress={DEBUG_LONG_PRESS_MS} accessible={false}>
+          <Mascot mood={mood} size={30} testID="mascot" />
+        </Pressable>
       <View style={styles.title}>
         <Text style={styles.name} numberOfLines={1}>
           {name}

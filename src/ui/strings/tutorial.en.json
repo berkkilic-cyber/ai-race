@@ -9,6 +9,8 @@
   "ui.tutorial.buyModel.wait": "Not quite enough {hype} yet. The clock is running until there is.",
   "ui.tutorial.buildDc.openMap": "A model needs somewhere to run. Back to the map.",
   "ui.tutorial.buildDc.tapHome": "Tap your home region, {region}.",
+  "ui.tutorial.buildDc.tapHomeOrList": "Tap your home region, {region}, or use the Regions button.",
+  "ui.tutorial.buildDc.pickHome": "Pick {region} in the list.",
   "ui.tutorial.buildDc.build": "Build a {dataCentre} here. This is what {cash} is for.",
   "ui.tutorial.buildDc.wait": "You need a little more {cash}. The clock is running until you have it.",
   "ui.tutorial.compute": "{compute} caps how smart your model can get. Upgrade the model and add sites together, or one waits for the other.",

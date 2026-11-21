@@ -121,3 +121,37 @@ export function blockersAround(hole: TargetRect, screen: { width: number; height
     { x: right, y: hole.y, width: Math.max(0, screen.width - right), height: hole.height },
   ].filter((r) => r.width > 0 && r.height > 0);
 }
+
+/**
+ * Rects that cover the screen except the holes (any number, overlapping or not): the touch
+ * blockers of a step with several cut-outs. A grid on the holes' edges, cells inside no hole
+ * kept, runs of cells in a row merged.
+ */
+export function blockersAroundAll(holes: readonly TargetRect[], screen: { width: number; height: number }): TargetRect[] {
+  const usable = holes.filter((h) => h.width > 0 && h.height > 0);
+  if (usable.length === 0) return [{ x: 0, y: 0, width: screen.width, height: screen.height }];
+  const clampX = (v: number) => Math.min(screen.width, Math.max(0, v));
+  const clampY = (v: number) => Math.min(screen.height, Math.max(0, v));
+  const xs = [...new Set([0, screen.width, ...usable.flatMap((h) => [clampX(h.x), clampX(h.x + h.width)])])].sort((a, b) => a - b);
+  const ys = [...new Set([0, screen.height, ...usable.flatMap((h) => [clampY(h.y), clampY(h.y + h.height)])])].sort((a, b) => a - b);
+  const inHole = (cx: number, cy: number) => usable.some((h) => cx > h.x && cx < h.x + h.width && cy > h.y && cy < h.y + h.height);
+  const out: TargetRect[] = [];
+  for (let j = 0; j + 1 < ys.length; j++) {
+    const y0 = ys[j];
+    const y1 = ys[j + 1];
+    if (y1 <= y0) continue;
+    let run: TargetRect | null = null;
+    for (let i = 0; i + 1 < xs.length; i++) {
+      const x0 = xs[i];
+      const x1 = xs[i + 1];
+      if (x1 <= x0) continue;
+      if (inHole((x0 + x1) / 2, (y0 + y1) / 2)) {
+        if (run) out.push(run);
+        run = null;
+      } else if (run) run.width = x1 - run.x;
+      else run = { x: x0, y: y0, width: x1 - x0, height: y1 - y0 };
+    }
+    if (run) out.push(run);
+  }
+  return out;
+}

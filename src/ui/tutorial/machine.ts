@@ -179,7 +179,9 @@ export function view(s: TutorialState, obs: Observation): TutorialView | null {
       if (obs.route !== 'map') return FULL(id, index, key('openMap'), ['tab.map'], 'do', true);
       if (!obs.canBuildHome) return FULL(id, index, key('wait'), ['shell.cash|shell.resources'], 'wait', false);
       if (obs.homeSheetOpen) return FULL(id, index, key('build'), ['region.build.home'], 'do', true);
-      return FULL(id, index, key('tapHome'), ['map.home'], 'do', true);
+      // Either route opens the home panel: a tap on the map, or the Regions button and its list
+      // (the list's cut-out appears while it is open).
+      return FULL(id, index, key('tapHome'), ['map.home', 'map.regions', 'map.regionList'], 'do', true);
     case 'compute':
       return FULL(id, index, key(), ['shell.compute|shell.resources', 'shell.tier'], 'next', true);
     case 'meters':

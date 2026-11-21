@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import Animated, { interpolateColor, useAnimatedStyle } from 'react-native-reanimated';
 
 import { CountingNumber } from '../components/CountingNumber';
@@ -8,6 +8,8 @@ import { fmtCash, fmtCompact, fmtDay, fmtPerDay } from '../format';
 import { useMeters, useResources } from '../hooks/useGame';
 import { useInsets } from '../hooks/useInsets';
 import { labName, t } from '../i18n';
+import { DEBUG_LONG_PRESS_MS } from '../diagnostics/BuildStamp';
+import { toggleTouchDebug } from '../map/touchDebug';
 import { Mascot, useMascotMood } from '../mascot';
 import { useGameStore } from '../store/game';
 import { colors, layout, spacing, voice } from '../theme';
@@ -57,7 +59,9 @@ export function TopStrip({ right }: { right?: ReactNode }) {
   return (
     <View style={styles.strip}>
       <View style={styles.brand}>
-        <Mascot mood={mood} size={26} testID="mascot" />
+        <Pressable onLongPress={toggleTouchDebug} delayLongPress={DEBUG_LONG_PRESS_MS} accessible={false}>
+          <Mascot mood={mood} size={26} testID="mascot" />
+        </Pressable>
         <View style={styles.title}>
           <Text style={styles.name} numberOfLines={1}>
             {name}
