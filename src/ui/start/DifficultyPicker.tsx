@@ -53,7 +53,7 @@ export function DifficultyPicker({ options, selected, onSelect, wide }: Difficul
 }
 
 const styles = StyleSheet.create({
-  wrap: { gap: spacing.xs },
+  wrap: { gap: 2 },
   label: { ...voice.calmLabel, color: colors.dim },
   list: { gap: spacing.s },
   listWide: { flexDirection: 'row' },
@@ -66,7 +66,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.s,
     gap: 2,
   },
-  optionWide: { flex: 1, paddingHorizontal: spacing.s, paddingVertical: spacing.xs + 2 },
+  optionWide: { flex: 1, paddingHorizontal: spacing.s, paddingVertical: spacing.xs },
   optionOn: { borderColor: colors.player, backgroundColor: colors.raised },
   pressed: { opacity: 0.85 },
   head: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: spacing.s },

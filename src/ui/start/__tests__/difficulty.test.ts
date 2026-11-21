@@ -1,9 +1,10 @@
-import { createGame, type ContentPack } from '@/engine';
+import { createGame, getFounderStart, type ContentPack } from '@/engine';
 
 import { getPackEntry } from '../../packs';
 import { setStorageBackend, writeValue } from '../../tutorial/storage';
 import { TUTORIAL_DONE_KEY } from '../../tutorial/store';
 import { playAgainSetup } from '../../end/logic';
+import { founderPerkLines } from '../logic';
 import {
   DIFFICULTY_KEY,
   difficultyEndLine,
@@ -67,6 +68,14 @@ describe('difficulty selection', () => {
     }
     expect(multiplierText(1.35)).toBe('1.35');
     expect(multiplierText(1)).toBe('1');
+  });
+
+  it('founder cards show the start at the chosen difficulty', () => {
+    const f = pack.founders[0];
+    const easy = getFounderStart(pack, f.id, ids[0]);
+    const lines = founderPerkLines(f, easy).map((l) => l.text);
+    expect(easy.hype).toBeGreaterThan(f.startHype);
+    expect(lines[0]).not.toBe(founderPerkLines(f)[0].text);
   });
 
   it('play again keeps the difficulty; the end line names it', () => {

@@ -1,5 +1,6 @@
 import type { EngineContext } from './context';
 import { getContext, resolveDifficulty } from './context';
+import { founderStart } from './derived';
 import { scheduleNextHeadline } from './events';
 import { max, round } from './natives';
 import { seedToRng } from './rng';
@@ -42,8 +43,7 @@ function createPlayer(context: EngineContext, setup: GameSetup): LabState {
     color: DEFAULT_PLAYER_COLOR,
     controller: 'human',
     founderId: founder.id,
-    hype: founder.startHype * max(0, context.balance.playerStartHypeFactor),
-    cash: founder.startCash * max(0, context.balance.playerStartCashFactor),
+    ...founderStart(founder, context.balance),
     active: true,
     adoption: { [setup.homeRegion]: context.balance.startAdoption },
   };

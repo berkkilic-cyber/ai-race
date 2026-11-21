@@ -50,7 +50,7 @@ describe('validatePack', () => {
     expectProblem(problemsOf((p) => { d(p)[0].scoreMultiplier = -1; }), /scoreMultiplier/);
     expectProblem(problemsOf((p) => { p.defaultDifficulty = 'nightmare'; }), /defaultDifficulty: "nightmare" is not one of/);
     expectProblem(problemsOf((p) => { delete p.defaultDifficulty; }), /defaultDifficulty: required/);
-    expectProblem(problemsOf((p) => { p.strings.en['difficulty.sandbox.desc'] = 'x'.repeat(90); }), /difficulty description/);
+    expectProblem(problemsOf((p) => { p.strings.en['difficulty.sandbox.desc'] = 'x'.repeat(61); }), /difficulty description/);
     // Difficulties are optional (their strings are then unused).
     expect(problemsOf((p) => { delete p.difficulties; delete p.defaultDifficulty; }).filter((x) => !/unused key "difficulty\./.test(x))).toEqual([]);
   });

@@ -2,6 +2,8 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View, type ScrollViewInstance } from 'react-native';
 
+import { getFounderStart } from '@/engine';
+
 import { Button } from '../components/Button';
 import { Ground } from '../components/Deco';
 import { usePackEntry } from '../hooks/useGame';
@@ -178,6 +180,7 @@ export function StartScreen({ beforeEnter }: StartScreenProps = {}) {
         difficulties={difficultyOptions(pack)}
         difficulty={difficulty}
         onDifficulty={pickDifficulty}
+        starts={Object.fromEntries(pack.founders.map((f) => [f.id, getFounderStart(pack, f.id, difficulty)]))}
       />
     ) : (
       <RegionStep

@@ -8,6 +8,7 @@ import {
   clamp,
   computeForCapability,
   computeOf,
+  founderStart,
   isBannedAt,
   isOnline,
   isPresent,
@@ -155,6 +156,14 @@ export function getDifficulties(pack: ContentPack): DifficultyDef[] {
 /** The run's difficulty level after fallback (named → pack default → none). */
 export function getDifficulty(state: GameState, pack: ContentPack): DifficultyDef | undefined {
   return getContext(pack, state.difficulty).difficulty;
+}
+
+/** Hype and Cash a founder starts with at a difficulty (id; fallback as in resolveDifficulty), for the start screen. */
+export function getFounderStart(pack: ContentPack, founderId: string, difficulty?: string): { hype: number; cash: number } {
+  const context = getContext(pack, difficulty);
+  const founder = context.founders.get(founderId);
+  if (!founder) throw new Error(`Unknown founder: ${founderId}`);
+  return founderStart(founder, context.balance);
 }
 
 /** The balance the run plays with: engine defaults ← pack balance ← difficulty balance. */

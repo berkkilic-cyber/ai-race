@@ -34,6 +34,7 @@ export {
   getDifficulties,
   getDifficulty,
   getBalance,
+  getFounderStart,
   type WinProgress,
   type StandingRow,
   type IncomeSource,

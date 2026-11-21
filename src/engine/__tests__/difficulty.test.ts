@@ -5,6 +5,7 @@ import {
   getComputeRequired,
   getDifficulties,
   getDifficulty,
+  getFounderStart,
   getWinProgress,
   mergeBalance,
   resolveDifficulty,
@@ -109,6 +110,10 @@ describe('difficulty: levers', () => {
     expect(at('easy').labs[PLAYER].hype).toBe(founder.startHype * 2);
     expect(at('hard').labs[PLAYER].cash).toBe(founder.startCash * 0.5);
     expect(at('normal').labs[PLAYER].hype).toBe(founder.startHype);
+    expect(getFounderStart(pack, founder.id, 'easy')).toEqual({ hype: at('easy').labs[PLAYER].hype, cash: at('easy').labs[PLAYER].cash });
+    expect(getFounderStart(pack, founder.id, 'hard').cash).toBe(founder.startCash * 0.5);
+    expect(getFounderStart(pack, founder.id)).toEqual({ hype: founder.startHype, cash: founder.startCash });
+    expect(() => getFounderStart(pack, 'ghost')).toThrow();
   });
 
   it('scales rival entry ticks and expansion', () => {

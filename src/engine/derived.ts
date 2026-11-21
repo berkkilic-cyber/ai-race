@@ -2,7 +2,7 @@
 import type { BalanceConfig } from './balance';
 import type { EngineContext } from './context';
 import { labModifierTable, statMultiplier, type ModifierTable } from './modifiers';
-import type { DataCentre, GameState, LabState, RegionId } from './types';
+import type { DataCentre, FounderDef, GameState, LabState, RegionId } from './types';
 import { cachedUsers } from './usersCache';
 import { INFINITY, floor, max, min, pow } from './natives';
 
@@ -145,4 +145,9 @@ export function leadRivalOf(state: GameState, context: EngineContext, labId: str
 
 export function clamp(value: number, low: number, high: number): number {
   return value < low ? low : value > high ? high : value;
+}
+
+/** A founder's starting Hype and Cash, scaled by the run's playerStart factors. */
+export function founderStart(founder: FounderDef, balance: BalanceConfig): { hype: number; cash: number } {
+  return { hype: founder.startHype * max(0, balance.playerStartHypeFactor), cash: founder.startCash * max(0, balance.playerStartCashFactor) };
 }
