@@ -11,8 +11,8 @@
       {
         "type": "resource",
         "resource": "hype",
-        "amount": 6.9,
-        "scaleWithIncome": 13.9
+        "amount": 5.5,
+        "scaleWithIncome": 11.1
       }
     ],
     "collectTextKey": "moment.viral-post.collect"
@@ -29,8 +29,8 @@
       {
         "type": "resource",
         "resource": "hype",
-        "amount": 4.6,
-        "scaleWithIncome": 11.5
+        "amount": 3.7,
+        "scaleWithIncome": 9.2
       }
     ],
     "collectTextKey": "moment.glowing-review.collect"
@@ -98,8 +98,8 @@
       {
         "type": "resource",
         "resource": "hype",
-        "amount": 9.2,
-        "scaleWithIncome": 18.5
+        "amount": 7.4,
+        "scaleWithIncome": 14.8
       }
     ],
     "collectTextKey": "moment.celebrity-mention.collect"
@@ -129,8 +129,8 @@
       {
         "type": "resource",
         "resource": "hype",
-        "amount": 2.3,
-        "scaleWithIncome": 6.9
+        "amount": 1.8,
+        "scaleWithIncome": 5.5
       }
     ],
     "collectTextKey": "moment.campus-adoption.collect"
@@ -173,8 +173,8 @@
       {
         "type": "resource",
         "resource": "hype",
-        "amount": 6.9,
-        "scaleWithIncome": 13.9
+        "amount": 5.5,
+        "scaleWithIncome": 11.1
       },
       {
         "type": "meter",
@@ -206,8 +206,8 @@
       {
         "type": "resource",
         "resource": "hype",
-        "amount": 11.5,
-        "scaleWithIncome": 20.8
+        "amount": 9.2,
+        "scaleWithIncome": 16.6
       }
     ],
     "collectTextKey": "moment.keynote-slot.collect"
@@ -230,8 +230,8 @@
       {
         "type": "resource",
         "resource": "hype",
-        "amount": 6.9,
-        "scaleWithIncome": 13.9
+        "amount": 5.5,
+        "scaleWithIncome": 11.1
       },
       {
         "type": "agiProgress",

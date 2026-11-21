@@ -1,4 +1,87 @@
-# Balance pass (task 8)
+# Balance
+
+## Task 12: moments, launch news, spread channels (current numbers)
+
+Seed **2026**, 1,000 runs per policy (6,000 runs in about 390 s on 2 workers, so 1,000 runs take about 65 s of wall time here while sharing the machine; the jest budget test, 200 headless runs with moments in under 12 s, passes). Bots tap moments with `momentSkill` 0.7 (sensible and the focused policies), 0.3 (random), 0 (idle).
+
+| Policy     | Runs | Win   | agi   | dependence | monopoly | banned | revolt | rivalAgi | Ticks p10/p50/p90  |
+| ---------- | ---- | ----- | ----- | ---------- | -------- | ------ | ------ | -------- | ------------------ |
+| sensible   | 1000 | 46.5% | 31.2% | 10.9%      | 4.4%     | 10.2%  | 11.5%  | 31.8%    | 1775 / 2741 / 3057 |
+| capability | 1000 | 34.6% | 28.2% | 6.1%       | 0.3%     | 18.7%  | 15.3%  | 31.4%    | 1699 / 2639 / 3059 |
+| reach      | 1000 | 48.3% | 14.6% | 26.9%      | 6.8%     | 18.7%  | 10.0%  | 23.0%    | 1443 / 2592 / 3046 |
+| shadow     | 1000 | 68.5% | 22.1% | 10.0%      | 36.4%    | 8.8%   | 8.7%   | 14.0%    | 1717 / 2492 / 2927 |
+| random     | 1000 | 5.4%  | 1.9%  | 3.5%       | 0.0%     | 77.3%  | 15.8%  | 1.5%     | 1403 / 1836 / 2497 |
+| idle       | 1000 | 0.0%  | 0.0%  | 0.0%       | 0.0%     | 0.0%   | 0.0%   | 100.0%   | 2547 / 3007 / 3123 |
+
+### Against the targets
+
+| # | Target | Result | Met |
+| --- | --- | --- | --- |
+| 1 | sensible wins 30 to 60%; median 2,400 to 3,600 ticks; p10 > 1,500; p90 < 4,800 | 46.5%; 2,741; 1,775; 3,057 | yes |
+| 2 | idle ≤ 2%, random ≤ 20% | 0.0%, 5.4% | yes |
+| 3 | every trigger ≥ 3% for sensible; each win ≥ 25% for its focused policy | lowest monopoly 4.4%; agi 28.2% (capability), dependence 26.9% (reach), monopoly 36.4% (shadow) | yes |
+| 4 | rivals eliminate themselves in < 20% of appearances; lead rival AGI > 50 in most player wins | 6.2%; 73.5% of wins | yes |
+| 5 | typical sensible win owns about 18 to 30 nodes; buying every rival rare | nodes p10/p50/p90 28/30/33; cash p50 594; every rival bought 1.2% | yes (top of range, as before) |
+| 6 | first node ≤ ~60, first data centre ≤ ~250, something every 60 to 120 ticks | tick 1, tick 1; purchase gap median 60, p75 90, p90 130 | yes |
+| 7 | no founder < 20% or > 70%; flag regions < 10% or > 85% | founders 39.6% to 56.6%; regions 26.2% (india) to 73.2% (nigeria) | yes |
+
+### Moments
+
+Per sensible run (median): 52 tapped, 22 missed. Moment income is **10.3% of all Hype** earned (moments + income, median 330 Hype a run) and **2.0% of all Cash**. Boost rewards are `scaleWithIncome` amounts: a fixed part plus a few ticks of the lab's average income so far, so they grow mildly with the run.
+
+Win rate by moment skill (sensible, 1,000 runs each):
+
+| momentSkill | Win | Tapped / missed (median) | Moment share of Hype |
+| --- | --- | --- | --- |
+| 0 | 21.1% | 0 / 76 | 0% |
+| 0.4 | 31.4% | 30 / 45 | 6.1% |
+| 0.7 | 46.5% | 52 / 22 | 10.3% |
+| 1.0 | 59.1% | 76 / 0 | 14.1% |
+
+The spread (38 points from 0 to 1) is wider than the 10 to 20 aimed for. The two aims conflict: probes showed the swing comes almost entirely from boost Hype (with every threat penalty removed, skill 0 vs 1 still moved 18% → 66%; with only the Hype parts of boosts kept, 19% → 63%), and the race against rival AGI is so tight that each percent of extra Hype is worth about 2.5 points of win rate. Hype share at the 10% floor gives this spread; a 10 to 20 point spread would need moment Hype near 4 to 5% (the first version: 4.1%), or a structural change (rubber-banding Hype, a softer AGI race). Threat penalties are small on purpose; they matter for meters, not for the win rate.
+
+AI rivals get no moments. A player at skill 0.7 gains about 10% more Hype, which is worth about 25 points of win rate; `aiAgiFactor` rose from 1.15 (task 8) to **1.3** to carry that expected income (the rivals' clock instead of their wallet, because rival Hype only buys nodes the AI already affords).
+
+### Launch news
+
+Median per run: 4 player launches and 16 rival launches; no engine news item without a `kind` in 6,000 runs.
+
+### Spread channels and the reach policy
+
+Barriers: `ocean` on the 12 sea links between continents (usa–russia, brazil–france, andes–france, the four far-south links, indonesia–australia, indonesia–pacific, iberia / italy / balkans–north-africa); `strict` on the six strict regions; `language:spanish` on the five Spanish-speaking regions; `language:asia-africa` on 14 non-English Asian and African regions. `barrierSeedFactor` 0.25 (engine default), `viralSeedFactor` 0.25 (pack; default 0.5), `openSeedFactor` 1.5, `openRivalSpreadBonus` 0.05.
+
+Reach policy, seed 2026, 1,000 runs, current balance:
+
+| | Win | agi | dependence | monopoly |
+| --- | --- | --- | --- | --- |
+| channels off (`barrierSeedFactor` 1, `viralSeedFactor` 0) | 54.0% | 25.8% | 24.6% | 3.6% |
+| channels on | 48.3% | 14.6% | 26.9% | 6.8% |
+
+With channels the reach route wins by dependence more often and by AGI much less: it is a distinct path, and dependence did not become trivial (the first channel draft, with `viralSeedFactor` 0.5 and `dependenceShare` 0.40, pushed sensible dependence to 30 to 40% and random to 18%; hence the lower jump factor and the 0.45 threshold). For reference, the reach policy's dependence rate was 30.6% in the task 8 report and 36.2% at the start of this task (moments in, no channels, 500 runs).
+
+### Shadow dominance
+
+The shadow policy won 88% (90% at the start of this task, 59% by monopoly): buy-outs were cheap and each one handed over 60% of the target's users, so every purchase paid for the next. Changes: `acquireBaseCost` 150 → 500, `acquirePerAgi` 3 → 7, `acquireAdoptionShare` 0.6 → 0.3 (the buyer keeps 30% of the target's adoption), and the Hostile Takeovers discount ×0.6 → ×0.7. Shadow now wins **68.5%** (36.4% by monopoly) and sensible still reaches monopoly in 4.4% of runs. Weakening the shadow tree's Hype nodes instead (tried: Benchmark Tuning, Staged Demos, Bot Farm) hurt sensible more than shadow.
+
+### Pack balance changes in this task (`balance.json`)
+
+| Constant | Old | New | Reason |
+| --- | --- | --- | --- |
+| aiAgiFactor | 1.15 | 1.3 | Rivals carry the player's expected moment income. |
+| dependenceShare | 0.40 | 0.45 | Channels make spreading easier; keeps dependence a goal, not a default. |
+| viralSeedFactor | (new) | 0.25 | Chat App is cheap; word of mouth must not double spread. |
+| acquireBaseCost | 150 | 500 | Shadow dominance. |
+| acquirePerAgi | 3 | 7 | Same. |
+| acquireAdoptionShare | (engine 0.6) | 0.3 | Same: buy-outs no longer snowball. |
+| shadow-hostile acquireCost | ×0.6 | ×0.7 | Same. |
+
+Engine `BalanceConfig` additions (defaults): `momentFirstTick` 40, `momentIntervalMin` 30, `momentIntervalMax` 54, `momentShareSpeedup` 1.5, `momentIntervalFloor` 16, `maxActiveMoments` 3, `barrierSeedFactor` 0.25, `viralSeedFactor` 0.5, `openSeedFactor` 1.5, `openRivalSpreadBonus` 0.05.
+
+Tuning used seeds 1 and 3 at 150 to 300 runs per policy; the tables are seed 2026. Expect ±3 points between seeds; capability's AGI rate (28.2%) and sensible's monopoly rate (4.4%) are the closest to their limits.
+
+---
+
+# Balance pass (task 8, historical)
 
 ## Method
 
