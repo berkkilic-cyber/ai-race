@@ -109,7 +109,7 @@ function Banner({ banner, insetRight }: { banner: LaunchBanner; insetRight: numb
   const second = banner.mine ? t('ui.banner.mineLine', { tier: banner.tier }) : banner.ahead > 0 ? t(banner.ahead === 1 ? 'ui.banner.ahead' : 'ui.banner.aheadMany', { n: banner.ahead }) : null;
   return (
     <View style={[styles.wrap, { right: insetRight }]} pointerEvents="none" onLayout={(e) => setWidth(Math.max(200, e.nativeEvent.layout.width))}>
-      <Animated.View style={[styles.band, banner.mine ? styles.bandMine : null, MOVING, style]} testID={banner.mine ? 'launch-banner-mine' : 'launch-banner'}>
+      <Animated.View style={[styles.band, { maxWidth: Math.max(200, Math.min(BAND_MAX, width - spacing.m * 2)) }, banner.mine ? styles.bandMine : null, MOVING, style]} testID={banner.mine ? 'launch-banner-mine' : 'launch-banner'}>
         <View style={[styles.block, { backgroundColor: banner.mine ? colors.newsInk : color }]}>
           <Icon name="launch" size={18} color={banner.mine ? colors.player : colors.newsInk} accent={banner.mine ? colors.newsPaper : colors.newsInk} strokeWidth={2.2} />
           <Text style={[styles.tier, { color: banner.mine ? colors.player : colors.newsInk }]}>{t('ui.banner.tierShort', { tier: banner.tier })}</Text>
@@ -133,13 +133,16 @@ function Banner({ banner, insetRight }: { banner: LaunchBanner; insetRight: numb
   );
 }
 
+/** Widest a banner gets; beside the side panel it fits the map part left visible (the headline ellipsizes). */
+const BAND_MAX = 500;
+
 const styles = StyleSheet.create({
   wrap: { position: 'absolute', left: 0, top: spacing.s, alignItems: 'center', overflow: 'hidden', paddingHorizontal: spacing.m },
   band: {
     flexDirection: 'row',
     alignItems: 'stretch',
-    maxWidth: 500,
-    minWidth: 260,
+    maxWidth: BAND_MAX,
+    minWidth: 200,
     backgroundColor: colors.newsInk,
     borderWidth: 1.5,
     borderColor: colors.newsPaper,
