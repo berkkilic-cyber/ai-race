@@ -84,6 +84,8 @@ function NodeSheetBody({ node, justBought, onClose, onBuy }: { node: NodeDef; ju
   const tier = node.capabilityLevel;
   const need = tier !== undefined ? getComputeRequired(pack, tier) : 0;
   const cantRun = tier !== undefined && need > model.compute;
+  // The first model never asks: everyone has to buy it, and the tutorial walks through it before any data centre exists.
+  const askFirst = cantRun && (tier ?? 0) > 1;
   const [confirming, setConfirming] = useState(false);
   const accent = TREE_ACCENT[node.tree];
   const owned = view.status === 'owned';
@@ -146,7 +148,7 @@ function NodeSheetBody({ node, justBought, onClose, onBuy }: { node: NodeDef; ju
         variant="primary"
         disabled={view.reason !== null}
         sublabel={view.reason !== null ? failureText(view.reason) : undefined}
-        onPress={() => (cantRun ? setConfirming(true) : onBuy(node.id))}
+        onPress={() => (askFirst ? setConfirming(true) : onBuy(node.id))}
         testID="node-buy"
       />
     </View>
