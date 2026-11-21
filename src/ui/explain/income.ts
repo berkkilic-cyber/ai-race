@@ -104,7 +104,8 @@ export function bestLaunch(state: GameState, pack: ContentPack, labId: string, k
     if (!region) continue;
     const check = canApply(state, pack, { type: 'launchInRegion', labId, regionId: region.id });
     const affordable = check.ok;
-    if (!check.ok && check.reason !== 'notEnoughCash') continue;
+    // A card waiting for an answer blocks every action for a moment; it does not make a region a bad tip.
+    if (!check.ok && check.reason !== 'notEnoughCash' && check.reason !== 'eventPending') continue;
     const score = region.population * (kind === 'hype' ? region.openness : region.wealth) * (r.reachable ? 0.6 : 1);
     const pick = { regionId: region.id, cost: getLaunchCost(state, pack, labId, region.id), affordable, score };
     if (!best || Number(pick.affordable) > Number(best.affordable) || (pick.affordable === best.affordable && pick.score > best.score)) best = pick;
@@ -112,17 +113,25 @@ export function bestLaunch(state: GameState, pack: ContentPack, labId: string, k
   return best ? { regionId: best.regionId, cost: best.cost, affordable: best.affordable } : null;
 }
 
-/** The cheapest unowned upgrade whose prerequisites are owned that raises `stat`. */
-function bestUpgradeFor(state: GameState, pack: ContentPack, labId: string, stat: Stat): { node: NodeDef; hype: number; cash: number } | null {
+interface UpgradePick {
+  node: NodeDef;
+  hype: number;
+  cash: number;
+  /** Prerequisites owned (canApply does not answer missingRequirement). */
+  open: boolean;
+}
+
+/** The cheapest unowned upgrade that raises `stat`, preferring ones whose prerequisites are owned. */
+function bestUpgradeFor(state: GameState, pack: ContentPack, labId: string, stat: Stat): UpgradePick | null {
   const lab = state.labs[labId];
-  let best: { node: NodeDef; hype: number; cash: number } | null = null;
+  let best: UpgradePick | null = null;
   for (const node of pack.nodes) {
     if (lab.ownedNodes.includes(node.id)) continue;
     if (!node.modifiers.some((m) => m.stat === stat && !m.regionTag && (m.op === 'mul' ? m.value > 1 : m.value > 0))) continue;
     const check = canApply(state, pack, { type: 'buyNode', labId, nodeId: node.id });
-    if (!check.ok && check.reason === 'missingRequirement') continue;
+    const open = check.ok || check.reason !== 'missingRequirement';
     const price = getNodeCost(state, pack, labId, node.id);
-    if (!best || price.hype < best.hype) best = { node, hype: price.hype, cash: price.cash };
+    if (!best || Number(open) > Number(best.open) || (open === best.open && price.hype < best.hype)) best = { node, hype: price.hype, cash: price.cash, open };
   }
   return best;
 }
@@ -132,9 +141,12 @@ function upgradeTip(state: GameState, pack: ContentPack, labId: string, stat: St
   if (!pick) return null;
   const mod = pick.node.modifiers.find((m) => m.stat === stat && !m.regionTag);
   const price = pick.cash > 0 ? `${fmtCompact(pick.hype)} ${t('term.hype')} + ${fmtCash(pick.cash)}` : `${fmtCompact(pick.hype)} ${t('term.hype')}`;
+  const missing = pick.node.requires.find((r) => !state.labs[labId].ownedNodes.includes(r));
+  const req = missing ? pack.nodes.find((n) => n.id === missing) : undefined;
+  const params = { node: t(pick.node.nameKey), tree: t(`term.tree.${pick.node.tree}`), effect: mod ? describeModifier(mod).text : '', price, req: req ? t(req.nameKey) : '' };
   return {
     key: `upgrade-${stat}`,
-    text: t('ui.explain.tip.upgrade', { node: t(pick.node.nameKey), tree: t(`term.tree.${pick.node.tree}`), effect: mod ? describeModifier(mod).text : '', price }),
+    text: t(pick.open || !req ? 'ui.explain.tip.upgrade' : 'ui.explain.tip.upgradeAfter', params),
     icon: pick.node.id as IconName,
   };
 }

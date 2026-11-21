@@ -94,7 +94,7 @@ function SortToggle({ sort, onSort }: { sort: RaceSort; onSort: (s: RaceSort) =>
   );
 }
 
-const COL = { lab: 172, share: 150, agi: 116, model: 76, compute: 96, status: 104, trend: 26 } as const;
+const COL = { lab: 172, share: 140, agi: 104, model: 72, compute: 132, status: 104, trend: 26 } as const;
 
 function HeaderRow() {
   return (

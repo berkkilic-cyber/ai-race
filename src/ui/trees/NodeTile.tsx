@@ -149,7 +149,7 @@ function Rivets({ color }: { color: string }) {
 
 const PIN = 6;
 /** Node icon on the tile: big enough to read at a glance next to a two-line name. */
-const ICON = 22;
+const ICON = shape.tile === 'plate' ? 18 : 22;
 /** The "not enough compute" chip: the bad colour as a fill, readable text on it. */
 const needShortFg = colors.newsPaper;
 
@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
     shape.tile === 'schematic'
       ? { ...voice.bodyStrong, fontSize: 12, lineHeight: 14, letterSpacing: 0.1 }
       : shape.tile === 'plate'
-        ? { ...voice.calmHeading, fontSize: 14, lineHeight: 15, letterSpacing: 0 }
+        ? { ...voice.calmHeading, fontSize: 13, lineHeight: 14, letterSpacing: 0 }
         : { ...voice.bodyStrong, fontSize: type.xs, lineHeight: 14 },
   // Keeps the name clear of the corner badge (owned check, lock).
   nameRoom: { paddingRight: 10, flex: 1 },

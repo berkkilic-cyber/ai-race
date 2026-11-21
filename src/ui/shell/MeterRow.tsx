@@ -5,8 +5,9 @@ import { useMeters } from '../hooks/useGame';
 import { t } from '../i18n';
 import { colors, spacing } from '../theme';
 import { useTutorialTarget } from '../tutorial/targets';
+import { RaceMeter } from './RaceMeter';
 
-/** Regulation, Backlash and Rival as labelled bars. */
+/** Regulation and Backlash as labelled bars, then the AGI race. */
 export function MeterRow() {
   const m = useMeters();
   const tutorialRef = useTutorialTarget('shell.meters');
@@ -14,7 +15,8 @@ export function MeterRow() {
     <View style={styles.row} ref={tutorialRef}>
       <Meter label={t('term.regulation')} value={m.regulation} color={colors.info} testID="meter-regulation" />
       <Meter label={t('term.backlash')} value={m.backlash} color={colors.alarm} testID="meter-backlash" />
-      <Meter label={t('term.rival')} value={m.rival} color={colors.amber} testID="meter-rival" />
+      {/* The AGI race: the player against the leading rival, as in the wide strip. */}
+      <RaceMeter tag={null} testID="meter-rival" />
     </View>
   );
 }
