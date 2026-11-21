@@ -90,6 +90,23 @@ describe('themes', () => {
     }
   });
 
+  it('every font require sits in a try block, so a theme never needs another theme\'s font package (Metro optional dependencies)', () => {
+    const src = readFileSync(path.join(ROOT, 'src', 'ui', 'fonts.ts'), 'utf8').split('\n');
+    let inTry = false;
+    const outside: string[] = [];
+    let requires = 0;
+    for (const line of src) {
+      if (/^\s*try \{/.test(line)) inTry = true;
+      if (/^\s*\} catch/.test(line)) inTry = false;
+      if (/require\('@expo-google-fonts\//.test(line)) {
+        requires++;
+        if (!inTry) outside.push(line.trim());
+      }
+    }
+    expect(requires).toBeGreaterThan(20);
+    expect(outside).toEqual([]);
+  });
+
   it('new themes leave the retired look behind: no cream ground, no orange accent, no serif headings', () => {
     for (const name of ['blueprint', 'hazard', 'candy', 'neon'] as const) {
       const hue = hueOf(palettes[name].player);
