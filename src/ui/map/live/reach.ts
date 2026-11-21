@@ -1,6 +1,6 @@
 import type { ContentPack, RegionReach } from '@/engine';
 
-import { t } from '../../i18n';
+import { barrierInline, t } from '../../i18n';
 import { barrierIcon, mapLiveConfig } from './config';
 
 /** "A, B or C" with the translated joiner. */
@@ -25,7 +25,7 @@ export function reachText(row: RegionReach | undefined, pack: ContentPack): Reac
   if (!row || row.present || row.banned) return null;
   const config = mapLiveConfig(pack.id);
   if (row.blockedBy && row.blockedBy.length > 0) {
-    const barriers = row.blockedBy.map((b) => nameOf(pack, 'barriers', b));
+    const barriers = row.blockedBy.map((b) => barrierInline(b));
     const lines = [t('ui.map.reach.blocked', { barriers: joinWords(barriers, t('ui.map.reach.and')) })];
     const unlock = row.unlockedBy ?? {};
     if (row.blockedBy.length === 1) {

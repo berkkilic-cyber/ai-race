@@ -20,6 +20,7 @@ const fs = require('node:fs');
 const http = require('node:http');
 const path = require('node:path');
 const puppeteer = require('puppeteer-core');
+const { scanText, textScanSummary } = require('./textScan');
 
 const ROOT = path.join(__dirname, '..', '..');
 const DIST = path.join(ROOT, 'dist');
@@ -70,6 +71,7 @@ async function captureSize(browser, size, errors) {
     await sleep(250);
     const file = path.join(OUT, `${THEME}-${size.id}-${name}.png`);
     await page.screenshot({ path: file });
+    await scanText(page, path.basename(String(file)));
     console.log(`saved ${path.relative(ROOT, file)}`);
     after = `${size.id}:${name}`;
   };
@@ -266,7 +268,9 @@ async function main() {
   }
 }
 
-main().catch((err) => {
+main()
+  .then(() => textScanSummary())
+  .catch((err) => {
   console.error(err);
   process.exit(1);
 });

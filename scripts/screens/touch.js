@@ -27,6 +27,7 @@ const fs = require('node:fs');
 const http = require('node:http');
 const path = require('node:path');
 const puppeteer = require('puppeteer-core');
+const { scanText, textScanSummary } = require('./textScan');
 
 const ROOT = path.join(__dirname, '..', '..');
 const DIST = path.join(ROOT, 'dist');
@@ -155,6 +156,7 @@ async function touchPage(context, errors) {
       await sleep(350);
       const file = path.join(OUT, `${TAG}-${name}.png`);
       await page.screenshot({ path: file });
+      await scanText(page, path.basename(String(file)));
       console.log(`     saved ${path.relative(ROOT, file)}`);
     },
   };
@@ -560,7 +562,9 @@ async function main() {
   console.log('all touch checks passed');
 }
 
-main().catch((err) => {
+main()
+  .then(() => textScanSummary())
+  .catch((err) => {
   console.error(err);
   process.exit(1);
 });

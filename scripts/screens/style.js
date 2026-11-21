@@ -27,6 +27,7 @@ const fs = require('node:fs');
 const http = require('node:http');
 const path = require('node:path');
 const puppeteer = require('puppeteer-core');
+const { scanText, textScanSummary } = require('./textScan');
 
 const ROOT = path.join(__dirname, '..', '..');
 const DIST = path.join(ROOT, 'dist');
@@ -86,6 +87,7 @@ async function capture(OUT) {
       await page.evaluate(() => document.fonts && document.fonts.ready);
       const file = path.join(OUT, `${THEME}-${name}.png`);
       await page.screenshot({ path: file });
+      await scanText(page, path.basename(String(file)));
       console.log(`saved ${path.relative(ROOT, file)}`);
       after = name;
     };
@@ -270,6 +272,7 @@ async function compose(dir, themes) {
       await page.setContent(html, { waitUntil: 'load' });
       const file = path.join(dir, `compare-${name}.png`);
       await page.screenshot({ path: file, fullPage: true });
+      await scanText(page, path.basename(String(file)));
       console.log(`saved ${path.relative(ROOT, file)}`);
     }
   } finally {
@@ -290,7 +293,9 @@ async function main() {
   await compose(dir, THEMES);
 }
 
-main().catch((err) => {
+main()
+  .then(() => textScanSummary())
+  .catch((err) => {
   console.error(err);
   process.exit(1);
 });

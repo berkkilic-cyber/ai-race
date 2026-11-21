@@ -16,6 +16,7 @@ const fs = require('node:fs');
 const http = require('node:http');
 const path = require('node:path');
 const puppeteer = require('puppeteer-core');
+const { scanText, textScanSummary } = require('./textScan');
 
 const ROOT = path.join(__dirname, '..', '..');
 const DIST = path.join(ROOT, 'dist');
@@ -79,6 +80,7 @@ async function main() {
     const base = `http://127.0.0.1:${server.address().port}`;
     const shot = async (name, dir = OUT) => {
       await page.screenshot({ path: path.join(dir, name) });
+      await scanText(page, String(name));
       console.log(`saved ${path.join(dir, name)}`);
     };
     /** Top shot, plus a bottom shot when the page scrolls (and middle shots into EXTRA). */
@@ -223,7 +225,9 @@ async function main() {
   }
 }
 
-main().catch((err) => {
+main()
+  .then(() => textScanSummary())
+  .catch((err) => {
   console.error(err);
   process.exit(1);
 });

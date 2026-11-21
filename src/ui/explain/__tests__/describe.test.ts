@@ -96,7 +96,7 @@ describe('describeChannel', () => {
 
   it('falls back by kind for channels without their own line', () => {
     expect(describeChannel('teleport', [{ id: 'teleport', nameKey: 'x', kind: 'jump' }]).text).toBe('Can skip a neighbouring region when spreading');
-    expect(describeChannel('moon', [{ id: 'moon', nameKey: 'x', kind: 'clear', clears: ['ocean'] }]).text).toBe('Gets past Ocean');
+    expect(describeChannel('moon', [{ id: 'moon', nameKey: 'x', kind: 'clear', clears: ['ocean'] }]).text).toBe('Gets past the ocean');
   });
 });
 

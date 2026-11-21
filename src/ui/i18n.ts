@@ -120,6 +120,20 @@ function labNameById(id: string): string {
   return rival ? t(rival.nameKey) : id;
 }
 
+/**
+ * A barrier's name for use mid-sentence ("Blocked by the ocean."): the pack's
+ * `barrier.<id>.inline` when it has one, else the name with its first letter lowered.
+ */
+export function barrierInline(id: string): string {
+  const def = context.pack.barriers?.find((b) => b.id === id);
+  const nameKey = def?.nameKey ?? `barrier.${id.replace(/:/g, '-')}.name`;
+  const inlineKey = nameKey.replace(/\.name$/, '.inline');
+  if (inlineKey !== nameKey && hasString(inlineKey)) return t(inlineKey);
+  if (!hasString(nameKey)) return id;
+  const name = t(nameKey);
+  return name.charAt(0).toLowerCase() + name.slice(1);
+}
+
 export function regionName(id: RegionId): string {
   const region = context.pack.regions.find((r) => r.id === id);
   return region ? t(region.nameKey) : id;

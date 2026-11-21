@@ -1,6 +1,6 @@
 import { createGame, type ContentPack } from '@/engine';
 
-import { failureText, hasString, humanizeKey, labColor, labName, regionName, setI18nContext, t, visibleFlags } from '../i18n';
+import { barrierInline, failureText, hasString, humanizeKey, labColor, labName, regionName, setI18nContext, t, visibleFlags } from '../i18n';
 import { getPackEntry } from '../packs';
 import { colors } from '../theme';
 import uiStrings from '../strings/en.json';
@@ -96,5 +96,22 @@ describe('lab helpers', () => {
   it('failureText names the currency', () => {
     expect(failureText('notEnoughCash')).toContain(t('term.cash'));
     expect(failureText('regionBanned')).toBe(t('ui.failure.regionBanned'));
+  });
+});
+
+describe('barrierInline', () => {
+  it('uses the pack\'s mid-sentence form, else lowers the first letter of the name', () => {
+    for (const b of base.barriers ?? []) {
+      const inline = barrierInline(b.id);
+      expect(inline).not.toMatch(/[{}]/);
+      expect(inline.charAt(0)).toBe(hasString(b.nameKey.replace(/\.name$/, '.inline')) ? t(b.nameKey.replace(/\.name$/, '.inline')).charAt(0) : t(b.nameKey).charAt(0).toLowerCase());
+    }
+    const id = base.barriers![0].id;
+    const nameKey = base.barriers![0].nameKey;
+    const strings = { ...base.strings.en };
+    delete strings[nameKey.replace(/\.name$/, '.inline')];
+    setI18nContext({ ...base, strings: { en: { ...strings, [nameKey]: 'Big Water' } } }, null);
+    expect(barrierInline(id)).toBe('big Water');
+    expect(barrierInline('no-such-barrier')).toBe('no-such-barrier');
   });
 });

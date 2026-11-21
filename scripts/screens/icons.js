@@ -13,6 +13,7 @@ const fs = require('node:fs');
 const http = require('node:http');
 const path = require('node:path');
 const puppeteer = require('puppeteer-core');
+const { scanText, textScanSummary } = require('./textScan');
 
 const ROOT = path.join(__dirname, '..', '..');
 const DIST = path.join(ROOT, 'dist');
@@ -72,6 +73,7 @@ async function main() {
       await page.setViewport({ width: WIDTH, height: Math.ceil(box.y + box.height + 16), deviceScaleFactor: 2 });
       const name = `icons-${s.size}-${s.bg}${labels ? '' : '-nolabels'}.png`;
       await page.screenshot({ path: path.join(OUT, name), fullPage: true });
+      await scanText(page, String(name));
       console.log(`saved ${name}`);
       await page.setViewport({ width: WIDTH, height: 800, deviceScaleFactor: 2 });
     }
@@ -85,7 +87,9 @@ async function main() {
   }
 }
 
-main().catch((e) => {
+main()
+  .then(() => textScanSummary())
+  .catch((e) => {
   console.error(e);
   process.exit(1);
 });

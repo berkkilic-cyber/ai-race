@@ -8,7 +8,7 @@
 import type { ChannelDef, Effect, EffectTarget, Modifier, NodeDef, RegionScope, Stat } from '@/engine';
 
 import { fmtCash, fmtCompact } from '../format';
-import { hasString, regionName, t } from '../i18n';
+import { barrierInline, hasString, regionName, t } from '../i18n';
 
 export type LineTone = 'good' | 'bad';
 
@@ -104,8 +104,7 @@ export function describeChannel(channelId: string, channels: readonly ChannelDef
   if (def?.kind === 'jump') return { text: t('ui.explain.channel.kind.jump'), tone: 'good' };
   if (def?.kind === 'open') return { text: t('ui.explain.channel.kind.open'), tone: 'good' };
   const barrier = def?.clears?.[0] ?? channelId;
-  const barrierKey = `barrier.${barrier.replace(/:/g, '-')}.name`;
-  return { text: t('ui.explain.channel.kind.clear', { barrier: hasString(barrierKey) ? t(barrierKey) : barrier }), tone: 'good' };
+  return { text: t('ui.explain.channel.kind.clear', { barrier: barrierInline(barrier) }), tone: 'good' };
 }
 
 /** Caption for a flag the player should know about, or null (engine internals and secrets stay hidden). */

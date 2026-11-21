@@ -1,6 +1,6 @@
 import { createGame, getReachableRegions, type GameState, type NewsItem } from '@/engine';
 
-import { setI18nContext } from '../../../i18n';
+import { barrierInline, setI18nContext } from '../../../i18n';
 import { getPackEntry } from '../../../packs';
 import { TouchController } from '../../touchController';
 import { toScreenPoint, type Layout } from '../../viewTransform';
@@ -136,6 +136,9 @@ describe('reach note', () => {
     const text = reachText(blocked, pack)!;
     expect(text.kind).toBe('blocked');
     expect(text.lines[0]).toMatch(/^Blocked by /);
+    // Mid-sentence the barrier is not capitalised like a heading ("Blocked by the ocean.", not "Blocked by Ocean.").
+    expect(text.lines[0]).not.toMatch(/^Blocked by [A-Z][a-z]+\.$/);
+    expect(text.lines[0]).toBe(`Blocked by ${barrierInline(blocked.blockedBy![0])}.`);
     expect(text.lines[1]).toMatch(/lets you cross\.$/);
     const next = rows.find((r) => r.reachable && !r.present);
     if (next) expect(reachText(next, pack)?.kind).toBe('next');

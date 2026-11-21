@@ -14,6 +14,7 @@ const fs = require('node:fs');
 const http = require('node:http');
 const path = require('node:path');
 const puppeteer = require('puppeteer-core');
+const { scanText, textScanSummary } = require('../screens/textScan');
 
 const ROOT = path.join(__dirname, '..', '..');
 const DIST = path.join(ROOT, 'dist');
@@ -66,6 +67,7 @@ async function main() {
     const base = `http://127.0.0.1:${PORT}`;
     const shot = async (name) => {
       await page.screenshot({ path: path.join(OUT, name) });
+      await scanText(page, String(name));
       console.log(`saved ${name}`);
     };
     const advance = (n, opts) => page.evaluate((n, opts) => window.__game.advance(n, opts), n, opts);
@@ -170,7 +172,9 @@ async function main() {
   }
 }
 
-main().catch((err) => {
+main()
+  .then(() => textScanSummary())
+  .catch((err) => {
   console.error(err);
   process.exit(1);
 });

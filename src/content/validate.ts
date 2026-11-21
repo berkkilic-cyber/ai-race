@@ -694,7 +694,12 @@ function checkIntegrity(pack: ContentPack): string[] {
     markKey(m.collectTextKey);
     markKey(m.expireTextKey);
   }
-  for (const b of pack.barriers ?? []) markKey(b.nameKey);
+  for (const b of pack.barriers ?? []) {
+    markKey(b.nameKey);
+    // Optional mid-sentence form of the name ("the ocean"), read by the UI when present.
+    const inline = b.nameKey.replace(/\.name$/, '.inline');
+    if (inline !== b.nameKey) for (const table of Object.values(pack.strings)) if (inline in table) used.add(inline);
+  }
   for (const c of pack.channels ?? []) {
     markKey(c.nameKey);
     markKey(c.entryTextKey);
