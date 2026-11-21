@@ -86,7 +86,7 @@ export const StatusRow = memo(function StatusRow() {
           >
             <Icon name={inc.icon} size={18} color={colors.newsPaper} />
             <View style={styles.incidentTexts}>
-              <Text style={styles.incidentTitle} numberOfLines={1}>
+              <Text style={styles.incidentTitle} numberOfLines={2}>
                 {gt(inc.textKey, { tier: tier.nameKey })}
               </Text>
               <Text style={styles.incidentSub} numberOfLines={1}>
