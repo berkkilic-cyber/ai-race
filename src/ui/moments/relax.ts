@@ -39,7 +39,17 @@ function finite(n: number): number {
  * (`onScreen[i]` false) are left alone (their edge indicator stands in for them).
  * Deterministic: the same input gives the same output, ties broken by index.
  */
-export function relaxBubbles(points: readonly [number, number][], onScreen: readonly boolean[], rects: readonly Rect[], w: number, h: number, r: number): [number, number][] {
+export function relaxBubbles(
+  points: readonly [number, number][],
+  onScreen: readonly boolean[],
+  rects: readonly Rect[],
+  w: number,
+  h: number,
+  r: number,
+  /** Each bubble's own region marker: a bubble never ends up within `keep` of it (the region stays tappable there). */
+  anchors?: readonly [number, number][],
+  keep = 0,
+): [number, number][] {
   'worklet';
   const n = points.length;
   const px: number[] = [];
@@ -106,6 +116,23 @@ export function relaxBubbles(points: readonly [number, number][], onScreen: read
       if (!onScreen[i]) continue;
       px[i] = Math.min(Math.max(px[i], pad), Math.max(pad, w - pad));
       py[i] = Math.min(Math.max(py[i], pad), Math.max(pad, h - pad));
+    }
+    // Off the bubble's own marker (a bubble pressed against the top edge would otherwise sit on
+    // it): step sideways, along the same height, to the edge of the keep-out circle.
+    if (anchors && keep > 0) {
+      for (let i = 0; i < n; i++) {
+        if (!onScreen[i] || !anchors[i]) continue;
+        const ax = finite(anchors[i][0]);
+        const ay = finite(anchors[i][1]);
+        const dx = px[i] - ax;
+        const dy = py[i] - ay;
+        if (dx * dx + dy * dy >= keep * keep) continue;
+        let side = dx > 0.01 ? 1 : dx < -0.01 ? -1 : i % 2 === 0 ? 1 : -1;
+        const step = Math.sqrt(Math.max(0, keep * keep - dy * dy));
+        if (ax + side * step > w - pad) side = -1;
+        if (ax + side * step < pad) side = 1;
+        px[i] = ax + side * step;
+      }
     }
   }
   const out: [number, number][] = [];

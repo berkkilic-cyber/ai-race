@@ -18,7 +18,12 @@ export interface AdvanceOptions {
   autoResolve?: boolean;
   /** Stop before resolving an event so it stays on screen. */
   stopAtEvent?: boolean;
+  /** Collect each of the player's moments a few ticks after it appears (a quick player), through collectMoment. */
+  collectMoments?: boolean;
 }
+
+/** Ticks a debug player waits before collecting a moment. */
+const MOMENT_REACTION = 4;
 
 export interface DebugHandle {
   store: typeof useGameStore;
@@ -44,7 +49,7 @@ export interface DebugHandle {
 const BOT_INTERVAL = 10;
 
 function advance(n: number, opts: AdvanceOptions = {}): number {
-  const { bot = false, autoResolve = true, stopAtEvent = false } = opts;
+  const { bot = false, autoResolve = true, stopAtEvent = false, collectMoments = false } = opts;
   const store = useGameStore.getState;
   let ran = 0;
   for (let i = 0; i < n; i++) {
@@ -58,8 +63,16 @@ function advance(n: number, opts: AdvanceOptions = {}): number {
       store().dismissEventResult();
       continue;
     }
+    if (collectMoments) {
+      for (const m of state.moments) {
+        if (m.labId === state.playerLabId && state.tick >= m.spawnTick + MOMENT_REACTION && state.tick < m.expiresTick) {
+          store().dispatch({ type: 'collectMoment', labId: state.playerLabId, uid: m.uid });
+        }
+      }
+    }
     if (bot && state.tick % BOT_INTERVAL === 0) {
-      for (const action of chooseAiActions(state, pack, state.playerLabId)) store().dispatch(action);
+      const now = store().state ?? state;
+      for (const action of chooseAiActions(now, pack, now.playerLabId)) store().dispatch(action);
     }
     store().tick();
     ran++;

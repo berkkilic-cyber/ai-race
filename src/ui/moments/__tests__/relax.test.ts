@@ -84,3 +84,14 @@ describe('pointAngle', () => {
     expect(pointAngle(NaN, 0, 1, 1)).toBe(0);
   });
 });
+
+describe('relaxBubbles and the region marker', () => {
+  it('steps a bubble pushed against the top edge sideways off its own marker', () => {
+    // Marker 10 pt below the top: the bubble's slot is above it, off the map; clamped down it would cover the marker.
+    const anchor: [number, number] = [300, 10];
+    const pts: [number, number][] = [[300, -26]];
+    const out = moved(pts, relaxBubbles(pts, [true], [], 844, 300, R, [anchor], 32));
+    expect(dist(out[0], anchor)).toBeGreaterThanOrEqual(32 - 1e-6);
+    expect(out[0][1]).toBeGreaterThanOrEqual(R + EDGE_PAD - 1e-9);
+  });
+});

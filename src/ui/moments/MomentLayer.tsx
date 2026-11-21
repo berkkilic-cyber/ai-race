@@ -262,6 +262,7 @@ function usePlacement(p: MapProjection, items: readonly BubbleItem[]): SharedVal
     const y = ty.get();
     const right = Math.max(1, f.cw - f.insetRight);
     const pts: [number, number][] = [];
+    const anchors: [number, number][] = [];
     const on: boolean[] = [];
     const edges: ([number, number] | null)[] = [];
     for (let i = 0; i < specs.length; i++) {
@@ -271,11 +272,12 @@ function usePlacement(p: MapProjection, items: readonly BubbleItem[]): SharedVal
       const by = sy + sp.dy;
       const e = edgePoint(bx, by, right, f.ch);
       pts.push([bx, by]);
+      anchors.push([sx, sy]);
       on.push(!e);
       edges.push(e);
     }
     const rects = obstacles.get();
-    const nudges = relaxBubbles(pts, on, rects, right, f.ch, BUBBLE / 2);
+    const nudges = relaxBubbles(pts, on, rects, right, f.ch, BUBBLE / 2, anchors, BUBBLE_HIT + 2);
     const marks = placeEdgeMarkers(edges, rects, right, f.ch, EDGE, EDGE_INSET);
     const out: Placed[] = [];
     for (let i = 0; i < specs.length; i++) {

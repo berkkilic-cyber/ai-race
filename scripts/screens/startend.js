@@ -201,6 +201,30 @@ async function main() {
       }
     }
 
+    // One full run with the bot playing and collecting moments (a quick player, through the
+    // debug handle): the run must end, the end screen render, and Play again start a new run.
+    {
+      await page.goto(`${base}/?autostart=1&debug=1&seed=${SEEDS[0] + 100}`, { waitUntil: 'networkidle0' });
+      await page.waitForFunction(() => location.pathname === '/game' && !!window.__game, { timeout: 10000 });
+      await page.evaluate(() => window.__game.store.getState().setSpeed(0));
+      for (let i = 0; i < 80; i++) {
+        await page.evaluate(() => window.__game.advance(100, { bot: true, collectMoments: true }));
+        if (await page.evaluate(() => window.__game.store.getState().state.status === 'ended')) break;
+      }
+      const run = await page.evaluate(() => {
+        const s = window.__game.store.getState().state;
+        const p = s.labs[s.playerLabId];
+        return { status: s.status, ending: s.ending, collected: p.stats.momentsCollected, missed: p.stats.momentsMissed };
+      });
+      console.log(`moments run: ${run.status} ${run.ending ? `${run.ending.kind} ${run.ending.endingId} day ${run.ending.tick + 1}` : ''}, moments collected ${run.collected}, missed ${run.missed}`);
+      if (run.status !== 'ended') throw new Error('the moments run did not end');
+      if (run.collected === 0) throw new Error('the bot collected no moments');
+      await page.waitForFunction(() => location.pathname === '/end', { timeout: 10000 });
+      await page.waitForSelector('[data-testid="end-title"]', { timeout: 10000 });
+      await sleep(1500);
+      await shotPage('end-moments-run');
+    }
+
     // Play again keeps the lab; /end without a finished run goes back to /.
     if (await page.$('[data-testid="end-play-again"]')) {
       await click('end-play-again');
@@ -211,6 +235,12 @@ async function main() {
         return `${p.name} / ${p.founderId} / ${p.homeRegion} / seed ${s.seed}`;
       });
       console.log(`play again -> ${lab}`);
+      const fresh = await page.evaluate(() => {
+        const s = window.__game.store.getState().state;
+        return { status: s.status, tick: s.tick, moments: s.labs[s.playerLabId].stats.momentsCollected };
+      });
+      if (fresh.status !== 'running' || fresh.tick > 50 || fresh.moments !== 0) throw new Error(`play again did not start a fresh run: ${JSON.stringify(fresh)}`);
+      console.log('play again started a fresh run');
     }
     await page.goto(`${base}/end`, { waitUntil: 'networkidle0' });
     await sleep(800);
