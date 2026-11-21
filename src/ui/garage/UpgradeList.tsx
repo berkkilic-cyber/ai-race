@@ -86,7 +86,7 @@ export const UpgradeList = memo(function UpgradeList() {
             style={({ pressed }) => [styles.buy, o.affordable ? styles.buyOn : styles.buyOff, pressed && styles.pressed]}
             testID={`buyup-${o.id}`}
           >
-            <Icon name="hype" size={12} color={o.affordable ? colors.onPlayer : colors.dim} />
+            <Icon name="speech" size={12} color={o.affordable ? colors.onPlayer : colors.dim} />
             <Text style={[styles.cost, o.affordable ? styles.onAccent : styles.dim]} numberOfLines={1}>
               {o.cost}
             </Text>

@@ -77,7 +77,7 @@ export const LiveCounter = memo(function LiveCounter() {
   return (
     <View style={styles.counter} accessibilityRole="summary" accessibilityLabel={`${shown.tokens} ${t('ui.garage.tokens')}, ${t('ui.garage.perSec', { amount: shown.rate })}`}>
       <View style={styles.tokensRow}>
-        <Icon name="hype" size={26} color={colors.text} accent={colors.player} />
+        <Icon name="speech" size={26} color={colors.text} accent={colors.player} />
         <Text style={styles.tokens} numberOfLines={1} adjustsFontSizeToFit testID="garage-tokens">
           {shown.tokens}
         </Text>
@@ -213,11 +213,11 @@ function TapTarget({ size }: { size: number }) {
       >
         <View style={StyleSheet.absoluteFill} pointerEvents="none">
           <View style={styles.centre}>
-            <Animated.View style={[styles.ring2, ring(size * 0.98), ring2Style]} />
-            <Animated.View style={[styles.ring, ring(size * 0.8), ringStyle]} />
-            <View style={[styles.pad, ring(size * 0.62)]} />
+            <Animated.View style={[styles.ring2, ring(size * 1.04), ring2Style]} />
+            <Animated.View style={[styles.ring, ring(size * 0.88), ringStyle]} />
+            <View style={[styles.pad, ring(size * 0.74)]} />
             <Animated.View style={modelStyle}>
-              <Mascot mood={mood} size={Math.round(size * 0.5)} />
+              <Mascot mood={mood} size={Math.round(size * 0.62)} />
             </Animated.View>
           </View>
           {Array.from({ length: POPS }, (_, i) => (
@@ -264,7 +264,7 @@ export function TapStage({ compact }: { compact?: boolean }) {
   };
   const onTargetLayout = (e: LayoutChangeEvent) => {
     const { width, height } = e.nativeEvent.layout;
-    const s = Math.max(96, Math.min(height, width / 1.5, 260));
+    const s = Math.max(96, Math.min(height * 0.96, width / 1.5, 280));
     setTarget((prev) => (Math.abs(prev - s) < 2 ? prev : Math.floor(s)));
   };
   return (

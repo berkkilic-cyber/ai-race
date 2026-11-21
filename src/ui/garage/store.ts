@@ -214,7 +214,11 @@ export const useGarageStore = create<GarageStore>()((set, get) => {
     },
 
     setFlash(text) {
-      set({ flash: { id: flashId++, text } });
+      const id = flashId++;
+      set({ flash: { id, text } });
+      setTimeout(() => {
+        if (get().flash?.id === id) set({ flash: null });
+      }, 2000);
     },
 
     setBuyMode(mode) {

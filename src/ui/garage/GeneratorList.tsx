@@ -93,7 +93,7 @@ function GeneratorRow({ row }: { row: Row }) {
       >
         <Text style={[styles.buyCount, row.affordable ? styles.onAccent : styles.dim]}>{t('ui.garage.buyCount', { count: row.count })}</Text>
         <View style={styles.costRow}>
-          <Icon name="hype" size={12} color={row.affordable ? colors.onPlayer : colors.dim} />
+          <Icon name="speech" size={12} color={row.affordable ? colors.onPlayer : colors.dim} />
           <Text style={[styles.cost, row.affordable ? styles.onAccent : styles.dim]} numberOfLines={1}>
             {row.cost}
           </Text>

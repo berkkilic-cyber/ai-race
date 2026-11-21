@@ -30,7 +30,7 @@ export function OfflinePanel({ hidden }: { hidden?: boolean }) {
         <Text style={styles.away}>{t('ui.garage.offline.away', { time: fmtTime(report.awayMs) })}</Text>
         <Text style={styles.label}>{t('ui.garage.offline.earned')}</Text>
         <View style={styles.amountRow}>
-          <Icon name="hype" size={30} color={colors.text} accent={colors.player} />
+          <Icon name="speech" size={30} color={colors.text} accent={colors.player} />
           <Text style={styles.amount} testID="garage-offline-amount">
             +{fmt(report.tokens)}
           </Text>

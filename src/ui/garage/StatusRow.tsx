@@ -112,7 +112,7 @@ export const StatusRow = memo(function StatusRow() {
 });
 
 const styles = StyleSheet.create({
-  row: { minHeight: touch, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.s, flexWrap: 'wrap', marginTop: spacing.xs },
+  row: { minHeight: 36, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.s, marginTop: spacing.xs },
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -128,7 +128,7 @@ const styles = StyleSheet.create({
   frenzy: { backgroundColor: colors.player, borderColor: colors.player },
   onAccent: { color: colors.onPlayer },
   chipText: { ...voice.bodyStrong, ...tabular, color: colors.text, fontSize: type.s },
-  incident: { backgroundColor: colors.newsRed, borderColor: colors.newsRed, minHeight: touch, borderRadius: radius.none, transform: [{ rotate: '-1deg' }] },
+  incident: { backgroundColor: colors.newsRed, borderColor: colors.newsRed, minHeight: touch, flexShrink: 1, borderRadius: radius.none, transform: [{ rotate: '-1deg' }] },
   incidentTexts: { flexShrink: 1 },
   incidentTitle: { ...voice.loudKicker, fontSize: 14, lineHeight: 16, color: colors.newsPaper },
   incidentSub: { ...voice.body, ...tabular, fontSize: type.xs, color: colors.newsPaper },
