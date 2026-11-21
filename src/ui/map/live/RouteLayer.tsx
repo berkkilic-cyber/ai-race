@@ -10,17 +10,15 @@ import { freshNews } from '../../hooks/useRegionFlashes';
 import { useKeyedSelector } from '../../hooks/useKeyedSelector';
 import { readableLabColor } from '../../i18n';
 import { Icon } from '../../icons';
-import { useAmbientClock, wave } from '../../motion/ambient';
 import { useGameStore, type GameStore } from '../../store/game';
 import { colors } from '../../theme';
 import { allFinite, isDrawablePath, nonNegative, unitInterval } from '../svgSafe';
 import { mapLiveConfig } from './config';
-import { project, useProjection, type MapProjection } from './projection';
+import { MOVING, project, useProjection, type MapProjection } from './projection';
 import { FAINT_MS, FLIGHT_MS, arcControl, arcLength, bezier, routeFor, useRoutesStore, type Route } from './routes';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
-const AnimatedG = Animated.createAnimatedComponent(G);
 
 interface Arc {
   route: Route;
@@ -178,7 +176,7 @@ function Runner({ p, arc }: { p: MapProjection; arc: Arc }) {
   });
   const viral = arc.route.style === 'viral';
   return (
-    <Animated.View style={[styles.runner, { backgroundColor: arc.color, borderRadius: viral ? RUNNER / 2 : 4 }, style]} testID={`route-runner-${arc.route.style}`}>
+    <Animated.View style={[styles.runner, { backgroundColor: arc.color, borderRadius: viral ? RUNNER / 2 : 4 }, MOVING, style]} testID={`route-runner-${arc.route.style}`}>
       <Icon name={arc.route.icon} size={RUNNER - 8} color={colors.newsInk} accent={colors.newsInk} strokeWidth={2.2} />
     </Animated.View>
   );
@@ -255,21 +253,22 @@ const selectReach = (s: GameStore) => {
 };
 const ident = (k: string) => k;
 
-/** Inside the map canvas: a faint pulsing dashed ring on regions the player's users are about to spread into. */
+/**
+ * Inside the map canvas: a faint dashed ring on regions the player's users are about to
+ * spread into. Static on purpose: a pulse here would repaint the whole map canvas every frame.
+ */
 export const ReachHints = memo(function ReachHints({ geometry }: { geometry: MapGeometry }) {
   const key = useKeyedSelector(selectReach, ident);
   const ids = key ? key.split('|') : [];
-  const clock = useAmbientClock(ids.length > 0);
-  const props = useAnimatedProps(() => ({ opacity: unitInterval(0.35 + 0.4 * (clock ? wave(clock.get(), 2.4) : 0.5)) }));
   if (ids.length === 0) return null;
   return (
-    <AnimatedG animatedProps={props} pointerEvents="none">
+    <G pointerEvents="none" opacity={0.6}>
       {ids.map((id) => {
         const g = geometry.regions[id];
         if (!g || !allFinite(g.centroid[0], g.centroid[1])) return null;
         return <Circle key={id} cx={g.centroid[0]} cy={g.centroid[1]} r={6} fill="none" stroke={colors.player} strokeWidth={0.9} strokeDasharray="1.6 1.6" testID={`reach-hint-${id}`} />;
       })}
-    </AnimatedG>
+    </G>
   );
 });
 

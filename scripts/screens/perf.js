@@ -15,6 +15,8 @@
  *
  * Prints one JSON line per scenario and a table. Serves dist/ in-process; the server and
  * browser are closed before exiting. Env: CHROME, PORT (default 8771), SEED (7), INSETS.
+ * LIVE=1: before each scenario, put three moment bubbles, a route and a launch banner on the
+ * map (through the `window.__mapLive` debug handle), so the live layers are measured too.
  */
 const fs = require('node:fs');
 const http = require('node:http');
@@ -195,6 +197,19 @@ async function main() {
     await cdp.send('Emulation.setCPUThrottlingRate', { rate: THROTTLE });
     await sleep(1000);
 
+    const live = () =>
+      process.env.LIVE
+        ? page.evaluate(() => {
+            const m = window.__mapLive;
+            if (!m) return;
+            const s = window.__game.store.getState().state;
+            const lab = s.labs[s.playerLabId];
+            const mine = s.moments.filter((x) => x.labId === lab.id).length;
+            for (let i = mine; i < 3; i++) m.spawnMoment(i % 2 ? 'threat' : 'boost', { life: 100000 });
+            m.entry({ channel: 'ocean' }) || m.entry({ channel: 'viral' });
+            m.launch();
+          })
+        : Promise.resolve();
     const start = () =>
       page.evaluate(() => {
         Object.assign(window.__perf, { commits: 0, longTasks: [], frames: [], recording: true, renders: window.__perfRenders ? {} : null });
@@ -222,6 +237,7 @@ async function main() {
         await cdp.send('Profiler.setSamplingInterval', { interval: 500 });
         await cdp.send('Profiler.start');
       }
+      await live();
       await start();
       const began = Date.now();
       await page.evaluate(() => window.__game.store.getState().setSpeed(3));
@@ -250,6 +266,7 @@ async function main() {
         return { x: r.x, y: r.y, w: r.width, h: r.height };
       });
       await page.evaluate(() => window.__game.store.getState().setSpeed(3));
+      await live();
       await start();
       const cx = box.x + box.w / 2;
       const cy = box.y + box.h / 2;

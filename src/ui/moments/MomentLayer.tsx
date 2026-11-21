@@ -6,12 +6,11 @@ import Svg, { Circle, G } from 'react-native-svg';
 import type { MapGeometry } from '@/content/packs/ai-lab/geometry';
 import { getMomentProgress, getMoments, type GameState, type MomentDef } from '@/engine';
 
-import { BASE_TICK_MS } from '../hooks/useGameLoop';
 import { t } from '../i18n';
 import { hasIcon } from '../icons';
 import { fallbackGlyph, registry } from '../icons/registry';
 import { useAmbientClock, wave } from '../motion/ambient';
-import { edgePoint, project, useProjection, type MapProjection } from '../map/live/projection';
+import { AnchorPlane, MOVING, edgePoint, local, project, useProjection, type MapProjection } from '../map/live/projection';
 import { allFinite, nonNegative, unitInterval } from '../map/svgSafe';
 import { useGameStore, type GameStore } from '../store/game';
 import { Mascot } from '../mascot';
@@ -54,6 +53,7 @@ const POP_MS = 320;
 const EXPIRE_MS = 760;
 const FLOAT_MS = 2100;
 const EDGE = 30;
+const RING_STEP_MS = 140;
 
 /** While true, looping motion rests (paused, an event card or its result is up). */
 const selectStill = (s: GameStore) => !s.state || s.state.status !== 'running' || s.speed === 0 || !!s.state.pendingEvent || s.eventResult !== null;
@@ -192,9 +192,11 @@ export const MomentLayer = memo(function MomentLayer({ geometry }: { geometry: M
     <View style={StyleSheet.absoluteFill} pointerEvents="none" testID="moment-layer">
       {/* Floating lines under the bubbles, so a line never hides a bubble still to tap. */}
       {items.map((b) => (b.phase !== 'live' && (b.lines.length > 0 || b.caption) ? <Floater key={`f-${b.uid}`} p={p} item={b} reduced={reduced} /> : null))}
-      {items.map((b) => (
-        <Bubble key={b.uid} p={p} item={b} reduced={reduced} onCollect={collect} />
-      ))}
+      <AnchorPlane p={p}>
+        {items.map((b) => (
+          <Bubble key={b.uid} p={p} item={b} reduced={reduced} onCollect={collect} />
+        ))}
+      </AnchorPlane>
       {items.map((b) => (b.phase === 'live' ? <EdgeIndicator key={`e-${b.uid}`} p={p} item={b} /> : null))}
       {coach ? items.map((b) => (b.uid === coach.uid && b.phase === 'live' ? <CoachCaption key={`c-${b.uid}`} p={p} item={b} /> : null)) : null}
     </View>
@@ -213,37 +215,33 @@ function bubbleColors(kind: MomentDef['kind']) {
     : { disc: colors.good, icon: colors.onPlayer, ring: colors.player, track: colors.newsInk, edge: colors.outline };
 }
 
-/** The ring's progress, eased towards the next tick while the game runs (UI thread; no React render per tick). */
-function useLifetime(uid: string, spawnTick: number, expiresTick: number, live: boolean): SharedValue<number> {
+/**
+ * The ring's progress (getMomentProgress), set once per tick on the UI side with a short
+ * ease: no React render per tick, and no SVG redraw on every frame between ticks (a ring
+ * step per tick reads as a steady drain and costs a fraction of a continuous tween).
+ */
+function useLifetime(uid: string, live: boolean): SharedValue<number> {
   const progress = useSharedValue(0);
   useEffect(() => {
     if (!live) {
       cancelAnimation(progress);
       return;
     }
-    const life = Math.max(1, expiresTick - spawnTick);
-    const update = (s: GameStore) => {
+    const update = (s: GameStore, animate: boolean) => {
       const state = s.state;
       if (!state) return;
       const now = getMomentProgress(state, uid);
-      const running = s.speed > 0 && !state.pendingEvent && s.eventResult === null && state.status === 'running';
-      if (!running) {
-        cancelAnimation(progress);
-        progress.set(now);
-        return;
-      }
-      progress.set(now);
-      progress.set(withTiming(Math.min(1, now + 1 / life), { duration: BASE_TICK_MS / s.speed, easing: Easing.linear }));
+      progress.set(animate ? withTiming(now, { duration: RING_STEP_MS, easing: Easing.out(Easing.quad) }) : now);
     };
-    update(useGameStore.getState());
+    update(useGameStore.getState(), false);
     const unsubscribe = useGameStore.subscribe((s, prev) => {
-      if (s.state?.tick !== prev.state?.tick || s.speed !== prev.speed || s.state?.pendingEvent !== prev.state?.pendingEvent || s.eventResult !== prev.eventResult) update(s);
+      if (s.state?.tick !== prev.state?.tick) update(s, true);
     });
     return () => {
       unsubscribe();
       cancelAnimation(progress);
     };
-  }, [uid, spawnTick, expiresTick, live, progress]);
+  }, [uid, live, progress]);
   return progress;
 }
 
@@ -252,7 +250,7 @@ const Bubble = memo(function Bubble({ p, item, reduced, onCollect }: { p: MapPro
   const [dx, dy] = bubbleOffset(item.slot);
   const still = useGameStore(selectStill);
   const clock = useAmbientClock(live && !still);
-  const progress = useLifetime(item.uid, item.spawnTick, item.expiresTick, live);
+  const progress = useLifetime(item.uid, live);
   const appear = useSharedValue(reduced ? 1 : 0);
   const leave = useSharedValue(0);
   const threat = item.kind === 'threat';
@@ -276,11 +274,12 @@ const Bubble = memo(function Bubble({ p, item, reduced, onCollect }: { p: MapPro
     return () => p.targets.delete(item.uid);
   }, [live, p, item.uid, item.x, item.y, item.regionId, dx, dy, onCollect]);
 
-  const { scale, tx, ty, frame } = p;
+  const { scale, frame } = p;
   const mx = item.x;
   const my = item.y;
+  // Inside the moment layer's anchor plane: only the zoom (and the pulse) move the bubble itself.
   const style = useAnimatedStyle(() => {
-    const [sx, sy] = project(frame.get(), scale.get(), tx.get(), ty.get(), mx, my);
+    const [sx, sy] = local(frame.get(), scale.get(), mx, my);
     const k = leave.get();
     const t = clock ? clock.get() : 0;
     const pr = progress.get();
@@ -327,8 +326,8 @@ const Bubble = memo(function Bubble({ p, item, reduced, onCollect }: { p: MapPro
   const iconScale = ICON / 24;
   const o = (BUBBLE - ICON) / 2;
   return (
-    <Animated.View style={[styles.bubble, style]} pointerEvents="none" testID={`moment-${item.kind}-${item.uid}`}>
-      <Animated.View style={[styles.halo, { backgroundColor: threat ? colors.alarm : colors.good }, haloStyle]} />
+    <Animated.View style={[styles.bubble, MOVING, style]} pointerEvents="none" testID={`moment-${item.kind}-${item.uid}`}>
+      <Animated.View style={[styles.halo, { backgroundColor: threat ? colors.alarm : colors.good }, MOVING, haloStyle]} />
       <Animated.View style={[styles.burst, { borderColor: threat ? colors.alarm : colors.player }, burstStyle]} />
       {item.slot === 0 ? <View style={[styles.stem, { backgroundColor: c.edge }]} /> : null}
       <Svg width={BUBBLE} height={BUBBLE} viewBox={`0 0 ${BUBBLE} ${BUBBLE}`}>
@@ -379,7 +378,7 @@ const EdgeIndicator = memo(function EdgeIndicator({ p, item }: { p: MapProjectio
   const c = bubbleColors(item.kind);
   const Glyph = hasIcon(item.icon) ? registry[item.icon] : fallbackGlyph;
   return (
-    <Animated.View style={[styles.edge, style]} pointerEvents="none" testID={`moment-edge-${item.uid}`}>
+    <Animated.View style={[styles.edge, MOVING, style]} pointerEvents="none" testID={`moment-edge-${item.uid}`}>
       <Animated.View style={[StyleSheet.absoluteFill, arrowStyle]}>
         <View style={[styles.arrow, { borderLeftColor: c.disc }]} />
       </Animated.View>
@@ -428,7 +427,7 @@ const Floater = memo(function Floater({ p, item, reduced }: { p: MapProjection; 
   });
   const lost = item.phase === 'expired';
   return (
-    <Animated.View style={[styles.floater, below && styles.floaterBelow, style]} pointerEvents="none" testID={`moment-float-${item.phase}`}>
+    <Animated.View style={[styles.floater, below && styles.floaterBelow, MOVING, style]} pointerEvents="none" testID={`moment-float-${item.phase}`}>
       {item.avoided || lost ? <Text style={[styles.kicker, lost ? styles.kickerLost : styles.kickerAvoided]}>{t(lost ? 'ui.moments.landed' : 'ui.moments.avoided')}</Text> : null}
       <View style={styles.lines}>
         {item.lines.slice(0, 3).map((l, i) => (
@@ -471,7 +470,7 @@ const CoachCaption = memo(function CoachCaption({ p, item }: { p: MapProjection;
     return { transform: [{ translateX: x }, { translateY: y }] };
   });
   return (
-    <Animated.View style={[styles.coach, style]} pointerEvents="none" testID="moment-coach">
+    <Animated.View style={[styles.coach, MOVING, style]} pointerEvents="none" testID="moment-coach">
       <Mascot mood={item.kind === 'threat' ? 'sweating' : 'pleased'} size={30} blinks={false} />
       <Text style={styles.coachText}>{t(item.kind === 'threat' ? 'ui.moments.coach.threat' : 'ui.moments.coach.boost')}</Text>
     </Animated.View>

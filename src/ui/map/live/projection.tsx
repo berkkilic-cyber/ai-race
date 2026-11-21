@@ -11,7 +11,8 @@
  * the regions.
  */
 import { createContext, useContext, type ReactNode } from 'react';
-import { useAnimatedStyle, type SharedValue } from 'react-native-reanimated';
+import { Platform, StyleSheet, type ViewStyle } from 'react-native';
+import Animated, { useAnimatedStyle, type SharedValue } from 'react-native-reanimated';
 
 import { finiteOr } from '../svgSafe';
 import type { MapView } from '../touchController';
@@ -52,6 +53,13 @@ export function useProjection(): MapProjection | null {
   return useContext(ProjectionContext);
 }
 
+/**
+ * Web: things moved every frame (anchors while panning, pulsing bubbles) get a compositor
+ * layer of their own, so moving them never repaints the map under them. Native moves views
+ * on the UI thread anyway.
+ */
+export const MOVING: ViewStyle | null = Platform.OS === 'web' ? ({ willChange: 'transform, opacity' } as unknown as ViewStyle) : null;
+
 /** Screen point (container coordinates) of a map point, in a worklet. */
 export function project(f: Frame, s: number, x: number, y: number, mx: number, my: number): [number, number] {
   'worklet';
@@ -61,13 +69,52 @@ export function project(f: Frame, s: number, x: number, y: number, mx: number, m
 }
 
 /**
+ * Anchors are split in two so panning is cheap: screen = plane + local, where the plane
+ * offset (t + c(1 - s)) depends on the pan and the local point (s(o + m k)) only on the
+ * zoom. One AnchorPlane carries the pan for all its children; a child's own style reads only
+ * the scale, so a pan moves one view instead of every anchor.
+ */
+export function planeOffset(f: Frame, s: number, x: number, y: number): [number, number] {
+  'worklet';
+  return [finiteOr(x + (f.cw / 2) * (1 - s), 0), finiteOr(y + (f.ch / 2) * (1 - s), 0)];
+}
+
+/** A map point relative to the anchor plane (see planeOffset), in a worklet. */
+export function local(f: Frame, s: number, mx: number, my: number): [number, number] {
+  'worklet';
+  const raw = Math.min(f.cw / f.mw, f.ch / f.mh);
+  const k = Number.isFinite(raw) && raw > 0 ? raw : 1;
+  const ox = (f.cw - f.mw * k) / 2;
+  const oy = (f.ch - f.mh * k) / 2;
+  return [finiteOr(s * (ox + mx * k), -9999), finiteOr(s * (oy + my * k), -9999)];
+}
+
+/** The view that carries the pan for anchors inside it. */
+export function AnchorPlane({ p, children }: { p: MapProjection; children: ReactNode }) {
+  const { scale, tx, ty, frame } = p;
+  const style = useAnimatedStyle(() => {
+    const [x, y] = planeOffset(frame.get(), scale.get(), tx.get(), ty.get());
+    return { transform: [{ translateX: x }, { translateY: y }] };
+  });
+  return (
+    <Animated.View style={[styles.plane, MOVING, style]} pointerEvents="none">
+      {children}
+    </Animated.View>
+  );
+}
+
+/**
  * Animated style that centres a box of `size` points on a map point plus an offset in
- * points. The view itself must be `position: absolute; left: 0; top: 0`.
+ * points, for a view inside an AnchorPlane (`position: absolute; left: 0; top: 0`).
  */
 export function useAnchorStyle(p: MapProjection, mx: number, my: number, dx: number, dy: number, w: number, h: number = w) {
-  const { scale, tx, ty, frame } = p;
+  const { scale, frame } = p;
   return useAnimatedStyle(() => {
-    const [sx, sy] = project(frame.get(), scale.get(), tx.get(), ty.get(), mx, my);
-    return { transform: [{ translateX: sx + dx - w / 2 }, { translateY: sy + dy - h / 2 }] };
+    const [lx, ly] = local(frame.get(), scale.get(), mx, my);
+    return { transform: [{ translateX: lx + dx - w / 2 }, { translateY: ly + dy - h / 2 }] };
   });
 }
+
+const styles = StyleSheet.create({
+  plane: { position: 'absolute', left: 0, top: 0, width: 0, height: 0, overflow: 'visible' },
+});

@@ -420,17 +420,13 @@ export function WorldMap({
               <SitesLayer geometry={geometry} />
             </Svg>
             <Svg width={size.w} height={size.h} viewBox={viewBox} preserveAspectRatio="xMidYMid meet" pointerEvents="none" style={styles.canvas}>
+              {/* Live map-unit drawings share the overlay canvas: spread hints (static), route arcs and launch pulses (brief). */}
+              {live ? <ReachHints geometry={geometry} /> : null}
               <OverlayLayer geometry={geometry} selected={selected} />
               <RippleLayer geometry={geometry} />
+              {live ? <RouteArcs geometry={geometry} /> : null}
+              {live ? <LaunchPulses geometry={geometry} /> : null}
             </Svg>
-            {live ? (
-              // Live map-unit drawings (route arcs, launch pulses, spread hints) animate on a canvas of their own.
-              <Svg width={size.w} height={size.h} viewBox={viewBox} preserveAspectRatio="xMidYMid meet" pointerEvents="none" style={styles.canvas}>
-                <ReachHints geometry={geometry} />
-                <RouteArcs geometry={geometry} />
-                <LaunchPulses geometry={geometry} />
-              </Svg>
-            ) : null}
           </Animated.View>
         ) : null}
         {size.w > 0 && live ? (

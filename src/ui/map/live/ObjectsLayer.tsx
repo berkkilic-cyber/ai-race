@@ -14,7 +14,7 @@ import { sitesKey } from '../mapColors';
 import { allFinite } from '../svgSafe';
 import { barrierIcon, mapLiveConfig } from './config';
 import { MAX_RACKS, OBJECT, RACK, objectItems, objectOffset, objectsKey, parseObjectsKey, placeSites, rackIcon, type SiteItem } from './objects';
-import { project, useAnchorStyle, useProjection, type MapProjection } from './projection';
+import { AnchorPlane, MOVING, project, useAnchorStyle, useProjection, type MapProjection } from './projection';
 
 const ident = (s: string) => s;
 
@@ -72,11 +72,13 @@ export const ObjectsLayer = memo(function ObjectsLayer({ geometry, selected }: {
   const config = mapLiveConfig(packId);
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="none" testID="map-objects">
-      {[...byRegion.entries()].map(([regionId, stuff]) => {
-        const g = geometry.regions[regionId];
-        if (!g || !allFinite(g.centroid[0], g.centroid[1])) return null;
-        return <RegionThings key={regionId} p={p} x={g.centroid[0]} y={g.centroid[1]} stuff={stuff} barrierIcons={stuff.barriers.map((b) => barrierIcon(config, b))} />;
-      })}
+      <AnchorPlane p={p}>
+        {[...byRegion.entries()].map(([regionId, stuff]) => {
+          const g = geometry.regions[regionId];
+          if (!g || !allFinite(g.centroid[0], g.centroid[1])) return null;
+          return <RegionThings key={regionId} p={p} x={g.centroid[0]} y={g.centroid[1]} stuff={stuff} barrierIcons={stuff.barriers.map((b) => barrierIcon(config, b))} />;
+        })}
+      </AnchorPlane>
       <CrateFlights geometry={geometry} p={p} />
     </View>
   );
@@ -220,7 +222,7 @@ function CrateFlight({ p, crate }: { p: MapProjection; crate: Crate }) {
   });
   return (
     <>
-      <Animated.View style={[styles.crate, style]} pointerEvents="none" testID="gpu-crate">
+      <Animated.View style={[styles.crate, MOVING, style]} pointerEvents="none" testID="gpu-crate">
         <Icon name="gpu-crate" size={CRATE - 4} color={colors.onPlayer} accent={colors.onPlayer} strokeWidth={2} />
       </Animated.View>
       <Animated.View style={[styles.crateLabel, labelStyle]} pointerEvents="none">
