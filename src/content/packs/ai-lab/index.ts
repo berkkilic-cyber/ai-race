@@ -3,6 +3,7 @@ import type {
   BarrierDef,
   ChannelDef,
   ContentPack,
+  DifficultyDef,
   EndingDef,
   EventDef,
   FounderDef,
@@ -18,6 +19,7 @@ import achievements from './achievements.json';
 import balance from './balance.json';
 import barriers from './barriers.json';
 import channels from './channels.json';
+import difficulties from './difficulties.json';
 import endings from './endings.json';
 import events from './events.json';
 import founders from './founders.json';
@@ -49,6 +51,8 @@ export const aiLabPack: ContentPack = {
   barriers: barriers as BarrierDef[],
   channels: channels as ChannelDef[],
   balance,
+  difficulties: difficulties as DifficultyDef[],
+  defaultDifficulty: 'frontier',
   strings: { en: en as Record<string, string> },
 };
 

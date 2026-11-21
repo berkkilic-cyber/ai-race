@@ -313,6 +313,20 @@ const momentSchema = z.strictObject({
   expireTextKey: key.optional(),
 });
 
+const difficultySchema = z.strictObject({
+  id,
+  nameKey: key,
+  descKey: key,
+  balance: z.record(z.string(), z.number()),
+  scoreMultiplier: z.number().positive().max(100),
+});
+
+/**
+ * Balance keys a difficulty may not override: selectors the UI calls with only the pack
+ * (getComputeRequired) read them, so they must be the same for every run of a pack.
+ */
+export const PACK_ONLY_BALANCE_KEYS: readonly string[] = ['computePerCapabilityLevel', 'capabilityComputeExponent'];
+
 export const packSchema = z.strictObject({
   id,
   version: z.number().int().positive(),
@@ -328,6 +342,8 @@ export const packSchema = z.strictObject({
   barriers: z.array(barrierSchema).optional(),
   channels: z.array(channelSchema).optional(),
   balance: z.record(z.string(), z.number()),
+  difficulties: z.array(difficultySchema).optional(),
+  defaultDifficulty: id.optional(),
   strings: z.record(z.string(), z.record(z.string(), z.string())).refine((s) => Object.keys(s).length > 0, 'no locales'),
 });
 
@@ -399,6 +415,8 @@ const LENGTH_LIMITS: { test: (k: string) => boolean; max: number; what: string }
   { test: (k) => k.startsWith('moment.') && k.endsWith('.name'), max: 27, what: 'moment name' },
   { test: (k) => k.startsWith('moment.'), max: 90, what: 'moment text' },
   { test: (k) => k.startsWith('headline.'), max: 90, what: 'headline' },
+  { test: (k) => k.startsWith('difficulty.') && k.endsWith('.name'), max: 14, what: 'difficulty name' },
+  { test: (k) => k.startsWith('difficulty.') && k.endsWith('.desc'), max: 72, what: 'difficulty description' },
   { test: (k) => k.startsWith('event.') && k.endsWith('.title'), max: 50, what: 'event title' },
   { test: (k) => k.startsWith('event.') && k.endsWith('.body'), max: 220, what: 'event body' },
   { test: (k) => k.endsWith('.label'), max: 40, what: 'choice label' },
@@ -449,11 +467,25 @@ function checkIntegrity(pack: ContentPack): string[] {
   const err = (msg: string) => problems.push(msg);
 
   // Balance overrides must name real BalanceConfig numbers.
-  for (const [k, v] of Object.entries(pack.balance)) {
-    if (!(k in defaultBalance)) err(`balance: unknown key "${k}"`);
-    else if (typeof defaultBalance[k as keyof typeof defaultBalance] !== 'number') err(`balance: "${k}" is not a number setting`);
-    else if (!Number.isFinite(v) || (v as number) < 0) err(`balance: "${k}" must be a finite number >= 0`);
+  const checkBalance = (where: string, balance: Record<string, unknown>) => {
+    for (const [k, v] of Object.entries(balance)) {
+      if (!(k in defaultBalance)) err(`${where}: unknown key "${k}"`);
+      else if (typeof defaultBalance[k as keyof typeof defaultBalance] !== 'number') err(`${where}: "${k}" is not a number setting`);
+      else if (!Number.isFinite(v) || (v as number) < 0) err(`${where}: "${k}" must be a finite number >= 0`);
+    }
+  };
+  checkBalance('balance', pack.balance);
+
+  // Difficulties: real balance keys (not the pack-only ones), a known default.
+  const difficulties = pack.difficulties ?? [];
+  for (const d of difficulties) {
+    checkBalance(`difficulties[${d.id}].balance`, d.balance);
+    for (const k of PACK_ONLY_BALANCE_KEYS) if (k in d.balance) err(`difficulties[${d.id}].balance: "${k}" can only be set in the pack's balance`);
   }
+  if (pack.defaultDifficulty !== undefined && !difficulties.some((d) => d.id === pack.defaultDifficulty)) {
+    err(`defaultDifficulty: "${pack.defaultDifficulty}" is not one of the pack's difficulties`);
+  }
+  if (difficulties.length > 0 && pack.defaultDifficulty === undefined) err('defaultDifficulty: required when the pack has difficulties');
 
   // Unique ids
   const collections: [string, { id: string }[]][] = [
@@ -468,6 +500,7 @@ function checkIntegrity(pack: ContentPack): string[] {
     ['moments', pack.moments],
     ['barriers', pack.barriers ?? []],
     ['channels', pack.channels ?? []],
+    ['difficulties', pack.difficulties ?? []],
   ];
   for (const [name, list] of collections) {
     for (const d of duplicates(list.map((x) => x.id))) err(`${name}: duplicate id "${d}"`);
@@ -703,6 +736,10 @@ function checkIntegrity(pack: ContentPack): string[] {
   for (const c of pack.channels ?? []) {
     markKey(c.nameKey);
     markKey(c.entryTextKey);
+  }
+  for (const d of pack.difficulties ?? []) {
+    markKey(d.nameKey);
+    markKey(d.descKey);
   }
 
   for (const k of REQUIRED_KEYS) used.add(k);
