@@ -122,6 +122,20 @@ async function capture(OUT) {
     await shot('start');
 
     // Early run, composure 0.
+    // Running at 1x for the ambient motion can draw an event card over the map: resolve it and wait again.
+    const settle = async (ms) => {
+      for (let i = 0; i < 4; i++) {
+        await sleep(ms);
+        const pending = await game(() => {
+          const st = window.__game.store.getState();
+          if (!st.state.pendingEvent && !st.eventResult) return false;
+          window.__game.advance(1, { autoResolve: true });
+          st.dismissEventResult();
+          return true;
+        });
+        if (!pending) return;
+      }
+    };
     await page.goto(`${base}/?autostart=1&debug=1&seed=${SEED}`, { waitUntil: 'networkidle0' });
     await page.waitForFunction(() => location.pathname === '/game' && !!window.__game);
     await hideToasts();
@@ -129,7 +143,7 @@ async function capture(OUT) {
     await advance(260, { bot: true });
     await game(() => window.__game.forceComposure(0));
     await setSpeed(1);
-    await sleep(1800);
+    await settle(1800);
     await shot('map-calm');
     await game(() => window.__game.forceComposure(null));
 
@@ -142,7 +156,7 @@ async function capture(OUT) {
     });
     console.log(`midgame: day ${mid.day}, ${mid.status}, ${mid.sites} data centres`);
     await setSpeed(1);
-    await sleep(1600);
+    await settle(1600);
     await shot('map-midgame');
 
     // Region side panel on the player's home region.
@@ -161,7 +175,7 @@ async function capture(OUT) {
     // Composure 3: regulation near the limit, BREAKING band, frame pulsing.
     await game(() => window.__game.setMeters({ regulation: 91 }));
     await setSpeed(1);
-    await sleep(1500);
+    await settle(1500);
     await shot('map-critical');
     await setSpeed(0);
     await game(() => window.__game.setMeters({ regulation: 30 }));
@@ -215,7 +229,7 @@ async function capture(OUT) {
 
     // Trees tab.
     const tabs = await page.$$('[role="tab"]');
-    if (tabs.length === 3) {
+    if (tabs.length >= 3) {
       await tabs[1].click();
       await sleep(1000);
       await shot('trees');

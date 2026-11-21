@@ -95,18 +95,20 @@ const keyRivalLab = (lab: ReturnType<typeof selectRivalLab>) => (lab ? `${lab.id
 
 /** Wide enough for "100 vs 100%". */
 const VALUE_WIDTH = 70;
+/** The race track's shortest length: still reads as a bar with the rival's tick on it. */
+const RACE_TRACK_MIN = 28;
 const TRACK_H = shape.panel === 'plain' ? 4 : shape.panel === 'ticks' ? 5 : 6;
 
 const styles = StyleSheet.create({
   // Never narrower than its track's minimum and the full "100 vs 100%": the lab name gives way first.
-  wrap: { flex: 1.5, minWidth: 40 + spacing.xs + VALUE_WIDTH, justifyContent: 'center', gap: 3 },
+  wrap: { flex: 1.5, minWidth: RACE_TRACK_MIN + spacing.xs + VALUE_WIDTH, justifyContent: 'center', gap: 3 },
   wrapTagged: { flexGrow: 0, flexShrink: 0, flexBasis: 'auto' },
   tag: { alignSelf: 'flex-start', backgroundColor: colors.newsInk, paddingHorizontal: 4, height: 13, justifyContent: 'center', transform: [{ rotate: '-1.5deg' }] },
-  tagText: { ...voice.loudKicker, fontSize: 10.5, lineHeight: 12, letterSpacing: 0.8, color: colors.newsPaper },
+  tagText: { ...voice.loudKicker, fontSize: 10, lineHeight: 12, letterSpacing: 0.3, color: colors.newsPaper },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   track: {
     flex: 1,
-    minWidth: 40,
+    minWidth: RACE_TRACK_MIN,
     height: TRACK_H,
     backgroundColor: shape.panel === 'ticks' ? colors.transparent : colors.raised,
     borderWidth: shape.panel === 'ticks' || shape.panel === 'sticker' ? shape.hairline * 0.75 : 0,

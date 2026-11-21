@@ -86,7 +86,7 @@ const styles = StyleSheet.create({
   // Wide capitals faces (mono, tracked) drop their tracking here so the label and its percent value fit a narrow meter.
   label: { ...voice.calmLabel, color: colors.dim, fontSize: shape.panel === 'ticks' ? 8.5 : 9, lineHeight: 11, letterSpacing: Math.min(voice.calmLabel.letterSpacing ?? 0, 0.1) },
   tag: { alignSelf: 'flex-start', backgroundColor: colors.newsInk, paddingHorizontal: 4, height: 13, justifyContent: 'center', transform: [{ rotate: '-1.5deg' }] },
-  tagText: { ...voice.loudKicker, fontSize: 10.5, lineHeight: 12, letterSpacing: 0.8, color: colors.newsPaper },
+  tagText: { ...voice.loudKicker, fontSize: 10, lineHeight: 12, letterSpacing: 0.3, color: colors.newsPaper },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   labelRow: { flexDirection: 'row', alignItems: 'center', gap: 3, minWidth: 0 },
   // Track per shape: hairline (soft), an outlined gauge (blueprint), a chunky bar (hazard), a pill (candy).

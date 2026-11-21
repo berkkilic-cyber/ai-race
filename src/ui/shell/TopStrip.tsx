@@ -42,6 +42,9 @@ const ROOM_FOR_INCOME = 880;
  */
 const ROOM_FOR_ICONS = 860;
 
+/** Below this strip width the gaps between the strip's groups tighten (phones with side insets). */
+const TIGHT_BELOW = 820;
+
 /** Hazard: the strip stands on a thin band of warning stripes. */
 const TAPE = 4;
 const sticker = shape.panel === 'sticker';
@@ -92,7 +95,7 @@ export function TopStrip({ right }: { right?: ReactNode }) {
   });
 
   return (
-    <View style={styles.strip}>
+    <View style={[styles.strip, stripWidth < TIGHT_BELOW && styles.stripTight]}>
       <View style={[styles.brand, styles.brandBox]}>
         <Pressable onLongPress={toggleTouchDebug} delayLongPress={DEBUG_LONG_PRESS_MS} accessible={false}>
           <Mascot mood={mood} size={shape.mascot === 'square' ? 26 : 28} testID="mascot" />
@@ -282,6 +285,7 @@ const styles = StyleSheet.create({
     paddingBottom: shape.composure === 'tape' ? TAPE : 0,
     backgroundColor: colors.chrome,
   },
+  stripTight: { gap: 6, paddingLeft: spacing.xs + 2, paddingRight: spacing.xs + 2 },
   // Wide enough that the day number ("Day 3600") never clips; the lab name gives way first.
   brand: { flexDirection: 'row', alignItems: 'center', gap: 7, flexShrink: 1, minWidth: 104, maxWidth: 196 },
   // Blueprint: the lab sits in a drawing's title block.
