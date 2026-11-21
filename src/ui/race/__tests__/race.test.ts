@@ -1,5 +1,6 @@
-import { createGame, getStandings, step, type GameState, type StandingRow } from '@/engine';
+import { createGame, defaultBalance, getStandings, step, type GameState, type StandingRow } from '@/engine';
 
+import { fmtPct } from '../../format';
 import { setI18nContext } from '../../i18n';
 import { getPackEntry } from '../../packs';
 import { raceView, rivalDetail, sortRows, statusOf } from '../logic';
@@ -67,7 +68,7 @@ describe('raceView', () => {
   it('shows the three ways to win with plain captions', () => {
     const view = raceView(game(), pack, []);
     expect(view.wins.map((w) => w.id)).toEqual(['agi', 'dependence', 'monopoly']);
-    expect(view.wins[1].caption).toContain('45%');
+    expect(view.wins[1].caption).toContain(fmtPct(pack.balance.dependenceShare ?? defaultBalance.dependenceShare));
     expect(view.wins[2].caption).toBe(`Buy out or outlast every rival. ${pack.rivals.length} of ${pack.rivals.length} left`);
     for (const w of view.wins) expect(w.caption).not.toMatch(/[{}]/);
   });

@@ -5,6 +5,7 @@
  */
 import { getCompute, getUsers, type ContentPack, type Effect, type GameState, type MomentDef, type MomentState } from '@/engine';
 
+import { describeEffect } from '../explain/describe';
 import { fmtCash, fmtCompact, fmtUsers } from '../format';
 import { t } from '../i18n';
 
@@ -110,7 +111,11 @@ export function deltaLines(before: Snapshot, after: Snapshot): DeltaLine[] {
   return out;
 }
 
-/** One line per self-targeted effect of an expiring moment, in plain words. */
+/**
+ * One line per self-targeted effect of an expiring moment, in plain words. The common
+ * kinds get a short figure ("+0.9 Backlash"); everything else (timed modifiers, flags,
+ * unbans, income-scaled amounts) uses the shared plain-language describer.
+ */
 export function effectLines(effects: readonly Effect[] | undefined): DeltaLine[] {
   const out: DeltaLine[] = [];
   for (const e of effects ?? []) {
@@ -123,6 +128,10 @@ export function effectLines(effects: readonly Effect[] | undefined): DeltaLine[]
         out.push({ text: `${sign(e.percent)}${one(e.percent)}% ${t(`term.${e.resource}`)}`, good: e.percent > 0 });
         break;
       case 'resource':
+        if (e.scaleWithIncome) {
+          pushDescribed(out, e);
+          break;
+        }
         out.push({ text: `${sign(e.amount)}${e.resource === 'cash' ? fmtCash(Math.abs(e.amount)) : `${fmtCompact(Math.abs(e.amount))} ${t(`term.${e.resource}`)}`}`, good: e.amount > 0 });
         break;
       case 'agiProgress':
@@ -140,11 +149,19 @@ export function effectLines(effects: readonly Effect[] | undefined): DeltaLine[]
       case 'ban':
         out.push({ text: t('ui.moments.banned'), good: false });
         break;
+      case 'news':
+        break;
       default:
+        pushDescribed(out, e);
         break;
     }
   }
   return out;
+}
+
+function pushDescribed(out: DeltaLine[], e: Effect) {
+  const line = describeEffect(e);
+  if (line) out.push({ text: line.text, good: line.tone === 'good' });
 }
 
 /** What a collect shows: measured gains, or for a contained threat the penalty avoided. */
