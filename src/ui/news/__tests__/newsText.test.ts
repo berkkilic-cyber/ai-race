@@ -6,8 +6,8 @@ import { newsText } from '../newsText';
 
 const { pack } = getPackEntry();
 
-/** A whole headless run: launches, channel entries and expiring moments all reach the news. */
-const final = runHeadless(pack, { playerName: 'Test Lab', founderId: pack.founders[0].id, homeRegion: pack.regions[0].id, seed: 3 }, { policy: 'sensible', maxTicks: 3600 });
+/** A whole headless run: launches, channel entries and expiring moments all reach the news (Sandbox: the seed's news log still holds launches at the end). */
+const final = runHeadless(pack, { playerName: 'Test Lab', founderId: pack.founders[0].id, homeRegion: pack.regions[0].id, seed: 3, difficulty: 'sandbox' }, { policy: 'sensible', maxTicks: 3600 });
 setI18nContext(pack, final.labs);
 
 describe('news text', () => {
