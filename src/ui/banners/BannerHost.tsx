@@ -4,6 +4,7 @@ import Animated, { Easing, cancelAnimation, useAnimatedStyle, useReducedMotion, 
 
 import { getCapabilityLevel } from '@/engine';
 
+import { logLifecycle } from '../diagnostics/log';
 import { freshNews } from '../hooks/useRegionFlashes';
 import { labName, readableLabColor, t } from '../i18n';
 import { Icon } from '../icons';
@@ -43,6 +44,7 @@ export const BannerHost = memo(function BannerHost({ insetRight }: BannerHostPro
       if (!show) return;
       showing.current = true;
       setCurrent(show);
+      logLifecycle('banner shown', { lab: show.labId, tier: show.tier, mine: show.mine });
       if (show.mine) launchHaptic();
       timer = setTimeout(() => {
         showing.current = false;

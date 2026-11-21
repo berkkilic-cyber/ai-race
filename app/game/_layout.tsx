@@ -1,9 +1,12 @@
+import { usePathname } from 'expo-router';
 import { TabList, TabSlot, TabTrigger, Tabs } from 'expo-router/ui';
+import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { ToastHost } from '@/ui/achievements';
 import { useComposure } from '@/ui/composure';
+import { logLifecycle } from '@/ui/diagnostics/log';
 import { EventModal } from '@/ui/events';
 import { useAmbientShouldRun, useEndNavigation, useGameLoop } from '@/ui/hooks';
 import { t } from '@/ui/i18n';
@@ -52,6 +55,7 @@ export default function GameLayout() {
 
 /** Everything inside the ambient clock (the tremble reads it). */
 function GameShell() {
+  useTabLog();
   const shell = useShellStyles();
   const { level } = useComposure();
   const tremble = useTremble(level);
@@ -91,6 +95,14 @@ function GameShell() {
       <EventModal />
     </View>
   );
+}
+
+/** `[AI-RACE] tab changed` whenever the shown tab changes (development builds). */
+function useTabLog() {
+  const pathname = usePathname();
+  useEffect(() => {
+    logLifecycle('tab changed', { tab: pathname });
+  }, [pathname]);
 }
 
 const styles = StyleSheet.create({

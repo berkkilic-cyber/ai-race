@@ -2,6 +2,7 @@ import { useEffect, useRef, type ReactNode } from 'react';
 import { BackHandler, Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import Animated, { SlideInRight } from 'react-native-reanimated';
 
+import { logLifecycle } from '../diagnostics/log';
 import { useInsets } from '../hooks/useInsets';
 import { layoutModeFor } from '../hooks/useLayoutMode';
 import { t } from '../i18n';
@@ -52,6 +53,7 @@ export function Sheet({ visible, onClose, title, headerRight, children, maxHeigh
   const { width, height } = useWindowDimensions();
   const insets = useInsets();
   useBackToClose(visible, onClose);
+  useOpenLog(visible, testID ?? title);
   if (!visible) return null;
   const edge = safeArea ? insets : { top: 0, right: 0, bottom: 0, left: 0 };
   if (layoutModeFor(width, height) === 'wide') {
@@ -109,6 +111,13 @@ export function Sheet({ visible, onClose, title, headerRight, children, maxHeigh
       </View>
     </View>
   );
+}
+
+/** `[AI-RACE] panel opened` when a sheet appears (development builds). */
+function useOpenLog(visible: boolean, name: string | undefined) {
+  useEffect(() => {
+    if (visible) logLifecycle('panel opened', { panel: name ?? 'sheet' });
+  }, [visible, name]);
 }
 
 /** The outside layer is for pointers only; keyboard and screen-reader users have the close button. */

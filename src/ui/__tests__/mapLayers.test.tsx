@@ -9,7 +9,9 @@ import { act, type ReactElement } from 'react';
 import { createRoot, type Root, type TestInstance } from 'test-renderer';
 
 import { createHitTester } from '../map/hitTest';
+import { useCoachStore } from '../moments/coach';
 import { bubbleOffset } from '../moments/logic';
+import { useStripPanel } from '../shell/panels/store';
 import { getPackEntry } from '../packs';
 import { useGameStore } from '../store/game';
 import { useTutorialStore } from '../tutorial/store';
@@ -317,6 +319,57 @@ describe('nothing covers the map touch view', () => {
     await tapAt(mx, my, 2000);
     expect(has('region-sheet')).toBe(true);
     expect(blockersAbove(root.container, touchView)).toEqual([]);
+  });
+
+  it('the fully merged Map tab (bubbles, banner, standings, coach line) with each panel: only a panel\'s own outside-tap layer covers the map', async () => {
+    const touchView = await renderShell();
+    const container = find(root.container, (n) => (n.props as { testID?: string }).testID === 'world-map')!;
+    await act(async () => {
+      (container.props as { onLayout: (e: unknown) => void }).onLayout({ nativeEvent: { layout: { x: 0, y: 0, width: 776, height: 339 } } });
+    });
+    const s0 = useGameStore.getState().state!;
+    const me = s0.labs[s0.playerLabId];
+    const rival = s0.labOrder.find((id) => id !== s0.playerLabId)!;
+    const capNode = pack.nodes.find((n) => (n.capabilityLevel ?? 0) > 0)!;
+    const boost = pack.moments.find((d) => d.kind === 'boost')!;
+    const threat = pack.moments.find((d) => d.kind === 'threat')!;
+    const near = pack.regions.find((r) => r.id === me.homeRegion)!.neighbors[0];
+    await act(async () => {
+      useGameStore.setState({
+        state: {
+          ...s0,
+          labs: { ...s0.labs, [me.id]: { ...me, adoption: { ...me.adoption, [near]: 0.1 } } },
+          moments: [
+            { uid: 'm-a', defId: boost.id, labId: me.id, regionId: me.homeRegion, spawnTick: s0.tick, expiresTick: s0.tick + 30 },
+            { uid: 'm-b', defId: threat.id, labId: me.id, regionId: near, spawnTick: s0.tick, expiresTick: s0.tick + 30 },
+          ],
+          news: [...s0.news, { tick: s0.tick, kind: 'launch', tier: 1, nodeId: capNode.id, textKey: 'engine.news.launch.rival', tone: 'bad', params: { lab: rival, model: capNode.nameKey, tier: 1 }, labId: rival, regionId: s0.labs[rival].homeRegion }],
+        },
+      });
+      useCoachStore.setState({ active: { uid: 'm-a', kind: 'boost' } });
+    });
+    const has = (id: string) => find(root.container, (n) => (n.props as { testID?: string }).testID === id) !== null;
+    for (const id of ['moment-boost-m-a', 'moment-threat-m-b', 'launch-banner', 'map-leaderboard', 'moment-coach']) expect([id, has(id)]).toEqual([id, true]);
+    expect(blockersAbove(root.container, touchView)).toEqual([]);
+
+    // The strip's panels close on an outside tap: their outside layer is the only thing above the map.
+    for (const panel of ['hype', 'cash', 'model'] as const) {
+      await act(async () => useStripPanel.getState().show(panel));
+      const blockers = blockersAbove(root.container, touchView);
+      expect(blockers.length).toBeGreaterThan(0);
+      expect(blockers.filter((b) => !b.includes('sheet-outside'))).toEqual([]);
+      await act(async () => useStripPanel.getState().close());
+      expect(blockersAbove(root.container, touchView)).toEqual([]);
+    }
+    // The Regions list and the region panel keep the map live beside them.
+    await press(find(root.container, (n) => (n.props as { testID?: string }).testID === 'map-regions')!);
+    expect(has('regions-sheet')).toBe(true);
+    expect(blockersAbove(root.container, touchView)).toEqual([]);
+    // The help panel (the "?" button) closes on an outside tap too.
+    await press(find(root.container, (n) => (n.props as { testID?: string }).testID === 'tutorial-help')!);
+    expect(has('help-sheet')).toBe(true);
+    expect(blockersAbove(root.container, touchView).filter((b) => !b.includes('sheet-outside'))).toEqual([]);
+    await act(async () => useCoachStore.setState({ active: null }));
   });
 
   it('the walk does flag a full-area touch layer above the map (an ordinary sheet\'s outside-tap layer)', async () => {

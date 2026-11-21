@@ -12,7 +12,7 @@ import { readableLabColor } from '../../i18n';
 import { Icon } from '../../icons';
 import { useGameStore, type GameStore } from '../../store/game';
 import { colors } from '../../theme';
-import { allFinite, isDrawablePath, nonNegative, unitInterval } from '../svgSafe';
+import { allFinite, finiteOr, isDrawablePath, nonNegative, unitInterval } from '../svgSafe';
 import { mapLiveConfig } from './config';
 import { MOVING, project, useProjection, type MapProjection } from './projection';
 import { FAINT_MS, FLIGHT_MS, arcControl, arcLength, bezier, routeFor, useRoutesStore, type Route } from './routes';
@@ -105,7 +105,8 @@ const ArcPath = memo(function ArcPath({ arc }: { arc: Arc }) {
     };
   }, [drawn, strength, reduced]);
   const viral = arc.route.style === 'viral';
-  const len = Math.max(1, arc.len);
+  // Math.max(1, NaN) is NaN: a NaN dash array or offset crashes react-native-svg on iOS.
+  const len = Math.max(1, finiteOr(arc.len, 1));
   const width = arc.route.mine ? 1.6 : 1.1;
   const props = useAnimatedProps(() => ({
     strokeDashoffset: viral ? 0 : len * (1 - unitInterval(drawn.get())),
@@ -117,7 +118,7 @@ const ArcPath = memo(function ArcPath({ arc }: { arc: Arc }) {
     const on = k > 0.98 ? 1 : 0;
     return { r: nonNegative(on * (2.2 + 3 * unitInterval(strength.get() - 0.28))), fillOpacity: unitInterval(on * Math.max(0.5, strength.get())) };
   });
-  if (!isDrawablePath(arc.d)) return null;
+  if (!isDrawablePath(arc.d) || !allFinite(arc.a[0], arc.a[1], arc.b[0], arc.b[1])) return null;
   return (
     <G>
       {arc.route.style === 'crossing' ? (
@@ -240,6 +241,7 @@ function PulseRing({ x, y, color, delayMs, radius }: { x: number; y: number; col
     const k = unitInterval(v.get());
     return { r: nonNegative(3 + k * radius), strokeOpacity: k > 0 ? 0.95 * (1 - k) : 0, strokeWidth: 3 * (1 - k) + 0.4 };
   });
+  if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
   return <AnimatedCircle cx={x} cy={y} fill="none" stroke={color} animatedProps={props} />;
 }
 

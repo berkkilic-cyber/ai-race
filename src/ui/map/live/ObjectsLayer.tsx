@@ -104,7 +104,9 @@ const RegionThings = memo(function RegionThings({ p, x, y, stuff, barrierIcons }
           </View>
         );
       })}
-      {more > 0 ? <Text style={[styles.more, { left: placed[placed.length - 1].dx + RACK / 2 + 1, top: placed[0].dy - 7 }]}>+{more}</Text> : null}
+      {more > 0 ? <Text style={[styles.more, { left: placed[placed.length - 1].dx + RACK / 2 + 1, top: placed[0].dy - 7 }]} numberOfLines={1}>
+          +{more}
+        </Text> : null}
       {stuff.objects.map((icon, i) => {
         const [dx, dy] = objectOffset(i, Math.min(MAX_RACKS, placed.length));
         return (
@@ -244,7 +246,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  more: { position: 'absolute', ...voice.calmLabel, color: colors.text, fontSize: 10 },
+  // An explicit width: inside the 0x0 anchor, native would otherwise measure the text against a zero-wide parent.
+  more: { position: 'absolute', width: 28, ...voice.calmLabel, color: colors.text, fontSize: 10 },
   object: {
     position: 'absolute',
     width: OBJECT,

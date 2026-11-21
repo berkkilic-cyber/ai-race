@@ -61,3 +61,39 @@ describe('view transform before the first layout', () => {
     expect(finite(clampTranslate(l, Number.NaN, Number.NaN, 5))).toBe(true);
   });
 });
+
+describe('source rules for native', () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const fs = require('node:fs') as typeof import('node:fs');
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const path = require('node:path') as typeof import('node:path');
+  const roots = [path.join(__dirname, '..'), path.join(__dirname, '..', '..', '..', 'app')];
+  const files: { file: string; src: string }[] = [];
+  const walk = (dir: string) => {
+    for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, e.name);
+      if (e.isDirectory()) {
+        if (e.name !== '__tests__') walk(full);
+      } else if (/\.tsx?$/.test(e.name)) files.push({ file: path.relative(process.cwd(), full), src: fs.readFileSync(full, 'utf8') });
+    }
+  };
+  roots.forEach(walk);
+  const offenders = (re: RegExp, allow: (f: string) => boolean = () => false) => files.filter((f) => re.test(f.src) && !allow(f.file)).map((f) => f.file);
+
+  it('uses no native Modal, no SafeAreaView and no gesture-handler gestures', () => {
+    expect(offenders(/import\s*\{[^}]*\bModal\b[^}]*\}\s*from\s*'react-native'/)).toEqual([]);
+    expect(offenders(/<SafeAreaView|import[^;]*\bSafeAreaView\b[^;]*from/)).toEqual([]);
+    // Only the root's GestureHandlerRootView (expo-router needs it); no gestures anywhere.
+    expect(offenders(/GestureDetector|Gesture\.(Pan|Pinch|Tap)|PanGestureHandler|TapGestureHandler/)).toEqual([]);
+  });
+
+  it('loops only on the shared ambient clock (and the ticker crawl, which stops with it)', () => {
+    expect(offenders(/withRepeat\(/, (f) => f.endsWith(path.join('motion', 'ambient.tsx')) || f.endsWith(path.join('shell', 'Ticker.tsx')))).toEqual([]);
+  });
+
+  it('keeps DOM APIs behind a web check', () => {
+    // Files that touch document/window DOM APIs must also check Platform.OS or typeof document/window.
+    const dom = files.filter((f) => /\bdocument\.|\.getBoundingClientRect\(|window\.location/.test(f.src));
+    for (const f of dom) expect([f.file, /Platform\.OS\s*[!=]==\s*'web'|typeof (document|window)/.test(f.src)]).toEqual([f.file, true]);
+  });
+});

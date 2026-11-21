@@ -6,6 +6,7 @@ import Svg, { Circle, G } from 'react-native-svg';
 import type { MapGeometry } from '@/content/packs/ai-lab/geometry';
 import { getMomentProgress, getMoments, type GameState, type MomentDef } from '@/engine';
 
+import { logLifecycle } from '../diagnostics/log';
 import { t } from '../i18n';
 import { hasIcon } from '../icons';
 import { fallbackGlyph, registry } from '../icons/registry';
@@ -78,6 +79,15 @@ export const MomentLayer = memo(function MomentLayer({ geometry }: { geometry: M
   const collected = useRef(new Set<string>());
   const slots = useRef(new Map<string, number>());
   const coach = useCoachStore((s) => s.active);
+  /** Timers that remove collected bubbles; cleared when the layer unmounts. */
+  const popTimers = useRef(new Set<ReturnType<typeof setTimeout>>());
+  useEffect(() => {
+    const timers = popTimers.current;
+    return () => {
+      for (const timer of timers) clearTimeout(timer);
+      timers.clear();
+    };
+  }, []);
   useEffect(() => {
     installMapLiveDebug();
     void useCoachStore.getState().load();
@@ -149,7 +159,9 @@ export const MomentLayer = memo(function MomentLayer({ geometry }: { geometry: M
         }
         return added.length > 0 ? [...out, ...added] : out;
       });
+      for (const b of added) logLifecycle('moment spawned', { uid: b.uid, moment: b.defId, kind: b.kind, region: b.regionId });
       for (const b of expired) {
+        logLifecycle('moment expired', { uid: b.uid, moment: b.defId, kind: b.kind, region: b.regionId });
         if (b.kind === 'threat') landHaptic();
         later(b.kind === 'threat' ? FLOAT_MS : EXPIRE_MS, () => setItems((c) => c.filter((x) => x.uid !== b.uid)));
       }
@@ -175,6 +187,7 @@ export const MomentLayer = memo(function MomentLayer({ geometry }: { geometry: M
     const before = snapshot(state, store.pack);
     collected.current.add(uid);
     const result = store.dispatch({ type: 'collectMoment', labId: state.playerLabId, uid });
+    logLifecycle('moment tapped', { uid, moment: moment?.defId, ok: result.ok, reason: result.ok ? undefined : result.reason });
     if (!result.ok) {
       collected.current.delete(uid);
       return;
@@ -185,7 +198,11 @@ export const MomentLayer = memo(function MomentLayer({ geometry }: { geometry: M
     collectHaptic();
     useCoachStore.getState().resolved(uid);
     setItems((c) => c.map((b) => (b.uid === uid ? { ...b, phase: 'collected', lines, caption, avoided } : b)));
-    setTimeout(() => setItems((c) => c.filter((x) => x.uid !== uid)), FLOAT_MS + 100);
+    const timer = setTimeout(() => {
+      popTimers.current.delete(timer);
+      setItems((c) => c.filter((x) => x.uid !== uid));
+    }, FLOAT_MS + 100);
+    popTimers.current.add(timer);
   }, []);
 
   if (!p || items.length === 0) return null;
