@@ -98,7 +98,7 @@ function Redline({ level }: { level: ComposureLevel }) {
       </Animated.View>
       {level >= 3 ? (
         <Animated.View entering={ZoomIn.duration(motion.slow)} style={styles.rejectedWrap}>
-          <Stamp text={t('ui.composure.stamp.rejected')} color={colors.mark} outline rotate={-11} size={30} />
+          <Stamp text={t('ui.composure.stamp.rejected')} color={colors.mark} outline rotate={-11} size={30} style={styles.centred} />
         </Animated.View>
       ) : null}
     </View>
@@ -240,7 +240,9 @@ const styles = StyleSheet.create({
   bandKickerText: { ...voice.loudKicker, fontSize: 15, lineHeight: 17, color: colors.newsPaper },
   bandText: { ...voice.loudKicker, flex: 1, alignSelf: 'center', fontSize: 15, lineHeight: 17, letterSpacing: 1, color: colors.newsPaper, paddingHorizontal: spacing.s },
   reviseWrap: { position: 'absolute', top: spacing.l + 4, right: spacing.xl },
-  rejectedWrap: { position: 'absolute', right: spacing.xl + 8, bottom: spacing.xl + 4 },
+  // Bottom centre: clear of the map's controls (bottom left) and standings strip (bottom right).
+  rejectedWrap: { position: 'absolute', left: 0, right: 0, bottom: spacing.xl + 4, alignItems: 'center' },
+  centred: { alignSelf: 'center' },
   tapeH: { position: 'absolute', left: 0, right: 0 },
   tapeV: { position: 'absolute', top: 0, bottom: 0, backgroundColor: colors.stripeA },
   beacon: { position: 'absolute', top: 14, width: 22, height: 22, borderRadius: 11, backgroundColor: colors.alarm, opacity: 0.4, alignItems: 'center', justifyContent: 'center', boxShadow: `0px 0px 14px ${colors.alarm}` },

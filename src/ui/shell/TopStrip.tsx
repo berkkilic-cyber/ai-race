@@ -27,10 +27,11 @@ import { wideShellLayout } from './shellLayout';
 import { StripMeter } from './StripMeter';
 
 /**
- * Room the three meters always keep: two plain meters (an abbreviated label over a track and
- * "100%") and the race bar (a track and "100 vs 100%"), with the gaps between them.
+ * Room the three meters always keep: a meter with its danger tag ("REGULATORS CIRCLING"), a
+ * plain meter (an abbreviated label over a short track and "100%") and the race bar (a track
+ * and "100 vs 100%"), with the gaps between them. The lab name gives way first.
  */
-const METERS_MIN = 274;
+const METERS_MIN = 296;
 
 /** Below this strip width the cash income sub-label is dropped so nothing wraps or clips. */
 const ROOM_FOR_INCOME = 880;

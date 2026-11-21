@@ -98,7 +98,8 @@ const VALUE_WIDTH = 70;
 const TRACK_H = shape.panel === 'plain' ? 4 : shape.panel === 'ticks' ? 5 : 6;
 
 const styles = StyleSheet.create({
-  wrap: { flex: 1.5, minWidth: 0, justifyContent: 'center', gap: 3 },
+  // Never narrower than its track's minimum and the full "100 vs 100%": the lab name gives way first.
+  wrap: { flex: 1.5, minWidth: 40 + spacing.xs + VALUE_WIDTH, justifyContent: 'center', gap: 3 },
   wrapTagged: { flexGrow: 0, flexShrink: 0, flexBasis: 'auto' },
   tag: { alignSelf: 'flex-start', backgroundColor: colors.newsInk, paddingHorizontal: 4, height: 13, justifyContent: 'center', transform: [{ rotate: '-1.5deg' }] },
   tagText: { ...voice.loudKicker, fontSize: 10.5, lineHeight: 12, letterSpacing: 0.8, color: colors.newsPaper },
@@ -115,7 +116,7 @@ const styles = StyleSheet.create({
   fill: { position: 'absolute', left: 0, top: 0, bottom: 0, backgroundColor: colors.player, borderRadius: radius.pill },
   // The rival's tick stands out above and below the track.
   mark: { position: 'absolute', top: -4, bottom: -4, width: 3, marginLeft: -1.5, borderWidth: 0.5, borderColor: colors.chrome },
-  value: { ...voice.calmNumber, width: VALUE_WIDTH, textAlign: 'right', color: colors.text, fontSize: 12, lineHeight: 15 },
+  value: { ...voice.calmNumber, width: VALUE_WIDTH, flexShrink: 0, textAlign: 'right', color: colors.text, fontSize: 12, lineHeight: 15 },
   you: { color: colors.playerText },
   vs: { ...voice.calmLabel, fontSize: 8.5, color: colors.dim },
   pct: { color: colors.dim },

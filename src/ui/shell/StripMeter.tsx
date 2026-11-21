@@ -79,7 +79,8 @@ export function StripLabel({ label, shortLabel, icon, color }: { label: string; 
 const VALUE_WIDTH = 31;
 
 const styles = StyleSheet.create({
-  wrap: { flex: 1, minWidth: 0, justifyContent: 'center', gap: 3 },
+  // A plain meter keeps a short track and its "100%" (the label shortens itself to fit).
+  wrap: { flex: 1, minWidth: 20 + spacing.xs + VALUE_WIDTH, justifyContent: 'center', gap: 3 },
   // The tagged meter takes the tag's natural width; the others share what is left.
   wrapTagged: { flexGrow: 0, flexShrink: 0, flexBasis: 'auto' },
   // Wide capitals faces (mono, tracked) drop their tracking here so the label and its percent value fit a narrow meter.
@@ -100,5 +101,5 @@ const styles = StyleSheet.create({
   },
   trackTagged: { minWidth: 56 },
   fill: { height: '100%' },
-  value: { ...voice.calmNumber, width: VALUE_WIDTH, textAlign: 'right', color: colors.text, fontSize: 12.5, lineHeight: 15 },
+  value: { ...voice.calmNumber, width: VALUE_WIDTH, flexShrink: 0, textAlign: 'right', color: colors.text, fontSize: 12.5, lineHeight: 15 },
 });
