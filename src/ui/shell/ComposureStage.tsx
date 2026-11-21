@@ -10,6 +10,7 @@ import { useAmbientClock, useAmbientRunning, wave } from '../motion/ambient';
 import { mixColor } from '../color';
 import { Ground, Stamp, Stripes } from '../components/Deco';
 import { colors, motion, radius, shape, spacing, type, voice } from '../theme';
+import { StripPanels } from './panels/StripPanels';
 
 /** Height of the BREAKING band at composure 3. */
 export const BREAKING_BAND_HEIGHT = 26;
@@ -184,6 +185,8 @@ export function ComposureStage({ children }: { children: ReactNode }) {
         {shape.composure === 'tape' ? <Tape level={level} clock={clock} /> : null}
       </Animated.View>
       {classic || (shape.composure === 'redline' && level >= 3) ? <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, styles.frame, frameStyle]} testID="composure-frame" /> : null}
+      {/* Panels opened from the top strip; nothing is mounted while they are closed. */}
+      <StripPanels />
     </View>
   );
 }

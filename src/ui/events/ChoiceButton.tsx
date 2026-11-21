@@ -5,6 +5,8 @@ import type { EventChoiceDef } from '@/engine';
 
 import { fmtCash, fmtCompact } from '../format';
 import { t } from '../i18n';
+import { Icon } from '../icons';
+import { useGameStore } from '../store/game';
 import { colors, shape, spacing, touch, voice } from '../theme';
 import { effectHints } from './hints';
 import { HintChip, RiskTag } from './HintChip';
@@ -22,6 +24,8 @@ export interface ChoiceButtonProps {
   /** Null when the choice can be taken, otherwise the reason it cannot. */
   disabledReason: string | null;
   onChoose: (choiceId: string) => void;
+  /** Opens the explanation of this choice (requirements, cost, arrows, gamble). */
+  onInfo?: (choiceId: string) => void;
 }
 
 /**
@@ -29,49 +33,73 @@ export interface ChoiceButtonProps {
  * stamp. It depresses into its shadow when pressed. Disabled choices stay visible on a
  * dashed newsprint outline with the reason.
  */
-export const ChoiceButton = memo(function ChoiceButton({ choice, disabledReason, onChoose }: ChoiceButtonProps) {
-  const hints = useMemo(() => effectHints(choice.effects), [choice.effects]);
+export const ChoiceButton = memo(function ChoiceButton({ choice, disabledReason, onChoose, onInfo }: ChoiceButtonProps) {
+  const channels = useGameStore((s) => s.pack.channels);
+  const hints = useMemo(() => effectHints(choice.effects, channels), [choice.effects, channels]);
   const cost = choiceCostText(choice);
   const disabled = disabledReason !== null;
   const label = t(choice.labelKey);
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={disabled ? `${label}. ${disabledReason}` : label}
-      accessibilityState={{ disabled }}
-      disabled={disabled}
-      onPress={() => onChoose(choice.id)}
-      testID={`event-choice-${choice.id}`}
-      style={({ pressed }) => [styles.button, disabled && styles.disabled, pressed && !disabled && styles.pressed]}
-    >
-      <View style={styles.top}>
-        <Text style={[styles.label, disabled && styles.dimText]}>{label}</Text>
-        {cost ? (
-          <View style={[styles.cost, disabled && styles.costDisabled]}>
-            <Text style={[styles.costText, disabled && styles.dimText]} numberOfLines={1}>
-              {cost}
-            </Text>
+    <View style={styles.wrap}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={disabled ? `${label}. ${disabledReason}` : label}
+        accessibilityState={{ disabled }}
+        disabled={disabled}
+        onPress={() => onChoose(choice.id)}
+        testID={`event-choice-${choice.id}`}
+        style={({ pressed }) => [styles.button, disabled && styles.disabled, pressed && !disabled && styles.pressed]}
+      >
+        <View style={styles.top}>
+          <Text style={[styles.label, disabled && styles.dimText]}>{label}</Text>
+          {cost ? (
+            <View style={[styles.cost, disabled && styles.costDisabled]}>
+              <Text style={[styles.costText, disabled && styles.dimText]} numberOfLines={1}>
+                {cost}
+              </Text>
+            </View>
+          ) : null}
+        </View>
+        {disabled ? (
+          <Text style={styles.reason} numberOfLines={2} testID={`event-choice-reason-${choice.id}`}>
+            {disabledReason}
+          </Text>
+        ) : null}
+        {hints.length > 0 || choice.risk || onInfo ? (
+          <View style={[styles.chips, onInfo && styles.chipsRoom]}>
+            {hints.map((hint) => (
+              <HintChip key={`${hint.subject}-${hint.dir}`} hint={hint} muted={disabled} />
+            ))}
+            {choice.risk ? <RiskTag muted={disabled} /> : null}
           </View>
         ) : null}
-      </View>
-      {hints.length > 0 || choice.risk ? (
-        <View style={styles.chips}>
-          {hints.map((hint) => (
-            <HintChip key={`${hint.subject}-${hint.dir}`} hint={hint} muted={disabled} />
-          ))}
-          {choice.risk ? <RiskTag muted={disabled} /> : null}
-        </View>
+      </Pressable>
+      {onInfo ? (
+        // A sibling of the choice, not inside it, so it works on a locked choice too.
+        <Pressable
+          onPress={() => onInfo(choice.id)}
+          hitSlop={8}
+          style={({ pressed }) => [styles.info, disabled && styles.infoDisabled, pressed && styles.infoPressed]}
+          accessibilityRole="button"
+          accessibilityLabel={t('ui.events2.infoA11y', { choice: label })}
+          testID={`event-choice-info-${choice.id}`}
+        >
+          <Icon name="info" size={18} color={disabled ? colors.newsInk : colors.newsPaper} strokeWidth={2} />
+        </Pressable>
       ) : null}
-      {disabled ? (
-        <Text style={styles.reason} numberOfLines={2}>
-          {disabledReason}
-        </Text>
-      ) : null}
-    </Pressable>
+    </View>
   );
 });
 
+/** Size of the info button (its touch area grows with hitSlop to 44). */
+const INFO = 30;
+
 const styles = StyleSheet.create({
+  wrap: { position: 'relative' },
+  info: { position: 'absolute', right: 3 + spacing.xs, bottom: 3 + spacing.xs, width: INFO, height: INFO, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: colors.newsPaper },
+  infoDisabled: { borderColor: colors.newsInk, backgroundColor: colors.newsPaper },
+  infoPressed: { opacity: 0.6 },
+  chipsRoom: { paddingRight: INFO + spacing.xs, minHeight: INFO - 6 },
   button: {
     minHeight: touch + 12,
     backgroundColor: colors.newsInk,

@@ -66,13 +66,16 @@ function GameShell() {
           <TabList asChild style={shell.tabBar}>
             <View>
               <TabTrigger name="index" href="/game" asChild>
-                <TabButton label={t('ui.tab.map')} targetId="tab.map" />
+                <TabButton label={t('ui.tab.map')} targetId="tab.map" icon="map" />
               </TabTrigger>
               <TabTrigger name="trees" href="/game/trees" asChild>
-                <TabButton label={t('ui.tab.trees')} badge={<TreesTabBadge />} targetId="tab.trees" />
+                <TabButton label={t('ui.tab.trees')} badge={<TreesTabBadge />} targetId="tab.trees" icon="trees" />
               </TabTrigger>
               <TabTrigger name="news" href="/game/news" asChild>
-                <TabButton label={t('ui.tab.news')} targetId="tab.news" />
+                <TabButton label={t('ui.tab.news')} targetId="tab.news" icon="news" />
+              </TabTrigger>
+              <TabTrigger name="race" href="/game/race" asChild>
+                <TabButton label={t('ui.race.tab')} targetId="tab.race" icon="race" />
               </TabTrigger>
             </View>
           </TabList>

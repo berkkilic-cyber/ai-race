@@ -4,6 +4,8 @@ import { StyleSheet, Text, View } from 'react-native';
 import type { EventDef, GameState } from '@/engine';
 
 import { Button } from '../components/Button';
+import { describeEffects } from '../explain/describe';
+import { useGameStore } from '../store/game';
 import { t } from '../i18n';
 import type { EventResult } from '../store/game';
 import { colors, spacing, voice } from '../theme';
@@ -29,6 +31,11 @@ export function ResultView({ event, result, playerLabId, deltas, onContinue }: R
   }, [backfired]);
 
   const choice = event.choices.find((c) => c.id === result.choiceId);
+  const channels = useGameStore((s) => s.pack.channels);
+  // What the measured changes cannot show: lasting effects (timed boosts, new ways to spread), in plain words.
+  const lasting = choice
+    ? describeEffects([...choice.effects, ...(backfired ? (choice.risk?.effects ?? []) : [])].filter((e) => e.type === 'timedModifier' || e.type === 'setFlag'), { channels })
+    : [];
   return (
     <EventFrame
       tone={tone}
@@ -46,6 +53,13 @@ export function ResultView({ event, result, playerLabId, deltas, onContinue }: R
                   {t(DELTA_LABEL_KEYS[d.id])}
                 </Text>
                 <Text style={[styles.rowValue, { color: d.good ? colors.newsGood : colors.newsRed }]}>{formatDelta(d, t('ui.events.delta.points'))}</Text>
+              </View>
+            ))}
+            {lasting.length > 0 ? <Text style={[styles.heading, styles.also]}>{t('ui.events2.lasting')}</Text> : null}
+            {lasting.map((line, i) => (
+              <View key={`lasting-${i}`} style={styles.row} testID="event-lasting">
+                <View style={[styles.mark, { backgroundColor: line.tone === 'good' ? colors.newsGood : colors.newsRed }]} />
+                <Text style={[styles.rowLabel, { color: line.tone === 'good' ? colors.newsGood : colors.newsRed }]}>{line.text}</Text>
               </View>
             ))}
           </View>
@@ -67,6 +81,7 @@ const styles = StyleSheet.create({
   changes: { gap: 0 },
   heading: { ...voice.loudKicker, color: colors.newsInk, fontSize: 12, letterSpacing: 1.6, paddingBottom: spacing.xs, borderBottomWidth: 3, borderColor: colors.newsInk },
   nothing: { color: colors.newsDim, fontSize: 13, paddingTop: spacing.s },
+  also: { marginTop: spacing.m },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.s, paddingVertical: 6, borderBottomWidth: 1, borderColor: colors.newsRule },
   mark: { width: 4, height: 14 },
   rowLabel: { flex: 1, color: colors.newsInk, fontSize: 14 },

@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-import { getCapabilityLevel, getCompute, getIncome, getMeters } from '@/engine';
+import { getCompute, getIncome, getMeters } from '@/engine';
 import { Pressable, StyleSheet, Text, View, useWindowDimensions, type ViewStyle } from 'react-native';
 import Animated, { interpolate, interpolateColor, useAnimatedStyle } from 'react-native-reanimated';
 
@@ -18,6 +18,11 @@ import { useGameStore, type GameStore } from '../store/game';
 import { PanelDeco, Stripes } from '../components/Deco';
 import { colors, flatShadow, layout, radius, shape, spacing, voice } from '../theme';
 import { useTutorialTarget } from '../tutorial/targets';
+import { isStuck, useModelStatus } from '../explain/useModelStatus';
+import { Icon, type IconName } from '../icons';
+import { useStripPanel, type StripPanel } from './panels/store';
+import { FitLabel } from './FitLabel';
+import { RaceMeter } from './RaceMeter';
 import { wideShellLayout } from './shellLayout';
 import { StripMeter } from './StripMeter';
 
@@ -27,6 +32,12 @@ const METER_MIN = 54;
 /** Below this strip width the cash income sub-label is dropped so nothing wraps or clips. */
 const ROOM_FOR_INCOME = 880;
 
+/** Below this strip width the resource figures drop their icons (labels and numbers stay). */
+const ROOM_FOR_ICONS = 700;
+
+/** Room for the model readout's warning label ("owns 5 · needs compute"); it abbreviates to "owns 5" below that. */
+const WARN_LABEL_WIDTH = 104;
+
 /** Hazard: the strip stands on a thin band of warning stripes. */
 const TAPE = 4;
 const sticker = shape.panel === 'sticker';
@@ -34,7 +45,7 @@ const sticker = shape.panel === 'sticker';
 /** Candy composure: the strip's stickers lose their colour as the meters rise (level 0..3). */
 const STICKER_DRAIN = [colors.surface, colors.surface, mixColor(colors.surface, colors.drain, 0.55), colors.drain];
 
-const fmtTier = (tier: number) => t('ui.resource.tier', { tier: Math.round(tier) });
+const fmtTier = (tier: number) => t('ui.strip.tier', { tier: Math.round(tier) });
 
 /**
  * Wide-mode header in the calm voice: the mascot and the lab name in serif, then the
@@ -51,6 +62,7 @@ export function TopStrip({ right }: { right?: ReactNode }) {
   const insets = useInsets();
   const { stripWidth } = wideShellLayout(width, height, insets);
   const showIncome = stripWidth >= ROOM_FOR_INCOME;
+  const icons = stripWidth >= ROOM_FOR_ICONS;
   const resourcesRef = useTutorialTarget('shell.resources');
   const metersRef = useTutorialTarget('shell.meters');
   const tagFor = (key: 'regulation' | 'backlash' | 'rival') => (composure.level >= 2 && composure.driver === key ? t(dangerKey(key)) : null);
@@ -92,18 +104,19 @@ export function TopStrip({ right }: { right?: ReactNode }) {
       <View style={styles.rule} />
       <Animated.View style={[styles.statsBox, styles.group, stickerA]}>
         <View style={styles.stats} ref={resourcesRef}>
-          <HypeStat />
-          <CashStat showIncome={showIncome} />
-          <ComputeStat />
-          <TierStat />
+          <HypeStat icons={icons} />
+          <CashStat showIncome={showIncome} icons={icons} />
+          <ComputeStat icons={icons} />
+          <TierStat icons={icons} />
         </View>
       </Animated.View>
       <View style={styles.rule} />
       <Animated.View style={[styles.metersBox, styles.group, stickerB]}>
         <View style={styles.meters} ref={metersRef}>
-          <MeterSlot meter="regulation" label={t('term.regulation')} color={colors.info} tag={tagFor('regulation')} testID="meter-regulation" />
-          <MeterSlot meter="backlash" label={t('term.backlash')} color={colors.alarm} tag={tagFor('backlash')} testID="meter-backlash" />
-          <MeterSlot meter="rival" label={t('term.rival')} color={colors.amber} tag={tagFor('rival')} testID="meter-rival" />
+          <MeterSlot meter="regulation" label={t('term.regulation')} shortLabel={t('ui.strip.short.regulation')} icon="regulation" color={colors.info} tag={tagFor('regulation')} testID="meter-regulation" />
+          <MeterSlot meter="backlash" label={t('term.backlash')} shortLabel={t('ui.strip.short.backlash')} icon="backlash" color={colors.alarm} tag={tagFor('backlash')} testID="meter-backlash" />
+          {/* The third meter is the AGI race: the player against the leading rival (still the composure's "rival" meter). */}
+          <RaceMeter tag={tagFor('rival')} testID="meter-rival" />
         </View>
       </Animated.View>
       {right}
@@ -130,7 +143,6 @@ const selCash = (s: GameStore): Rate => {
   return { v: st.labs[st.playerLabId].cash, rate: getIncome(st, s.pack, st.playerLabId).cash };
 };
 const selCompute = (s: GameStore): number => (s.state ? getCompute(s.state, s.pack, s.state.playerLabId) : 0);
-const selTier = (s: GameStore): number => (s.state ? getCapabilityLevel(s.state, s.pack, s.state.playerLabId) : 0);
 const selTick = (s: GameStore): number => s.state?.tick ?? 0;
 const keyHype = (r: Rate) => fmtCompact(r.v);
 const keyCash = (r: Rate) => `${fmtCash(r.v)}|${fmtCash(r.rate)}|${r.rate >= 0}`;
@@ -138,7 +150,6 @@ const incomeOf = (rate: number) => fmtPerDay(`${rate >= 0 ? '+' : ''}${fmtCash(r
 const meterSelectors = {
   regulation: (s: GameStore) => (s.state ? getMeters(s.state, s.state.playerLabId).regulation : 0),
   backlash: (s: GameStore) => (s.state ? getMeters(s.state, s.state.playerLabId).backlash : 0),
-  rival: (s: GameStore) => (s.state ? getMeters(s.state, s.state.playerLabId).rival : 0),
 };
 /** Half-percent steps: the text shows whole percents, the bar cannot show finer. */
 const keyMeter = (v: number) => Math.floor(v * 2);
@@ -152,20 +163,20 @@ function DayText() {
   );
 }
 
-function HypeStat() {
+function HypeStat({ icons }: { icons: boolean }) {
   const r = useKeyedSelector(selHype, keyHype);
   return (
-    <Stat label={t('term.hype')} target="shell.hype" testID="res-hype" a11y={fmtCompact(r.v)}>
+    <Stat label={t('term.hype')} icon={icons ? 'hype' : undefined} panel="hype" target="shell.hype" testID="res-hype" a11y={fmtCompact(r.v)}>
       <CountingNumber value={r.v} format={fmtCompact} notable={Math.max(2, Math.abs(r.rate) * 3)} style={styles.value} />
     </Stat>
   );
 }
 
-function CashStat({ showIncome }: { showIncome: boolean }) {
+function CashStat({ showIncome, icons }: { showIncome: boolean; icons: boolean }) {
   const r = useKeyedSelector(selCash, keyCash);
   const incomeText = showIncome ? incomeOf(r.rate) : undefined;
   return (
-    <Stat label={t('term.cash')} target="shell.cash" testID="res-cash" a11y={`${fmtCash(r.v)}${incomeText ? ` ${incomeText}` : ''}`}>
+    <Stat label={t('term.cash')} icon={icons ? 'cash' : undefined} panel="cash" target="shell.cash" testID="res-cash" a11y={`${fmtCash(r.v)}${incomeText ? ` ${incomeText}` : ''}`}>
       <View style={styles.valueRow}>
         <CountingNumber value={r.v} format={fmtCash} notable={Math.max(1, Math.abs(r.rate) * 3)} style={styles.value} />
         {incomeText ? (
@@ -178,38 +189,88 @@ function CashStat({ showIncome }: { showIncome: boolean }) {
   );
 }
 
-function ComputeStat() {
+function ComputeStat({ icons }: { icons: boolean }) {
   const v = useKeyedSelector(selCompute, fmtCompact);
   return (
-    <Stat label={t('term.compute')} target="shell.compute" testID="res-compute" a11y={fmtCompact(v)}>
+    <Stat label={t('term.compute')} icon={icons ? 'compute' : undefined} panel="model" target="shell.compute" testID="res-compute" a11y={fmtCompact(v)}>
       <CountingNumber value={v} format={fmtCompact} style={styles.value} />
     </Stat>
   );
 }
 
-function TierStat() {
-  const v = useKeyedSelector(selTier, fmtTier);
+/**
+ * The model readout: the tier running now. When the player owns a better model than the
+ * compute lets them run, the label says so ("owns 5 · needs compute") in the bad colour and a
+ * badge marks the figure; tapping opens the explanation with the numbers.
+ */
+function TierStat({ icons }: { icons: boolean }) {
+  const m = useModelStatus();
+  const stuck = isStuck(m);
+  const label = stuck ? [t('ui.strip.owns', { tier: m.owned }), t('ui.strip.ownsShort', { tier: m.owned })] : [t('term.capability')];
+  const a11y = stuck ? `${fmtTier(m.running)}. ${t('ui.explain.model.stuck', { owned: m.owned, required: m.required, compute: m.compute })}` : fmtTier(m.running);
   return (
-    <Stat label={t('term.capability')} target="shell.tier" testID="res-tier" a11y={fmtTier(v)}>
-      <CountingNumber value={v} format={fmtTier} style={[styles.value, styles.tier]} color={colors.playerText} />
+    <Stat label={label} icon={icons ? 'tier' : undefined} panel="model" target="shell.tier" testID="res-tier" a11y={a11y} warn={stuck}>
+      <View style={styles.valueRow}>
+        <CountingNumber value={m.running} format={fmtTier} style={[styles.value, styles.tier]} color={colors.playerText} />
+        {stuck ? (
+          <View style={styles.badge} testID="tier-badge">
+            <Text style={styles.badgeText}>!</Text>
+          </View>
+        ) : null}
+      </View>
     </Stat>
   );
 }
 
-function MeterSlot({ meter, ...rest }: { meter: keyof typeof meterSelectors; label: string; color: string; tag: string | null; testID: string }) {
+function MeterSlot({ meter, ...rest }: { meter: keyof typeof meterSelectors; label: string; shortLabel: string; icon: IconName; color: string; tag: string | null; testID: string }) {
   const value = useKeyedSelector(meterSelectors[meter], keyMeter);
   return <StripMeter value={value} {...rest} />;
 }
 
-function Stat({ label, a11y, children, target, testID }: { label: string; a11y: string; children: ReactNode; target?: string; testID?: string }) {
+interface StatProps {
+  /** One label, or candidates longest first (the first that fits is shown). */
+  label: string | readonly string[];
+  a11y: string;
+  children: ReactNode;
+  icon?: IconName;
+  /** Panel the figure opens when tapped. */
+  panel?: StripPanel;
+  /** The label is a warning (bad colour). */
+  warn?: boolean;
+  target?: string;
+  testID?: string;
+}
+
+function Stat({ label, a11y, children, icon, panel, warn, target, testID }: StatProps) {
   const tutorialRef = useTutorialTarget(target ?? null);
+  const show = useStripPanel((s) => s.show);
+  const labels = typeof label === 'string' ? [label] : label;
+  const labelStyle = [styles.statLabel, warn && styles.statWarn];
   return (
-    <View style={styles.stat} ref={tutorialRef} testID={testID} accessibilityLabel={`${label} ${a11y}`}>
-      <Text style={styles.statLabel} numberOfLines={1}>
-        {label}
-      </Text>
-      {children}
-    </View>
+    <Pressable
+      style={({ pressed }) => [styles.stat, pressed && styles.pressed]}
+      ref={tutorialRef}
+      testID={testID}
+      onPress={panel ? () => show(panel) : undefined}
+      disabled={!panel}
+      accessibilityRole={panel ? 'button' : undefined}
+      accessibilityLabel={`${labels[0]} ${a11y}`}
+      accessibilityHint={panel ? t('ui.strip.tapHint') : undefined}
+    >
+      {icon ? <Icon name={icon} size={16} color={colors.dim} accent={warn ? colors.bad : colors.player} /> : null}
+      <View style={styles.statText}>
+        {labels.length > 1 ? (
+          <View style={styles.warnBox}>
+            <FitLabel options={labels} style={labelStyle} />
+          </View>
+        ) : (
+          <Text style={labelStyle} numberOfLines={1}>
+            {labels[0]}
+          </Text>
+        )}
+        {children}
+      </View>
+    </Pressable>
   );
 }
 
@@ -236,7 +297,14 @@ const styles = StyleSheet.create({
   group: (sticker
     ? { backgroundColor: colors.surface, borderWidth: shape.outline, borderColor: colors.outline, borderRadius: radius.s, paddingHorizontal: 10, paddingVertical: 1, marginVertical: 3, alignSelf: 'stretch', ...flatShadow(2) }
     : {}) as ViewStyle,
-  stat: { justifyContent: 'center', gap: 1 },
+  stat: { flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'stretch' },
+  statText: { justifyContent: 'center', gap: 1 },
+  pressed: { opacity: 0.6 },
+  statWarn: { color: colors.bad },
+  // The warning label may be wider than the figure but never wider than this: it abbreviates first.
+  warnBox: { width: WARN_LABEL_WIDTH, flexDirection: 'row' },
+  badge: { width: 13, height: 13, borderRadius: 7, backgroundColor: colors.alarm, alignItems: 'center', justifyContent: 'center', alignSelf: 'center' },
+  badgeText: { ...voice.bodyStrong, color: colors.newsPaper, fontSize: 10, lineHeight: 12 },
   statLabel: { ...voice.calmLabel, color: colors.dim, fontSize: 9.5, lineHeight: 11, letterSpacing: voice.calmLabel.letterSpacing },
   valueRow: { flexDirection: 'row', alignItems: 'baseline', gap: spacing.xs },
   value: { ...voice.calmNumber, color: colors.text, fontSize: shape.panel === 'clip' ? 19 : shape.panel === 'ticks' ? 15 : 16, lineHeight: shape.panel === 'clip' ? 20 : 19 },

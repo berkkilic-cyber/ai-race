@@ -8,6 +8,7 @@ import { useInsets } from '../hooks/useInsets';
 import { useGameStore } from '../store/game';
 import { colors, layer, spacing } from '../theme';
 import { diffSnapshots, snapshotPlayer, type StatDelta } from './deltas';
+import { ChoiceInfoSheet } from './ChoiceInfoSheet';
 import { EventCard } from './EventCard';
 import { tapHaptic } from './haptics';
 import { ResultView } from './ResultView';
@@ -34,6 +35,8 @@ export function EventModal() {
   const pack = useGameStore((s) => s.pack);
   const dismiss = useGameStore((s) => s.dismissEventResult);
   const [changes, setChanges] = useState<Changes | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
+  const closeInfo = useCallback(() => setInfo(null), []);
   const insets = useInsets();
 
   const choose = useCallback((choiceId: string) => {
@@ -42,6 +45,7 @@ export function EventModal() {
     if (!before?.pendingEvent) return;
     const eventId = before.pendingEvent.eventId;
     tapHaptic();
+    setInfo(null);
     if (!store.dispatch({ type: 'resolveEvent', labId: before.playerLabId, choiceId }).ok) return;
     const after = useGameStore.getState();
     if (!after.state) return;
@@ -62,7 +66,7 @@ export function EventModal() {
 
   let content = null;
   if (pendingEvent && pendingState) {
-    content = <EventCard key={`card-${pendingEvent.id}`} event={pendingEvent} state={pendingState} pack={pack} onChoose={choose} />;
+    content = <EventCard key={`card-${pendingEvent.id}`} event={pendingEvent} state={pendingState} pack={pack} onChoose={choose} onInfo={setInfo} />;
   } else if (resultEvent && result && playerLabId) {
     const deltas = changes && changes.eventId === result.eventId && changes.choiceId === result.choiceId ? changes.deltas : null;
     content = <ResultView key={`result-${result.eventId}`} event={resultEvent} result={result} playerLabId={playerLabId} deltas={deltas} onContinue={onContinue} />;
@@ -80,6 +84,10 @@ export function EventModal() {
       >
         {content}
       </Animated.View>
+      {/* A choice's explanation, as the shared side panel over the card (closes on an outside tap). */}
+      {pendingEvent && pendingState ? (
+        <ChoiceInfoSheet choice={info ? (pendingEvent.choices.find((c) => c.id === info) ?? null) : null} state={pendingState} pack={pack} onClose={closeInfo} />
+      ) : null}
     </Overlay>
   );
 }

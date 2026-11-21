@@ -1,4 +1,4 @@
-import type { Effect, Stat } from '@/engine';
+import type { ChannelDef, Effect, Stat } from '@/engine';
 
 /** What a hint chip is about. Each maps to a caption key in `HINT_LABEL_KEYS`. */
 export type HintSubject =
@@ -13,7 +13,8 @@ export type HintSubject =
   | 'dataCentres'
   | 'costs'
   | 'risk'
-  | 'rivals';
+  | 'rivals'
+  | 'spread';
 
 export type HintDirection = 'up' | 'down';
 
@@ -40,6 +41,7 @@ export const HINT_LABEL_KEYS: Record<HintSubject, string> = {
   costs: 'ui.events.hint.costs',
   risk: 'ui.events.hint.risk',
   rivals: 'ui.events.hint.rivals',
+  spread: 'ui.events2.hint.spread',
 };
 
 /** For each modifier stat: the chip it shows as, and whether raising it is good for the lab it lands on. */
@@ -103,6 +105,18 @@ function targetOf(effect: Effect): string {
   return 'target' in effect && effect.target ? effect.target : 'self';
 }
 
+/**
+ * Chips for a flag that grants a spread channel for a while ("channel:<id>"): faster spread
+ * for the player and, for an 'open' channel, faster spread for every rival too.
+ */
+export function channelFlagHints(effect: Effect, channels: readonly ChannelDef[] = []): EffectHint[] {
+  if (effect.type !== 'setFlag' || !effect.flag.startsWith('channel:')) return [];
+  const def = channels.find((c) => c.id === effect.flag.slice('channel:'.length));
+  const out: EffectHint[] = [{ subject: 'spread', dir: 'up', good: true }];
+  if (def?.kind === 'open') out.push({ subject: 'rivals', dir: 'up', good: false });
+  return out;
+}
+
 /** The hint for one effect from the player's point of view: effects aimed at rivals become a `rivals` chip. */
 export function effectHint(effect: Effect): EffectHint | null {
   const hint = hintForTarget(effect);
@@ -113,16 +127,17 @@ export function effectHint(effect: Effect): EffectHint | null {
 }
 
 /** Hint chips for a choice's effects, in effect order, one per subject and direction. */
-export function effectHints(effects: readonly Effect[]): EffectHint[] {
+export function effectHints(effects: readonly Effect[], channels: readonly ChannelDef[] = []): EffectHint[] {
   const out: EffectHint[] = [];
   const seen = new Set<string>();
   for (const effect of effects) {
-    const hint = effectHint(effect);
-    if (!hint) continue;
-    const key = `${hint.subject}:${hint.dir}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
-    out.push(hint);
+    const single = effectHint(effect);
+    for (const hint of single ? [single] : channelFlagHints(effect, channels)) {
+      const key = `${hint.subject}:${hint.dir}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push(hint);
+    }
   }
   return out;
 }

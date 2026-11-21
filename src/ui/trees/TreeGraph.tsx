@@ -3,8 +3,9 @@ import { ScrollView, StyleSheet, View, type LayoutChangeEvent, type ScrollViewIn
 import Svg, { Path } from 'react-native-svg';
 import { useShallow } from 'zustand/react/shallow';
 
-import { getNodeCost, type TreeId } from '@/engine';
+import { getComputeRequired, getNodeCost, type TreeId } from '@/engine';
 
+import { useModelStatus } from '../explain/useModelStatus';
 import { t } from '../i18n';
 import { useGameStore } from '../store/game';
 import { colors, shape, spacing } from '../theme';
@@ -57,6 +58,8 @@ const DASH_READY = [4, 4];
 function TreeGraphImpl({ tree, flash, onSelect, horizontal, selected, insetRight }: TreeGraphProps) {
   const pack = useGameStore((s) => s.pack);
   const nodes = useMemo(() => treeNodes(pack, tree), [pack, tree]);
+  // Model nodes show the compute their tier needs; compute changes with data centres, not every tick.
+  const { compute } = useModelStatus();
   const [size, setSize] = useState({ width: 0, height: 0 });
   const layout = useMemo(() => {
     if (size.width <= 0) return null;
@@ -140,6 +143,9 @@ function TreeGraphImpl({ tree, flash, onSelect, horizontal, selected, insetRight
             rect={rect}
             flashKey={flash?.nodeId === node.id ? flash.key : 0}
             onPress={onSelect}
+            computeNeed={node.capabilityLevel !== undefined ? getComputeRequired(pack, node.capabilityLevel) : undefined}
+            computeShort={node.capabilityLevel !== undefined && getComputeRequired(pack, node.capabilityLevel) > compute}
+            computeHave={compute}
           />
         );
       })}
