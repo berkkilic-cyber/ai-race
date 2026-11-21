@@ -8,7 +8,7 @@ import { StartScreen } from '@/ui/start';
  * the chunk. Started here, at module evaluation, the import loads the chunks quietly, and
  * the start screen waits for it before entering the game. On native it resolves at once.
  */
-const gameRoutes: Promise<unknown> = Promise.all([import('./game/_layout'), import('./game/index'), import('./game/trees'), import('./game/news'), import('./game/race')]).catch(() => undefined);
+const gameRoutes: Promise<unknown> = Promise.all([import('./game/_layout'), import('./game/index'), import('./game/trees'), import('./game/news'), import('./game/race'), import('./garage')]).catch(() => undefined);
 
 export default function StartRoute() {
   return <StartScreen beforeEnter={gameRoutes} />;
