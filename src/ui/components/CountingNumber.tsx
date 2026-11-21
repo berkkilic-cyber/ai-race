@@ -20,6 +20,8 @@ export interface CountingNumberProps {
 }
 
 const COUNT_MS = 320;
+/** The count shows at most one new figure per this many ms (about 6 steps per count). */
+const COUNT_STEP_MS = 55;
 
 /** Ease-out cubic. */
 function ease(t: number): number {
@@ -29,10 +31,15 @@ function ease(t: number): number {
 /**
  * A number that counts to its new value. A notable gain pops slightly (and flashes good),
  * a notable loss dips (and flashes bad). Reduced motion: no count, no movement, colour only.
+ *
+ * Cost: an ordinary change (no larger than `notable`, such as income per tick) shows the new
+ * figure in the same render as the tick, with no extra React work. Only a notable change
+ * counts, in a few throttled steps that re-render only when the formatted text changes.
  */
 export const CountingNumber = memo(function CountingNumber({ value, format, notable = 0, style, color = colors.text, numberOfLines = 1, testID }: CountingNumberProps) {
   const reduced = useReducedMotion();
-  const [shown, setShown] = useState(value);
+  /** The figure while a count runs; null shows `value` itself. */
+  const [counting, setCounting] = useState<number | null>(null);
   const shownRef = useRef(value);
   const prev = useRef(value);
   const scale = useSharedValue(1);
@@ -44,8 +51,9 @@ export const CountingNumber = memo(function CountingNumber({ value, format, nota
     const delta = value - prev.current;
     prev.current = value;
     if (delta === 0) return;
+    const isNotable = Math.abs(delta) > notable;
 
-    if (Math.abs(delta) > notable) {
+    if (isNotable) {
       const up = delta > 0;
       flash.set(withSequence(withTiming(up ? 1 : -1, { duration: 60 }), withTiming(0, { duration: motion.slow, easing: Easing.out(Easing.quad) })));
       if (!reduced) {
@@ -54,23 +62,32 @@ export const CountingNumber = memo(function CountingNumber({ value, format, nota
       }
     }
 
-    if (reduced) {
+    if (reduced || !isNotable) {
       shownRef.current = value;
-      setShown(value);
+      setCounting(null);
       return;
     }
-    let frame = 0;
+    let timer: ReturnType<typeof setTimeout> | undefined;
     const start = Date.now();
+    let lastText = format(from);
     const step = () => {
       const t = Math.min(1, (Date.now() - start) / COUNT_MS);
       const v = t >= 1 ? value : from + (value - from) * ease(t);
       shownRef.current = v;
-      setShown(v);
-      if (t < 1) frame = requestAnimationFrame(step);
+      if (t >= 1) {
+        setCounting(null);
+        return;
+      }
+      const text = format(v);
+      if (text !== lastText) {
+        lastText = text;
+        setCounting(v);
+      }
+      timer = setTimeout(step, COUNT_STEP_MS);
     };
-    frame = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(frame);
-  }, [value, notable, reduced, scale, shift, flash]);
+    step();
+    return () => clearTimeout(timer);
+  }, [value, notable, reduced, scale, shift, flash, format]);
 
   const animated = useAnimatedStyle(() => ({
     color: interpolateColor(flash.get(), [-1, 0, 1], [colors.bad, color, colors.goodText]),
@@ -79,7 +96,7 @@ export const CountingNumber = memo(function CountingNumber({ value, format, nota
 
   return (
     <Animated.Text style={[style, animated]} numberOfLines={numberOfLines} testID={testID}>
-      {format(shown)}
+      {format(counting ?? value)}
     </Animated.Text>
   );
 });

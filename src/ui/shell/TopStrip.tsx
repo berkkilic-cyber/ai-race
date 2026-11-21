@@ -1,17 +1,19 @@
 import type { ReactNode } from 'react';
+
+import { getCapabilityLevel, getCompute, getIncome, getMeters } from '@/engine';
 import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import Animated, { interpolateColor, useAnimatedStyle } from 'react-native-reanimated';
 
 import { CountingNumber } from '../components/CountingNumber';
 import { dangerKey, useComposure, useComposureProgress } from '../composure';
 import { fmtCash, fmtCompact, fmtDay, fmtPerDay } from '../format';
-import { useMeters, useResources } from '../hooks/useGame';
+import { useKeyedSelector } from '../hooks/useKeyedSelector';
 import { useInsets } from '../hooks/useInsets';
 import { labName, t } from '../i18n';
 import { DEBUG_LONG_PRESS_MS } from '../diagnostics/BuildStamp';
 import { toggleTouchDebug } from '../map/touchDebug';
 import { Mascot, useMascotMood } from '../mascot';
-import { useGameStore } from '../store/game';
+import { useGameStore, type GameStore } from '../store/game';
 import { colors, layout, spacing, voice } from '../theme';
 import { useTutorialTarget } from '../tutorial/targets';
 import { wideShellLayout } from './shellLayout';
@@ -33,17 +35,13 @@ const fmtTier = (tier: number) => t('ui.resource.tier', { tier: Math.round(tier)
  */
 export function TopStrip({ right }: { right?: ReactNode }) {
   const name = useGameStore((s) => (s.state ? labName(s.state.labs[s.state.playerLabId]) : ''));
-  const tick = useGameStore((s) => s.state?.tick ?? 0);
-  const r = useResources();
-  const m = useMeters();
   const mood = useMascotMood();
   const composure = useComposure();
   const progress = useComposureProgress();
   const { width, height } = useWindowDimensions();
   const insets = useInsets();
   const { stripWidth } = wideShellLayout(width, height, insets);
-  const income = r.cashPerDay;
-  const incomeText = stripWidth >= ROOM_FOR_INCOME ? fmtPerDay(`${income >= 0 ? '+' : ''}${fmtCash(income)}`) : undefined;
+  const showIncome = stripWidth >= ROOM_FOR_INCOME;
   const resourcesRef = useTutorialTarget('shell.resources');
   const metersRef = useTutorialTarget('shell.meters');
   const tagFor = (key: 'regulation' | 'backlash' | 'rival') => (composure.level >= 2 && composure.driver === key ? t(dangerKey(key)) : null);
@@ -66,43 +64,114 @@ export function TopStrip({ right }: { right?: ReactNode }) {
           <Text style={styles.name} numberOfLines={1}>
             {name}
           </Text>
-          <Text style={styles.day} numberOfLines={1}>
-            {fmtDay(tick)}
-          </Text>
+          <DayText />
         </View>
       </View>
       <View style={styles.rule} />
       <View style={styles.stats} ref={resourcesRef}>
-        <Stat label={t('term.hype')} target="shell.hype" testID="res-hype" a11y={fmtCompact(r.hype)}>
-          <CountingNumber value={r.hype} format={fmtCompact} notable={Math.max(2, Math.abs(r.hypePerDay) * 3)} style={styles.value} />
-        </Stat>
-        <Stat label={t('term.cash')} target="shell.cash" testID="res-cash" a11y={`${fmtCash(r.cash)}${incomeText ? ` ${incomeText}` : ''}`}>
-          <View style={styles.valueRow}>
-            <CountingNumber value={r.cash} format={fmtCash} notable={Math.max(1, Math.abs(income) * 3)} style={styles.value} />
-            {incomeText ? (
-              <Text style={[styles.sub, { color: income >= 0 ? colors.goodText : colors.bad }]} numberOfLines={1}>
-                {incomeText}
-              </Text>
-            ) : null}
-          </View>
-        </Stat>
-        <Stat label={t('term.compute')} target="shell.compute" testID="res-compute" a11y={fmtCompact(r.compute)}>
-          <CountingNumber value={r.compute} format={fmtCompact} style={styles.value} />
-        </Stat>
-        <Stat label={t('term.capability')} target="shell.tier" testID="res-tier" a11y={fmtTier(r.tier)}>
-          <CountingNumber value={r.tier} format={fmtTier} style={[styles.value, styles.tier]} color={colors.playerText} />
-        </Stat>
+        <HypeStat />
+        <CashStat showIncome={showIncome} />
+        <ComputeStat />
+        <TierStat />
       </View>
       <View style={styles.rule} />
       <View style={styles.meters} ref={metersRef}>
-        <StripMeter label={t('term.regulation')} value={m.regulation} color={colors.info} tag={tagFor('regulation')} testID="meter-regulation" />
-        <StripMeter label={t('term.backlash')} value={m.backlash} color={colors.alarm} tag={tagFor('backlash')} testID="meter-backlash" />
-        <StripMeter label={t('term.rival')} value={m.rival} color={colors.amber} tag={tagFor('rival')} testID="meter-rival" />
+        <MeterSlot meter="regulation" label={t('term.regulation')} color={colors.info} tag={tagFor('regulation')} testID="meter-regulation" />
+        <MeterSlot meter="backlash" label={t('term.backlash')} color={colors.alarm} tag={tagFor('backlash')} testID="meter-backlash" />
+        <MeterSlot meter="rival" label={t('term.rival')} color={colors.amber} tag={tagFor('rival')} testID="meter-rival" />
       </View>
       {right}
       <Animated.View style={[styles.composureRule, ruleStyle]} pointerEvents="none" testID="composure-rule" />
     </View>
   );
+}
+
+// Each figure subscribes to what it shows (the formatted text, a whole or half percent),
+// not to the raw numbers, which change every tick: a tick re-renders only the figures whose
+// text changed, and the strip itself not at all.
+
+type Rate = { v: number; rate: number };
+const NONE: Rate = { v: 0, rate: 0 };
+const selHype = (s: GameStore): Rate => {
+  const st = s.state;
+  if (!st) return NONE;
+  return { v: st.labs[st.playerLabId].hype, rate: getIncome(st, s.pack, st.playerLabId).hype };
+};
+const selCash = (s: GameStore): Rate => {
+  const st = s.state;
+  if (!st) return NONE;
+  return { v: st.labs[st.playerLabId].cash, rate: getIncome(st, s.pack, st.playerLabId).cash };
+};
+const selCompute = (s: GameStore): number => (s.state ? getCompute(s.state, s.pack, s.state.playerLabId) : 0);
+const selTier = (s: GameStore): number => (s.state ? getCapabilityLevel(s.state, s.pack, s.state.playerLabId) : 0);
+const selTick = (s: GameStore): number => s.state?.tick ?? 0;
+const keyHype = (r: Rate) => fmtCompact(r.v);
+const keyCash = (r: Rate) => `${fmtCash(r.v)}|${fmtCash(r.rate)}|${r.rate >= 0}`;
+const incomeOf = (rate: number) => fmtPerDay(`${rate >= 0 ? '+' : ''}${fmtCash(rate)}`);
+const meterSelectors = {
+  regulation: (s: GameStore) => (s.state ? getMeters(s.state, s.state.playerLabId).regulation : 0),
+  backlash: (s: GameStore) => (s.state ? getMeters(s.state, s.state.playerLabId).backlash : 0),
+  rival: (s: GameStore) => (s.state ? getMeters(s.state, s.state.playerLabId).rival : 0),
+};
+/** Half-percent steps: the text shows whole percents, the bar cannot show finer. */
+const keyMeter = (v: number) => Math.floor(v * 2);
+
+function DayText() {
+  const tick = useKeyedSelector(selTick, fmtDay);
+  return (
+    <Text style={styles.day} numberOfLines={1}>
+      {fmtDay(tick)}
+    </Text>
+  );
+}
+
+function HypeStat() {
+  const r = useKeyedSelector(selHype, keyHype);
+  return (
+    <Stat label={t('term.hype')} target="shell.hype" testID="res-hype" a11y={fmtCompact(r.v)}>
+      <CountingNumber value={r.v} format={fmtCompact} notable={Math.max(2, Math.abs(r.rate) * 3)} style={styles.value} />
+    </Stat>
+  );
+}
+
+function CashStat({ showIncome }: { showIncome: boolean }) {
+  const r = useKeyedSelector(selCash, keyCash);
+  const incomeText = showIncome ? incomeOf(r.rate) : undefined;
+  return (
+    <Stat label={t('term.cash')} target="shell.cash" testID="res-cash" a11y={`${fmtCash(r.v)}${incomeText ? ` ${incomeText}` : ''}`}>
+      <View style={styles.valueRow}>
+        <CountingNumber value={r.v} format={fmtCash} notable={Math.max(1, Math.abs(r.rate) * 3)} style={styles.value} />
+        {incomeText ? (
+          <Text style={[styles.sub, { color: r.rate >= 0 ? colors.goodText : colors.bad }]} numberOfLines={1}>
+            {incomeText}
+          </Text>
+        ) : null}
+      </View>
+    </Stat>
+  );
+}
+
+function ComputeStat() {
+  const v = useKeyedSelector(selCompute, fmtCompact);
+  return (
+    <Stat label={t('term.compute')} target="shell.compute" testID="res-compute" a11y={fmtCompact(v)}>
+      <CountingNumber value={v} format={fmtCompact} style={styles.value} />
+    </Stat>
+  );
+}
+
+function TierStat() {
+  const v = useKeyedSelector(selTier, fmtTier);
+  return (
+    <Stat label={t('term.capability')} target="shell.tier" testID="res-tier" a11y={fmtTier(v)}>
+      <CountingNumber value={v} format={fmtTier} style={[styles.value, styles.tier]} color={colors.playerText} />
+    </Stat>
+  );
+}
+
+function MeterSlot({ meter, ...rest }: { meter: keyof typeof meterSelectors; label: string; color: string; tag: string | null; testID: string }) {
+  const value = useKeyedSelector(meterSelectors[meter], keyMeter);
+  return <StripMeter value={value} {...rest} />;
 }
 
 function Stat({ label, a11y, children, target, testID }: { label: string; a11y: string; children: ReactNode; target?: string; testID?: string }) {

@@ -24,7 +24,8 @@ import { useTutorialTarget } from '../tutorial/targets';
 import { t } from '../i18n';
 import { newsText } from '../news/newsText';
 import { useUnreadCount } from '../news/useNews';
-import { useGameStore } from '../store/game';
+import { useKeyedSelector } from '../hooks/useKeyedSelector';
+import { type GameStore } from '../store/game';
 import { crawlGeometry } from './crawl';
 import { colors, layout, spacing, touch, voice } from '../theme';
 
@@ -37,6 +38,8 @@ const HOLD_MS = 1600;
 const RECENT = 6;
 const MAX_BADGE = 99;
 const EMPTY: readonly NewsItem[] = [];
+const selNews = (s: GameStore) => s.state?.news ?? EMPTY;
+const keyNews = (news: readonly { tick: number; textKey: string }[]) => `${news.length}:${news[news.length - 1]?.tick ?? -1}:${news[news.length - 1]?.textKey ?? ''}`;
 
 /**
  * The one loud element of the resting shell: recent headlines crawling in condensed
@@ -57,7 +60,8 @@ const EMPTY: readonly NewsItem[] = [];
  */
 export function Ticker() {
   const router = useRouter();
-  const news = useGameStore((s) => s.state?.news ?? EMPTY);
+  // Re-renders when a headline arrives, not on every tick (the state, and its news array, are new each tick).
+  const news = useKeyedSelector(selNews, keyNews);
   const unread = useUnreadCount();
   const wide = useWide();
   const insets = useInsets();

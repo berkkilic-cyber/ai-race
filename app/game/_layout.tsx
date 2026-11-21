@@ -11,6 +11,7 @@ import { AmbientProvider } from '@/ui/motion/ambient';
 import { ComposureStage, useTremble } from '@/ui/shell/ComposureStage';
 import { GameHeader } from '@/ui/shell/GameHeader';
 import { useShellStyles } from '@/ui/shell/shellStyles';
+import { renderFrozenTab } from '@/ui/shell/tabSlot';
 import { TabButton } from '@/ui/shell/TabButton';
 import { Ticker } from '@/ui/shell/Ticker';
 import { TickerDock } from '@/ui/shell/TickerDock';
@@ -30,7 +31,8 @@ import { TutorialHost } from '@/ui/tutorial';
  * Safe areas: no SafeAreaView here. useShellStyles places the rail and the main column from
  * the insets (useInsets), once. TabList uses asChild so expo-router does not wrap it in its
  * own SafeAreaView (which added the left inset a second time inside the rail); it stays a
- * direct child of Tabs as expo-router requires.
+ * direct child of Tabs as expo-router requires. Hidden tabs are frozen (renderFrozenTab):
+ * they keep their state but skip the per-tick renders until shown again.
  */
 export default function GameLayout() {
   useGameLoop();
@@ -55,7 +57,7 @@ function GameShell() {
           <View style={shell.main}>
             <GameHeader />
             <ComposureStage>
-              <TabSlot style={styles.slot} />
+              <TabSlot style={styles.slot} renderFn={renderFrozenTab} />
             </ComposureStage>
             <TickerDock>
               <Ticker />
