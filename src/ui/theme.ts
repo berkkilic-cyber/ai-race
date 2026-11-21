@@ -87,6 +87,8 @@ export interface Palette {
   drain: string;
   /** The shell's chrome: top strip and tab rail. */
   chrome: string;
+  /** Accent of the shadow tree (shady tactics): the bad colour, except where red is kept for danger alone (neon: amber). */
+  shady: string;
 }
 
 const paper: Palette = {
@@ -129,6 +131,7 @@ const paper: Palette = {
   mark: '#C8102E',
   drain: '#F4EFE6',
   chrome: '#F4EFE6',
+  shady: '#C8102E',
 };
 
 const night: Palette = {
@@ -171,6 +174,7 @@ const night: Palette = {
   mark: '#FF4D5E',
   drain: '#11100E',
   chrome: '#11100E',
+  shady: '#FF4D5E',
 };
 
 /**
@@ -217,6 +221,7 @@ const blueprint: Palette = {
   mark: '#FF3B3B',
   drain: '#A3162B',
   chrome: '#0B3CA6',
+  shady: '#FFC2C2',
 };
 
 /**
@@ -263,6 +268,7 @@ const hazard: Palette = {
   mark: '#FF2A1F',
   drain: '#2A0806',
   chrome: '#17191C',
+  shady: '#FF6A5E',
 };
 
 /**
@@ -309,6 +315,7 @@ const candy: Palette = {
   mark: '#E8003A',
   drain: '#CFCDD6',
   chrome: '#E4D8FF',
+  shady: '#B3002A',
 };
 
 /**
@@ -357,6 +364,7 @@ const neon: Palette = {
   mark: '#FF2D3D',
   drain: '#2B1114',
   chrome: '#131416',
+  shady: '#FFB21E',
 };
 
 /** Every palette (tests check contrast on each). */

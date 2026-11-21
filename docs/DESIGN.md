@@ -12,7 +12,7 @@ This document defines the game's own identity: the concept, which every theme fo
 
 Six themes with identical token names, chosen at build time by `EXPO_PUBLIC_THEME` (`neon`, `blueprint`, `hazard`, `candy`, and the retired `paper` and `night`; unset or anything else gives the default, `neon`, `DEFAULT_THEME` in `src/ui/theme.ts`). A theme is three things, all in `src/ui/theme.ts` and nowhere else:
 
-- a **palette** (`palettes`): every colour token, including the theme-only ones (`grid`, `gridMajor`, `stripeA`, `stripeB`, `outline`, `shadow`, `mark`, `drain`, `chrome`);
+- a **palette** (`palettes`): every colour token, including the theme-only ones (`grid`, `gridMajor`, `stripeA`, `stripeB`, `outline`, `shadow`, `mark`, `drain`, `chrome`, and `shady`, the shadow tree's accent: the bad colour everywhere except neon, where it is amber so that red stays for danger);
 - a **shape language** (`shapes`): corner radii, line weights, flat shadow offset, button depth, clipped-corner size, the glow on active elements (`glow`), and which decoration panels, tree tiles, the ground, the composure overlays and the mascot use (`panel`, `tile`, `ground`, `composure`, `mascot`, `stamp`), plus how rival colours are kept apart from the player and the alarm (`rivalHue`, `rivalLift`, `rivalAlarmHue`, `rivalSat`);
 - a **type pairing** (`themeFontFaces`, `voice`).
 

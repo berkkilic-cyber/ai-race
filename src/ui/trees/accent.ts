@@ -6,5 +6,5 @@ import { colors } from '../theme';
 export const TREE_ACCENT: Record<TreeId, string> = {
   capability: colors.info,
   reach: colors.good,
-  shadow: colors.bad,
+  shadow: colors.shady,
 };
