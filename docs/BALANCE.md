@@ -1,6 +1,94 @@
 # Balance
 
-## Task 12: moments, launch news, spread channels (current numbers)
+## Task 12b: moments retune (current numbers)
+
+Goal: tapping should feel rewarding but not decide the run. The first moments pass let tap skill swing the sensible bot from 21.1% (never taps) to 59.1% (taps everything), 38 points. Target: at most about 20 to 25 points across `momentSkill` 0 / 0.4 / 0.7 / 1.0, skill 0 at about 30% or more, skill 1.0 at about 55% or less, every target below still met at 0.7.
+
+### What drives the swing (probes, seeds 1 and 3, 300 to 600 runs)
+
+- **Hype is almost all of it.** With every boost's Hype set to 0, skill 1.0 won 22% (the same as skill 0). With every boost's Cash set to 0, nothing moved (61.7% vs 57.7%). Cash ends most runs unspent, so Cash rewards feel good and cost almost no balance.
+- **Threats do not matter for the win rate.** Removing every threat penalty moved skill 0 from 31.2% to 30.8%.
+- **Spread is not free either.** A `spreadRate` ×1.25 buff for 30 ticks on the most common boost (viral post) was worth about 7 points at skill 1.0; ×1.2 for 20 ticks is about half that.
+- **Skill 0 is set by `aiAgiFactor` alone** (nothing is tapped), so the floor and the spread are separate knobs: moment rewards set the spread, the rivals' clock sets where it sits.
+
+### Changes
+
+Moments (`moments.json`; text and icons unchanged, every name still fits its effect):
+
+| Moment | Old | New |
+| --- | --- | --- |
+| viral-post | Hype 5.5 + 11.1 ticks of income | Hype 2.2 + 4.5 ticks; spread ×1.2 for 20 ticks |
+| glowing-review | Hype 3.7 + 9.2 | Hype 1.5 + 3.8; backlash −0.6 |
+| angel-wire | Cash 11 + 8.8 | Cash 14 + 10 |
+| intern-bugfix | Cash 6.6 + 6.6 | Cash 8 + 8 |
+| celebrity-mention | Hype 7.4 + 14.8 | Hype 3 + 6; adoption ×1.03 in that region |
+| campus-adoption | adoption ×1.04; Hype 1.8 + 5.5 | adoption ×1.06; Hype 0.8 + 2.2 |
+| dock-gpus | compute +2 | unchanged |
+| mascot-meme | Hype 5.5 + 11.1; backlash −1 | Hype 1.9 + 3.8; backlash −1.5 |
+| keynote-slot | Hype 9.2 + 16.6 | Hype 2.2 + 4.5; Hype income ×1.5 for 20 ticks |
+| leaderboard-win | Hype 5.5 + 11.1; AGI +0.3 | Hype 1.9 + 3.8; AGI +0.4 |
+| cheap-power | Cash 4.4 + 11 | Cash 6 + 12 |
+| sovereign-fund | Cash 11 + 15.4 | Cash 14 + 16 |
+| rival-recruiter (threat) | AGI −0.3 (permanent) | AGI rate ×0.85 for 40 ticks |
+| prompt-injection (threat) | Hype −8% | Hype −5% |
+| site-protest (threat) | backlash +0.6; adoption ×0.93 | backlash +0.6; adoption ×0.95 |
+
+Boost Hype is about 40% of what it was; each boost still gives a visible amount plus a second, less compounding reward. A pack test (`aiLabPack.test.ts`) keeps boost Hype at most 4 + 8 ticks of income and threat penalties modest and temporary.
+
+Pack balance (`balance.json`):
+
+| Constant | Old | New | Reason |
+| --- | --- | --- | --- |
+| aiAgiFactor | 1.3 | 1.18 | Rivals carried the old 10% moment Hype; the player now gains about 4% at skill 0.7. Also lifts skill 0 to about 30%. |
+| momentIntervalMin / Max | 30 / 54 (engine default) | 36 / 64 | Moments came every 35 ticks (17.5 s at 1x), faster than the 20 to 40 s aimed for; now every 42 ticks (21 s). |
+| acquireBaseCost | 500 | 550 | Slower rivals made the shadow route stronger (70.5% at seed 3); 600 gave shadow 65% but cut sensible monopoly towards 3%. |
+| dependenceShare | 0.45 | 0.43 | Slower rivals moved reach wins from dependence to AGI: reach dependence fell to 22.0% (seed 2028), under the 25% target. 0.43 gives 29.1%; random stays at 5.5%. |
+
+Balance script: `--moments file.json` swaps the pack's moments for a sweep; Hype-rate buffs from tapped moments now count as moment Hype (the extra income while the buff runs); the report gives how often a moment appears.
+
+### Results (seed 2029, 1,000 runs per policy, not used for tuning)
+
+| Policy     | Runs | Win   | agi   | dependence | monopoly | banned | revolt | rivalAgi | Ticks p10/p50/p90  |
+| ---------- | ---- | ----- | ----- | ---------- | -------- | ------ | ------ | -------- | ------------------ |
+| sensible   | 1000 | 45.6% | 26.6% | 15.3%      | 3.7%     | 11.5%  | 8.8%   | 34.1%    | 1724 / 2871 / 3219 |
+| capability | 1000 | 41.8% | 30.5% | 11.1%      | 0.2%     | 16.2%  | 13.5%  | 28.5%    | 1697 / 2770 / 3248 |
+| reach      | 1000 | 49.0% | 15.1% | 29.1%      | 4.8%     | 17.5%  | 11.7%  | 21.8%    | 1425 / 2629 / 3205 |
+| shadow     | 1000 | 70.5% | 23.1% | 13.6%      | 33.8%    | 11.1%  | 6.9%   | 11.5%    | 1656 / 2548 / 3041 |
+| random     | 1000 | 7.9%  | 2.4%  | 5.5%       | 0.0%     | 76.0%  | 14.8%  | 1.3%     | 1396 / 1794 / 2518 |
+| idle       | 1000 | 0.0%  | 0.0%  | 0.0%       | 0.0%     | 0.0%   | 0.0%   | 100.0%   | 2617 / 3194 / 3303 |
+
+Win rate by moment skill (seed 2029, 1,000 runs each; moment share = moment income ÷ (moments + income)):
+
+| momentSkill | sensible | capability | Tapped / missed (sensible, median) | Moment share of Hype / Cash (sensible) |
+| --- | --- | --- | --- | --- |
+| 0 | 33.8% | 30.2% | 0 / 67 | 0% / 0% |
+| 0.4 | 39.6% | 33.2% | 26 / 40 | 2.4% / 1.2% |
+| 0.7 | 45.6% | 41.8% | 47 / 20 | 4.1% / 2.0% |
+| 1.0 | 52.0% | 44.6% | 67 / 0 | 5.9% / 2.7% |
+
+Spread from skill 0 to 1.0: **18.2 points** for sensible (was 38.0), 14.4 for capability. On seed 2028 (before the `dependenceShare` change) the sensible spread was 31.3% → 51.7%, 20.4 points. A moment appears every 42 ticks of a median run (about 21 s at 1x); sensible at 0.7 taps 47 and misses 20 per run, median 105 Hype and 91 Cash from moments.
+
+### Against the targets (sensible and focused policies at momentSkill 0.7)
+
+| # | Target | Result | Met |
+| --- | --- | --- | --- |
+| 1 | sensible wins 30 to 60%; median 2,400 to 3,600 ticks; p10 > 1,500; p90 < 4,800 | 45.6%; 2,871; 1,724; 3,219 | yes |
+| 2 | idle ≤ 2%, random ≤ 20% | 0.0%, 7.9% | yes |
+| 3 | every trigger ≥ 3% for sensible; each win ≥ 25% for its focused policy | lowest monopoly 3.7%; agi 30.5% (capability), dependence 29.1% (reach), monopoly 33.8% (shadow) | yes |
+| 4 | rivals eliminate themselves in < 20% of appearances; lead rival AGI > 50 in most player wins | 8.1%; 70.0% of wins | yes |
+| 5 | typical sensible win owns about 18 to 30 nodes; buying every rival rare | win nodes p10/p50/p90 27/29/33; every rival bought 0.3% | yes (top of range, as before) |
+| 6 | first node ≤ ~60, first data centre ≤ ~250, something every 60 to 120 ticks | tick 1, tick 1; purchase gap median 60, p75 100, p90 140 | yes |
+| 7 | no founder < 20% or > 70%; flag regions < 10% or > 85% | founders 41.4% to 53.6%; regions 33.3% to 72.0% (nigeria) | yes |
+
+### In tension
+
+- **Shadow vs sensible monopoly.** Shadow wins 70.5% on seed 2029 (67.5% on seed 2028), right at the "under about 70%" line. Raising `acquireBaseCost` to 600 brings it to about 65% but pulls sensible monopoly (3.7% here) to about 3%, the floor of target 3. The two pull on the same lever; 550 is the middle.
+- **Capability AGI** was 26.6% on seed 2028 and 30.5% on seed 2029: above 25%, within seed noise of the limit.
+- Lowering the swing further is easy (boost Hype × 0.7 gave about 15 points) but makes tapping matter little; the current numbers keep a visible gain at every skill step.
+
+---
+
+## Task 12: moments, launch news, spread channels (historical)
 
 Seed **2026**, 1,000 runs per policy (6,000 runs in about 390 s on 2 workers, so 1,000 runs take about 65 s of wall time here while sharing the machine; the jest budget test, 200 headless runs with moments in under 12 s, passes). Bots tap moments with `momentSkill` 0.7 (sensible and the focused policies), 0.3 (random), 0 (idle).
 
