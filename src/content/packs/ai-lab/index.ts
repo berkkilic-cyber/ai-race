@@ -13,6 +13,7 @@ import type {
   RegionDef,
   RegionId,
   RivalDef,
+  RunLengthDef,
 } from '@/engine/types';
 
 import achievements from './achievements.json';
@@ -29,6 +30,7 @@ import moments from './moments.json';
 import nodes from './nodes.json';
 import regions from './regions.json';
 import rivals from './rivals.json';
+import runLengths from './runLengths.json';
 import en from './strings/en.json';
 
 /**
@@ -53,6 +55,8 @@ export const aiLabPack: ContentPack = {
   balance,
   difficulties: difficulties as DifficultyDef[],
   defaultDifficulty: 'frontier',
+  runLengths: runLengths as RunLengthDef[],
+  defaultRunLength: 'full',
   strings: { en: en as Record<string, string> },
 };
 

@@ -1,0 +1,18 @@
+[
+  {
+    "id": "sprint",
+    "nameKey": "runLength.sprint.name",
+    "descKey": "runLength.sprint.desc",
+    "scoreMultiplier": 0.6,
+    "balance": {
+      "pace": 2.6
+    }
+  },
+  {
+    "id": "full",
+    "nameKey": "runLength.full.name",
+    "descKey": "runLength.full.desc",
+    "scoreMultiplier": 1,
+    "balance": {}
+  }
+]

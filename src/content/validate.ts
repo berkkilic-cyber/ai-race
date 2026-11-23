@@ -321,6 +321,22 @@ const difficultySchema = z.strictObject({
   scoreMultiplier: z.number().positive().max(100),
 });
 
+const runLengthSchema = z.strictObject({
+  id,
+  nameKey: key,
+  descKey: key,
+  balance: z.record(z.string(), z.number()),
+  scoreMultiplier: z.number().positive().max(100),
+});
+
+/** Run-length presets may set `pace`, between these (a sprint, never a crawl or a blur). */
+export const RUN_LENGTH_PACE_RANGE = { min: 0.25, max: 6 } as const;
+
+/** Each run length's `runLength.<id>.minutes` string: how long it lasts, shown beside its name. */
+export function runLengthMinutesKey(id: string): string {
+  return `runLength.${id}.minutes`;
+}
+
 /**
  * Balance keys a difficulty may not override: selectors the UI calls with only the pack
  * (getComputeRequired) read them, so they must be the same for every run of a pack.
@@ -344,6 +360,8 @@ export const packSchema = z.strictObject({
   balance: z.record(z.string(), z.number()),
   difficulties: z.array(difficultySchema).optional(),
   defaultDifficulty: id.optional(),
+  runLengths: z.array(runLengthSchema).optional(),
+  defaultRunLength: id.optional(),
   strings: z.record(z.string(), z.record(z.string(), z.string())).refine((s) => Object.keys(s).length > 0, 'no locales'),
 });
 
@@ -417,6 +435,9 @@ const LENGTH_LIMITS: { test: (k: string) => boolean; max: number; what: string }
   { test: (k) => k.startsWith('headline.'), max: 90, what: 'headline' },
   { test: (k) => k.startsWith('difficulty.') && k.endsWith('.name'), max: 14, what: 'difficulty name' },
   { test: (k) => k.startsWith('difficulty.') && k.endsWith('.desc'), max: 60, what: 'difficulty description' },
+  { test: (k) => k.startsWith('runLength.') && k.endsWith('.name'), max: 14, what: 'run length name' },
+  { test: (k) => k.startsWith('runLength.') && k.endsWith('.desc'), max: 60, what: 'run length description' },
+  { test: (k) => k.startsWith('runLength.') && k.endsWith('.minutes'), max: 12, what: 'run length minutes' },
   { test: (k) => k.startsWith('event.') && k.endsWith('.title'), max: 50, what: 'event title' },
   { test: (k) => k.startsWith('event.') && k.endsWith('.body'), max: 220, what: 'event body' },
   { test: (k) => k.endsWith('.label'), max: 40, what: 'choice label' },
@@ -486,6 +507,24 @@ function checkIntegrity(pack: ContentPack): string[] {
     err(`defaultDifficulty: "${pack.defaultDifficulty}" is not one of the pack's difficulties`);
   }
   if (difficulties.length > 0 && pack.defaultDifficulty === undefined) err('defaultDifficulty: required when the pack has difficulties');
+  // `pace` (how much game a tick holds) belongs to run lengths only, so a difficulty never changes the clock.
+  if ('pace' in pack.balance) err('balance: "pace" can only be set by a run length');
+  for (const d of difficulties) if ('pace' in d.balance) err(`difficulties[${d.id}].balance: "pace" can only be set by a run length`);
+
+  // Run lengths: real balance keys (not the pack-only ones), a pace in range, a known default.
+  const runLengths = pack.runLengths ?? [];
+  for (const r of runLengths) {
+    checkBalance(`runLengths[${r.id}].balance`, r.balance);
+    for (const k of PACK_ONLY_BALANCE_KEYS) if (k in r.balance) err(`runLengths[${r.id}].balance: "${k}" can only be set in the pack's balance`);
+    const pace = r.balance.pace;
+    if (pace !== undefined && !(pace >= RUN_LENGTH_PACE_RANGE.min && pace <= RUN_LENGTH_PACE_RANGE.max)) {
+      err(`runLengths[${r.id}].balance: "pace" must be between ${RUN_LENGTH_PACE_RANGE.min} and ${RUN_LENGTH_PACE_RANGE.max}`);
+    }
+  }
+  if (pack.defaultRunLength !== undefined && !runLengths.some((r) => r.id === pack.defaultRunLength)) {
+    err(`defaultRunLength: "${pack.defaultRunLength}" is not one of the pack's run lengths`);
+  }
+  if (runLengths.length > 0 && pack.defaultRunLength === undefined) err('defaultRunLength: required when the pack has run lengths');
 
   // Unique ids
   const collections: [string, { id: string }[]][] = [
@@ -501,6 +540,7 @@ function checkIntegrity(pack: ContentPack): string[] {
     ['barriers', pack.barriers ?? []],
     ['channels', pack.channels ?? []],
     ['difficulties', pack.difficulties ?? []],
+    ['runLengths', pack.runLengths ?? []],
   ];
   for (const [name, list] of collections) {
     for (const d of duplicates(list.map((x) => x.id))) err(`${name}: duplicate id "${d}"`);
@@ -740,6 +780,11 @@ function checkIntegrity(pack: ContentPack): string[] {
   for (const d of pack.difficulties ?? []) {
     markKey(d.nameKey);
     markKey(d.descKey);
+  }
+  for (const r of pack.runLengths ?? []) {
+    markKey(r.nameKey);
+    markKey(r.descKey);
+    markKey(runLengthMinutesKey(r.id));
   }
 
   for (const k of REQUIRED_KEYS) used.add(k);

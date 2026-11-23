@@ -55,6 +55,30 @@ describe('validatePack', () => {
     expect(problemsOf((p) => { delete p.difficulties; delete p.defaultDifficulty; }).filter((x) => !/unused key "difficulty\./.test(x))).toEqual([]);
   });
 
+  it('validates run lengths: ids, strings, minutes, balance keys, pace, multipliers, default', () => {
+    const r = (p: ContentPack) => p.runLengths!;
+    expect(r(clone()).map((x) => x.id)).toEqual(['sprint', 'full']);
+    expect(clone().defaultRunLength).toBe('full');
+    // The full run is the standard game: no overrides.
+    expect(r(clone())[1].balance).toEqual({});
+    expectProblem(problemsOf((p) => { r(p)[1].id = r(p)[0].id; }), /runLengths: duplicate id "sprint"/);
+    expectProblem(problemsOf((p) => { r(p)[0].nameKey = 'runLength.nope.name'; }), /missing key "runLength.nope.name"/);
+    expectProblem(problemsOf((p) => { delete p.strings.en['runLength.sprint.minutes']; }), /missing key "runLength.sprint.minutes"/);
+    expectProblem(problemsOf((p) => { (r(p)[0].balance as Record<string, number>).warpSpeed = 2; }), /runLengths\[sprint\]\.balance: unknown key "warpSpeed"/);
+    expectProblem(problemsOf((p) => { r(p)[0].balance.computePerCapabilityLevel = 5; }), /runLengths\[sprint\]\.balance: "computePerCapabilityLevel" can only be set in the pack's balance/);
+    expectProblem(problemsOf((p) => { r(p)[0].balance.pace = 0; }), /"pace" must be between/);
+    expectProblem(problemsOf((p) => { r(p)[0].balance.pace = 40; }), /"pace" must be between/);
+    expectProblem(problemsOf((p) => { p.balance.pace = 2; }), /balance: "pace" can only be set by a run length/);
+    expectProblem(problemsOf((p) => { p.difficulties![0].balance.pace = 2; }), /difficulties\[sandbox\]\.balance: "pace" can only be set by a run length/);
+    expectProblem(problemsOf((p) => { r(p)[0].scoreMultiplier = 0; }), /scoreMultiplier/);
+    expectProblem(problemsOf((p) => { p.defaultRunLength = 'marathon'; }), /defaultRunLength: "marathon" is not one of/);
+    expectProblem(problemsOf((p) => { delete p.defaultRunLength; }), /defaultRunLength: required/);
+    expectProblem(problemsOf((p) => { p.strings.en['runLength.sprint.desc'] = 'x'.repeat(61); }), /run length description/);
+    expectProblem(problemsOf((p) => { p.strings.en['runLength.sprint.minutes'] = 'x'.repeat(13); }), /run length minutes/);
+    // Run lengths are optional (their strings are then unused).
+    expect(problemsOf((p) => { delete p.runLengths; delete p.defaultRunLength; }).filter((x) => !/unused key "runLength\./.test(x))).toEqual([]);
+  });
+
   it('catches duplicate ids', () => {
     expectProblem(problemsOf((p) => { p.nodes[1].id = p.nodes[0].id; }), /duplicate id "cap-model-1"/);
   });
