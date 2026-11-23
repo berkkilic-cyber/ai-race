@@ -57,7 +57,9 @@ export type Requirement =
   /** At least this many taps, all time. */
   | { type: 'taps'; count: number }
   /** Another upgrade owned. */
-  | { type: 'upgrade'; id: UpgradeId };
+  | { type: 'upgrade'; id: UpgradeId }
+  /** At least this many tokens earned, all time (never resets). */
+  | { type: 'allTime'; tokens: number };
 
 export interface UpgradeDef {
   id: UpgradeId;
@@ -212,7 +214,11 @@ export type StatKey =
   | 'upgradesBought'
   | 'cratesOpened'
   | 'boostsUsed'
-  | 'offersClaimed';
+  | 'offersClaimed'
+  | 'happeningsCaught'
+  | 'trainingRuns'
+  | 'modelsKept'
+  | 'autoBought';
 
 export type AchievementRule =
   | { type: 'stat'; stat: StatKey; gte: number }
@@ -268,8 +274,189 @@ export interface NewsConfig {
   headlines: HeadlineDef[];
 }
 
+// ---------------------------------------------------------------------------------------
+// The lab (stages, milestones, training runs, staff, ship day, happenings, automation).
+// All optional: content without them plays as the plain clicker.
+
+/** What a stage switches on. */
+export type StageMechanic = 'none' | 'training' | 'staff' | 'autoCollect' | 'autoBuy';
+
+/** A place the lab moves to as it grows. Reached stages are never lost (shipping keeps them). */
+export interface StageDef {
+  id: string;
+  nameKey: string;
+  /** One line about the place. */
+  descKey: string;
+  /** What the stage switches on, in words. */
+  unlockKey: string;
+  /** Which room the UI draws (theme-defined scene id). */
+  scene: string;
+  /** All must hold to move in. */
+  requires: Requirement[];
+  mechanic: StageMechanic;
+  /** Active model slots from this stage on (0 before training runs). */
+  modelSlots: number;
+}
+
+/** Owning `count` of one generator multiplies its output by `mult` (cumulative). */
+export interface MilestoneConfig {
+  steps: { count: number; mult: number }[];
+  /** After the last step, every `repeatEvery` more owned multiply by `repeatMult` again. */
+  repeatEvery: number;
+  repeatMult: number;
+}
+
+/** What a trained model changes. Values are shares (0.1 = +10%) except offlineCap (hours). */
+export type ModelStat = 'production' | 'tap' | 'offlineCap' | 'offlineRate' | 'shipHype' | 'happening' | 'incident' | 'trainingSpeed';
+
+export const MODEL_STATS: readonly ModelStat[] = ['production', 'tap', 'offlineCap', 'offlineRate', 'shipHype', 'happening', 'incident', 'trainingSpeed'];
+
+/** A strength (or, as a drawback, a weakness) a candidate model can roll. */
+export interface TraitDef {
+  id: string;
+  stat: ModelStat;
+  /** Value range before the rarity's power (signed: an `incident` boon is negative). */
+  min: number;
+  max: number;
+  weight: number;
+  /** `{value}` = the rolled value in words. */
+  labelKey: string;
+}
+
+export interface RarityDef {
+  id: string;
+  nameKey: string;
+  weight: number;
+  /** Number of strengths rolled. */
+  boons: number;
+  /** Multiplies every rolled strength. */
+  power: number;
+  /** Chance of one drawback (0..1). */
+  drawbackChance: number;
+  /** How much Research staff raises this rarity's weight (0 for the commonest). */
+  luck: number;
+}
+
+export interface TrainingConfig {
+  /** Real time for one queued run to come ready. */
+  cooldownMs: number;
+  /** Runs that can wait in the queue (it fills while away). */
+  queueMax: number;
+  /** Candidates per run. */
+  candidates: number;
+  rarities: RarityDef[];
+  traits: TraitDef[];
+  drawbacks: TraitDef[];
+  /** Name parts: "{prefix}-{suffix} {version}". */
+  prefixKeys: string[];
+  suffixKeys: string[];
+  /** One-line descriptions by the candidate's main strength. */
+  descKeys: Partial<Record<ModelStat, string[]>>;
+}
+
+/** Staff lanes. Each one's share of the headcount moves its effect around a neutral third. */
+export type StaffLane = 'research' | 'product' | 'safety';
+
+export const STAFF_LANES: readonly StaffLane[] = ['research', 'product', 'safety'];
+
+export interface StaffConfig {
+  /** Headcount to split (a third each is neutral). */
+  total: number;
+  /** Product: production × (1 + productSwing × (3p − 1)). */
+  productSwing: number;
+  /** Safety: incident frequency × (1 − safetySwing × (3s − 1)), severity × (1 − severitySwing × (3s − 1)), ship Hype × (1 + trustSwing × (3s − 1)). */
+  safetySwing: number;
+  severitySwing: number;
+  trustSwing: number;
+  /** Research: training speed × (1 + researchSwing × (3r − 1)); rarity luck × (3r − 1). */
+  researchSwing: number;
+}
+
+/** A launch-day choice: modifies the Hype of this ship and carries a risk into the next run. */
+export interface ShipChoiceDef {
+  id: string;
+  labelKey: string;
+  descKey: string;
+  hypeMult: number;
+  /** Incident frequency multiplier for the whole next generation. */
+  incidentMult: number;
+  /** Training runs added to the queue (may exceed the queue cap once). */
+  trainingRuns?: number;
+  /** Extra Lab Rep. */
+  labRep?: number;
+}
+
+export interface ShipRivalDef {
+  id: string;
+  nameKey: string;
+  /** Leaderboard score at generation 0 and per generation. */
+  base: number;
+  growth: number;
+}
+
+export interface ShipDayConfig {
+  choices: ShipChoiceDef[];
+  /** Our leaderboard score: base + perGeneration × generation + perHype × log2(1 + Hype gained). */
+  scoreBase: number;
+  scorePerGeneration: number;
+  scorePerHype: number;
+  rivals: ShipRivalDef[];
+  /** A rival's reaction; `{rival}` = its name key. */
+  reactionKeys: string[];
+  /** The benchmark the reveal runs on. */
+  benchmarkKeys: string[];
+}
+
+/** A small tappable thing in the lab: tap for a reward, or let it go (some cost a little). */
+export interface HappeningDef {
+  id: string;
+  labelKey: string;
+  /** Ticker line when handled. */
+  textKey: string;
+  icon: string;
+  weight: number;
+  /** Where in the room it appears (theme-defined). */
+  spot: string;
+  minStage?: number;
+  /** Seconds of production on tap (at least `rewardMinTaps` taps' worth). */
+  rewardSeconds: number;
+  rewardMinTaps: number;
+  /** Seconds of production lost if it expires untouched (0 or absent: none). */
+  penaltySeconds?: number;
+  /** Ticker line when it expires untouched and costs something. */
+  missKey?: string;
+  /** On tap, the next training run comes this much sooner (once training is on). */
+  trainingMs?: number;
+}
+
+export interface HappeningConfig {
+  firstAfterMs: number;
+  intervalMinMs: number;
+  intervalMaxMs: number;
+  lifetimeMs: number;
+  /** A missed happening never takes more than this share of the tokens in hand. */
+  penaltyCapShare: number;
+  defs: HappeningDef[];
+}
+
+export interface AutomationConfig {
+  /** autoCollect: happenings are handled at expiry for this share of their reward. */
+  collectShare: number;
+  /** autoBuy: one purchase every this often while the lab is open. */
+  buyIntervalMs: number;
+  /** autoBuy spends at most this share of the tokens in hand on one purchase. */
+  buyBudgetShare: number;
+}
+
 export interface GarageContent {
   id: string;
+  stages?: StageDef[];
+  milestones?: MilestoneConfig;
+  training?: TrainingConfig;
+  staff?: StaffConfig;
+  shipDay?: ShipDayConfig;
+  happenings?: HappeningConfig;
+  automation?: AutomationConfig;
   generators: GeneratorDef[];
   upgrades: UpgradeDef[];
   generations: GenerationDef[];
@@ -319,7 +506,42 @@ export interface FrenzyState {
   until: number;
 }
 
-export type NewsKind = 'headline' | 'launch' | 'golden' | 'incident' | 'fixed' | 'achievement';
+export type NewsKind = 'headline' | 'launch' | 'golden' | 'incident' | 'fixed' | 'achievement' | 'stage' | 'happening' | 'training';
+
+export interface HappeningState {
+  uid: number;
+  id: string;
+  spawnedAt: number;
+  expiresAt: number;
+  /** Position in the room, 0..1 of its width and height (the UI may snap it to `spot`). */
+  x: number;
+  y: number;
+}
+
+/** A trained model: a candidate, or one kept in an active slot. */
+export interface ModelCandidate {
+  uid: number;
+  /** Indexes into the name parts. */
+  prefix: number;
+  suffix: number;
+  version: number;
+  rarity: string;
+  /** Index into the description lines of its main strength. */
+  desc: number;
+  boons: { trait: string; value: number }[];
+  drawback?: { trait: string; value: number };
+}
+
+export interface TrainingState {
+  /** Runs ready to launch. */
+  charges: number;
+  /** When the next run comes ready (0 = the queue is full). */
+  nextChargeAt: number;
+  /** The last run's candidates, waiting for a pick. */
+  candidates: ModelCandidate[] | null;
+}
+
+export type StaffSplit = Record<StaffLane, number>;
 
 export interface GarageNews {
   uid: number;
@@ -362,12 +584,18 @@ export interface GarageStats {
   fastestFixMs: number;
   /** Set once a model ships with no upgrade bought in its generation. */
   shippedClean: number;
+  happeningsCaught: number;
+  happeningsMissed: number;
+  trainingRuns: number;
+  modelsKept: number;
+  autoBought: number;
 }
 
 export interface LastShip {
   generation: number;
   hypeGained: number;
   at: number;
+  choice?: string;
 }
 
 export interface GarageState {
@@ -400,9 +628,23 @@ export interface GarageState {
   stats: GarageStats;
   lastShip: LastShip | null;
   uidSeq: number;
+  /** Highest stage reached (index into content.stages). */
+  stage: number;
+  happening: HappeningState | null;
+  nextHappeningAt: number;
+  training: TrainingState;
+  /** Kept models in their active slots. */
+  models: ModelCandidate[];
+  /** Headcount per lane (sum = staff.total). */
+  staff: StaffSplit;
+  /** The launch choice made at the last ship (its risk applies to this generation). */
+  shipChoice: string | null;
+  /** Auto-buy helper switched on (once unlocked). */
+  autoBuy: boolean;
+  nextAutoBuyAt: number;
 }
 
-export type GarageFailure = 'cantAfford' | 'locked' | 'owned' | 'unknownId' | 'notReady' | 'none' | 'cooldown' | 'dailyCap' | 'notApplicable';
+export type GarageFailure = 'cantAfford' | 'locked' | 'owned' | 'unknownId' | 'notReady' | 'none' | 'cooldown' | 'dailyCap' | 'notApplicable' | 'full' | 'pending';
 
 export interface ActionResult {
   state: GarageState;

@@ -25,15 +25,19 @@ export {
   offerStatus,
   offlineCapMs,
   offlineEarnings,
+  offlineRate,
   prestige,
   prestigePreview,
   requirementMet,
   requirementProgress,
+  shipGain,
+  shipHypeMult,
   shipThreshold,
   tap,
   tapIncident,
   type OfferStatus,
   type PrestigePreview,
+  type ShipChoiceQuote,
 } from './garage';
 export {
   HOUR_MS,
@@ -46,6 +50,11 @@ export {
   generatorRate,
   hypeMultiplier,
   incidentDef,
+  incidentFrequency,
+  incidentSeverityMult,
+  labProductionMult,
+  offlineTerms,
+  trainingSpeed,
   maxAffordable,
   multipliers,
   offerDef,
@@ -57,7 +66,44 @@ export {
   type Multipliers,
 } from './rates';
 export { availableUpgrades, buyQuote, generatorRows, labPerks, nextLabPerk, nextUnlocks, type GeneratorRow, type UpcomingUpgrade } from './selectors';
+export {
+  currentStage,
+  factor,
+  lastMilestone,
+  mechanicOn,
+  mechanicStage,
+  milestoneMult,
+  modelEffects,
+  modelSlots,
+  nextMilestone,
+  stageCount,
+  staffEffects,
+  staffShares,
+  traitDef,
+  type ModelEffects,
+  type StaffEffects,
+  type StaffShares,
+} from './labRates';
+export { autoBuyActive, autoBuyPick, evenStaff, happeningDef, happeningPenalty, happeningReward, trainingCooldownMs } from './lab';
+export {
+  collectHappening,
+  happeningQuote,
+  keepModel,
+  launchTraining,
+  moveStaff,
+  nextStage,
+  retireModel,
+  scrapCandidates,
+  setAutoBuy,
+  setStaff,
+  shipReveal,
+  trainingStatus,
+  type LeaderRow,
+  type NextStage,
+  type ShipReveal,
+  type TrainingStatus,
+} from './labActions';
 export { MAX_AMOUNT, amount, finite, formatAmount, formatDuration } from './num';
-export { deserialize, migrateV1, sanitize, serialize, type LoadResult } from './save';
+export { deserialize, migrateV1, migrateV2, sanitize, serialize, type LoadResult } from './save';
 export { validateGarage } from './validate';
 export { nextRandom, seedFrom } from './rng';

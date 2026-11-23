@@ -1,4 +1,4 @@
-import type { GarageContent } from '../types';
+import type { GarageContent, ModelStat, Requirement } from '../types';
 
 /** A small, theme-free content pack for the idle engine's tests. */
 export function fixture(): GarageContent {
@@ -91,4 +91,89 @@ export function calmFixture(): GarageContent {
   const c = fixture();
   const far = 1e15;
   return { ...c, golden: { ...c.golden, firstAfterMs: far }, incidents: { ...c.incidents, firstAfterMs: far }, news: { ...c.news } };
+}
+
+/** The fixture with the lab layer: five stages, milestones, training, staff, ship day, happenings, automation. */
+export function labFixture(): GarageContent {
+  const c = fixture();
+  const k = (key: string) => {
+    c.strings[key] = key;
+    return key;
+  };
+  const stage = (id: string, mechanic: NonNullable<GarageContent['stages']>[number]['mechanic'], requires: Requirement[], modelSlots: number) => ({
+    id,
+    nameKey: k(`st.${id}`),
+    descKey: k(`st.${id}.d`),
+    unlockKey: k(`st.${id}.u`),
+    scene: id,
+    requires,
+    mechanic,
+    modelSlots,
+  });
+  const trait = (id: string, stat: ModelStat, min: number, max: number) => ({ id, stat, min, max, weight: 1, labelKey: k(`tr.${stat}`) });
+  return {
+    ...c,
+    stages: [
+      stage('s0', 'none', [], 0),
+      stage('s1', 'training', [{ type: 'allTime', tokens: 1000 }], 1),
+      stage('s2', 'staff', [{ type: 'generation', min: 1 }], 2),
+      stage('s3', 'autoCollect', [{ type: 'generation', min: 2 }], 2),
+      stage('s4', 'autoBuy', [{ type: 'generation', min: 3 }], 3),
+    ],
+    milestones: { steps: [{ count: 10, mult: 2 }, { count: 25, mult: 2 }], repeatEvery: 25, repeatMult: 3 },
+    training: {
+      cooldownMs: 120_000,
+      queueMax: 3,
+      candidates: 3,
+      rarities: [
+        { id: 'r0', nameKey: k('ra.0'), weight: 80, boons: 1, power: 1, drawbackChance: 0.3, luck: 0 },
+        { id: 'r1', nameKey: k('ra.1'), weight: 15, boons: 2, power: 1.5, drawbackChance: 0.5, luck: 1 },
+        { id: 'r2', nameKey: k('ra.2'), weight: 5, boons: 3, power: 2, drawbackChance: 0.8, luck: 2 },
+      ],
+      traits: [
+        trait('tp', 'production', 0.1, 0.2),
+        trait('tt', 'tap', 0.2, 0.4),
+        trait('toc', 'offlineCap', 1, 2),
+        trait('tor', 'offlineRate', 0.05, 0.1),
+        trait('th', 'shipHype', 0.1, 0.2),
+        trait('thp', 'happening', 0.2, 0.4),
+        trait('ti', 'incident', -0.3, -0.2),
+        trait('ts', 'trainingSpeed', 0.1, 0.2),
+      ],
+      drawbacks: [trait('di', 'incident', 0.3, 0.5), trait('dp', 'production', -0.1, -0.05)],
+      prefixKeys: ['a', 'b', 'c', 'd'].map((x) => k(`pre.${x}`)),
+      suffixKeys: ['a', 'b', 'c', 'd'].map((x) => k(`suf.${x}`)),
+      descKeys: Object.fromEntries((['production', 'tap', 'offlineCap', 'offlineRate', 'shipHype', 'happening', 'incident', 'trainingSpeed'] as ModelStat[]).map((s) => [s, [k(`de.${s}`)]])),
+    },
+    staff: { total: 12, productSwing: 0.5, safetySwing: 0.45, severitySwing: 0.4, trustSwing: 0.25, researchSwing: 0.6 },
+    shipDay: {
+      choices: [
+        { id: 'hype', labelKey: k('ch.h'), descKey: k('ch.h.d'), hypeMult: 1.5, incidentMult: 2 },
+        { id: 'safe', labelKey: k('ch.s'), descKey: k('ch.s.d'), hypeMult: 0.9, incidentMult: 0.5 },
+        { id: 'open', labelKey: k('ch.o'), descKey: k('ch.o.d'), hypeMult: 0.8, incidentMult: 1, trainingRuns: 2, labRep: 1 },
+      ],
+      scoreBase: 40,
+      scorePerGeneration: 9,
+      scorePerHype: 4,
+      rivals: [
+        { id: 'r1', nameKey: k('rv.1'), base: 60, growth: 9 },
+        { id: 'r2', nameKey: k('rv.2'), base: 50, growth: 10 },
+      ],
+      reactionKeys: [k('re.1'), k('re.2')],
+      benchmarkKeys: [k('be.1'), k('be.2')],
+    },
+    happenings: {
+      firstAfterMs: 20_000,
+      intervalMinMs: 20_000,
+      intervalMaxMs: 40_000,
+      lifetimeMs: 9000,
+      penaltyCapShare: 0.05,
+      defs: [
+        { id: 'pizza', labelKey: k('hp.p'), textKey: k('hp.p.t'), icon: 'x', weight: 1, spot: 'door', rewardSeconds: 15, rewardMinTaps: 10 },
+        { id: 'fire', labelKey: k('hp.f'), textKey: k('hp.f.t'), icon: 'x', weight: 1, spot: 'rack', rewardSeconds: 10, rewardMinTaps: 5, penaltySeconds: 20, missKey: k('hp.f.m') },
+        { id: 'intern', labelKey: k('hp.i'), textKey: k('hp.i.t'), icon: 'x', weight: 1, spot: 'desk', rewardSeconds: 5, rewardMinTaps: 5, trainingMs: 30_000, minStage: 1 },
+      ],
+    },
+    automation: { collectShare: 0.5, buyIntervalMs: 4000, buyBudgetShare: 0.25 },
+  };
 }

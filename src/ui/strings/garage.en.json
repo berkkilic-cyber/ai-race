@@ -27,6 +27,7 @@
   "ui.garage.upgrades.buy": "Buy",
   "ui.garage.req.owned": "Own {count} {name}",
   "ui.garage.req.lifetime": "Earn {amount} this model",
+  "ui.garage.req.allTime": "Earn {amount} in all",
   "ui.garage.req.taps": "Tap {count} times",
   "ui.garage.req.generation": "Ship {model}",
   "ui.garage.req.upgrade": "Buy {name}",

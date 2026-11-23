@@ -11,6 +11,9 @@
  * backwards shifts every stored time by the same amount (no production, no lost timers);
  * an absurd jump forward is bounded by the offline cap.
  */
+import { between, grant, pickWeighted, pushNews, random } from './core';
+import { accrueTraining, autoBuyActive, evenStaff, expireHappening, runAutoBuy, spawnHappening, updateStage } from './lab';
+import { factor, mechanicOn, modelEffects, staffEffects } from './labRates';
 import { amount } from './num';
 import {
   HOUR_MS,
@@ -18,30 +21,20 @@ import {
   comboAfterTap,
   generatorDef,
   incidentDef,
+  incidentFrequency,
   maxAffordable,
   multipliers,
   offerDef,
+  offlineTerms,
   tapValue,
   totalRate,
   upgradeDef,
 } from './rates';
-import { nextRandom, seedFrom } from './rng';
-import type {
-  ActionResult,
-  GarageContent,
-  GarageFailure,
-  GarageNews,
-  GarageState,
-  GarageStats,
-  NewsKind,
-  OfferId,
-  Requirement,
-  TapOutcome,
-  UpgradeDef,
-} from './types';
+import { seedFrom } from './rng';
+import type { ActionResult, GarageContent, GarageFailure, GarageState, GarageStats, OfferId, Requirement, ShipChoiceDef, TapOutcome, UpgradeDef } from './types';
 import { OFFER_IDS } from './types';
 
-export const GARAGE_VERSION = 2;
+export const GARAGE_VERSION = 3;
 export const DAY_MS = 24 * HOUR_MS;
 
 export function emptyStats(): GarageStats {
@@ -66,6 +59,11 @@ export function emptyStats(): GarageStats {
     genUpgrades: 0,
     fastestFixMs: 0,
     shippedClean: 0,
+    happeningsCaught: 0,
+    happeningsMissed: 0,
+    trainingRuns: 0,
+    modelsKept: 0,
+    autoBought: 0,
   };
 }
 
@@ -104,6 +102,15 @@ export function createGarage(content: GarageContent, now: number, seed: number =
     stats: emptyStats(),
     lastShip: null,
     uidSeq: 1,
+    stage: 0,
+    happening: null,
+    nextHappeningAt: now + (content.happenings?.firstAfterMs ?? 0),
+    training: { charges: 0, nextChargeAt: 0, candidates: null },
+    models: [],
+    staff: evenStaff(content.staff?.total ?? 0),
+    shipChoice: null,
+    autoBuy: false,
+    nextAutoBuyAt: 0,
   };
 }
 
@@ -122,41 +129,10 @@ function clone(s: GarageState): GarageState {
     offline: s.offline ? { ...s.offline } : null,
     stats: { ...s.stats },
     lastShip: s.lastShip ? { ...s.lastShip } : null,
+    happening: s.happening ? { ...s.happening } : null,
+    training: { ...s.training },
+    staff: { ...s.staff },
   };
-}
-
-function random(s: GarageState): number {
-  const r = nextRandom(s.rng);
-  s.rng = r.seed;
-  return r.value;
-}
-
-function between(s: GarageState, min: number, max: number): number {
-  return min + (max - min) * random(s);
-}
-
-function pickWeighted<T extends { weight?: number }>(s: GarageState, items: readonly T[]): T | undefined {
-  const total = items.reduce((sum, i) => sum + Math.max(0, i.weight ?? 1), 0);
-  if (items.length === 0 || total <= 0) return undefined;
-  let roll = random(s) * total;
-  for (const item of items) {
-    roll -= Math.max(0, item.weight ?? 1);
-    if (roll < 0) return item;
-  }
-  return items[items.length - 1];
-}
-
-function grant(s: GarageState, tokens: number): number {
-  const g = amount(tokens);
-  s.tokens = amount(s.tokens + g);
-  s.genLifetime = amount(s.genLifetime + g);
-  s.stats.tokensAllTime = amount(s.stats.tokensAllTime + g);
-  return g;
-}
-
-function pushNews(s: GarageState, content: GarageContent, key: string, kind: NewsKind, at: number, params?: GarageNews['params']): void {
-  const item: GarageNews = { uid: s.uidSeq++, key, kind, at, ...(params ? { params } : {}) };
-  s.news = [...s.news, item].slice(-Math.max(1, content.news.keep));
 }
 
 // ---------------------------------------------------------------------------------------
@@ -178,7 +154,7 @@ function spawnGolden(s: GarageState, content: GarageContent, t: number): void {
 
 function spawnIncident(s: GarageState, content: GarageContent, t: number): void {
   const cfg = content.incidents;
-  const interval = between(s, cfg.intervalMinMs, cfg.intervalMaxMs);
+  const interval = between(s, cfg.intervalMinMs, cfg.intervalMaxMs) / incidentFrequency(s, content);
   const tiers = content.generators.filter((g) => (s.generators[g.id] ?? 0) >= cfg.minOwned);
   const defs = cfg.defs.filter((d) => (d.minGeneration ?? 0) <= s.generation);
   if (s.generation < cfg.minGeneration || tiers.length === 0 || defs.length === 0) {
@@ -210,13 +186,17 @@ function processAt(s: GarageState, content: GarageContent, t: number): void {
   }
   if (s.incident && t >= s.incident.until) s.incident = null;
   if (s.frenzy && t >= s.frenzy.until) s.frenzy = null;
+  if (s.happening && t >= s.happening.expiresAt) expireHappening(s, content);
   if (!s.golden && t >= s.nextGoldenAt) spawnGolden(s, content, t);
   if (!s.incident && t >= s.nextIncidentAt) spawnIncident(s, content, t);
+  if (content.happenings && !s.happening && t >= s.nextHappeningAt) spawnHappening(s, content, t);
   if (t >= s.nextHeadlineAt) spawnHeadline(s, content, t);
+  accrueTraining(s, content, t);
+  if (autoBuyActive(s, content) && t >= s.nextAutoBuyAt) runAutoBuy(s, content, t);
 }
 
 /** The next time after `t` at which production or events change. */
-function nextBreakpoint(s: GarageState, t: number): number {
+function nextBreakpoint(s: GarageState, content: GarageContent, t: number): number {
   let next = Infinity;
   const consider = (v: number | undefined) => {
     if (v !== undefined && v > t && v < next) next = v;
@@ -227,6 +207,9 @@ function nextBreakpoint(s: GarageState, t: number): number {
   consider(s.golden ? s.golden.expiresAt : s.nextGoldenAt);
   if (!s.incident) consider(s.nextIncidentAt);
   consider(s.nextHeadlineAt);
+  if (content.happenings) consider(s.happening ? s.happening.expiresAt : s.nextHappeningAt);
+  if (s.training.nextChargeAt > 0) consider(s.training.nextChargeAt);
+  if (autoBuyActive(s, content)) consider(s.nextAutoBuyAt);
   return next;
 }
 
@@ -235,7 +218,7 @@ function runOnline(s: GarageState, content: GarageContent, end: number): void {
   processAt(s, content, t);
   // Bounded: every pass either reaches `end` or crosses a breakpoint, and breakpoints are seconds apart.
   for (let guard = 0; t < end && guard < 10_000; guard++) {
-    const next = Math.min(end, nextBreakpoint(s, t));
+    const next = Math.min(end, nextBreakpoint(s, content, t));
     grant(s, (totalRate(s, content, t) * (next - t)) / 1000);
     s.stats.playMs += next - t;
     t = next;
@@ -254,7 +237,7 @@ export function offlineEarnings(state: GarageState, content: GarageContent, cred
   const calm: GarageState = { ...state, incident: null };
   const start = state.now;
   const end = start + Math.max(0, creditedMs);
-  const rate = multipliers(state, content).offlineRate;
+  const rate = offlineTerms(state, content).rate;
   const cuts = [state.boostUntil, state.frenzy?.until ?? 0].filter((v) => v > start && v < end).sort((a, b) => a - b);
   let total = 0;
   let a = start;
@@ -267,21 +250,30 @@ export function offlineEarnings(state: GarageState, content: GarageContent, cred
 
 /** The offline cap in ms for this state. */
 export function offlineCapMs(state: GarageState, content: GarageContent): number {
-  return multipliers(state, content).offlineCapMs;
+  return offlineTerms(state, content).capMs;
+}
+
+/** Offline earnings rate (0..1) for this state. */
+export function offlineRate(state: GarageState, content: GarageContent): number {
+  return offlineTerms(state, content).rate;
 }
 
 function awayCatchUp(s: GarageState, content: GarageContent, now: number): void {
   const away = now - s.now;
   s.golden = null;
   s.incident = null;
+  s.happening = null;
   const credited = Math.min(away, offlineCapMs(s, content));
   const tokens = grant(s, offlineEarnings(s, content, credited));
   s.now = now;
   if (s.frenzy && now >= s.frenzy.until) s.frenzy = null;
   s.combo = { count: 0, lastAt: s.combo.lastAt };
   s.nextGoldenAt = now + between(s, content.golden.intervalMinMs, content.golden.intervalMaxMs) * multipliers(s, content).goldenInterval * 0.5;
-  s.nextIncidentAt = now + between(s, content.incidents.intervalMinMs, content.incidents.intervalMaxMs);
+  s.nextIncidentAt = now + between(s, content.incidents.intervalMinMs, content.incidents.intervalMaxMs) / incidentFrequency(s, content);
   s.nextHeadlineAt = now + 1500;
+  if (content.happenings) s.nextHappeningAt = now + content.happenings.firstAfterMs;
+  if (s.nextAutoBuyAt > 0) s.nextAutoBuyAt = now + (content.automation?.buyIntervalMs ?? 0);
+  accrueTraining(s, content, now);
   s.stats.offlineReturns += 1;
   s.stats.offlineTokens = amount(s.stats.offlineTokens + tokens);
   if (away >= content.offline.reportMinMs) {
@@ -308,6 +300,13 @@ function rebase(s: GarageState, delta: number): void {
   s.nextIncidentAt += delta;
   s.nextHeadlineAt += delta;
   s.combo.lastAt += delta;
+  if (s.happening) {
+    s.happening.spawnedAt += delta;
+    s.happening.expiresAt += delta;
+  }
+  s.nextHappeningAt += delta;
+  if (s.training.nextChargeAt > 0) s.training.nextChargeAt += delta;
+  if (s.nextAutoBuyAt > 0) s.nextAutoBuyAt += delta;
   for (const id of OFFER_IDS) s.offers[id] = s.offers[id].map((v) => v + delta);
 }
 
@@ -332,7 +331,7 @@ export function advance(state: GarageState, content: GarageContent, now: number)
 }
 
 /** Advances and returns a private copy the caller may mutate. */
-function at(state: GarageState, content: GarageContent, now: number): GarageState {
+export function at(state: GarageState, content: GarageContent, now: number): GarageState {
   const s = advance(state, content, now);
   return s === state ? clone(state) : s;
 }
@@ -369,6 +368,8 @@ export function requirementMet(state: GarageState, req: Requirement): boolean {
       return state.stats.taps >= req.count;
     case 'upgrade':
       return state.upgrades.includes(req.id);
+    case 'allTime':
+      return state.stats.tokensAllTime >= req.tokens;
   }
 }
 
@@ -386,6 +387,8 @@ export function requirementProgress(state: GarageState, req: Requirement): numbe
       return ratio(state.stats.taps, req.count);
     case 'upgrade':
       return state.upgrades.includes(req.id) ? 1 : 0;
+    case 'allTime':
+      return ratio(state.stats.tokensAllTime, req.tokens);
   }
 }
 
@@ -463,10 +466,19 @@ export function hypeForLifetime(content: GarageContent, lifetime: number): numbe
   return Math.floor(amount(Math.pow(Math.max(0, lifetime) / p.scale, p.exponent)));
 }
 
+export interface ShipChoiceQuote {
+  id: string;
+  def: ShipChoiceDef;
+  gain: number;
+  bonusGain: number;
+}
+
 export interface PrestigePreview {
   canShip: boolean;
-  /** Hype gained by shipping now. */
+  /** Hype gained by shipping now (kept models and Safety staff included, no launch choice). */
   gain: number;
+  /** The formula's Hype before the lab's modifiers. */
+  baseGain: number;
   /** Gain with the prestige bonus offer. */
   bonusGain: number;
   /** Tokens needed this generation to ship. */
@@ -477,17 +489,35 @@ export interface PrestigePreview {
   /** Production multiplier from Hype now and after shipping. */
   multNow: number;
   multAfter: number;
+  /** Each launch choice's gain (empty without ship-day content). */
+  choices: ShipChoiceQuote[];
+}
+
+/** The lab's multiplier on ship Hype: kept models' shipHype and Safety staff's trust. */
+export function shipHypeMult(state: GarageState, content: GarageContent): number {
+  return factor(modelEffects(state, content).shipHype) * staffEffects(state, content).trust;
+}
+
+/** Hype for a ship: the base formula times the lab's modifiers, a launch choice and the ad bonus. */
+export function shipGain(state: GarageState, content: GarageContent, base: number, choice?: ShipChoiceDef, bonus = false): number {
+  if (base < 1) return 0;
+  const raw = base * shipHypeMult(state, content) * (choice?.hypeMult ?? 1);
+  const extra = bonus ? 1 + (offerDef(content, 'prestigeBonus')?.prestigeBonus ?? 0) : 1;
+  return Math.max(1, bonus ? Math.ceil(raw * extra) : Math.floor(raw));
 }
 
 export function prestigePreview(state: GarageState, content: GarageContent): PrestigePreview {
   const needed = shipThreshold(content, state.generation + 1);
-  const gain = hypeForLifetime(content, state.genLifetime);
-  const bonus = offerDef(content, 'prestigeBonus')?.prestigeBonus ?? 0;
+  const baseGain = hypeForLifetime(content, state.genLifetime);
+  const gain = shipGain(state, content, baseGain);
   const per = content.prestige.hypePerPoint;
+  const choices = (content.shipDay?.choices ?? []).map((def) => ({ id: def.id, def, gain: shipGain(state, content, baseGain, def), bonusGain: shipGain(state, content, baseGain, def, true) }));
   return {
-    canShip: state.genLifetime >= needed && gain >= 1,
+    canShip: state.genLifetime >= needed && baseGain >= 1,
     gain,
-    bonusGain: Math.ceil(gain * (1 + bonus)),
+    baseGain,
+    choices,
+    bonusGain: shipGain(state, content, baseGain, undefined, true),
     needed,
     progress: needed > 0 ? Math.min(1, state.genLifetime / needed) : 1,
     nextGeneration: state.generation + 1,
@@ -501,21 +531,27 @@ export function prestigePreview(state: GarageState, content: GarageContent): Pre
  * and Lab Rep are gained. With `bonus`, the prestigeBonus offer is claimed as well (it
  * must be available).
  */
-export function prestige(state: GarageState, content: GarageContent, now: number, opts: { bonus?: boolean } = {}): ActionResult {
+export function prestige(state: GarageState, content: GarageContent, now: number, opts: { bonus?: boolean; choice?: string } = {}): ActionResult {
   const s = at(state, content, now);
   const preview = prestigePreview(s, content);
   if (!preview.canShip) return { state: s, ok: false, reason: 'notReady' };
-  let gain = preview.gain;
+  const choice = opts.choice ? content.shipDay?.choices.find((c) => c.id === opts.choice) : undefined;
+  if (opts.choice && !choice) return { state: s, ok: false, reason: 'unknownId' };
   if (opts.bonus) {
     const status = offerStatus(s, content, 'prestigeBonus', s.now);
     if (!status.available) return { state: s, ok: false, reason: status.reason };
-    gain = preview.bonusGain;
     recordOffer(s, 'prestigeBonus');
   }
+  const gain = shipGain(s, content, preview.baseGain, choice, !!opts.bonus);
   const next = s.generation + 1;
   if (s.stats.genUpgrades === 0) s.stats.shippedClean += 1;
   s.hype = amount(s.hype + gain);
-  s.labRep += content.labRep.perShip + content.labRep.perGeneration * next;
+  s.labRep += content.labRep.perShip + content.labRep.perGeneration * next + (choice?.labRep ?? 0);
+  s.shipChoice = choice ? choice.id : null;
+  if (choice?.trainingRuns && content.training && mechanicOn(s, content, 'training')) {
+    s.training = { ...s.training, charges: s.training.charges + choice.trainingRuns };
+    accrueTraining(s, content, s.now);
+  }
   s.generation = next;
   s.tokens = 0;
   s.genLifetime = 0;
@@ -527,7 +563,7 @@ export function prestige(state: GarageState, content: GarageContent, now: number
   s.stats.modelsShipped += 1;
   s.stats.genUpgrades = 0;
   s.stats.pureTaps = 0;
-  s.lastShip = { generation: next, hypeGained: gain, at: s.now };
+  s.lastShip = { generation: next, hypeGained: gain, at: s.now, ...(choice ? { choice: choice.id } : {}) };
   const named = content.generations[next];
   pushNews(s, content, named ? named.headlineKey : content.endlessHeadlineKey, 'launch', s.now, { n: next + 1 });
   checkAchievements(s, content);
@@ -643,8 +679,8 @@ export function crateValue(state: GarageState, content: GarageContent): number {
 }
 
 /** Claims an offer's reward (the UI calls this after the ad, or straight away with ads removed). */
-export function claimOffer(state: GarageState, content: GarageContent, id: OfferId, now: number): ActionResult {
-  if (id === 'prestigeBonus') return prestige(state, content, now, { bonus: true });
+export function claimOffer(state: GarageState, content: GarageContent, id: OfferId, now: number, opts: { choice?: string } = {}): ActionResult {
+  if (id === 'prestigeBonus') return prestige(state, content, now, { bonus: true, choice: opts.choice });
   const s = at(state, content, now);
   const def = offerDef(content, id);
   const status = offerStatus(s, content, id, s.now);
@@ -703,6 +739,7 @@ function achieved(s: GarageState, content: GarageContent, rule: GarageContent['a
 }
 
 function checkAchievements(s: GarageState, content: GarageContent): void {
+  updateStage(s, content);
   for (const a of content.achievements) {
     if (s.achievements.includes(a.id) || !achieved(s, content, a.rule)) continue;
     s.achievements = [...s.achievements, a.id];

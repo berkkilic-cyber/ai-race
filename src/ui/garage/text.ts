@@ -75,6 +75,8 @@ export function requirementText(r: Requirement, content: GarageContent = garageC
     }
     case 'lifetime':
       return t('ui.garage.req.lifetime', { amount: fmt(r.tokens) });
+    case 'allTime':
+      return t('ui.garage.req.allTime', { amount: fmt(r.tokens) });
     case 'taps':
       return t('ui.garage.req.taps', { count: r.count });
     case 'generation':

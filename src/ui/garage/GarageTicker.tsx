@@ -24,6 +24,9 @@ const TONE: Record<GarageNews['kind'], string> = {
   incident: colors.alarm,
   fixed: colors.good,
   achievement: colors.player,
+  stage: colors.player,
+  happening: colors.info,
+  training: colors.good,
 };
 
 /**
