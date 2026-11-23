@@ -11,6 +11,7 @@ import {
   type BotPolicy,
   type ContentPack,
   type EndingTrigger,
+  type GameSetup,
   type GameState,
   type NewsItem,
 } from '@/engine';
@@ -30,6 +31,8 @@ export interface Job {
   difficulty?: string;
   /** Run-length id; default: the pack's default run length. */
   runLength?: string;
+  /** Start bonus for the player (Lab Rep perks, see --perks). */
+  bonus?: GameSetup['bonus'];
 }
 
 export interface RivalRecord {
@@ -236,6 +239,7 @@ export function simulate(job: Job): RunRecord {
         seed: job.seed,
         ...(job.difficulty !== undefined ? { difficulty: job.difficulty } : {}),
         ...(job.runLength !== undefined ? { runLength: job.runLength } : {}),
+        ...(job.bonus ? { bonus: job.bonus } : {}),
       },
       { policy: job.policy, maxTicks: MAX_TICKS, onTick, onMomentCollected, ...(job.momentSkill !== undefined ? { momentSkill: job.momentSkill } : {}) },
     );
