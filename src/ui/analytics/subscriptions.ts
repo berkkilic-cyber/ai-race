@@ -4,6 +4,7 @@ import type { GameState } from '@/engine';
 import { useAdStore } from '../ads/store';
 import { PLACEMENTS } from '../ads/types';
 import { onLoggedError } from '../diagnostics/log';
+import { garageMoments } from '../garage/moments';
 import { useGarageStore } from '../garage/store';
 import { onGameAction, useGameStore } from '../store/game';
 import { STEPS } from '../tutorial/machine';
@@ -126,23 +127,63 @@ export function subscribeTutorial(): () => void {
 
 /** Taps are summed and sent as one garage_tap_batch at most this often (and when leaving or backgrounding). */
 export const TAP_BATCH_MS = 30_000;
+/** Happenings the helpers collect on their own are counted per id and sent at most this often (and when leaving). */
+export const AUTO_HAPPENING_BATCH_MS = 300_000;
+/** The staff split is sent once the player has stopped adjusting it for this long (and when leaving). */
+export const STAFF_SETTLE_MS = 2500;
 
 let pendingTaps = 0;
 let tapTimer: ReturnType<typeof setTimeout> | null = null;
+const pendingAuto = new Map<string, number>();
+let autoTimer: ReturnType<typeof setTimeout> | null = null;
+let pendingStaff: { research: number; product: number; safety: number } | null = null;
+let staffTimer: ReturnType<typeof setTimeout> | null = null;
 
-/** Sends the taps counted so far as one event (none if there were none). */
+function flushAutoHappenings(): void {
+  if (autoTimer) {
+    clearTimeout(autoTimer);
+    autoTimer = null;
+  }
+  for (const [id, count] of pendingAuto) track({ name: 'garage_happening', params: { id, outcome: 'auto', count } });
+  pendingAuto.clear();
+}
+
+function flushStaff(): void {
+  if (staffTimer) {
+    clearTimeout(staffTimer);
+    staffTimer = null;
+  }
+  if (!pendingStaff) return;
+  const split = pendingStaff;
+  pendingStaff = null;
+  track({ name: 'garage_staff_change', params: split });
+}
+
+/**
+ * Sends what the Garage holds back: the taps counted so far as one event (none if there
+ * were none), the settled staff split and the helpers' batched happenings. Called on the
+ * batch timers, when leaving the Garage and when the app goes to the background.
+ */
 export function flushTaps(): void {
   if (tapTimer) {
     clearTimeout(tapTimer);
     tapTimer = null;
   }
+  flushStaff();
+  flushAutoHappenings();
   if (pendingTaps <= 0) return;
   const taps = pendingTaps;
   pendingTaps = 0;
   track({ name: 'garage_tap_batch', params: { taps } });
 }
 
-/** The Garage: taps (batched), generator and upgrade purchases, shipping a model, the haptics setting. */
+/**
+ * The Garage: taps (batched), generator and upgrade purchases, shipping a model with its
+ * launch choice, the haptics setting, and the lab (src/ui/garage/moments.ts reads the
+ * discrete changes): stages, training runs and picks, staff (debounced), happenings
+ * (helpers' ones batched) and milestones. The auto-buy helper's purchases are not player
+ * purchases and send nothing.
+ */
 export function subscribeGarage(): () => void {
   return useGarageStore.subscribe((st, prev) => {
     if (st.settings !== prev.settings && st.settings.haptics !== prev.settings.haptics) track({ name: 'settings_change', params: { key: 'haptics', value: st.settings.haptics } });
@@ -154,16 +195,36 @@ export function subscribeGarage(): () => void {
       pendingTaps += taps;
       if (!tapTimer) tapTimer = setTimeout(flushTaps, TAP_BATCH_MS);
     }
+    const m = garageMoments(b, a, st.content);
+    if (m.stage !== null) track({ name: 'garage_stage_unlock', params: { stage: st.content.stages?.[m.stage]?.id ?? String(m.stage) } });
     if (a.generation > b.generation) {
       flushTaps();
       track({ name: 'garage_prestige', params: { index: a.generation } });
+      if (m.ship?.choice) track({ name: 'garage_ship_choice', params: { choice: m.ship.choice } });
       return;
     }
-    if (a.generators !== b.generators && a.stats.generatorsBought !== b.stats.generatorsBought) {
+    if (m.trainingStarted) track({ name: 'garage_training_start' });
+    if (m.pick) track({ name: 'garage_training_pick', params: m.pick });
+    if (m.staff) {
+      pendingStaff = { research: m.staff.research, product: m.staff.product, safety: m.staff.safety };
+      if (staffTimer) clearTimeout(staffTimer);
+      staffTimer = setTimeout(flushStaff, STAFF_SETTLE_MS);
+    }
+    if (m.happening) {
+      if (m.happening.outcome === 'auto') {
+        pendingAuto.set(m.happening.id, (pendingAuto.get(m.happening.id) ?? 0) + 1);
+        if (!autoTimer) autoTimer = setTimeout(flushAutoHappenings, AUTO_HAPPENING_BATCH_MS);
+      } else track({ name: 'garage_happening', params: { id: m.happening.id, outcome: m.happening.outcome } });
+    }
+    for (const ms of m.milestones) track({ name: 'garage_milestone', params: ms });
+    if (m.bought > 0 && a.generators !== b.generators) {
       const gens = st.content.generators;
-      for (let i = 0; i < gens.length; i++) {
-        const count = (a.generators[gens[i].id] ?? 0) - (b.generators[gens[i].id] ?? 0);
-        if (count > 0) track({ name: 'garage_generator_buy', params: { tier: i + 1, count } });
+      // A change that also holds a helper's auto-buy (the engine caught up before the player's buy) is skipped: the tiers cannot be told apart.
+      if (m.autoBought === 0) {
+        for (let i = 0; i < gens.length; i++) {
+          const count = (a.generators[gens[i].id] ?? 0) - (b.generators[gens[i].id] ?? 0);
+          if (count > 0) track({ name: 'garage_generator_buy', params: { tier: i + 1, count } });
+        }
       }
     }
     if (a.upgrades !== b.upgrades && a.upgrades.length > b.upgrades.length) {
@@ -203,4 +264,10 @@ export function resetSubscriptionState(): void {
   lastErrorAt = -Infinity;
   if (tapTimer) clearTimeout(tapTimer);
   tapTimer = null;
+  if (autoTimer) clearTimeout(autoTimer);
+  autoTimer = null;
+  pendingAuto.clear();
+  if (staffTimer) clearTimeout(staffTimer);
+  staffTimer = null;
+  pendingStaff = null;
 }

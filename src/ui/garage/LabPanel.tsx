@@ -253,6 +253,7 @@ function Staff({ state, content }: { state: GarageState; content: GarageContent 
             <Pressable
               style={({ pressed }) => [styles.step, n < 1 && styles.stepOff, pressed && styles.pressed]}
               disabled={n < 1}
+              hitSlop={STEP_SLOP}
               onPress={() => useGarageStore.getState().moveStaff(lane, receiver(state, lane))}
               accessibilityRole="button"
               accessibilityLabel={t('ui.garage.lab.less', { lane: t(`ui.garage.lab.lane.${lane}`) })}
@@ -263,6 +264,7 @@ function Staff({ state, content }: { state: GarageState; content: GarageContent 
             <Pressable
               style={({ pressed }) => [styles.step, !from && styles.stepOff, pressed && styles.pressed]}
               disabled={!from}
+              hitSlop={STEP_SLOP}
               onPress={() => from && useGarageStore.getState().moveStaff(from, lane)}
               accessibilityRole="button"
               accessibilityLabel={t('ui.garage.lab.more', { lane: t(`ui.garage.lab.lane.${lane}`) })}
@@ -321,6 +323,9 @@ export const LabPanel = memo(function LabPanel() {
     </View>
   );
 });
+
+/** The steppers draw 40 px square; the slop makes each a 44 px target (the gap between them is wider than the slop). */
+const STEP_SLOP = { top: 2, bottom: 2, left: 2, right: 2 };
 
 const styles = StyleSheet.create({
   wrap: { gap: spacing.s },

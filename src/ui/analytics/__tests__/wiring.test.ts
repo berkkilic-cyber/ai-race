@@ -176,6 +176,122 @@ describe('analytics wiring', () => {
     gs().setHaptics(true);
   });
 
+  it('garage lab: stage, training start and picks, debounced staff, happenings, milestones, ship choice', async () => {
+    await useGarageStore.getState().load();
+    const gs = useGarageStore.getState;
+    const content = gs().content;
+    const stage = (id: string) => content.stages!.findIndex((x) => x.id === id);
+    const far = gs().state!.now + 3_600_000;
+    gs().replace({ ...gs().state!, stage: stage('datacentre'), generation: 2, tokens: 1e15, genLifetime: 1e15, nextGoldenAt: far, nextIncidentAt: far, nextHappeningAt: far, training: { charges: 2, nextChargeAt: far, candidates: null }, achievements: content.achievements.map((x) => x.id) });
+    rt.memory.clear();
+    const s0 = gs().state!;
+    gs().replace({ ...s0, stage: s0.stage + 1 });
+    expect(last('garage_stage_unlock')!.params).toEqual({ stage: 'town' });
+    gs().replace({ ...gs().state!, stage: stage('datacentre') });
+    expect(gs().launchTraining()).toBe(true);
+    expect(last('garage_training_start')).toBeDefined();
+    const cand = gs().state!.training.candidates![0];
+    expect(gs().keepModel(cand.uid)).toBe(true);
+    const pick = last('garage_training_pick')!.params;
+    expect(pick.action).toBe('keep');
+    expect(pick.rarity).toBe(cand.rarity);
+    expect(typeof pick.strength).toBe('string');
+    expect(gs().launchTraining()).toBe(true);
+    gs().scrapCandidates();
+    expect(last('garage_training_pick')!.params.action).toBe('scrap');
+    // Staff: five quick taps, one event once the player stops (flushed here as on leaving).
+    rt.memory.clear();
+    for (let i = 0; i < 3; i++) gs().moveStaff('research', 'product');
+    gs().moveStaff('safety', 'product');
+    gs().moveStaff('product', 'safety');
+    expect(names()).toEqual([]);
+    flushTaps();
+    const split = gs().state!.staff;
+    expect(rt.memory.events.map((e) => [e.name, e.params])).toEqual([['garage_staff_change', { research: split.research, product: split.product, safety: split.safety }]]);
+    // Happenings: tapped and missed one by one.
+    rt.memory.clear();
+    const spawn = (id: string) => {
+      const s = gs().state!;
+      gs().replace({ ...s, happening: { uid: s.uidSeq, id, spawnedAt: s.now, expiresAt: s.now + 60_000, x: 0.5, y: 0.5 }, uidSeq: s.uidSeq + 1 });
+    };
+    spawn('pizza');
+    expect(gs().collectHappening()?.ok).toBe(true);
+    expect(last('garage_happening')!.params).toEqual({ id: 'pizza', outcome: 'tapped' });
+    spawn('bug');
+    const h = gs().state!;
+    gs().replace({ ...h, happening: { ...h.happening!, expiresAt: h.now + 1 } });
+    await new Promise((r) => setTimeout(r, 5));
+    gs().tick();
+    expect(last('garage_happening')!.params).toEqual({ id: 'bug', outcome: 'missed' });
+    // Milestones: buying the 25th of a tier.
+    const first = content.generators[0].id;
+    gs().replace({ ...gs().state!, generators: { ...gs().state!.generators, [first]: 24 } });
+    expect(gs().buy(first)).toBe(true);
+    expect(last('garage_milestone')!.params).toEqual({ tier: 1, count: 25 });
+    // Ship with a launch choice.
+    rt.memory.clear();
+    gs().replace({ ...gs().state!, genLifetime: 1e13 });
+    expect(gs().ship(false, 'hype')).toBe(true);
+    expect(rt.memory.events.filter((e) => e.name !== 'garage_tap_batch').map((e) => [e.name, e.params])).toEqual([
+      ['garage_prestige', { index: 3 }],
+      ['garage_ship_choice', { choice: 'hype' }],
+    ]);
+  });
+
+  it('garage helpers: 1,000 ticks with automation on send nothing until the batch, then one event per happening id', async () => {
+    await useGarageStore.getState().load();
+    const gs = useGarageStore.getState;
+    const content = gs().content;
+    let now = gs().state!.now;
+    const spy = jest.spyOn(Date, 'now').mockImplementation(() => now);
+    gs().replace({
+      ...gs().state!,
+      stage: content.stages!.findIndex((x) => x.id === 'latent'),
+      generation: 8,
+      tokens: 1e24,
+      genLifetime: 1e24,
+      generators: { intern: 260, gpu: 230, closet: 210, scraper: 190, hall: 170, chips: 150, power: 120, robotics: 90, orbital: 50, universe: 4 },
+      autoBuy: true,
+      nextAutoBuyAt: now + 4000,
+      nextHappeningAt: now + 1000,
+      nextGoldenAt: now + 3_600_000,
+      nextIncidentAt: now + 3_600_000,
+      training: { charges: 3, nextChargeAt: 0, candidates: null },
+      achievements: content.achievements.map((x) => x.id),
+    });
+    rt.memory.clear();
+    const caught0 = gs().state!.stats.happeningsCaught;
+    for (let i = 0; i < 1000; i++) {
+      now += 250;
+      gs().tick();
+    }
+    spy.mockRestore();
+    const end = gs().state!;
+    expect(end.stats.autoBought).toBeGreaterThan(10);
+    expect(end.stats.happeningsCaught - caught0).toBeGreaterThan(2);
+    // Milestones the helper crosses are still milestones; nothing else per tick.
+    expect(names().filter((n) => n !== 'garage_milestone')).toEqual([]);
+    expect(names().length).toBeLessThan(10);
+    rt.memory.clear();
+    flushTaps();
+    const batched = rt.memory.events;
+    expect(batched.every((e) => e.name === 'garage_happening' && e.params.outcome === 'auto')).toBe(true);
+    expect(batched.reduce((n, e) => n + Number(e.params.count), 0)).toBe(end.stats.happeningsCaught - caught0);
+    expect(new Set(batched.map((e) => e.params.id)).size).toBe(batched.length);
+  });
+
+  it('ads: the bonus multiplier flows like every other placement', async () => {
+    await useAdStore.getState().load();
+    rt.memory.clear();
+    useAdStore.getState().count('bonusMultiply', 'requested');
+    useAdStore.getState().count('bonusMultiply', 'shown');
+    useAdStore.getState().count('bonusMultiply', 'rewarded');
+    expect(rt.memory.events.map((e) => [e.name, e.params])).toEqual([
+      ['ad_started', { placement: 'bonusMultiply' }],
+      ['ad_completed', { placement: 'bonusMultiply' }],
+    ]);
+  });
+
   it('ads: started and completed per placement, remove-ads switch; nothing on load', async () => {
     await useAdStore.getState().load();
     rt.memory.clear();

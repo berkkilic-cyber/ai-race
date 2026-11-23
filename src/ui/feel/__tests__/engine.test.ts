@@ -50,7 +50,7 @@ describe('sound files', () => {
       expect(fs.existsSync(file)).toBe(true);
       total += fs.statSync(file).size;
     }
-    expect(total).toBeLessThan(700 * 1024);
+    expect(total).toBeLessThan(900 * 1024);
   });
 
   it('every file is 16-bit mono 44.1 kHz, peaks near -6 dBFS, never clips and is not silent', () => {
@@ -63,7 +63,7 @@ describe('sound files', () => {
       expect(l.peakDb).toBeGreaterThan(-6.5);
       expect(l.peakDb).toBeLessThan(-5.5);
       expect(l.rmsDb).toBeGreaterThan(-40);
-      expect(l.ms).toBeLessThanOrEqual(name.endsWith('sting') || name.includes('launch') || name.includes('ship') ? 1000 : 500);
+      expect(l.ms).toBeLessThanOrEqual(name.endsWith('sting') || name.includes('launch') || name.includes('ship') || name.includes('stage') ? 1000 : 500);
     }
   });
 });

@@ -13,7 +13,7 @@
  * launch result, every stage's room (garage, office, data centre, company town, latent
  * space) with its Lab tab (training candidates, kept models, staff, helpers), a lab
  * happening, the stage card, stats and achievements, settings, a late save, and (default
- * size only) a narrow portrait window.
+ * size, 844 wide, only) a narrow portrait window.
  * Checks (exits 1 if any fails): the mode choice opens /garage; one touch tap earns tokens;
  * two fingers at once count as two taps; a buy works; the golden moment collects; the
  * incident fixes by taps; the offline report doubles through the test ad; ship day ships
@@ -30,6 +30,7 @@
  * SECONDS (default 5) at TAPS per second (default 10). Prints frame times (average, p95,
  * worst), long tasks, React commits per second and the components that rendered most.
  */
+/* global __dirname */
 const fs = require('node:fs');
 const http = require('node:http');
 const path = require('node:path');
@@ -37,7 +38,7 @@ const puppeteer = require('puppeteer-core');
 const { scanText, textScanSummary } = require('./textScan');
 
 const ROOT = path.join(__dirname, '..', '..');
-const DIST = path.join(ROOT, 'dist');
+const DIST = process.env.DIST ? path.resolve(process.env.DIST) : path.join(ROOT, 'dist');
 const OUT = path.join(ROOT, 'docs', 'screenshots', 'garage');
 const PORT = Number(process.env.PORT || 8781);
 const CHROME = process.env.CHROME || '/usr/bin/google-chrome';
@@ -67,6 +68,35 @@ function serve() {
 }
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+/**
+ * In the page: what overlaps that must not. The one ad offer never covers the model's ring
+ * or a happening; a happening never covers the ring; the HUD, the model, the offer and the
+ * happening stay inside the side insets. Returns a list of problems (empty when clear).
+ */
+function layoutProblems(insets) {
+  const [, right = 0, , left = 0] = (insets || '0,0,0,0').split(',').map(Number);
+  const rect = (id) => {
+    const el = document.querySelector(`[data-testid="${id}"]`);
+    if (!el) return null;
+    const r = el.getBoundingClientRect();
+    return r.width > 0 && r.height > 0 ? { x: r.x, y: r.y, w: r.width, h: r.height, id } : null;
+  };
+  const hit = (a, b) => a && b && a.x < b.x + b.w - 1 && b.x < a.x + a.w - 1 && a.y < b.y + b.h - 1 && b.y < a.y + a.h - 1;
+  const out = [];
+  const tap = rect('garage-tap');
+  // The visible ring: a square of 1.04 x the surface height, centred on it.
+  const ring = tap ? { x: tap.x + tap.w / 2 - tap.h * 0.52, y: tap.y - tap.h * 0.02, w: tap.h * 1.04, h: tap.h * 1.04, id: 'model' } : null;
+  const offer = rect('garage-offer-slot') || rect('garage-bonus-offer');
+  const happening = rect('garage-happening-wrap');
+  if (hit(offer, ring)) out.push(`${offer.id} covers the model`);
+  if (hit(offer, happening)) out.push(`${offer.id} covers the happening`);
+  if (hit(happening, ring)) out.push('the happening covers the model');
+  for (const r of [rect('garage-hud'), tap, offer, happening]) {
+    if (r && (r.x < left - 1 || r.x + r.w > window.innerWidth - right + 1)) out.push(`${r.id} under a side inset`);
+  }
+  return out;
+}
 let failures = 0;
 function check(ok, what) {
   console.log(`${ok ? 'ok  ' : 'FAIL'} ${what}`);
@@ -241,6 +271,8 @@ async function main() {
       check(!hit, `${name}: no raw garage keys${hit ? ` (${hit[0]})` : ''}`);
       const ads = await page.evaluate(() => [...document.querySelectorAll('[data-testid^="ad-"]')].map((e) => e.getAttribute('data-testid')));
       check(ads.length <= 1, `${name}: at most one ad offer on screen${ads.length > 1 ? ` (${ads.join(', ')})` : ''}`);
+      const clash = await page.evaluate(layoutProblems, INSETS);
+      check(clash.length === 0, `${name}: layout clear (offer, happening, model, insets)${clash.length ? ` (${clash.join('; ')})` : ''}`);
       console.log(`     ${path.relative(ROOT, file)}`);
     };
     const q = `debug=1&adseconds=2${INSETS ? `&insets=${INSETS}` : ''}`;
@@ -276,6 +308,8 @@ async function main() {
     const tokens = await g(() => window.__garage.state().tokens);
     check(tokens > 0, `taps earn tokens (${tokens})`);
     for (let i = 0; i < 8; i++) await tapAt({ x: target.x + 30, y: target.y - 10 });
+    // Let the pop-out numbers finish so the capture shows the screen, not a number in flight.
+    await sleep(700);
     await shot('fresh');
     await tapId('buy-intern');
     check((await g(() => window.__garage.state().generators.intern)) === 1, 'buying the first generator works');
@@ -437,8 +471,8 @@ async function main() {
     await shot('settings');
     await tapId('sheet-close');
 
-    // 11. Narrow portrait window (usable, not polished).
-    if (!INSETS) {
+    // 11. Narrow portrait window (usable, not polished), with the default size's run.
+    if (VIEW.width === 844) {
       await page.setViewport({ width: 390, height: 780, deviceScaleFactor: 1, hasTouch: true });
       await sleep(400);
       await shot('narrow');

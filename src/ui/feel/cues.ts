@@ -25,7 +25,23 @@ export type Cue =
   | 'garageBuy'
   | 'garageGolden'
   | 'garageShip'
-  | 'garageDeny';
+  | 'garageDeny'
+  | 'garageStage'
+  | 'trainingReady'
+  | 'trainingReveal'
+  | 'modelKeep'
+  | 'modelScrap'
+  | 'staffMove'
+  | 'happeningShow'
+  | 'happeningGood'
+  | 'happeningAverted'
+  | 'happeningMiss'
+  | 'garageMilestone'
+  | 'shipReveal'
+  | 'shipPress'
+  | 'shipChoice'
+  | 'garageMultiply'
+  | 'garageHelper';
 
 export interface CueSpec {
   sound: SoundName;
@@ -60,6 +76,25 @@ export const CUES: Record<Cue, CueSpec> = {
   garageGolden: { sound: 'garage-golden', haptic: null, priority: 5 },
   garageShip: { sound: 'garage-ship', haptic: null, priority: 8 },
   garageDeny: { sound: 'deny', haptic: 'light', priority: 1 },
+  // The Garage lab. Presses through the shared Button drop their own tap when these sound,
+  // so the ones the player causes carry a haptic; the bubbles (happenings, the bonus offer)
+  // buzz on their own; what the lab does by itself (a run ready, a miss, helpers) never buzzes.
+  garageStage: { sound: 'garage-stage', haptic: 'success', priority: 8 },
+  trainingReady: { sound: 'training-ready', haptic: null, priority: 1 },
+  trainingReveal: { sound: 'training-reveal', haptic: 'light', priority: 4 },
+  modelKeep: { sound: 'model-keep', haptic: 'medium', priority: 4 },
+  modelScrap: { sound: 'model-scrap', haptic: 'light', priority: 3 },
+  staffMove: { sound: 'staff-move', haptic: 'selection', priority: 1 },
+  happeningShow: { sound: 'happening-pop', haptic: null, priority: 0 },
+  happeningGood: { sound: 'moment-boost', haptic: null, priority: 4 },
+  happeningAverted: { sound: 'moment-averted', haptic: null, priority: 4 },
+  happeningMiss: { sound: 'happening-miss', haptic: null, priority: 1 },
+  garageMilestone: { sound: 'milestone', haptic: 'light', priority: 5 },
+  shipReveal: { sound: 'shipday-reveal', haptic: null, priority: 5 },
+  shipPress: { sound: 'shipday-press', haptic: 'medium', priority: 5 },
+  shipChoice: { sound: 'event-confirm', haptic: 'selection', priority: 3 },
+  garageMultiply: { sound: 'bonus-multiply', haptic: null, priority: 6 },
+  garageHelper: { sound: 'helper-tick', haptic: null, priority: 0 },
 };
 
 /** At most this many cues sound for one state change (the highest priorities); the rest are dropped. */

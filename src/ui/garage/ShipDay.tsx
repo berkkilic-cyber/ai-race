@@ -8,6 +8,7 @@ import { AdButton } from '../ads';
 import { Button } from '../components/Button';
 import { Stamp } from '../components/Deco';
 import { Overlay } from '../components/Overlay';
+import { feedback } from '../feel/cues';
 import { useInsets } from '../hooks/useInsets';
 import { t } from '../i18n';
 import { Text } from '../locale/Text';
@@ -24,6 +25,12 @@ import { fmtFixed, fmtMult, generationLabel, gt, pctText } from './text';
  * launch bonus). The choice modifies the base prestige formula; the engine does the maths.
  */
 export function ShipDay() {
+  // Only the open flag here: the body (which reads the whole state) mounts while ship day is open.
+  const open = useGarageStore((s) => s.shipDay !== null);
+  return open ? <ShipDayBody /> : null;
+}
+
+function ShipDayBody() {
   const shipDay = useGarageStore((s) => s.shipDay);
   const state = useGarageStore((s) => s.state);
   const content = useGarageStore((s) => s.content);
@@ -99,7 +106,10 @@ export function ShipDay() {
                     return (
                       <Pressable
                         key={c.id}
-                        onPress={() => setChoice(c.id)}
+                        onPress={() => {
+                          if (c.id !== picked?.id) feedback('shipChoice');
+                          setChoice(c.id);
+                        }}
                         accessibilityRole="radio"
                         accessibilityState={{ selected: on }}
                         style={[styles.choice, on && styles.choiceOn]}

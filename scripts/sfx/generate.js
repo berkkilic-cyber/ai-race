@@ -362,6 +362,121 @@ const SOUNDS = {
     biquad(b, { f0: 6000 });
     return echo(b, { time: 0.08, feedback: 0.25, mix: 0.2 });
   },
+
+  // ── the Garage lab (task 28) ──
+  // Stage unlocked: the place changes. A roll-up door rattles open (noise through a rising
+  // band pass with a slat flutter), a low thump lands, then a wide major chord blooms with echo.
+  'garage-stage': () => {
+    const b = buffer(0.56);
+    noise(b, { dur: 0.26, gain: 0.45, seed: 91, attack: 0.03, curve: 'lin' });
+    for (let i = 0; i < Math.round(0.26 * RATE); i++) b[i] *= 0.6 + 0.4 * Math.sign(Math.sin((TAU * 28 * i) / RATE));
+    biquad(b, { type: 'bandpass', f0: 500, f1: 2600, q: 1.4, dur: 0.26 });
+    osc(b, { type: 'sine', f0: 140, f1: 55, start: 0.24, dur: 0.14, gain: 0.9 });
+    for (const [n, d] of [['D5', 0], ['F#5', 5], ['A5', -5], ['D6', 3]]) osc(b, { type: 'pulse', duty: 0.3, f0: hz(n), start: 0.26, dur: 0.3, gain: 0.2, detune: d, attack: 0.015, hold: 0.06 });
+    osc(b, { type: 'triangle', f0: hz('A6'), start: 0.32, dur: 0.24, gain: 0.25, vibrato: { rate: 9, depth: 0.004 } });
+    biquad(b, { f0: 6500 });
+    return echo(b, { time: 0.08, feedback: 0.3, mix: 0.25 });
+  },
+  // Training run ready: a soft two-note "ding-dong" (sine with a quiet octave), gentle.
+  'training-ready': () => {
+    const b = buffer(0.18);
+    osc(b, { type: 'sine', f0: hz('G5'), dur: 0.09, gain: 0.6 });
+    osc(b, { type: 'sine', f0: hz('G6'), dur: 0.05, gain: 0.12 });
+    osc(b, { type: 'sine', f0: hz('D6'), start: 0.07, dur: 0.11, gain: 0.6 });
+    return echo(b, { time: 0.04, feedback: 0.2, mix: 0.2 });
+  },
+  // Candidates revealed: three quick card flips (noise ticks) each with a rising blip.
+  'training-reveal': () => {
+    const b = buffer(0.24);
+    ['C6', 'E6', 'A6'].forEach((n, i) => {
+      noise(b, { start: i * 0.065, dur: 0.01, gain: 0.35, seed: 101 + i });
+      osc(b, { type: 'pulse', duty: 0.25, f0: hz(n), start: i * 0.065 + 0.005, dur: 0.06, gain: 0.4 });
+    });
+    biquad(b, { f0: 6000 });
+    return echo(b, { time: 0.05, feedback: 0.25, mix: 0.2 });
+  },
+  // Candidate kept: a "slot in" click (short sine thunk) and an upward fifth, confident.
+  'model-keep': () => {
+    const b = buffer(0.18);
+    osc(b, { type: 'sine', f0: 220, f1: 110, dur: 0.04, gain: 0.8 });
+    noise(b, { dur: 0.006, gain: 0.4, seed: 111 });
+    osc(b, { type: 'square', f0: hz('D6'), start: 0.035, dur: 0.05, gain: 0.3, curve: 'flat', release: 0.008 });
+    osc(b, { type: 'square', f0: hz('A6'), start: 0.08, dur: 0.1, gain: 0.3 });
+    return biquad(b, { f0: 5000 });
+  },
+  // Candidates scrapped: a paper "fwip" (noise with a falling band pass) and a low falling blip.
+  'model-scrap': () => {
+    const b = buffer(0.18);
+    noise(b, { dur: 0.12, gain: 0.5, seed: 121, attack: 0.01 });
+    biquad(b, { type: 'bandpass', f0: 3500, f1: 700, q: 1.2, dur: 0.12 });
+    osc(b, { type: 'triangle', f0: 520, f1: 260, start: 0.05, dur: 0.13, gain: 0.5 });
+    return biquad(b, { f0: 4000 });
+  },
+  // Staff moved: a tiny wooden tick (band-passed click with a short triangle tap).
+  'staff-move': () => {
+    const b = buffer(0.045);
+    noise(b, { dur: 0.004, gain: 0.5, seed: 131 });
+    biquad(b, { type: 'bandpass', f0: 1800, q: 3 });
+    osc(b, { type: 'triangle', f0: 1400, f1: 1250, dur: 0.04, gain: 0.5 });
+    return b;
+  },
+  // A lab happening appears: a very soft high "bloop" (sine up), played quietly.
+  'happening-pop': () => {
+    const b = buffer(0.08);
+    osc(b, { type: 'sine', f0: 700, f1: 1400, dur: 0.08, gain: 0.7, attack: 0.006 });
+    return biquad(b, { f0: 3000 });
+  },
+  // A happening slipped away: a soft low falling two-step, muted.
+  'happening-miss': () => {
+    const b = buffer(0.14);
+    osc(b, { type: 'triangle', f0: 392, f1: 349, dur: 0.06, gain: 0.7 });
+    osc(b, { type: 'triangle', f0: 330, f1: 262, start: 0.06, dur: 0.08, gain: 0.6 });
+    return biquad(b, { f0: 1400 });
+  },
+  // Milestone on a tier: a quick upward "level up" (four pulse steps) capped by a bell partial.
+  milestone: () => {
+    const b = buffer(0.23);
+    ['E5', 'A5', 'C#6', 'E6'].forEach((n, i) => osc(b, { type: 'pulse', duty: 0.3, f0: hz(n), start: i * 0.035, dur: 0.05, gain: 0.35, curve: 'flat', release: 0.008 }));
+    osc(b, { type: 'sine', f0: hz('A6'), start: 0.13, dur: 0.1, gain: 0.5 });
+    osc(b, { type: 'sine', f0: hz('A6') * 2.76, start: 0.13, dur: 0.06, gain: 0.12 });
+    return biquad(b, { f0: 7000 });
+  },
+  // Ship day, benchmark reveal: a leaderboard "ticker" climbing (fast square steps up) into a held note.
+  'shipday-reveal': () => {
+    const b = buffer(0.36);
+    for (let i = 0; i < 8; i++) osc(b, { type: 'square', f0: hz('A4') * semis(i * 2), start: i * 0.03, dur: 0.028, gain: 0.25, curve: 'flat', release: 0.005 });
+    osc(b, { type: 'pulse', duty: 0.3, f0: hz('E6'), start: 0.24, dur: 0.12, gain: 0.35 });
+    osc(b, { type: 'pulse', duty: 0.3, f0: hz('E6'), start: 0.24, dur: 0.12, gain: 0.2, detune: 8 });
+    return biquad(b, { f0: 5000 });
+  },
+  // Ship day, headline: the press. A heavy thud with paper noise, then a brassy two-note fanfare.
+  'shipday-press': () => {
+    const b = buffer(0.28);
+    osc(b, { type: 'sine', f0: 110, f1: 50, dur: 0.1, gain: 1 });
+    noise(b, { dur: 0.05, gain: 0.5, seed: 141 });
+    biquad(b, { f0: 1600 });
+    osc(b, { type: 'saw', f0: hz('C5'), start: 0.08, dur: 0.08, gain: 0.25, curve: 'flat', release: 0.01 });
+    osc(b, { type: 'saw', f0: hz('G5'), start: 0.16, dur: 0.12, gain: 0.25 });
+    return biquad(b, { f0: 3500 });
+  },
+  // Bonus multiplied: a cash-register "ka-ching" (noise tick, then a bright bell pair rising).
+  'bonus-multiply': () => {
+    const b = buffer(0.28);
+    noise(b, { dur: 0.02, gain: 0.5, seed: 151 });
+    biquad(b, { type: 'highpass', f0: 2500 });
+    for (const [n, s] of [['E6', 0.02], ['B6', 0.08]]) {
+      osc(b, { type: 'sine', f0: hz(n), start: s, dur: 0.2, gain: 0.55 });
+      osc(b, { type: 'sine', f0: hz(n) * 2.76, start: s, dur: 0.08, gain: 0.15 });
+    }
+    osc(b, { type: 'triangle', f0: hz('E7'), start: 0.14, dur: 0.12, gain: 0.25, vibrato: { rate: 16, depth: 0.004 } });
+    return echo(b, { time: 0.05, feedback: 0.3, mix: 0.25 });
+  },
+  // A helper collected something: a barely-there soft tick (played very quietly and rarely).
+  'helper-tick': () => {
+    const b = buffer(0.05);
+    osc(b, { type: 'sine', f0: 1600, f1: 1500, dur: 0.05, gain: 0.6, attack: 0.004 });
+    return biquad(b, { f0: 2500 });
+  },
 };
 
 // ───────────────────────────── WAV I/O and levels ─────────────────────────────
@@ -434,8 +549,8 @@ function main() {
     if (problems.length) bad++;
     console.log(`${name.padEnd(18)} ${l.ms.toFixed(0).padStart(4)}  ${l.peakDb.toFixed(1).padStart(9)}  ${l.rmsDb.toFixed(1).padStart(8)}  ${String(l.bytes).padStart(6)}  ${problems.join(', ') || 'ok'}`);
   }
-  console.log(`${Object.keys(SOUNDS).length} sounds, ${(total / 1024).toFixed(0)} KB total${total > 700 * 1024 ? ' (OVER 700 KB)' : ''}`);
-  if (bad || total > 700 * 1024) process.exitCode = 1;
+  console.log(`${Object.keys(SOUNDS).length} sounds, ${(total / 1024).toFixed(0)} KB total${total > 900 * 1024 ? ' (OVER 900 KB)' : ''}`);
+  if (bad || total > 900 * 1024) process.exitCode = 1;
 }
 
 module.exports = { SOUNDS, levels };

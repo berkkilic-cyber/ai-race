@@ -11,7 +11,7 @@ import { useAdPlacement } from './adOffer';
 import { garageNow } from './clock';
 import { successHaptic } from './haptics';
 import { useGarage } from './hooks';
-import { spotPosition } from './LabRoom';
+import { overlaps, spotPosition, type StageRect } from './LabRoom';
 import { useGarageStore, type GarageStore } from './store';
 import { fmt } from './text';
 
@@ -24,12 +24,12 @@ const key = (b: BonusOfferState | null) => (b ? `${b.until}` : '');
  * just collected. It sits where the bonus was for a few seconds, with a bar that runs
  * down, then goes. Shown only when the placement policy picks it (one offer at a time).
  */
-export const BonusOffer = memo(function BonusOffer({ width, height }: { width: number; height: number }) {
+export const BonusOffer = memo(function BonusOffer({ width, height, avoid = null }: { width: number; height: number; avoid?: StageRect | null }) {
   const bonus = useGarage(sel, key);
-  return bonus ? <BonusOfferBody width={width} height={height} /> : null;
+  return bonus ? <BonusOfferBody width={width} height={height} avoid={avoid} /> : null;
 });
 
-const BonusOfferBody = memo(function BonusOfferBody({ width, height }: { width: number; height: number }) {
+const BonusOfferBody = memo(function BonusOfferBody({ width, height, avoid }: { width: number; height: number; avoid: StageRect | null }) {
   const bonus = useGarage(sel, key);
   const placement = useAdPlacement();
   const reduced = useReducedMotion();
@@ -48,8 +48,13 @@ const BonusOfferBody = memo(function BonusOfferBody({ width, height }: { width: 
   const mult = def?.multiplyMult ?? 2;
   const spot = bonus.source === 'happening' ? happeningDef(content, bonus.id)?.spot : undefined;
   const p = spot ? spotPosition(spot, bonus.x, bonus.y, width, height) : { x: bonus.x * width, y: bonus.y * height };
-  const left = Math.max(2, Math.min(width - WRAP - 2, p.x - WRAP / 2));
-  const top = Math.max(2, Math.min(height - 64, p.y - 22));
+  let left = Math.max(2, Math.min(width - WRAP - 2, p.x - WRAP / 2));
+  let top = Math.max(2, Math.min(height - 64, p.y - 22));
+  // Never over the model: when it does not fit beside it, it takes the stage's offer slot (top right; empty, one offer at a time).
+  if (avoid && overlaps({ x: left, y: top, w: WRAP, h: 60 }, { x: avoid.x - 4, y: avoid.y - 4, w: avoid.w + 8, h: avoid.h + 8 })) {
+    left = width - WRAP - spacing.s;
+    top = spacing.xs;
+  }
   return (
     <Animated.View entering={reduced ? undefined : FadeIn.duration(160)} exiting={reduced ? undefined : FadeOut.duration(160)} style={[styles.wrap, { left, top }]} pointerEvents="box-none" testID="garage-bonus-offer">
       <AdButton

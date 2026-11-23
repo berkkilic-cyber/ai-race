@@ -204,5 +204,8 @@
   "ui.garage.shipday.rep": "+{count} Lab İtibarı",
   "ui.garage.ship.startDay": "Yayın gününü başlat",
   "ui.garage.launch.live": "{model} yayında",
-  "ui.garage.launch.choice": "Lansman planı: {choice}"
+  "ui.garage.launch.choice": "Lansman planı: {choice}",
+  "ui.garage.stage.nextName": "Sıradaki: {name}",
+  "ui.garage.hint.tap": "Token kazanmak için modeline dokun",
+  "ui.garage.hint.buy": "Şimdi Kur sekmesinden al: {name} →"
 }

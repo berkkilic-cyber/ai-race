@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, useSyncExternalStore } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { availableUpgrades, crateValue, isGeneratorUnlocked, offerDef, offerStatus, totalRate, unitCost } from '@/idle';
@@ -6,7 +6,7 @@ import { availableUpgrades, crateValue, isGeneratorUnlocked, offerDef, offerStat
 import { AdButton, adReady, pickPlacement, useAdStore, type PlacementId } from '../ads';
 import { t } from '../i18n';
 import { successHaptic } from './haptics';
-import { useGarage, useNowEvery } from './hooks';
+import { garageNow } from './clock';
 import { useGarageStore, type GarageStore } from './store';
 import { fmt } from './text';
 
@@ -59,11 +59,26 @@ function cachedPlacement(s: GarageStore, now: number): PlacementId | null {
   return value;
 }
 
-/** The placement on screen now; re-evaluated every second and when the context changes. */
+/** Store changes, ad-store changes and a one-second clock: everything the placement depends on. */
+function subscribePlacement(onChange: () => void): () => void {
+  const offGarage = useGarageStore.subscribe(onChange);
+  const offAds = useAdStore.subscribe(onChange);
+  const timer = setInterval(onChange, 1000);
+  return () => {
+    offGarage();
+    offAds();
+    clearInterval(timer);
+  };
+}
+
+const placementNow = () => cachedPlacement(useGarageStore.getState(), Math.floor(garageNow() / 1000) * 1000);
+
+/**
+ * The placement on screen now; re-evaluated every second and when the context changes, but
+ * a component re-renders only when the placement itself changes (not once a second).
+ */
 export function useAdPlacement(): PlacementId | null {
-  const now = useNowEvery(1000);
-  useAdStore((a) => `${a.adsRemoved}|${a.mock !== null}`);
-  return useGarage((s) => cachedPlacement(s, now), (p) => p ?? '');
+  return useSyncExternalStore(subscribePlacement, placementNow, placementNow);
 }
 
 /**

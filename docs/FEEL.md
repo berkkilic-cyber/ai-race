@@ -30,6 +30,22 @@ All files are 16-bit mono 44.1 kHz WAV, peak normalised to -6 dBFS (loudness dif
 | Garage golden moment or crate | `garageGolden` | `garage-golden` | 420 | existing (Garage) | shimmering triangle run C6 → E7 with slight vibrato and a long echo |
 | Garage incident fixed | `momentAverted` | `moment-averted` | 210 | existing (Garage) | as above |
 | Garage ship (prestige) | `garageShip` | `garage-ship` | 700 | existing (Garage) | rocket: noise through a band pass rising 400 Hz → 3.5 kHz, a saw sweep up, ending on a G5 B5 D6 pulse chord |
+| Garage stage unlocked (the lab moves) | `garageStage` | `garage-stage` | 560 | success | a roll-up door: noise through a band pass rising 500 Hz → 2.6 kHz with a 28 Hz slat flutter, a sine thump 140 → 55 Hz, then a detuned D major pulse chord with a vibrato A6 on top, echo |
+| Training run ready (the queue grew by itself) | `trainingReady` | `training-ready` | 180 | none | soft sine "ding-dong" G5 → D6 with a quiet octave, short echo |
+| Training run launched (candidates revealed) | `trainingReveal` | `training-reveal` | 240 | light | three card flips: noise ticks each with a rising 25 % pulse blip (C6, E6, A6) |
+| Candidate kept (free slot or swap) | `modelKeep` | `model-keep` | 180 | medium | "slot in": sine thunk 220 → 110 Hz with a click, then a square fifth D6 → A6 |
+| Candidates scrapped | `modelScrap` | `model-scrap` | 180 | light | paper "fwip" (noise, band pass falling 3.5 kHz → 700 Hz) over a triangle falling 520 → 260 Hz |
+| Staff moved (each − / +) | `staffMove` | `staff-move` | 45 | selection | tiny wooden tick: band-passed click and a triangle 1.4 kHz tap |
+| Lab happening appears | `happeningShow` | `happening-pop` | 80 | none | very soft sine bloop 700 → 1400 Hz, played at volume 0.22, at most once per 15 s |
+| Happening tapped (a good one) | `happeningGood` | `moment-boost` | 200 | existing (bubble) | as the race's boost moment |
+| Happening tapped (a bad one stopped) | `happeningAverted` | `moment-averted` | 210 | existing (bubble) | as the race's averted threat |
+| Happening slipped away (no helper) | `happeningMiss` | `happening-miss` | 140 | none | soft low falling two-step (triangle 392 → 349, 330 → 262 Hz), muted, volume 0.35 |
+| Milestone on a tier (25 / 50 / 100 / 200 …, player buys) | `garageMilestone` | `milestone` | 230 | light | four quick pulse steps up (E5 A5 C♯6 E6) capped by a bell partial on A6 |
+| Ship day: benchmark reveal | `shipReveal` | `shipday-reveal` | 360 | none | leaderboard ticker: eight square steps climbing a whole tone each from A4, into a held detuned E6 |
+| Ship day: the headline | `shipPress` | `shipday-press` | 280 | medium | the press: sine thud 110 → 50 Hz with paper noise, then a two-note saw fanfare C5 → G5 |
+| Ship day: launch plan picked | `shipChoice` | `event-confirm` | 160 | selection | as the event confirm (a stamp) |
+| Bonus multiplied (the ×3 ad claimed) | `garageMultiply` | `bonus-multiply` | 280 | existing (offer) | "ka-ching": a high-passed noise tick, then a bell pair E6 → B6 with a vibrato E7 sparkle, echo |
+| Helpers at work (auto-collect, auto-buy) | `garageHelper` | `helper-tick` | 50 | none | a barely-there sine tick at 1.6 kHz, volume 0.12, at most once per 30 s of Garage time |
 
 Shared `Button`s also squeeze their content to 94 % while held (React Native `Animated` with the native driver: runs on the UI thread, no React state per frame).
 
@@ -37,7 +53,7 @@ Shared `Button`s also squeeze their content to 94 % while held (React Native `An
 
 - **Presses:** `Button` (src/ui/components) wraps `onPress` in `pressFeedback`; `Sheet` wraps `onClose` with the back cue. A press that itself causes a sound (a buy, a deny) drops its tap so the two never stack.
 - **Race store** (`src/ui/feel/raceSounds.ts`, pure, tested): sounds are derived from discrete changes between two states, never per tick. Player actions are counters or sets that grew while the tick stayed the same (nodes bought, data centres, a new region, moments collected, events resolved); world events come from new news items (`kind: 'launch'`, `'achievement'`), a new pending event, the player's composure level rising (`src/ui/composure` levels, each level at most once per 120 ticks) and the run ending (only the sting plays).
-- **Garage store** (`src/ui/feel/garageSounds.ts`): one small file mapping Garage counters (taps, generators and upgrades bought, golden caught, crates, incidents fixed, models shipped, achievements) to cues. Extend it there when the Garage gains new mechanics.
+- **Garage store** (`src/ui/feel/garageSounds.ts`): one small file mapping discrete Garage changes to cues: taps, purchases, golden moments, crates, incidents fixed, ships, achievements, and the lab (stage, training ready / launched / kept / scrapped, staff, happenings appearing / tapped / missed / collected by helpers, milestones, the bonus multiplier, auto-buys). The changes come from `garageMoments(prev, next, content)` (src/ui/garage/moments.ts, pure), which the analytics wiring reads too. Ship day's steps come from the store's `shipDay` field (`deriveShipDayCues`); the launch-plan pick is local state in `ShipDay.tsx`, which plays `shipChoice` itself. Helpers' auto-buys never sound as purchases.
 - **Deny:** `installFeel` wraps the race store's `dispatch` and the Garage store's `buy` / `buyUpgrade`, so a "cannot afford" failure plays the deny cue without editing the stores. Most buy buttons are disabled when unaffordable, so it is rare.
 - **Tabs:** `useFeelRoutes()` in the root layout plays the tab cue when the route moves between two `/game` tabs.
 - `installFeel()` runs once from `app/_layout.tsx`.
@@ -49,7 +65,8 @@ Shared `Button`s also squeeze their content to 94 % while held (React Native `An
 - One state change plays at most its **2** highest-priority cues (`MAX_CUES_PER_CHANGE`; e.g. the ending sting beats everything).
 - Voice pools are small (1 voice, 2 for UI tap / buy / moments, 3 for the Garage tap): an idle voice is reused, otherwise the oldest restarts. 10+ Garage taps a second cost one property write and a `play()` each.
 - Haptics closer than **40 ms** merge into one unless the later one is stronger (`HAPTIC_GAP_MS`).
-- `src/ui/feel/__tests__/wiring.test.ts` proves 1,000 ticks with no player action in a quiet world make no sound, and that a full world stays far below one sound per ten ticks.
+- The Garage's own limits (Garage time, so a reload or fast-forward cannot stack them): the helpers' tick at most once per **30 s** (`HELPER_SOUND_GAP_MS`), a happening appearing at most once per **15 s** (`HAPPENING_SOUND_GAP_MS`). A milestone only sounds on the player's own purchase.
+- `src/ui/feel/__tests__/wiring.test.ts` proves 1,000 ticks with no player action in a quiet world make no sound, and that a full world stays far below one sound per ten ticks. `garageSounds.test.ts` does the same for the Garage: 1,000 ticks (250 ms each) in a plain Garage are silent, and 1,000 ticks in Latent Space with auto-buy and auto-collect working make only the helper tick (at most once per 30 s) and the soft happening pop.
 
 ## Platform behaviour
 
@@ -65,7 +82,7 @@ One persisted store, `useFeelSettings` (`src/ui/feel/settings.ts`, key `feel.set
 ## Debug and checks
 
 - Web with `?debug=1`: `window.__feel.log()` lists the sounds played (names, oldest first), `entries()` adds time and rate, `settings` is the store.
-- `node scripts/sfx/feelcheck.js` (after `npx expo export --platform web`) plays part of a run and some Garage taps in headless Chrome and prints the log.
+- `node scripts/sfx/feelcheck.js` (after `npx expo export --platform web`) plays part of a run and some Garage taps in headless Chrome and prints the log, then drives every Garage lab mechanic through the `?debug=1` hooks and real taps (stage, training, staff, happenings, a milestone, ship day, the bonus multiplier, 12 s of helpers) and prints the sounds of each step.
 
 ## Regenerate
 
@@ -74,4 +91,4 @@ npm run sfx                              # rewrites assets/sfx/*.wav, prints dur
 node scripts/sfx/generate.js --check     # only checks the committed files
 ```
 
-The synth is deterministic (seeded noise, no clock): the same script writes byte-identical files. Add a sound by adding a recipe to `SOUNDS` in the script, its `require` in `src/ui/feel/sounds.ts` (a test checks both lists match), a cue in `src/ui/feel/cues.ts`, and a row here. Budget: most sounds under 300 ms, all files together under 700 KB (now 578 KB).
+The synth is deterministic (seeded noise, no clock): the same script writes byte-identical files. Add a sound by adding a recipe to `SOUNDS` in the script, its `require` in `src/ui/feel/sounds.ts` (a test checks both lists match), a cue in `src/ui/feel/cues.ts`, and a row here. Budget: most sounds under 300 ms, all files together under 900 KB (now 820 KB, 34 files; `du` shows about 892 KB with file-system blocks). The generator's `--check` and `engine.test.ts` enforce it.

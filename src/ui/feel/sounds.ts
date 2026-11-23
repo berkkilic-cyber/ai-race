@@ -25,6 +25,19 @@ export const SOUND_FILES = {
   'garage-buy': require('../../../assets/sfx/garage-buy.wav'),
   'garage-golden': require('../../../assets/sfx/garage-golden.wav'),
   'garage-ship': require('../../../assets/sfx/garage-ship.wav'),
+  'garage-stage': require('../../../assets/sfx/garage-stage.wav'),
+  'training-ready': require('../../../assets/sfx/training-ready.wav'),
+  'training-reveal': require('../../../assets/sfx/training-reveal.wav'),
+  'model-keep': require('../../../assets/sfx/model-keep.wav'),
+  'model-scrap': require('../../../assets/sfx/model-scrap.wav'),
+  'staff-move': require('../../../assets/sfx/staff-move.wav'),
+  'happening-pop': require('../../../assets/sfx/happening-pop.wav'),
+  'happening-miss': require('../../../assets/sfx/happening-miss.wav'),
+  milestone: require('../../../assets/sfx/milestone.wav'),
+  'shipday-reveal': require('../../../assets/sfx/shipday-reveal.wav'),
+  'shipday-press': require('../../../assets/sfx/shipday-press.wav'),
+  'bonus-multiply': require('../../../assets/sfx/bonus-multiply.wav'),
+  'helper-tick': require('../../../assets/sfx/helper-tick.wav'),
 } as const;
 
 export type SoundName = keyof typeof SOUND_FILES;
@@ -53,6 +66,20 @@ export const SOUND_SPECS: Partial<Record<SoundName, Partial<SoundSpec>>> = {
   'win-sting': { volume: 0.9 },
   'lose-sting': { volume: 0.9 },
   'model-launch': { volume: 0.9 },
+  // The Garage lab: soft and frequent ones down, the stage move full.
+  'garage-stage': { volume: 0.9 },
+  'training-ready': { volume: 0.55 },
+  'training-reveal': { volume: 0.65 },
+  'model-keep': { volume: 0.7 },
+  'model-scrap': { volume: 0.6 },
+  'staff-move': { volume: 0.4, voices: 2 },
+  'happening-pop': { volume: 0.22 },
+  'happening-miss': { volume: 0.35 },
+  milestone: { volume: 0.7 },
+  'shipday-reveal': { volume: 0.7 },
+  'shipday-press': { volume: 0.75 },
+  'bonus-multiply': { volume: 0.8 },
+  'helper-tick': { volume: 0.12 },
 };
 
 export function soundSpec(name: SoundName): SoundSpec {
