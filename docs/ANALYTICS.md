@@ -33,7 +33,7 @@ Every event is stored as `{ name, params, t, s }`: `t` is epoch ms, `s` the sess
 | `tutorial_step` | `step` (1-based), `id` (step id) | Each tutorial step shown. |
 | `tutorial_complete` | | The tutorial ends from its last step. |
 | `tutorial_skip` | `step` | The tutorial ends before its last step. |
-| `run_start` | `founder`, `difficulty` (`none` if the pack has no levels), `runLength?`, `homeRegion` | A new run (also Play again). |
+| `run_start` | `founder`, `difficulty` (`none` if the pack has no levels), `runLength?`, `homeRegion`, `perks` (number of Lab Rep race perks in the start bonus; 0 when off) | A new run (also Play again). |
 | `run_end` | `ending` (ending id), `won`, `score`, `ticks`, `seconds` (wall time since `run_start`) | The run reaches an ending. |
 | `run_quit` | `ticks`, `how`: `restart` \| `menu` \| `error` | A run is left before its ending: a new run over it, back to the start screen, or dropped by the error screen. |
 | `node_buy` | `nodeId`, `kind` (tree id) | The player buys a node. |
@@ -53,6 +53,8 @@ Every event is stored as `{ name, params, t, s }`: `t` is epoch ms, `s` the sess
 | `ad_started` | `placement` | An ad opens. |
 | `ad_completed` | `placement` | An ad is watched to the reward. |
 | `remove_ads_tap` | `on` | The remove-ads switch changes (the future purchase). |
+| `race_reward_granted` | `rep` (Lab Rep, one decimal), `boost` (blueprints minutes) | A finished race granted the Garage its reward (end screen). |
+| `perks_toggle` | `on` | The player flips "Play this run with perks" in the perks sheet. |
 | `settings_change` | `key`, `value` | A setting changes (today: Garage haptics). |
 | `error` | `where`, `message` | Anything logged through `logError` (error boundary, uncaught errors, failed saves). |
 

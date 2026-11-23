@@ -2,6 +2,7 @@
  * The meta layer's small store: the account's Lab Rep (read from the Garage save), the
  * player's perks switch, and the last race reward. The rules are in ./logic.ts and src/idle.
  */
+import { Platform } from 'react-native';
 import { create } from 'zustand';
 
 import type { ContentPack, GameState } from '@/engine';
@@ -108,4 +109,15 @@ export const useMetaStore = create<MetaStore>()((set, get) => ({
 /** A new run's setup with the Lab Rep perk bonus as the switch and the current Lab Rep say. */
 export function withPerks(setup: NewGameSetup, perksOn: boolean = useMetaStore.getState().perksOn): NewGameSetup {
   return withSetupBonus(setup, { perksOn }, Math.floor(useMetaStore.getState().labRep + 1e-9), garageContent());
+}
+
+/**
+ * Web debug pages (`?debug=1`): `window.__meta` for screenshot scripts: `setLabRep(n)` writes the
+ * Garage save's Lab Rep and reloads; `state()` reads this store.
+ */
+if (Platform.OS === 'web' && typeof window !== 'undefined' && /[?&]debug=1\b/.test(window.location?.search ?? '')) {
+  (window as unknown as { __meta?: unknown }).__meta = {
+    setLabRep: (n: number) => useMetaStore.getState().debugSetLabRep(n),
+    state: () => useMetaStore.getState(),
+  };
 }

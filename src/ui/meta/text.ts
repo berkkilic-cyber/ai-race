@@ -1,13 +1,13 @@
 /** Words for Lab Rep perks and rewards (all through the strings files). */
 import type { GarageContent, LabPerkDef } from '@/idle';
 
-import { fmtCash } from '../format';
+import { fmtCash, fmtPct } from '../format';
 import { garageContent } from '../garage/content';
 import { gt } from '../garage/text';
 import { t } from '../i18n';
 import { isPowerPerk, perkTotals } from './logic';
 
-const pct = (share: number) => `${Math.round(share * 1000) / 10}%`;
+const pct = (share: number) => fmtPct(share);
 
 export function perkName(p: LabPerkDef, content: GarageContent = garageContent()): string {
   return p.nameKey ? gt(p.nameKey, undefined, content) : p.id;

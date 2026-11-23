@@ -85,19 +85,72 @@ The launch bonus ad stacks on the choice. The result card names the model, the H
 
 **Automation.** The Company Town's helpers collect missed happenings for 25% of the reward instead of the penalty; Latent Space's auto-buy is a switch in the Lab tab.
 
-## Link with the race: Lab Rep
+## Link with the race: Lab Rep (task 25)
 
-Every model shipped earns 1 **Lab Rep** (`labRep.perShip`; `perGeneration` can reward depth). Perks are data in `garage.json` → `labRep.perks`:
+The two modes are one game: the race gives stories and mastery, the Garage a reason to check in several times a day. **Lab Rep** is the account level that joins them. It is never spent. It comes from shipping models (1 per ship, `labRep.perShip`; ship day's "Open the weights" adds 1) and from finishing races. It unlocks perks on a ladder in `garage.json` → `labRep.perks`.
 
-| Rep | Perk (race runs) | `effect` |
-| --- | --- | --- |
-| 1 | Seed round: start with +$50M Cash | `startCash` 50 |
-| 3 | Press list: start with +20 Hype | `startHype` 20 |
-| 6 | Fan club: +5% Hype income | `hypeIncome` 0.05 |
-| 10 | Lucky breaks: moments 10% more often | `momentRate` 0.1 |
-| 15 | Old friends: +5% Cash income | `cashIncome` 0.05 |
+### Garage → race: perks
 
-`labPerks(content, labRep)` (src/idle/selectors.ts) returns the active perks, `nextLabPerk` the next one. The Ship panel and Stats sheet show them; **the race does not apply them yet** (this task does not touch src/engine). The hook, for a later task: read the save with `deserialize(await readValue('garage.save'), garageContent(), Date.now())`, take `labPerks(content, state.labRep)`, and fold the effects into the race's `GameSetup` (start resources) or as founder-style modifiers when a run starts (in `useGameStore.newGame`). That needs a small, agreed change to `GameSetup` in `src/engine/types.ts`.
+| Rep | Perk | Effect (`effect`) | In the race |
+| --- | --- | --- | --- |
+| 1 | Seed round | +$1M start Cash (`startCash` 1) | added to the founder's start |
+| 3 | Press list | +3 start Hype (`startHype` 3) | added to the founder's start |
+| 6 | Garage Legend | title under the lab name (`title`) | looks only |
+| 9 | Fan club | +0.5% Hype income (`hypeIncome` 0.005) | modifier `hypeIncome` add 0.005 |
+| 12 | Duct-tape frame | frame on the chosen founder card (`frame`) | looks only |
+| 16 | Old friends | +0.5% Cash income (`cashIncome` 0.005) | modifier `cashIncome` add 0.005 |
+| 20 | Angel on line two | +$1M start Cash (`startCash` 1) | added to the founder's start |
+| 25 | Thought Leader | title | looks only |
+| 31 | Gold-plated frame | frame | looks only |
+| 38 | Insider list | +2 start Hype (`startHype` 2) | added to the founder's start |
+| 46 | Visionary (self-appointed) | title | looks only |
+| 58 | Holographic frame | frame | looks only |
+
+Each has a name and one line in the Garage strings (`garage.perk.<id>.name` / `.quip`). The newest title and frame are shown automatically (the title on the end screen under the lab name, the frame on the start screen's selected founder card). The `momentRate` kind is still accepted by the types but no perk uses it: the race engine has no moment-frequency stat, so it would do nothing.
+
+The sizes look tiny because the simulator says they must be: a player with every perk may win at most 5 points more often than one with none (table in docs/BALANCE.md, "Task 25"). Start Cash has a cliff: +$4M was already +5 points on Sandbox (the Researcher's start lands just above an early purchase), so the two Cash perks add $2M together.
+
+How it is applied (src/ui/meta/logic.ts, pure): `bonusForSetup({ perksOn }, labRep, content)` is the one function that decides a run's bonus (`startBonusOf` maps the active power perks to `GameSetup.bonus`; a future daily challenge adds one line there to force perks off). `withPerks(setup)` (src/ui/meta/store.ts) applies it on Found the lab and Play again; Rematch and Restart replay the recorded setup with its bonus. The run's setup records `perksOn` and `perkIds` (UI fields beside the engine's `GameSetup`, kept in the game store and in the run save).
+
+Start screen, founder step: a chip with the Lab Rep badge and what the perks add ("+$2M Cash, +5 Hype +2"), or "perks off"; it opens the perks sheet (badge, "Play this run with perks" switch, the ladder grouped Earned / Next to earn / Later, Open the Garage). With no Lab Rep yet the chip is a pointer instead: "The Garage earns race perks".
+
+### Race → Garage: the race reward
+
+When a run reaches an ending, the end screen grants the Garage once (`grantRaceReward`, src/idle/race.ts; numbers in `garage.json` → `raceReward`). An abandoned run (Abandon, Restart, quitting) never reaches an ending and grants nothing.
+
+rep = baseRep 1.6 × (win 1, loss 0.4) × difficulty (Sandbox 0.6, Frontier 1, Arms Race 1.4, Hard Takeoff 1.8) × length (Sprint 0.45, Full 1) × (1 + 0.5 × min(1, raw score / 3000)) × 0.5 ^ (earlier rewarded plays of this seed), rounded to 0.1.
+
+The raw score is the run's score divided by the race's own difficulty and length multipliers (they are counted above). A rematch on the same seed grants half, the next a quarter (the last 50 seeds are remembered), so a seed cannot be farmed. Whole points go to `labRep` (so the Ship panel and every older display stay whole numbers), the rest waits in `race.repProgress`.
+
+**Blueprints** ("the rival's slides, photographed from the back row"): production ×1.5 for 20 minutes per Lab Rep granted, extending a running boost, at most 2 hours left. They run while away like the ad boost (at the offline rate) and stack with it. The grant does not move the Garage's clock: the boost window starts at the race's end, and the next catch-up credits it only from then.
+
+The end screen shows one line ("Garage: +1.2 Lab Rep · blueprints ×1.5 for 24 min"), the Lab Rep badge and a Garage button. The next time the Garage opens, a small "From your last race" card over the lab shows what came in and the boost time left, until dismissed (`markRaceNoteSeen`).
+
+### Where Lab Rep comes from (a casual week)
+
+Rep per race, sensible bot, 120 runs per cell (`scripts/balance/raceReward.ts`, seed 3):
+
+| Difficulty | Length | Win | Raw score p50 (win / loss) | Rep per race (mean) | Blueprints min (mean) |
+| --- | --- | --- | --- | --- | --- |
+| sandbox | sprint | 62.5% | 2531 / 1020 | 0.45 | 9.0 |
+| frontier | sprint | 27.5% | 2402 / 922 | 0.49 | 9.9 |
+| arms-race | sprint | 14.2% | 2357 / 853 | 0.62 | 12.3 |
+| hard-takeoff | sprint | 15.8% | 2314 / 773 | 0.79 | 15.8 |
+| sandbox | full | 62.5% | 2465 / 1021 | 1.02 | 20.3 |
+| frontier | full | 31.7% | 2331 / 914 | 1.19 | 23.8 |
+| arms-race | full | 22.5% | 2386 / 843 | 1.48 | 29.6 |
+| hard-takeoff | full | 11.7% | 2314 / 779 | 1.61 | 32.3 |
+
+Ships: the casual Garage player (three check-ins a day, "Pacing" below) has Model 11 at the end of day 7, so 11 ships = **11 Lab Rep** in week one.
+
+Races, a casual race player on Frontier:
+- one Sprint a day and two Full runs at the weekend: 7 × 0.49 + 2 × 1.19 = 3.4 + 2.4 = **5.8** → 5.8 / (11 + 5.8) = **35%** from races;
+- two Sprints a day and two Full runs: 14 × 0.49 + 2.4 = **9.2** → 9.2 / 20.2 = **46%**;
+- the lighter pattern on Sandbox (a newer player): 7 × 0.45 + 2 × 1.02 = 5.2 → **32%**.
+
+So a third to a half of week one's Lab Rep comes from races, and races never swamp ships. After week two ships slow down (Model 12 is a two-week goal, then each model is ten times harder), so races carry the ladder from there: at about 6 to 9 Rep a week from races the last perk (Rep 58) arrives around week six to eight.
+
+`labPerks(content, labRep)` / `nextLabPerk` (src/idle/selectors.ts) list the ladder; `labRepTotal(state)` is Lab Rep with its fraction. The same `LabRepBadge` (level and a bar to the next perk) is on the start chip and sheet, the end screen, the Garage's race note and the Ship panel's Lab Rep card.
 
 ## Idle engine API (`src/idle/index.ts`)
 
@@ -120,6 +173,8 @@ totalRate, generatorRate, baseRate, tapValue, comboMultiplier, comboAt, multipli
 unitCost, bulkCost, maxAffordable, buyQuote, generatorRows, availableUpgrades, nextUnlocks,
 prestigePreview, shipThreshold, hypeForLifetime, generationName, offlineEarnings, offlineCapMs,
 crateValue, labPerks, nextLabPerk, requirementMet, requirementProgress
+// the race link (task 25)
+grantRaceReward(state, content, input, now)  raceRewardQuote  markRaceNoteSeen(state)  labRepTotal  raceBoostLeftMs
 // the lab
 launchTraining(state, content, now)  keepModel(state, content, uid, now, replaceUid?)  scrapCandidates  retireModel
 setStaff(state, content, split, now)  moveStaff(state, content, from, to, now)
