@@ -25,8 +25,10 @@ function playTick(s: GameState, pack: ContentPack): GameState {
   let next = s;
   if (next.pendingEvent) {
     const choice = chooseEventChoice(next, pack, next.playerLabId);
-    const r = applyAction(next, pack, { type: 'resolveEvent', labId: next.playerLabId, choiceId: choice });
-    if (r.ok) next = r.state;
+    if (choice !== undefined) {
+      const r = applyAction(next, pack, { type: 'resolveEvent', labId: next.playerLabId, choiceId: choice });
+      if (r.ok) next = r.state;
+    }
   }
   if (next.tick % 10 === 0) {
     for (const action of chooseAiActions(next, pack, next.playerLabId)) {

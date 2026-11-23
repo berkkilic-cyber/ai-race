@@ -10,6 +10,7 @@ import startStrings from './strings/start.en.json';
 import treesStrings from './strings/trees.en.json';
 import tutorialStrings from './strings/tutorial.en.json';
 import garageStrings from './strings/garage.en.json';
+import sprintStrings from './strings/sprint.en.json';
 import { readableOn } from './color';
 import { colors, isDark, shape } from './theme';
 
@@ -17,7 +18,7 @@ export type Params = Record<string, string | number>;
 
 const LOCALE = 'en';
 /** Shared captions plus one file per feature, so feature tasks never edit the same file. */
-const UI: Record<string, string> = { ...uiStrings, ...treesStrings, ...eventsStrings, ...startStrings, ...tutorialStrings, ...momentsStrings, ...raceStrings, ...garageStrings, ...difficultyStrings };
+const UI: Record<string, string> = { ...uiStrings, ...treesStrings, ...eventsStrings, ...startStrings, ...tutorialStrings, ...momentsStrings, ...raceStrings, ...garageStrings, ...difficultyStrings, ...sprintStrings };
 
 /** Params whose values are lab ids, resolved to lab names. */
 const LAB_PARAMS = new Set(['lab', 'rival']);

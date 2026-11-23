@@ -2,6 +2,8 @@ import {
   ENGINE_NEWS_KEYS,
   getCapabilityLevel,
   getMeters,
+  getStandings,
+  getWinProgress,
   getUsers,
   getWorldShare,
   type ContentPack,
@@ -11,7 +13,10 @@ import {
   type NewsItem,
 } from '@/engine';
 
+import { fmtPct } from '../format';
+import { t } from '../i18n';
 import type { NewGameSetup } from '../store/game';
+import { restartSetup } from '../store/runSave';
 
 export const MAX_HEADLINES = 8;
 
@@ -59,7 +64,68 @@ export function playAgainSetup(state: GameState, random: () => number = Math.ran
     packId: state.packId,
     seed,
     ...(state.difficulty !== undefined ? { difficulty: state.difficulty } : {}),
+    ...(state.runLength !== undefined ? { runLength: state.runLength } : {}),
   };
+}
+
+/** Rematch: the very same run again (same seed, same setup and pack). */
+export function rematchSetup(state: GameState): NewGameSetup {
+  return restartSetup(state);
+}
+
+/** At or above this fraction the end screen calls it close. */
+export const CLOSE_CALL = 0.8;
+
+export type CloseCall =
+  /** A win: the nearest thing that could have ended it (a rival's AGI or one of the player's meters), 0..1. */
+  | { kind: 'win'; threat: { type: 'rivalAgi'; labId: LabId } | { type: 'meter'; meter: 'regulation' | 'backlash' }; value: number; near: boolean }
+  /** A loss: the player's best win condition, 0..1. */
+  | { kind: 'lose'; goal: 'agi' | 'dependence' | 'monopoly'; value: number; near: boolean };
+
+const clamp01 = (v: number) => (Number.isFinite(v) ? Math.min(1, Math.max(0, v)) : 0);
+
+/**
+ * How close the finished run was, from the engine's selectors. A win: the closest rival's
+ * AGI progress or the player's highest failing meter at the end, whichever was nearer 100%.
+ * A loss: the player's best win condition (AGI, share of the dependence threshold, or the
+ * share of rivals already gone).
+ */
+export function closeCall(state: GameState, pack: ContentPack): CloseCall {
+  const id = state.playerLabId;
+  if (state.ending?.kind === 'win') {
+    const rival = getStandings(state, pack)
+      .filter((row) => row.labId !== id && row.status === 'active')
+      .sort((a, b) => b.agi - a.agi)[0];
+    const meters = getMeters(state, id);
+    const meter: 'regulation' | 'backlash' = meters.backlash > meters.regulation ? 'backlash' : 'regulation';
+    const meterValue = clamp01(meters[meter] / 100);
+    const rivalValue = clamp01(rival?.agi ?? 0);
+    const value = Math.max(meterValue, rivalValue);
+    const threat = rival && rivalValue >= meterValue ? ({ type: 'rivalAgi', labId: rival.labId } as const) : ({ type: 'meter', meter } as const);
+    return { kind: 'win', threat, value, near: value >= CLOSE_CALL };
+  }
+  const progress = getWinProgress(state, pack, id);
+  const { remaining, total } = progress.monopoly;
+  const options: { goal: 'agi' | 'dependence' | 'monopoly'; value: number }[] = [
+    { goal: 'agi', value: clamp01(progress.agi) },
+    { goal: 'dependence', value: clamp01(progress.dependence) },
+    { goal: 'monopoly', value: total > 0 ? clamp01((total - remaining) / total) : 0 },
+  ];
+  const best = options.reduce((a, b) => (b.value > a.value ? b : a));
+  return { kind: 'lose', goal: best.goal, value: best.value, near: best.value >= CLOSE_CALL };
+}
+
+/** The end screen's one line: "Close call: Hyperion's AGI was at 92%." */
+export function closeCallText(call: CloseCall): string {
+  const pct = fmtPct(call.value);
+  if (call.kind === 'win') {
+    const what =
+      call.threat.type === 'rivalAgi'
+        ? t('ui.sprint.close.rivalAgi', { rival: call.threat.labId })
+        : t('ui.sprint.close.meter', { meter: t(`term.${call.threat.meter}`).toLowerCase() });
+    return t(call.near ? 'ui.sprint.close.win.near' : 'ui.sprint.close.win.far', { what, pct });
+  }
+  return t(call.near ? 'ui.sprint.close.lose.near' : 'ui.sprint.close.lose.far', { pct, goal: t(`ui.sprint.close.goal.${call.goal}`) });
 }
 
 export interface EndStats {
