@@ -1,12 +1,12 @@
 import * as Haptics from 'expo-haptics';
 import { Platform } from 'react-native';
 
-import { useGarageStore } from './store';
+import { useFeelSettings } from '../feel/settings';
 
 let last = 0;
 
 function safely(call: () => Promise<void> | undefined): void {
-  if (Platform.OS === 'web' || !useGarageStore.getState().settings.haptics) return;
+  if (Platform.OS === 'web' || !useFeelSettings.getState().haptics) return;
   try {
     call()?.catch?.(() => undefined);
   } catch {

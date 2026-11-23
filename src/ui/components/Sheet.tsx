@@ -3,6 +3,7 @@ import { BackHandler, Platform, Pressable, ScrollView, StyleSheet, Text, View, u
 import Animated, { SlideInRight } from 'react-native-reanimated';
 
 import { logLifecycle } from '../diagnostics/log';
+import { pressFeedback } from '../feel/cues';
 import { useInsets } from '../hooks/useInsets';
 import { layoutModeFor } from '../hooks/useLayoutMode';
 import { t } from '../i18n';
@@ -49,9 +50,10 @@ export function sheetPanelWidth(windowWidth: number): number {
  *   panel), unless `dismissOnOutsidePress` is off, as for the map's region panel.
  * - Narrow (portrait): a bottom sheet over a light scrim; tapping the scrim closes it.
  */
-export function Sheet({ visible, onClose, title, headerRight, children, maxHeight = '70%', safeArea = false, dismissOnOutsidePress = true, panelRef, testID }: SheetProps) {
+export function Sheet({ visible, onClose: onCloseProp, title, headerRight, children, maxHeight = '70%', safeArea = false, dismissOnOutsidePress = true, panelRef, testID }: SheetProps) {
   const { width, height } = useWindowDimensions();
   const insets = useInsets();
+  const onClose = () => pressFeedback(onCloseProp, 'back'); // feel: the close sound (src/ui/feel)
   useBackToClose(visible, onClose);
   useOpenLog(visible, testID ?? title);
   if (!visible) return null;

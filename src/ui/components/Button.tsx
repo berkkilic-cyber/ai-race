@@ -1,5 +1,7 @@
-import { Pressable, StyleSheet, Text, View, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';
+import { useState } from 'react';
+import { Animated, Platform, Pressable, StyleSheet, Text, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';
 
+import { pressFeedback } from '../feel/cues';
 import { colors, flatShadow, glow, radius, shape, spacing, touch, type, voice } from '../theme';
 
 /** primary: the accent, weighted; secondary: quiet outline; ghost: text on a hairline; danger: alarm; ink: the loud voice (tabloid black). */
@@ -57,13 +59,18 @@ const LABEL: TextStyle =
 export function Button({ label, onPress, variant = 'secondary', disabled, sublabel, compact, selected, accessibilityLabel, testID, style }: ButtonProps) {
   const weighted = variant === 'primary' || variant === 'ink';
   const fg = selected ? colors.bg : disabled && shape.panel !== 'plain' ? colors.dim : FG[variant];
+  // Feel: the content squeezes while pressed (native driver: on the UI thread, no React state per frame);
+  // a press answers with a tap sound and buzz (src/ui/feel).
+  const [squeeze] = useState(() => new Animated.Value(1));
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? label}
       accessibilityState={{ disabled: !!disabled, selected: !!selected }}
       disabled={disabled}
-      onPress={onPress}
+      onPress={() => pressFeedback(onPress)}
+      onPressIn={() => squeezeTo(squeeze, 0.94, 60)}
+      onPressOut={() => squeezeTo(squeeze, 1, 140)}
       testID={testID}
       style={({ pressed }) => [
         styles.base,
@@ -82,7 +89,7 @@ export function Button({ label, onPress, variant = 'secondary', disabled, sublab
         style,
       ]}
     >
-      <View style={styles.inner}>
+      <Animated.View style={[styles.inner, { transform: [{ scale: squeeze }] }]}>
         <Text style={[styles.label, compact && styles.labelCompact, variant === 'ink' && styles.labelInk, { color: fg }]} numberOfLines={1}>
           {label}
         </Text>
@@ -91,9 +98,13 @@ export function Button({ label, onPress, variant = 'secondary', disabled, sublab
             {sublabel}
           </Text>
         ) : null}
-      </View>
+      </Animated.View>
     </Pressable>
   );
+}
+
+function squeezeTo(v: Animated.Value, toValue: number, duration: number): void {
+  Animated.timing(v, { toValue, duration, useNativeDriver: Platform.OS !== 'web' }).start();
 }
 
 const styles = StyleSheet.create({
