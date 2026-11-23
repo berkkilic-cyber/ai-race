@@ -12,6 +12,7 @@
  * normalised to a -6 dBFS peak; loudness differences between cues are set at play time
  * (src/ui/feel/cues.ts), not baked in. docs/FEEL.md describes each recipe.
  */
+/* global __dirname, Buffer */
 const fs = require('node:fs');
 const path = require('node:path');
 
@@ -160,13 +161,6 @@ function echo(buf, { time = 0.06, feedback = 0.3, mix = 0.3 }) {
   const out = Float64Array.from(buf);
   for (let i = d; i < out.length; i++) out[i] += out[i - d] * feedback;
   for (let i = 0; i < buf.length; i++) buf[i] = buf[i] * (1 - mix) + out[i] * mix;
-  return buf;
-}
-
-/** Soft saturation for a little analogue edge; keeps peaks round. */
-function drive(buf, amount = 1.5) {
-  const norm = Math.tanh(amount);
-  for (let i = 0; i < buf.length; i++) buf[i] = Math.tanh(buf[i] * amount) / norm;
   return buf;
 }
 

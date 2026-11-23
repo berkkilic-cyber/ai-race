@@ -13,6 +13,7 @@
  * stretch never produces more sounds than ticks / 5.
  * Env: CHROME, PORT (default 8791), W, H (default 926x428), INSETS (default 0,47,21,47).
  */
+/* global __dirname */
 const fs = require('node:fs');
 const http = require('node:http');
 const path = require('node:path');
