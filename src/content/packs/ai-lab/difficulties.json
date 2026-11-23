@@ -5,7 +5,7 @@
     "descKey": "difficulty.sandbox.desc",
     "scoreMultiplier": 0.75,
     "balance": {
-      "aiAgiFactor": 1.16,
+      "aiAgiFactor": 1.09,
       "rivalEntryTickFactor": 1.15,
       "aiExpansionFactor": 0.95,
       "playerStartHypeFactor": 1.15,
@@ -27,7 +27,7 @@
       "playerRegulationGainFactor": 1.1,
       "playerBacklashGainFactor": 1.1,
       "momentThreatWeightFactor": 1.2,
-      "acquireBaseCost": 600
+      "acquireBaseCost": 750
     }
   },
   {
@@ -36,7 +36,7 @@
     "descKey": "difficulty.arms-race.desc",
     "scoreMultiplier": 1.35,
     "balance": {
-      "aiAgiFactor": 1.31,
+      "aiAgiFactor": 1.24,
       "rivalEntryTickFactor": 0.85,
       "aiExpansionFactor": 1.0,
       "playerStartHypeFactor": 0.85,
@@ -45,7 +45,7 @@
       "playerBacklashGainFactor": 1.25,
       "momentThreatWeightFactor": 1.6,
       "momentLifetimeFactor": 0.85,
-      "acquireBaseCost": 700,
+      "acquireBaseCost": 875,
       "dataCentreUpkeep": 0.08,
       "backlashPerDataCentreLevel": 0.0045
     }
@@ -56,7 +56,7 @@
     "descKey": "difficulty.hard-takeoff.desc",
     "scoreMultiplier": 1.75,
     "balance": {
-      "aiAgiFactor": 1.36,
+      "aiAgiFactor": 1.25,
       "rivalEntryTickFactor": 0.7,
       "aiExpansionFactor": 1.1,
       "playerStartHypeFactor": 0.7,
@@ -65,8 +65,8 @@
       "playerBacklashGainFactor": 1.4,
       "momentThreatWeightFactor": 2.2,
       "momentLifetimeFactor": 0.7,
-      "acquireBaseCost": 850,
-      "acquirePerAgi": 9,
+      "acquireBaseCost": 1060,
+      "acquirePerAgi": 12,
       "dataCentreUpkeep": 0.09,
       "backlashPerDataCentreLevel": 0.006
     }

@@ -14,6 +14,9 @@
  *                      [--perks 60]                   (the player starts with the Lab Rep perks active at
  *                                                      that Rep, as the start screen applies them)
  *                      [--bonus '{"startCash":10}']   (a raw GameSetup.bonus for the player, for tuning)
+ *                      [--patch file.json]            (what-if node / founder / difficulty changes, see PackPatch)
+ *                      [--routes]                     (routes and founders: per-founder win rates, top
+ *                                                      nodes bought, risks fired, target checks)
  *
  * Seeds are base + run index, so a report is reproducible; tune on one --seed
  * and confirm on another.
@@ -29,8 +32,8 @@ import { bonusForSetup } from '@/ui/meta/logic';
 
 import { coverageReport } from './coverage';
 import { FOUNDERS, HOME_REGIONS } from './jobs';
-import { difficultyTable, policyReport, runLengthTables, summaryTable } from './report';
-import { PACK, setBalanceOverrides, simulate, type Job, type RunRecord } from './simulate';
+import { difficultyTable, policyReport, routeReport, runLengthTables, summaryTable } from './report';
+import { PACK, setBalanceOverrides, simulate, type Job, type PackPatch, type RunRecord } from './simulate';
 
 const ALL_POLICIES: BotPolicy[] = ['sensible', 'capability', 'reach', 'shadow', 'random', 'idle'];
 
@@ -56,10 +59,14 @@ interface Options {
   perks?: number;
   /** A raw start bonus (overrides --perks). */
   bonus?: GameSetup['bonus'];
+  /** Add the routes and founders report. */
+  routes: boolean;
+  /** What-if pack changes for diagnosis sweeps. */
+  patch?: PackPatch;
 }
 
 function parseArgs(argv: string[]): Options {
-  const options: Options = { runs: 1000, policies: ALL_POLICIES, seed: 1, coverage: false, workers: availableParallelism(), balance: {}, brief: false };
+  const options: Options = { runs: 1000, policies: ALL_POLICIES, seed: 1, coverage: false, workers: availableParallelism(), balance: {}, brief: false, routes: false };
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     const next = () => argv[++i];
@@ -82,6 +89,8 @@ function parseArgs(argv: string[]): Options {
     } else if (arg === '--brief') options.brief = true;
     else if (arg === '--perks') options.perks = Number(next());
     else if (arg === '--bonus') options.bonus = JSON.parse(next()) as GameSetup['bonus'];
+    else if (arg === '--routes') options.routes = true;
+    else if (arg === '--patch') options.patch = JSON.parse(readFileSync(next(), 'utf8')) as PackPatch;
     else if (arg === '--moments') options.moments = JSON.parse(readFileSync(next(), 'utf8')) as ContentPack['moments'];
     else throw new Error(`Unknown argument ${arg}`);
   }
@@ -115,7 +124,7 @@ export function jobsFor(policy: BotPolicy, runs: number, seed: number, coverage:
   return jobs;
 }
 
-function runInWorkers(jobs: Job[], workers: number, balance: Record<string, unknown>, moments?: ContentPack['moments']): Promise<RunRecord[]> {
+function runInWorkers(jobs: Job[], workers: number, balance: Record<string, unknown>, moments?: ContentPack['moments'], patch?: PackPatch): Promise<RunRecord[]> {
   const results: RunRecord[] = new Array(jobs.length);
   if (workers <= 1) {
     jobs.forEach((job, i) => (results[i] = simulate(job)));
@@ -133,7 +142,7 @@ function runInWorkers(jobs: Job[], workers: number, balance: Record<string, unkn
       worker.postMessage({ index, job: jobs[index] });
     };
     for (let w = 0; w < Math.min(workers, jobs.length); w++) {
-      const worker = new Worker(new URL(import.meta.url), { workerData: { worker: true, balance, moments } });
+      const worker = new Worker(new URL(import.meta.url), { workerData: { worker: true, balance, moments, patch } });
       worker.on('message', (msg: { index: number; record: RunRecord }) => {
         results[msg.index] = msg.record;
         done++;
@@ -159,8 +168,8 @@ async function main(): Promise<void> {
   );
   const bonus = options.bonus ?? (options.perks !== undefined ? bonusForSetup({ perksOn: true }, options.perks, aiLabGarage).bonus : undefined);
   if (bonus) for (const job of jobs) job.bonus = bonus;
-  setBalanceOverrides(options.balance, options.moments);
-  const records = await runInWorkers(jobs, options.workers, options.balance, options.moments);
+  setBalanceOverrides(options.balance, options.moments, options.patch);
+  const records = await runInWorkers(jobs, options.workers, options.balance, options.moments, options.patch);
   const seconds = (performance.now() - start) / 1000;
   const byPolicy = new Map<string, RunRecord[]>();
   const multiLevel = levels.length > 1;
@@ -178,6 +187,7 @@ async function main(): Promise<void> {
   if (Object.keys(options.balance).length > 0) out.push(`\nBalance overrides: \`${JSON.stringify(options.balance)}\``);
   if (options.moments) out.push(`\nMoments replaced (${options.moments.length} from --moments).`);
   if (options.perks !== undefined || options.bonus) out.push(`\nLab Rep perks at Rep ${options.perks}: \`${JSON.stringify(bonus ?? null)}\``);
+  if (options.patch) out.push(`\nPack patch: \`${JSON.stringify(options.patch)}\``);
   out.push(`\nRun length: ${lengths.map((l) => l ?? `${PACK.defaultRunLength ?? 'none'} (pack default)`).join(', ')}.`);
   out.push(`\nDifficulty: ${levels.map((l) => l ?? `${PACK.defaultDifficulty ?? 'none'} (pack default)`).join(', ')}.`);
   out.push('');
@@ -193,6 +203,10 @@ async function main(): Promise<void> {
   }
   if (multiLength) {
     out.push(runLengthTables(records, lengths as string[], PACK.defaultDifficulty ?? 'none'));
+    out.push('');
+  }
+  if (options.routes) {
+    out.push(routeReport(records, PACK.nodes, PACK.defaultDifficulty ?? 'none', PACK.defaultRunLength ?? 'none'));
     out.push('');
   }
   if (!options.brief) {
@@ -213,7 +227,7 @@ if (isMainThread) {
     process.exit(1);
   });
 } else if (workerData?.worker) {
-  setBalanceOverrides(workerData.balance as Record<string, unknown>, workerData.moments as ContentPack['moments'] | undefined);
+  setBalanceOverrides(workerData.balance as Record<string, unknown>, workerData.moments as ContentPack['moments'] | undefined, workerData.patch as PackPatch | undefined);
   parentPort?.on('message', (msg: { index: number; job: Job }) => {
     parentPort?.postMessage({ index: msg.index, record: simulate(msg.job) });
   });

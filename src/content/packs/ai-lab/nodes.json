@@ -159,7 +159,7 @@
       {
         "stat": "regulationGain",
         "op": "mul",
-        "value": 0.9
+        "value": 0.8
       }
     ]
   },
@@ -185,6 +185,11 @@
         "stat": "dataCentreUpkeep",
         "op": "mul",
         "value": 0.85
+      },
+      {
+        "stat": "agiRate",
+        "op": "mul",
+        "value": 1.1
       }
     ]
   },
@@ -235,6 +240,11 @@
         "stat": "agiRate",
         "op": "mul",
         "value": 1.05
+      },
+      {
+        "stat": "regulationGain",
+        "op": "mul",
+        "value": 0.9
       }
     ]
   },
@@ -640,6 +650,11 @@
         "stat": "riskChance",
         "op": "mul",
         "value": 1.1
+      },
+      {
+        "stat": "backlashGain",
+        "op": "mul",
+        "value": 1.05
       }
     ]
   },
@@ -866,6 +881,11 @@
         "stat": "riskChance",
         "op": "mul",
         "value": 1.25
+      },
+      {
+        "stat": "backlashGain",
+        "op": "mul",
+        "value": 1.1
       }
     ]
   },
@@ -874,8 +894,8 @@
     "tree": "shadow",
     "nameKey": "node.shadow-ma-team.name",
     "descKey": "node.shadow-ma-team.desc",
-    "cost": 75,
-    "cashCost": 80,
+    "cost": 85,
+    "cashCost": 100,
     "requires": [
       "shadow-nda"
     ],
@@ -885,7 +905,12 @@
       {
         "stat": "acquireCost",
         "op": "mul",
-        "value": 0.75
+        "value": 0.9
+      },
+      {
+        "stat": "regulationGain",
+        "op": "mul",
+        "value": 1.25
       }
     ],
     "grantsFlags": [
@@ -929,8 +954,7 @@
     "tree": "shadow",
     "nameKey": "node.shadow-hostile.name",
     "descKey": "node.shadow-hostile.desc",
-    "cost": 120,
-    "cashCost": 100,
+    "cost": 130,
     "requires": [
       "shadow-ma-team"
     ],
@@ -940,7 +964,7 @@
       {
         "stat": "acquireCost",
         "op": "mul",
-        "value": 0.7
+        "value": 0.85
       }
     ],
     "onBuy": [
@@ -952,6 +976,11 @@
       {
         "type": "meter",
         "meter": "backlash",
+        "amount": 10
+      },
+      {
+        "type": "meter",
+        "meter": "regulation",
         "amount": 8
       }
     ]
