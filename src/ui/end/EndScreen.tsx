@@ -18,7 +18,8 @@ import { useGameStore } from '../store/game';
 import { colors, flatShadow, radius, shape, spacing, tabular, type, voice } from '../theme';
 import { FinalMap } from './FinalMap';
 import { difficultyEndLine } from '../start/difficulty';
-import { endStats, pickNotableHeadlines, playAgainSetup } from './logic';
+import { closeCall, closeCallText, endStats, pickNotableHeadlines, playAgainSetup, rematchSetup } from './logic';
+import { runEndLine } from '../start/runLength';
 import { useWide } from '../start/useWide';
 import { useCountUp } from './useCountUp';
 
@@ -103,12 +104,17 @@ function EndView({ state }: { state: GameState }) {
   const winner = !win && ending.winnerLabId && ending.winnerLabId !== state.playerLabId ? state.labs[ending.winnerLabId] : undefined;
   const founder = pack.founders.find((f) => f.id === player.founderId);
   const stats = endStats(state, pack);
-  const level = difficultyEndLine(state, pack);
+  const level = runEndLine(state, pack) ?? difficultyEndLine(state, pack);
+  const call = closeCall(state, pack);
   const headlines = pickNotableHeadlines(state.news, state.playerLabId);
   const achievements = state.achievements.flatMap((id) => pack.achievements.filter((a) => a.id === id));
 
   const playAgain = () => {
     newGame(playAgainSetup(state));
+    router.replace('/game');
+  };
+  const rematch = () => {
+    newGame(rematchSetup(state));
     router.replace('/game');
   };
   const newLab = () => {
@@ -125,6 +131,9 @@ function EndView({ state }: { state: GameState }) {
         {def ? t(def.titleKey, params) : ''}
       </Text>
       {def ? <Text style={[styles.body, wide && styles.bodyWide]}>{t(def.bodyKey, params)}</Text> : null}
+      <Text style={[styles.closeCall, { color: call.near ? accent : colors.text }]} testID="end-close-call">
+        {closeCallText(call)}
+      </Text>
       {winner ? (
         <View style={styles.winner}>
           <View style={[styles.swatch, { backgroundColor: readableLabColor(winner) }]} />
@@ -218,9 +227,12 @@ function EndView({ state }: { state: GameState }) {
   );
   const buttonsEl = (
     <View style={[styles.footer, wide && styles.footerWide]}>
-        <Button label={t('ui.end.newLab')} sublabel={t('ui.end.newLabHint')} variant="secondary" onPress={newLab} style={styles.footerBtn} testID="end-new-lab" />
-        <Button label={t('ui.end.again')} sublabel={t('ui.end.againHint')} variant="primary" onPress={playAgain} style={styles.footerBtn} testID="end-play-again" />
+        <Button label={t('ui.sprint.end.newRun')} sublabel={t('ui.sprint.end.newRunHint')} variant="secondary" onPress={playAgain} style={styles.footerBtn} testID="end-play-again" />
+        <Button label={t('ui.sprint.end.rematch')} sublabel={t('ui.sprint.end.rematchHint')} variant="primary" onPress={rematch} style={styles.footerBtn} testID="end-rematch" />
     </View>
+  );
+  const newLabEl = (
+    <Button label={t('ui.sprint.end.newLab')} variant="ghost" compact onPress={newLab} style={styles.newLab} testID="end-new-lab" />
   );
 
   if (wide) {
@@ -230,6 +242,7 @@ function EndView({ state }: { state: GameState }) {
           <ScrollView contentContainerStyle={styles.leftContent}>{bannerEl}</ScrollView>
           {scoreRowEl}
           {buttonsEl}
+          {newLabEl}
         </View>
         <ScrollView style={styles.rightPane} contentContainerStyle={styles.rightContent} testID="end-right">
           {sectionsEl}
@@ -244,6 +257,7 @@ function EndView({ state }: { state: GameState }) {
         {bannerEl}
         {scoreEl}
         {sectionsEl}
+        {newLabEl}
       </ScrollView>
       {buttonsEl}
     </View>
@@ -303,4 +317,6 @@ const styles = StyleSheet.create({
   achDesc: { ...voice.body, color: colors.dim, fontSize: type.s },
   footer: { flexDirection: 'row', gap: spacing.s, padding: spacing.l, paddingTop: spacing.m, borderTopWidth: shape.hairline, borderColor: colors.border, backgroundColor: colors.chrome },
   footerBtn: { flex: 1, minHeight: 56 },
+  newLab: { alignSelf: 'center', marginBottom: spacing.s },
+  closeCall: { ...voice.bodyStrong, fontSize: type.s + 1, lineHeight: 20 },
 });

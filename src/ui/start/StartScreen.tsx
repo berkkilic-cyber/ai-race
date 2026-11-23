@@ -1,8 +1,13 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View, type ScrollViewInstance } from 'react-native';
+import { Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View, type ScrollViewInstance } from 'react-native';
 
 import { getFounderStart } from '@/engine';
+
+import { ModalCard } from '../components/ModalCard';
+import { clearRunSave, loadRunSave, restoreRun, type RunSave } from '../store/runSave';
+import { ContinueCard } from './ContinueCard';
+import { loadRunLengthChoice, runLengthOptions, runLengthParam, saveRunLengthChoice } from './runLength';
 
 import { Button } from '../components/Button';
 import { Ground } from '../components/Deco';
@@ -11,7 +16,7 @@ import { useInsets } from '../hooks/useInsets';
 import { dismissKeyboardOnTap, useKeyboardVisible } from '../hooks/useKeyboardVisible';
 import { regionName, t } from '../i18n';
 import { useGameStore } from '../store/game';
-import { colors, shape, spacing } from '../theme';
+import { colors, shape, spacing, type } from '../theme';
 import { FounderStep } from './FounderStep';
 import { BuildStamp } from '../diagnostics/BuildStamp';
 import { HowToSheet } from './HowToSheet';
@@ -49,7 +54,7 @@ export interface StartScreenProps {
 
 export function StartScreen({ beforeEnter }: StartScreenProps = {}) {
   const router = useRouter();
-  const params = useLocalSearchParams<{ autostart?: string; seed?: string; difficulty?: string }>();
+  const params = useLocalSearchParams<{ autostart?: string; seed?: string; difficulty?: string; runLength?: string }>();
   const { pack, geometry, labNames } = usePackEntry();
   const newGame = useGameStore((s) => s.newGame);
 
@@ -58,6 +63,11 @@ export function StartScreen({ beforeEnter }: StartScreenProps = {}) {
   const [founderId, setFounderId] = useState<string | null>(pack.founders[0]?.id ?? null);
   const [home, setHome] = useState<string | null>(null);
   const [difficulty, setDifficulty] = useState<string | undefined>(undefined);
+  const [runLength, setRunLength] = useState<string | undefined>(undefined);
+  /** The saved run, if any (null: none or not read yet); the Continue card shows until the player picks "new lab". */
+  const [save, setSave] = useState<RunSave | null>(null);
+  const [showContinue, setShowContinue] = useState(true);
+  const [confirmDiscard, setConfirmDiscard] = useState(false);
   const [howTo, setHowTo] = useState(false);
   const [list, setList] = useState(false);
   const [focus, setFocus] = useState<{ regionId: string; nonce: number } | null>(null);
@@ -76,6 +86,29 @@ export function StartScreen({ beforeEnter }: StartScreenProps = {}) {
       live = false;
     };
   }, [pack]);
+  // Preselect the remembered run length (the shortest until a run has been finished) and read the save.
+  useEffect(() => {
+    let live = true;
+    void loadRunLengthChoice(pack).then((id) => {
+      if (live) setRunLength((current) => current ?? id);
+    });
+    void loadRunSave().then((s) => {
+      if (live) setSave(s);
+    });
+    return () => {
+      live = false;
+    };
+  }, [pack]);
+  const pickRunLength = useCallback((id: string) => {
+    setRunLength(id);
+    saveRunLengthChoice(id);
+  }, []);
+  const continueRun = () => {
+    if (!save) return;
+    restoreRun(save);
+    void enterWhenReady(beforeEnter, () => router.replace('/game'));
+  };
+
   const pickDifficulty = useCallback((id: string) => {
     setDifficulty(id);
     saveDifficultyChoice(id);
@@ -85,12 +118,14 @@ export function StartScreen({ beforeEnter }: StartScreenProps = {}) {
     if (params.autostart !== '1') return;
     const seed = params.seed ? Number(params.seed) : undefined;
     const level = difficultyParam(pack, params.difficulty);
+    const length = runLengthParam(pack, params.runLength);
     newGame({
       playerName: t('ui.start.defaultName'),
       founderId: pack.founders[0].id,
       homeRegion: defaultHomeRegion(pack),
       ...(seed !== undefined && Number.isFinite(seed) ? { seed } : {}),
       ...(level ? { difficulty: level } : {}),
+      ...(length ? { runLength: length } : {}),
     });
     let live = true;
     void enterWhenReady(beforeEnter, () => {
@@ -99,7 +134,7 @@ export function StartScreen({ beforeEnter }: StartScreenProps = {}) {
     return () => {
       live = false;
     };
-  }, [params.autostart, params.seed, params.difficulty, newGame, pack, router, beforeEnter]);
+  }, [params.autostart, params.seed, params.difficulty, params.runLength, newGame, pack, router, beforeEnter]);
 
   const goTo = useCallback((next: number) => {
     Keyboard.dismiss();
@@ -110,9 +145,19 @@ export function StartScreen({ beforeEnter }: StartScreenProps = {}) {
   const nameCheck = validateLabName(name);
   const missing = missingText({ name, founderId, homeRegion: home });
 
-  const found = () => {
+  const found = (discardConfirmed = false) => {
     if (missing || !nameCheck.ok || !founderId || !home) return;
-    newGame({ playerName: nameCheck.name, founderId, homeRegion: home, ...(difficulty ? { difficulty } : {}) });
+    // A saved run is only thrown away once the player says so.
+    if (save && !discardConfirmed) {
+      setConfirmDiscard(true);
+      return;
+    }
+    setConfirmDiscard(false);
+    if (save) {
+      void clearRunSave();
+      setSave(null);
+    }
+    newGame({ playerName: nameCheck.name, founderId, homeRegion: home, ...(difficulty ? { difficulty } : {}), ...(runLength ? { runLength } : {}) });
     void enterWhenReady(beforeEnter, () => router.replace('/game'));
   };
 
@@ -180,7 +225,10 @@ export function StartScreen({ beforeEnter }: StartScreenProps = {}) {
         difficulties={difficultyOptions(pack)}
         difficulty={difficulty}
         onDifficulty={pickDifficulty}
-        starts={Object.fromEntries(pack.founders.map((f) => [f.id, getFounderStart(pack, f.id, difficulty)]))}
+        runLengths={runLengthOptions(pack)}
+        runLength={runLength}
+        onRunLength={pickRunLength}
+        starts={Object.fromEntries(pack.founders.map((f) => [f.id, getFounderStart(pack, f.id, difficulty, runLength)]))}
       />
     ) : (
       <RegionStep
@@ -205,7 +253,11 @@ export function StartScreen({ beforeEnter }: StartScreenProps = {}) {
       <Ground />
       <View style={[styles.inset, { paddingTop: insets.top, paddingRight: insets.right, paddingBottom: insets.bottom, paddingLeft: insets.left }]}>
         <KeyboardAvoidingView style={styles.avoid} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} enabled={Platform.OS !== 'web'}>
-          {wide ? (
+          {save && showContinue ? (
+            <ScrollView style={styles.scroll} contentContainerStyle={[wide ? styles.wideContent : styles.content, styles.grow]}>
+              <ContinueCard save={save} pack={pack} onContinue={continueRun} onNew={() => setShowContinue(false)} wide={wide} />
+            </ScrollView>
+          ) : wide ? (
             <>
               {step === 0 ? (
                 <ScrollView style={styles.scroll} contentContainerStyle={[styles.wideContent, styles.grow]}
@@ -250,6 +302,15 @@ export function StartScreen({ beforeEnter }: StartScreenProps = {}) {
       <BuildStamp style={[styles.stamp, { top: insets.top + 2, right: insets.right + spacing.s }]} />
       <HowToSheet visible={howTo} onClose={() => setHowTo(false)} />
       <RegionListSheet visible={list} regions={pack.regions} selected={home} onSelect={pickFromList} onClose={() => setList(false)} />
+      <ModalCard visible={confirmDiscard} title={t('ui.sprint.discard.title')} tone="bad" onRequestClose={() => setConfirmDiscard(false)} testID="discard-confirm">
+        <Text style={styles.discardBody}>
+          {save ? t('ui.sprint.discard.body', { lab: save.state.labs[save.state.playerLabId].name, day: save.state.tick + 1 }) : ''}
+        </Text>
+        <View style={styles.discardRow}>
+          <Button label={t('ui.sprint.discard.cancel')} variant="ghost" onPress={() => setConfirmDiscard(false)} style={styles.discardBtn} testID="discard-cancel" />
+          <Button label={t('ui.sprint.discard.confirm')} variant="danger" onPress={() => found(true)} style={styles.discardBtn} testID="discard-confirm-button" />
+        </View>
+      </ModalCard>
     </View>
   );
 }
@@ -289,4 +350,7 @@ const styles = StyleSheet.create({
   side: { width: 200, flexDirection: 'row' },
   sideRight: { justifyContent: 'flex-end' },
   stamp: { position: 'absolute' },
+  discardBody: { color: colors.text, fontSize: type.m, lineHeight: 22 },
+  discardRow: { flexDirection: 'row', gap: spacing.s, marginTop: spacing.s },
+  discardBtn: { flex: 1, minHeight: 48 },
 });

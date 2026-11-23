@@ -7,6 +7,8 @@ import { colors, radius, spacing, type, voice } from '../theme';
 import type { DifficultyOption } from './difficulty';
 import { DifficultyPicker } from './DifficultyPicker';
 import { founderPerkLines } from './logic';
+import type { RunLengthOption } from './runLength';
+import { RunLengthPicker } from './RunLengthPicker';
 
 export interface FounderStepProps {
   founders: readonly FounderDef[];
@@ -18,6 +20,10 @@ export interface FounderStepProps {
   difficulties?: readonly DifficultyOption[];
   difficulty?: string;
   onDifficulty?: (id: string) => void;
+  /** Run lengths beside the difficulty picker (none: no picker). */
+  runLengths?: readonly RunLengthOption[];
+  runLength?: string;
+  onRunLength?: (id: string) => void;
   /** What each founder really starts with at the chosen difficulty, by founder id. */
   starts?: Readonly<Record<string, { hype: number; cash: number }>>;
 }
@@ -25,7 +31,7 @@ export interface FounderStepProps {
 const TONE = { good: colors.good, bad: colors.bad, neutral: colors.text } as const;
 
 /** Step 2: the founders as selectable cards with their perks. */
-export function FounderStep({ founders, selected, onSelect, wide, difficulties = [], difficulty, onDifficulty, starts }: FounderStepProps) {
+export function FounderStep({ founders, selected, onSelect, wide, difficulties = [], difficulty, onDifficulty, runLengths = [], runLength, onRunLength, starts }: FounderStepProps) {
   return (
     <View style={[styles.wrap, wide && styles.wrapWide]}>
       <View style={[styles.head, wide && styles.headWide]}>
@@ -64,7 +70,14 @@ export function FounderStep({ founders, selected, onSelect, wide, difficulties =
           );
         })}
       </View>
-      {onDifficulty ? <DifficultyPicker options={difficulties} selected={difficulty} onSelect={onDifficulty} wide={wide} /> : null}
+      <View style={[styles.choices, wide && styles.choicesWide]}>
+        {onRunLength ? <RunLengthPicker options={runLengths} selected={runLength} onSelect={onRunLength} wide={wide} /> : null}
+        {onDifficulty ? (
+          <View style={wide ? styles.difficultyWide : null}>
+            <DifficultyPicker options={difficulties} selected={difficulty} onSelect={onDifficulty} wide={wide} />
+          </View>
+        ) : null}
+      </View>
     </View>
   );
 }
@@ -92,4 +105,7 @@ const styles = StyleSheet.create({
   perk: { flexDirection: 'row', alignItems: 'center', gap: spacing.s },
   bullet: { width: 6, height: 6, borderRadius: 3 },
   perkText: { fontSize: type.s, fontWeight: '600' },
+  choices: { gap: spacing.l },
+  choicesWide: { flexDirection: 'row', gap: spacing.m, alignItems: 'flex-start' },
+  difficultyWide: { flex: 1 },
 });

@@ -8,7 +8,7 @@
  * The host (RunMenuHost, mounted once in the shell) also runs the autosave (runSave.ts) while
  * the race screen is up. Drawn in the tree (Overlay), never a native Modal.
  */
-import { usePreventRemove } from 'expo-router';
+import * as Router from 'expo-router';
 import { useEffect, type ReactNode } from 'react';
 import { BackHandler, Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { create } from 'zustand';
@@ -25,6 +25,13 @@ import { useTutorialStore } from '../tutorial/store';
 import { colors, flatShadow, layer, layout, radius, shape, spacing, touch, type, voice } from '../theme';
 
 type Confirm = null | 'restart' | 'abandon';
+
+/**
+ * expo-router's usePreventRemove, or a no-op where the router is mocked without it (tests that
+ * render the shell). Picked once at load, so the hook order never changes between renders.
+ */
+const usePreventRemove: (prevent: boolean, callback: () => void) => void =
+  typeof (Router as { usePreventRemove?: unknown }).usePreventRemove === 'function' ? Router.usePreventRemove : () => undefined;
 
 interface RunMenuStore {
   open: boolean;
