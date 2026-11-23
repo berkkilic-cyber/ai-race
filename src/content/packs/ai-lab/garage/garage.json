@@ -20,7 +20,7 @@
    "requires": [
     {
      "type": "allTime",
-     "tokens": 5000000.0
+     "tokens": 15000000.0
     }
    ],
    "mechanic": "training",
@@ -78,10 +78,6 @@
  ],
  "milestones": {
   "steps": [
-   {
-    "count": 10,
-    "mult": 1.1
-   },
    {
     "count": 25,
     "mult": 1.25
@@ -1951,7 +1947,7 @@
    "nameKey": "garage.model.turbo.name",
    "headlineKey": "garage.model.turbo.headline",
    "unlockKey": "garage.model.turbo.unlock",
-   "shipAt": 4000000000.0,
+   "shipAt": 6400000000.0,
    "perks": []
   },
   {
@@ -1959,7 +1955,7 @@
    "nameKey": "garage.model.final.name",
    "headlineKey": "garage.model.final.headline",
    "unlockKey": "garage.model.final.unlock",
-   "shipAt": 23200000000.0,
+   "shipAt": 59400000000.0,
    "perks": [
     {
      "kind": "offlineCap",
@@ -1972,7 +1968,7 @@
    "nameKey": "garage.model.omni.name",
    "headlineKey": "garage.model.omni.headline",
    "unlockKey": "garage.model.omni.unlock",
-   "shipAt": 195000000000.0,
+   "shipAt": 799000000000.0,
    "perks": []
   },
   {
@@ -1980,7 +1976,7 @@
    "nameKey": "garage.model.reasoner.name",
    "headlineKey": "garage.model.reasoner.headline",
    "unlockKey": "garage.model.reasoner.unlock",
-   "shipAt": 2380000000000.0,
+   "shipAt": 15600000000000.0,
    "perks": [
     {
      "kind": "comboStacks",
@@ -1997,7 +1993,7 @@
    "nameKey": "garage.model.agentic.name",
    "headlineKey": "garage.model.agentic.headline",
    "unlockKey": "garage.model.agentic.unlock",
-   "shipAt": 42100000000000.0,
+   "shipAt": 441000000000000.0,
    "perks": []
   },
   {
@@ -2005,7 +2001,7 @@
    "nameKey": "garage.model.feelings.name",
    "headlineKey": "garage.model.feelings.headline",
    "unlockKey": "garage.model.feelings.unlock",
-   "shipAt": 1080000000000000.0,
+   "shipAt": 1.81e+16,
    "perks": [
     {
      "kind": "offlineRate",
@@ -2018,7 +2014,7 @@
    "nameKey": "garage.model.bigone.name",
    "headlineKey": "garage.model.bigone.headline",
    "unlockKey": "garage.model.bigone.unlock",
-   "shipAt": 4.01e+16,
+   "shipAt": 1.08e+18,
    "perks": []
   },
   {
@@ -2026,7 +2022,7 @@
    "nameKey": "garage.model.ultralite.name",
    "headlineKey": "garage.model.ultralite.headline",
    "unlockKey": "garage.model.ultralite.unlock",
-   "shipAt": 1.8e+18,
+   "shipAt": 7.73e+19,
    "perks": [
     {
      "kind": "tapFromRate",
@@ -2039,7 +2035,7 @@
    "nameKey": "garage.model.preview.name",
    "headlineKey": "garage.model.preview.headline",
    "unlockKey": "garage.model.preview.unlock",
-   "shipAt": 8.12e+19,
+   "shipAt": 5.58e+21,
    "perks": [
     {
      "kind": "globalMult",
@@ -2052,7 +2048,7 @@
    "nameKey": "garage.model.super.name",
    "headlineKey": "garage.model.super.headline",
    "unlockKey": "garage.model.super.unlock",
-   "shipAt": 3.65e+21,
+   "shipAt": 4.01e+23,
    "perks": [
     {
      "kind": "globalMult",
@@ -2242,14 +2238,14 @@
    "id": "crate",
    "cooldownMs": 10800000,
    "dailyCap": 4,
-   "crateSeconds": 600,
-   "crateMinTaps": 40
+   "crateSeconds": 1200,
+   "crateMinTaps": 60
   },
   {
    "id": "prestigeBonus",
    "cooldownMs": 0,
    "dailyCap": 3,
-   "prestigeBonus": 0.25
+   "prestigeBonus": 0.3
   },
   {
    "id": "bonusMultiply",
