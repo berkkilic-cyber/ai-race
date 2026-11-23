@@ -14,6 +14,8 @@
  *   soak     (opt-in) SOAK_MIN minutes (default 10) at 3x, moments tapped, JS heap after
  *            a forced GC every 30 s; reports the heap trend after the first 2 minutes. Keeps
  *            the run alive (debug meter writes) so the same screen is measured throughout.
+ *            SOAK_LOOP=1 rewinds the run to its first state every 30 s (same content, so a
+ *            heap trend is a leak rather than a growing game).
  *   engine   the engine's public step() per tick in plain Node (no browser), over a full bot
  *            run played the way the UI plays it: median and p95, early and late game
  *
@@ -682,7 +684,12 @@ async function soak(page, cdp, live) {
   await cdp.send('HeapProfiler.enable');
   const samples = [];
   const began = Date.now();
+  // SOAK_LOOP=1: every 30 s the run goes back to the state it had when the soak began, so
+  // the screen replays the same stretch of play: any heap trend then is a leak, not a bigger
+  // game (more data centres, sites and news on the map).
+  if (process.env.SOAK_LOOP) await page.evaluate(() => (window.__soakStart = window.__game.store.getState().state));
   const sample = async () => {
+    if (process.env.SOAK_LOOP) await page.evaluate(() => window.__game.store.setState({ state: window.__soakStart }));
     await cdp.send('HeapProfiler.collectGarbage');
     const heap = await cdp.send('Runtime.getHeapUsage');
     const dom = await cdp.send('Memory.getDOMCounters').catch(() => ({ nodes: 0, jsEventListeners: 0 }));
