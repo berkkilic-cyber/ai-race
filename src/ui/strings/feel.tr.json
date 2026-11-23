@@ -2,5 +2,5 @@
   "ui.feel.sound": "Ses efektleri",
   "ui.feel.soundHint": "Sessiz mod anahtarına uyar",
   "ui.feel.haptics": "Titreşim",
-  "ui.feel.hapticsHint": "Destekleyen telefonlarda dokunuş ve titreşim"
+  "ui.feel.hapticsHint": "Desteklenen telefonlarda hafif titreşimler"
 }
