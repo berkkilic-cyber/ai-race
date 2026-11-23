@@ -71,14 +71,34 @@ export function AnalyticsDebugSection() {
   return <Section />;
 }
 
+interface Snapshot {
+  rt: ReturnType<typeof getAnalyticsRuntime>;
+  report: RetentionReport | null;
+  events: TrackedEvent[];
+  summary: string[];
+}
+
+/**
+ * Reads the analytics runtime. Takes the poll counter so the React Compiler (on in
+ * app.json) recomputes it on every poll instead of memoising the first read.
+ */
+function snapshot(_poll: number): Snapshot {
+  const rt = getAnalyticsRuntime();
+  const report = rt?.session.report() ?? null;
+  return {
+    rt,
+    report,
+    events: rt ? rt.buffer.events.slice(-DEBUG_EVENT_COUNT).reverse() : [],
+    summary: report && rt ? summaryLines(report, rt.buffer.events.length, rt.buffer.writes + rt.session.writes(), analyticsErrors()) : [],
+  };
+}
+
 function Section() {
-  usePoll(true, POLL_MS);
+  const poll = usePoll(true, POLL_MS);
   const insets = useInsets();
   const [open, setOpen] = useState(true);
   const [copied, setCopied] = useState<'ok' | 'fail' | null>(null);
-  const rt = getAnalyticsRuntime();
-  const report = rt?.session.report() ?? null;
-  const events = rt ? rt.buffer.events.slice(-DEBUG_EVENT_COUNT).reverse() : [];
+  const { rt, report, events, summary } = snapshot(poll);
   const copy = () => {
     if (!rt) return;
     exportLog(rt.buffer.toText())
@@ -100,9 +120,9 @@ function Section() {
       </View>
       {open ? (
         <ScrollView style={styles.scroll} contentContainerStyle={styles.body}>
-          {report && rt ? (
+          {report ? (
             <>
-              {summaryLines(report, rt.buffer.events.length, rt.buffer.writes + rt.session.writes(), analyticsErrors()).map((line, i) => (
+              {summary.map((line, i) => (
                 <Text key={i} style={styles.line} numberOfLines={1}>
                   {line}
                 </Text>
