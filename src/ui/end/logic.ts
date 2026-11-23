@@ -117,7 +117,8 @@ export function closeCall(state: GameState, pack: ContentPack): CloseCall {
 
 /** The end screen's one line: "Close call: Hyperion's AGI was at 92%." */
 export function closeCallText(call: CloseCall): string {
-  const pct = fmtPct(call.value);
+  // Floored, never rounded up: a rival at 99.6% did not reach 100% (the player won).
+  const pct = fmtPct(Math.floor(call.value * 100) / 100);
   if (call.kind === 'win') {
     const what =
       call.threat.type === 'rivalAgi'

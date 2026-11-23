@@ -125,6 +125,14 @@ describe('close call and rematch', () => {
     expect(closeCallText(farCall)).toMatch(/^You got 25% of the way to a monopoly\.$/);
   });
 
+  it('never rounds a near miss up to 100%', () => {
+    const s = ended((x) => {
+      x.labs.player.agiProgress = 100;
+      x.labs[x.labOrder[1]].agiProgress = 99.6;
+    }, 'win');
+    expect(closeCallText(closeCall(s, pack))).toMatch(/99%\.$/);
+  });
+
   it('never reports NaN', () => {
     const s = ended((x) => (x.labs.player.agiProgress = Number.NaN), 'lose');
     expect(Number.isFinite(closeCall(s, pack).value)).toBe(true);
