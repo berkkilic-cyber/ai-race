@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { t } from '../i18n';
@@ -10,16 +11,21 @@ export interface DifficultyPickerProps {
   onSelect: (id: string) => void;
   /** The options side by side in one row (landscape). */
   wide?: boolean;
+  /** Right of the "Difficulty" label (the Lab Rep perks chip on wide screens). */
+  headerRight?: ReactNode;
 }
 
 /** Compact difficulty choice on the founder step: one small card per level, easiest first. */
-export function DifficultyPicker({ options, selected, onSelect, wide }: DifficultyPickerProps) {
+export function DifficultyPicker({ options, selected, onSelect, wide, headerRight }: DifficultyPickerProps) {
   if (options.length === 0) return null;
   return (
     <View style={styles.wrap}>
-      <Text style={styles.label} accessibilityRole="header">
-        {t('ui.difficulty.title')}
-      </Text>
+      <View style={styles.labelRow}>
+        <Text style={styles.label} accessibilityRole="header">
+          {t('ui.difficulty.title')}
+        </Text>
+        {headerRight ? <View style={styles.headRight}>{headerRight}</View> : null}
+      </View>
       <View accessibilityRole="radiogroup" accessibilityLabel={t('ui.difficulty.title')} style={[styles.list, wide && styles.listWide]}>
         {options.map((o) => {
           const on = selected === o.id;
@@ -55,6 +61,9 @@ export function DifficultyPicker({ options, selected, onSelect, wide }: Difficul
 const styles = StyleSheet.create({
   wrap: { gap: 2 },
   label: { ...voice.calmLabel, color: colors.dim },
+  labelRow: { flexDirection: 'row', alignItems: 'flex-end' },
+  // Out of the flow, so the row stays one label high and the founder cards keep their height.
+  headRight: { position: 'absolute', right: 0, bottom: -2, left: 120, flexDirection: 'row', justifyContent: 'flex-end' },
   list: { gap: spacing.s },
   listWide: { flexDirection: 'row' },
   option: {

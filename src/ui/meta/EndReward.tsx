@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import type { ContentPack, GameState } from '@/engine';
@@ -16,6 +16,8 @@ export interface EndRewardProps {
   state: GameState;
   pack: ContentPack;
   onGarage: () => void;
+  /** Another button for the same row (the wide end screen puts Change lab here). */
+  extra?: ReactNode;
 }
 
 /** The reward line in words. */
@@ -28,7 +30,7 @@ export function rewardLine(r: RaceRewardRecord): string {
  * The end screen's line about what the Garage received for this run (granted once, when the
  * screen opens), the Lab Rep badge and a button to the Garage.
  */
-export function EndReward({ state, pack, onGarage }: EndRewardProps) {
+export function EndReward({ state, pack, onGarage, extra }: EndRewardProps) {
   const [reward, setReward] = useState<RaceRewardRecord | null>(null);
   const labRep = useMetaStore((s) => s.labRep);
   useEffect(() => {
@@ -53,6 +55,7 @@ export function EndReward({ state, pack, onGarage }: EndRewardProps) {
         <LabRepBadge total={labRep} showNext={false} />
       </View>
       <Button label={t('ui.meta.end.garage')} variant="secondary" compact onPress={onGarage} style={styles.button} testID="end-garage" />
+      {extra}
     </View>
   );
 }
@@ -63,5 +66,5 @@ const styles = StyleSheet.create({
   line: { ...voice.bodyStrong, color: colors.text, fontSize: type.xs + 1, lineHeight: 16 },
   good: { color: colors.goodText },
   note: { ...voice.body, color: colors.dim, fontSize: type.xs },
-  button: { minHeight: 40, minWidth: 96 },
+  button: { minHeight: 40, minWidth: 88 },
 });

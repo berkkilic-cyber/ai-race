@@ -43,13 +43,9 @@ export function FounderStep({ founders, selected, onSelect, wide, difficulties =
         <Text style={[styles.title, wide && styles.titleWide]} accessibilityRole="header" numberOfLines={wide ? 1 : undefined}>
           {t('ui.start.founderTitle')}
         </Text>
-        {wide && extra ? (
-          <View style={styles.extraWide}>{extra}</View>
-        ) : (
-          <Text style={[styles.hint, wide && styles.hintWide]} numberOfLines={wide ? 2 : undefined}>
-            {t('ui.start.founderHint')}
-          </Text>
-        )}
+        <Text style={[styles.hint, wide && styles.hintWide]} numberOfLines={wide ? 2 : undefined}>
+          {t('ui.start.founderHint')}
+        </Text>
         {!wide && extra ? <View style={styles.extra}>{extra}</View> : null}
         {wide && onRunLength ? (
           <View style={styles.lengthWide}>
@@ -88,7 +84,8 @@ export function FounderStep({ founders, selected, onSelect, wide, difficulties =
         })}
       </View>
       {!wide && onRunLength ? <RunLengthPicker options={runLengths} selected={runLength} onSelect={onRunLength} /> : null}
-      {onDifficulty ? <DifficultyPicker options={difficulties} selected={difficulty} onSelect={onDifficulty} wide={wide} /> : null}
+      {onDifficulty ? <DifficultyPicker options={difficulties} selected={difficulty} onSelect={onDifficulty} wide={wide} headerRight={wide ? extra : undefined} /> : null}
+      {wide && extra && !onDifficulty ? <View style={styles.extra}>{extra}</View> : null}
     </View>
   );
 }
@@ -121,6 +118,5 @@ const styles = StyleSheet.create({
   descWide: { fontSize: type.s - 1, lineHeight: 17 },
   perksWide: { gap: 2, marginTop: 2 },
   hintWide: { flex: 1, minWidth: 0 },
-  extraWide: { flex: 1, minWidth: 0, alignSelf: 'center', flexDirection: 'row' },
   extra: { flexDirection: 'row', marginTop: spacing.xs },
 });

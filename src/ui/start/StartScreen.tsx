@@ -5,7 +5,7 @@ import { Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text,
 import { getFounderStart } from '@/engine';
 
 import { ModalCard } from '../components/ModalCard';
-import { cosmeticsAt } from '../meta/logic';
+import { bonusForSetup, cosmeticsAt } from '../meta/logic';
 import { PerksChip } from '../meta/PerksChip';
 import { PerksSheet } from '../meta/PerksSheet';
 import { useMetaStore, withPerks } from '../meta/store';
@@ -78,6 +78,8 @@ export function StartScreen({ beforeEnter }: StartScreenProps = {}) {
   const [perksSheet, setPerksSheet] = useState(false);
   const labRep = useMetaStore((s) => s.labRep);
   const frame = cosmeticsAt(garageContent(), Math.floor(labRep + 1e-9)).frame;
+  const perksOn = useMetaStore((s) => s.perksOn);
+  const perkBonus = bonusForSetup({ perksOn }, Math.floor(labRep + 1e-9), garageContent()).bonus;
   const [list, setList] = useState(false);
   const [focus, setFocus] = useState<{ regionId: string; nonce: number } | null>(null);
   const scroll = useRef<ScrollViewInstance>(null);
@@ -237,8 +239,14 @@ export function StartScreen({ beforeEnter }: StartScreenProps = {}) {
         runLengths={runLengthOptions(pack)}
         runLength={runLength}
         onRunLength={pickRunLength}
-        starts={Object.fromEntries(pack.founders.map((f) => [f.id, getFounderStart(pack, f.id, difficulty, runLength)]))}
-        extra={<PerksChip onOpen={() => setPerksSheet(true)} />}
+        starts={Object.fromEntries(
+          pack.founders.map((f) => {
+            const start = getFounderStart(pack, f.id, difficulty, runLength);
+            // What the run really starts with: the perk bonus is added after the level's factors (as the engine does).
+            return [f.id, { hype: start.hype + (perkBonus?.startHype ?? 0), cash: start.cash + (perkBonus?.startCash ?? 0) }];
+          }),
+        )}
+        extra={<PerksChip onOpen={() => setPerksSheet(true)} compact={wide} />}
         frameColor={frame?.effect.color}
       />
     ) : (

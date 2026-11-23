@@ -259,8 +259,7 @@ function EndView({ state }: { state: GameState }) {
           {closeCallEl}
           {scoreRowEl}
           {buttonsEl}
-          {rewardEl}
-          {newLabEl}
+          <EndReward state={state} pack={pack} onGarage={garage} extra={newLabEl} />
         </View>
         <ScrollView style={styles.rightPane} contentContainerStyle={styles.rightContent} testID="end-right">
           {sectionsEl}
