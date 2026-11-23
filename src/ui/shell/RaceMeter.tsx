@@ -75,10 +75,11 @@ export function RaceMeter({ tag, testID }: { tag: string | null; testID?: string
           {rivalLab ? <Animated.View style={[styles.mark, { left: `${rival}%`, backgroundColor: rivalColor }, markStyle]} testID="race-rival" /> : null}
         </View>
         <Text style={styles.value} numberOfLines={1}>
+          {pctFirst() ? <Text style={styles.pct}>%</Text> : null}
           <Text style={styles.you}>{Math.floor(you)}</Text>
           {rivalLab ? <Text style={styles.vs}>{` ${t('ui.strip.vs')} `}</Text> : null}
           {rivalLab ? <Text style={{ color: pulsing ? colors.bad : rivalText }}>{Math.floor(rival)}</Text> : null}
-          <Text style={styles.pct}>%</Text>
+          {pctFirst() ? null : <Text style={styles.pct}>%</Text>}
         </Text>
       </View>
     </View>
@@ -86,6 +87,8 @@ export function RaceMeter({ tag, testID }: { tag: string | null; testID?: string
 }
 
 const clampPct = (v: number) => Math.max(0, Math.min(100, v));
+/** Turkish writes the percent sign first ("%4"). */
+const pctFirst = () => pctText(0).startsWith('%');
 
 const selectRivalLab = (s: GameStore) => {
   const st = s.state;

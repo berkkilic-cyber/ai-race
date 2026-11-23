@@ -40,7 +40,7 @@
   "ui.sprint.close.win.far": "Rahat geçti: en yakın tehdit ({what}) {pct} seviyesindeydi.",
   "ui.sprint.close.lose.near": "Az kalmıştı: {goal} yolunda {pct} ilerlemiştin.",
   "ui.sprint.close.lose.far": "{goal} yolunda {pct} ilerledin.",
-  "ui.sprint.close.rivalAgi": "{rival} AGI ilerlemesi",
+  "ui.sprint.close.rivalAgi": "AGI yarışında {rival}",
   "ui.sprint.close.meter": "{meter} göstergen",
   "ui.sprint.close.goal.agi": "AGI",
   "ui.sprint.close.goal.dependence": "dünya bağımlılığı",

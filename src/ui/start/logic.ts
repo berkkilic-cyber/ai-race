@@ -1,6 +1,6 @@
 import type { ContentPack, FounderDef, Modifier, RegionDef, Stat } from '@/engine';
 
-import { fmtCash, fmtCompact } from '../format';
+import { fmtCash, fmtCompact, fmtNum, pctText } from '../format';
 import { t } from '../i18n';
 
 /** Longest lab name the start screen accepts (after trimming). */
@@ -121,7 +121,7 @@ const LOWER_IS_BETTER: ReadonlySet<Stat> = new Set<Stat>([
 
 function signed(n: number, suffix = ''): string {
   const rounded = Math.round(n * 10) / 10;
-  return `${rounded > 0 ? '+' : rounded < 0 ? '−' : ''}${Math.abs(rounded)}${suffix}`;
+  return `${rounded > 0 ? '+' : rounded < 0 ? '−' : ''}${suffix === '%' ? pctText(Math.abs(rounded)) : `${fmtNum(Math.abs(rounded))}${suffix}`}`;
 }
 
 /** "+20% AGI progress", "−25% Regulation build-up", "+5 compute". */
