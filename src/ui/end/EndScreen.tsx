@@ -122,6 +122,12 @@ function EndView({ state }: { state: GameState }) {
     router.replace('/');
   };
 
+  // How close it was, in one line: in the banner (narrow), above the score outside the scroll (wide).
+  const closeCallEl = (
+    <Text style={[styles.closeCall, wide && styles.closeCallWide, { color: call.near ? accent : colors.text }]} numberOfLines={wide ? 2 : undefined} testID="end-close-call">
+      {closeCallText(call)}
+    </Text>
+  );
   const bannerEl = (
     <View style={[styles.banner, { borderColor: accent, backgroundColor: mixColor(colors.surface, accent, 0.07) }]} testID="end-banner">
       <View style={[styles.kindPill, { backgroundColor: accent }]}>
@@ -131,9 +137,7 @@ function EndView({ state }: { state: GameState }) {
         {def ? t(def.titleKey, params) : ''}
       </Text>
       {def ? <Text style={[styles.body, wide && styles.bodyWide]}>{t(def.bodyKey, params)}</Text> : null}
-      <Text style={[styles.closeCall, { color: call.near ? accent : colors.text }]} testID="end-close-call">
-        {closeCallText(call)}
-      </Text>
+      {wide ? null : closeCallEl}
       {winner ? (
         <View style={styles.winner}>
           <View style={[styles.swatch, { backgroundColor: readableLabColor(winner) }]} />
@@ -240,6 +244,7 @@ function EndView({ state }: { state: GameState }) {
       <View style={[safe, styles.row]}>
         <View style={styles.leftPane}>
           <ScrollView contentContainerStyle={styles.leftContent}>{bannerEl}</ScrollView>
+          {closeCallEl}
           {scoreRowEl}
           {buttonsEl}
           {newLabEl}
@@ -319,4 +324,5 @@ const styles = StyleSheet.create({
   footerBtn: { flex: 1, minHeight: 56 },
   newLab: { alignSelf: 'center', marginBottom: spacing.s },
   closeCall: { ...voice.bodyStrong, fontSize: type.s + 1, lineHeight: 20 },
+  closeCallWide: { paddingHorizontal: spacing.l, paddingTop: spacing.s },
 });

@@ -12,7 +12,11 @@ export interface RunLengthPickerProps {
   wide?: boolean;
 }
 
-/** Sprint / Full run choice on the founder step, beside the difficulty picker, with the minutes shown. */
+/**
+ * Sprint / Full run choice on the founder step, with the minutes shown. Wide (landscape): one
+ * compact segmented row (label, then each option's name and minutes) for the step's header line.
+ * Narrow: two cards with their descriptions, above the difficulty picker.
+ */
 export function RunLengthPicker({ options, selected, onSelect, wide }: RunLengthPickerProps) {
   if (options.length === 0) return null;
   return (
@@ -20,14 +24,14 @@ export function RunLengthPicker({ options, selected, onSelect, wide }: RunLength
       <Text style={styles.label} accessibilityRole="header">
         {t('ui.sprint.length.title')}
       </Text>
-      <View accessibilityRole="radiogroup" accessibilityLabel={t('ui.sprint.length.title')} style={[styles.list, !wide && styles.listRow]}>
+      <View accessibilityRole="radiogroup" accessibilityLabel={t('ui.sprint.length.title')} style={[styles.list, styles.listRow, wide && styles.listWide]}>
         {options.map((o) => {
           const on = selected === o.id;
           return (
             <Pressable
               key={o.id}
               onPress={() => onSelect(o.id)}
-              style={({ pressed }) => [styles.option, !wide && styles.optionRow, on && styles.optionOn, pressed && styles.pressed]}
+              style={({ pressed }) => [styles.option, wide ? styles.optionWide : styles.optionRow, on && styles.optionOn, pressed && styles.pressed]}
               accessibilityRole="radio"
               accessibilityState={{ selected: on, checked: on }}
               aria-checked={on}
@@ -57,10 +61,11 @@ export function RunLengthPicker({ options, selected, onSelect, wide }: RunLength
 
 const styles = StyleSheet.create({
   wrap: { gap: 2 },
-  wrapWide: { width: 172 },
+  wrapWide: { flexDirection: 'row', alignItems: 'center', gap: spacing.s },
   label: { ...voice.calmLabel, color: colors.dim },
   list: { gap: spacing.xs },
   listRow: { flexDirection: 'row', gap: spacing.s },
+  listWide: { gap: spacing.xs },
   option: {
     backgroundColor: colors.surface,
     borderRadius: radius.s,
@@ -73,6 +78,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   optionRow: { flex: 1, paddingHorizontal: spacing.m, paddingVertical: spacing.s },
+  optionWide: { minHeight: 30, paddingVertical: 2, paddingHorizontal: spacing.m },
   optionOn: { borderColor: colors.player, backgroundColor: colors.raised },
   pressed: { opacity: 0.85 },
   head: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: spacing.s },
