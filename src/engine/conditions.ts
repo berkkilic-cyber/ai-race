@@ -1,3 +1,4 @@
+import { pacedTickValue } from './balance';
 import type { EngineContext } from './context';
 import { hasLabFlag, isBannedAt, leadRivalOf, worldShareOf } from './derived';
 import { assertNever, isPresentInScope } from './scopes';
@@ -37,10 +38,11 @@ function normaliseName(name: string): string {
 
 export function checkCondition(state: GameState, context: EngineContext, lab: LabState, condition: Condition): boolean {
   switch (condition.type) {
+    // Tick conditions are written for the standard run; a faster run converts them (÷ pace).
     case 'tickAtLeast':
-      return state.tick >= condition.value;
+      return state.tick >= pacedTickValue(context.pace, condition.value);
     case 'tickAtMost':
-      return state.tick <= condition.value;
+      return state.tick <= pacedTickValue(context.pace, condition.value);
     case 'hasNode':
       return lab.ownedNodes.includes(condition.nodeId);
     case 'lacksNode':

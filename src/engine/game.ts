@@ -1,5 +1,6 @@
 import type { EngineContext } from './context';
-import { getContext, resolveDifficulty } from './context';
+import { pacedTicks } from './balance';
+import { getContext, resolveDifficulty, resolveRunLength } from './context';
 import { founderStart } from './derived';
 import { scheduleNextHeadline } from './events';
 import { max, round } from './natives';
@@ -68,9 +69,11 @@ function createRival(context: EngineContext, rival: RivalDef): LabState {
   };
 }
 
-/** The tick a rival enters in this run: its entryTick × rivalEntryTickFactor, rounded. */
+/** The tick a rival enters in this run: its entryTick × rivalEntryTickFactor, rounded, then ÷ pace. */
 export function rivalEntryTick(context: EngineContext, rival: RivalDef): number {
-  return rival.entryTick <= 0 ? rival.entryTick : max(0, round(rival.entryTick * context.balance.rivalEntryTickFactor));
+  if (rival.entryTick <= 0) return rival.entryTick;
+  const scaled = max(0, round(rival.entryTick * context.balance.rivalEntryTickFactor));
+  return scaled <= 0 ? scaled : pacedTicks(context.pace, scaled);
 }
 
 function selectedRivals(context: EngineContext, setup: GameSetup): RivalDef[] {
@@ -84,7 +87,8 @@ function selectedRivals(context: EngineContext, setup: GameSetup): RivalDef[] {
 
 export function createGame(pack: ContentPack, setup: GameSetup): GameState {
   const difficulty = resolveDifficulty(pack, setup.difficulty);
-  const context = getContext(pack, difficulty?.id);
+  const runLength = resolveRunLength(pack, setup.runLength);
+  const context = getContext(pack, difficulty?.id, runLength?.id);
   const player = createPlayer(context, setup);
   const rivals = selectedRivals(context, setup).map((rival) => createRival(context, rival));
   const labs: Record<string, LabState> = { [player.id]: player };
@@ -110,6 +114,7 @@ export function createGame(pack: ContentPack, setup: GameSetup): GameState {
     nextMomentTick: context.balance.momentFirstTick,
   };
   if (difficulty) state.difficulty = difficulty.id;
+  if (runLength) state.runLength = runLength.id;
   scheduleNextHeadline(state, context);
   return state;
 }

@@ -26,6 +26,8 @@ export interface HeadlessOptions {
   momentSkill?: number;
   /** Called after the bot taps a moment, with what the tap gained (for balance scripts measuring moment income). */
   onMomentCollected?: (gain: { defId: string; hype: number; cash: number }) => void;
+  /** Run-length id; when given it replaces `setup.runLength` (unknown or missing falls back as in createGame). */
+  runLength?: string;
 }
 
 /** How reliably each bot policy taps moments when no momentSkill is given. */
@@ -94,8 +96,8 @@ function playerTurn(state: GameState, context: EngineContext, policy: BotPolicy)
 
 /** Plays a whole run with a bot in the player's seat and returns the final state. */
 export function runHeadless(pack: ContentPack, setup: GameSetup, opts: HeadlessOptions): GameState {
-  const state = cloneState(createGame(pack, setup));
-  const context = getContext(pack, state.difficulty);
+  const state = cloneState(createGame(pack, opts.runLength !== undefined ? { ...setup, runLength: opts.runLength } : setup));
+  const context = getContext(pack, state.difficulty, state.runLength);
   const skill = max(0, min(1, opts.momentSkill ?? DEFAULT_MOMENT_SKILL[opts.policy]));
   const tapper = skill > 0 && pack.moments.length > 0 ? new MomentTapper(setup.seed, skill, opts.onMomentCollected) : undefined;
   while (state.status === 'running' && state.tick < opts.maxTicks) {
@@ -134,7 +136,7 @@ export interface RunSummary {
 
 /** Compact facts about a finished (or timed-out) run, for balance scripts. */
 export function summarizeRun(state: GameState, pack: ContentPack): RunSummary {
-  const context = getContext(pack, state.difficulty);
+  const context = getContext(pack, state.difficulty, state.runLength);
   const player = state.labs[state.playerLabId];
   return {
     endingId: state.ending?.endingId ?? null,

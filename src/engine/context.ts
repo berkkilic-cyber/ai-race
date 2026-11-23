@@ -1,13 +1,17 @@
-import { mergeBalance, type BalanceConfig } from './balance';
-import type { ChannelDef, ContentPack, DifficultyDef, EventDef, FounderDef, NodeDef, RegionDef, RivalDef } from './types';
+import { applyPace, mergeBalance, paceOf, type BalanceConfig } from './balance';
+import type { ChannelDef, ContentPack, DifficultyDef, EventDef, FounderDef, NodeDef, RegionDef, RivalDef, RunLengthDef } from './types';
 
 /** Lookup tables derived once per pack. Packs are treated as immutable. */
 export interface EngineContext {
   pack: ContentPack;
-  /** Defaults ← pack balance ← the run's difficulty balance. */
+  /** Defaults ← pack balance ← the run's difficulty balance ← its run-length balance, then paced (applyPace). */
   balance: BalanceConfig;
   /** The run's difficulty level (after fallback), if the pack has one. */
   difficulty?: DifficultyDef;
+  /** The run's length preset (after fallback), if the pack has one. */
+  runLength?: RunLengthDef;
+  /** balance.pace, validated (1 = the standard run). */
+  pace: number;
   regions: Map<string, RegionDef>;
   nodes: Map<string, NodeDef>;
   events: Map<string, EventDef>;
@@ -68,10 +72,10 @@ function twoHopOf(neighbours: number[][], links: number[][]): { target: number; 
 }
 
 interface PackContexts {
-  /** The pack's own balance, no difficulty. */
+  /** The pack's own balance, no difficulty, no run length. */
   base: EngineContext;
-  /** By resolved difficulty id. */
-  byDifficulty: Map<string, EngineContext>;
+  /** By resolved difficulty id and run-length id ("difficulty|runLength"). */
+  byLevel: Map<string, EngineContext>;
 }
 
 const cache = new WeakMap<ContentPack, PackContexts>();
@@ -86,27 +90,42 @@ export function resolveDifficulty(pack: ContentPack, id?: string): DifficultyDef
   return (id !== undefined ? list.find((d) => d.id === id) : undefined) ?? list.find((d) => d.id === pack.defaultDifficulty);
 }
 
+/**
+ * The run-length preset a run uses: the one named if the pack has it, else the pack's default
+ * (if that exists), else none (the standard run).
+ */
+export function resolveRunLength(pack: ContentPack, id?: string): RunLengthDef | undefined {
+  const list = pack.runLengths;
+  if (!list || list.length === 0) return undefined;
+  return (id !== undefined ? list.find((r) => r.id === id) : undefined) ?? list.find((r) => r.id === pack.defaultRunLength);
+}
+
 function byId<T extends { id: string }>(items: readonly T[]): Map<string, T> {
   return new Map(items.map((item) => [item.id, item]));
 }
 
 /**
- * The engine context of a pack for a run at `difficulty` (a difficulty id; unknown or
- * missing falls back as in resolveDifficulty). Lookups are built once per pack and shared;
- * each difficulty gets its own merged balance.
+ * The engine context of a pack for a run at `difficulty` and `runLength` (ids; unknown or
+ * missing fall back as in resolveDifficulty / resolveRunLength). Lookups are built once per
+ * pack and shared; each pair gets its own merged, paced balance.
  */
-export function getContext(pack: ContentPack, difficulty?: string): EngineContext {
+export function getContext(pack: ContentPack, difficulty?: string, runLength?: string): EngineContext {
   let entry = cache.get(pack);
   if (!entry) {
-    entry = { base: buildContext(pack), byDifficulty: new Map() };
+    entry = { base: buildContext(pack), byLevel: new Map() };
     cache.set(pack, entry);
   }
   const def = resolveDifficulty(pack, difficulty);
-  if (!def) return entry.base;
-  let context = entry.byDifficulty.get(def.id);
+  const length = resolveRunLength(pack, runLength);
+  if (!def && !length) return entry.base;
+  const key = `${def?.id ?? ''}|${length?.id ?? ''}`;
+  let context = entry.byLevel.get(key);
   if (!context) {
-    context = { ...entry.base, balance: mergeBalance(pack.balance, def.balance), difficulty: def, capabilityCapMemo: new Map() };
-    entry.byDifficulty.set(def.id, context);
+    const balance = applyPace(mergeBalance(pack.balance, def?.balance ?? {}, length?.balance ?? {}));
+    context = { ...entry.base, balance, pace: paceOf(balance), capabilityCapMemo: new Map() };
+    if (def) context.difficulty = def;
+    if (length) context.runLength = length;
+    entry.byLevel.set(key, context);
   }
   return context;
 }
@@ -126,7 +145,8 @@ function buildContext(pack: ContentPack): EngineContext {
   );
   const context: EngineContext = {
     pack,
-    balance: mergeBalance(pack.balance),
+    balance: applyPace(mergeBalance(pack.balance)),
+    pace: paceOf(mergeBalance(pack.balance)),
     regions: byId(pack.regions),
     nodes: byId(pack.nodes),
     events: byId(pack.events),

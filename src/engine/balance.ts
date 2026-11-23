@@ -1,3 +1,5 @@
+import { max, min, round } from './natives';
+
 /**
  * Every tunable number of the simulation. A content pack's `balance` is a
  * partial override shallow-merged over `defaultBalance`.
@@ -219,6 +221,18 @@ export interface BalanceConfig {
   scoreTargetTicks: number;
   /** Speed bonus per tick a win comes before scoreTargetTicks. */
   scorePerTickSaved: number;
+
+  // ── Pace (run length) ──
+  /**
+   * How much game happens per tick (1 = the standard run; a run-length preset raises it to
+   * play the same arc in fewer ticks). Every other tick count and per-tick rate in this
+   * config, and every content duration, entry tick and tick condition, is written for the
+   * standard run; the engine converts them once: rates (PACE_RATE_KEYS) × pace; tick counts
+   * (PACE_TICK_KEYS), effect durations, rivals' entry ticks and tick conditions ÷ pace.
+   * Moments are tapped by a person, so their spawn interval and lifetime stay in real ticks;
+   * the effects they apply are paced like any other effect (a buff's total is rate × time).
+   */
+  pace: number;
 }
 
 export const defaultBalance: BalanceConfig = {
@@ -328,9 +342,86 @@ export const defaultBalance: BalanceConfig = {
   scorePerNode: 10,
   scoreTargetTicks: 3600,
   scorePerTickSaved: 0.5,
+
+  pace: 1,
 };
 
 /** Defaults with the pack's overrides applied, then any further layers (a difficulty's) in order. */
 export function mergeBalance(overrides: Partial<BalanceConfig>, ...more: Partial<BalanceConfig>[]): BalanceConfig {
   return Object.assign({ ...defaultBalance, ...overrides }, ...more);
+}
+
+/** Per-tick rates: multiplied by `pace`. */
+export const PACE_RATE_KEYS = [
+  'baseSpread',
+  'stealRate',
+  'seedChance',
+  'banDecayRate',
+  'eliminatedDecayRate',
+  'cashPerUser',
+  'cashBase',
+  'hypeBase',
+  'agiBase',
+  'regulationPerShare',
+  'regulationDecay',
+  'backlashPerCapability',
+  'backlashPerDataCentreLevel',
+  'backlashDecay',
+  'aiRegulationDecay',
+  'aiBacklashDecay',
+  'dataCentreUpkeep',
+  'scorePerTickSaved',
+] as const satisfies readonly (keyof BalanceConfig)[];
+
+/** Tick counts: divided by `pace` (rounded, at least 1). Moment timing is real time and not listed. */
+export const PACE_TICK_KEYS = [
+  'unpaidOfflineTicks',
+  'defaultDisableTicks',
+  'banDuration',
+  'aiDecisionInterval',
+  'aiCashReserveTicks',
+  'firstEventTick',
+  'eventIntervalMin',
+  'eventIntervalMax',
+  'eventRetryTicks',
+  'headlineIntervalMin',
+  'headlineIntervalMax',
+  'scoreTargetTicks',
+] as const satisfies readonly (keyof BalanceConfig)[];
+
+/** Rates that are fractions per tick and must stay at most 1 after pacing. */
+const PACE_FRACTION_KEYS: ReadonlySet<string> = new Set(['banDecayRate', 'eliminatedDecayRate']);
+
+/** A valid pace: finite and > 0, else 1. */
+export function paceOf(balance: Pick<BalanceConfig, 'pace'>): number {
+  const pace = balance.pace;
+  return typeof pace === 'number' && Number.isFinite(pace) && pace > 0 ? pace : 1;
+}
+
+/** Standard-run ticks converted to this run's ticks (÷ pace, rounded, at least 1). Identity at pace 1. */
+export function pacedTicks(pace: number, ticks: number): number {
+  if (pace === 1) return ticks;
+  return max(1, round(ticks / pace));
+}
+
+/**
+ * The balance a run plays with: `balance` with its rates × pace and its tick counts ÷ pace.
+ * Returns the same values untouched at pace 1, so a standard run is bit-for-bit unchanged.
+ */
+export function applyPace(balance: BalanceConfig): BalanceConfig {
+  const pace = paceOf(balance);
+  if (pace === 1) return balance;
+  const out: BalanceConfig = { ...balance, pace };
+  for (const key of PACE_RATE_KEYS) {
+    const value = balance[key] * pace;
+    out[key] = PACE_FRACTION_KEYS.has(key) ? min(1, value) : value;
+  }
+  for (const key of PACE_TICK_KEYS) out[key] = pacedTicks(pace, balance[key]);
+  return out;
+}
+
+/** A standard-run tick number (a tick condition's value) in this run's ticks: ÷ pace, rounded. Identity at pace 1. */
+export function pacedTickValue(pace: number, tick: number): number {
+  if (pace === 1) return tick;
+  return round(tick / pace);
 }
