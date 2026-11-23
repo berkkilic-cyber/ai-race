@@ -5,7 +5,7 @@ import { chooseAiActions, chooseEventChoice, type Meters } from '@/engine';
 import { useComposureOverride, type ComposureLevel } from './composure';
 import { readableLabColor } from './i18n';
 import { regionDotColors } from './map/mapColors';
-import { touchDebugInfo, type TouchDebugInfo } from './map/touchDebug';
+import { setTouchDebug, touchDebugInfo, type TouchDebugInfo } from './map/touchDebug';
 import { enableRenderStats, renderStats, resetRenderStats } from './map/renderStats';
 import { getPackEntry } from './packs';
 
@@ -43,6 +43,8 @@ export interface DebugHandle {
   dotColors(): Record<string, string>;
   /** The touch diagnostics record of the maps (last touch, callbacks, hit region, view). */
   touch(): TouchDebugInfo;
+  /** Turns the debug overlay (touch diagnostics and the performance readout) on or off, as the 2 s long press does. */
+  debugOverlay(on: boolean): void;
 }
 
 /** Ticks between bot decisions for the player seat. */
@@ -116,5 +118,5 @@ export function installDebugHandle(): void {
   if (Platform.OS !== 'web' || typeof window === 'undefined') return;
   if (!/[?&]debug=1\b/.test(window.location?.search ?? '')) return;
   enableRenderStats();
-  (window as unknown as { __game?: DebugHandle }).__game = { store: useGameStore, advance, forceComposure, setMeters, renderStats, resetRenderStats, dotColors, touch: touchDebugInfo };
+  (window as unknown as { __game?: DebugHandle }).__game = { store: useGameStore, advance, forceComposure, setMeters, renderStats, resetRenderStats, dotColors, touch: touchDebugInfo, debugOverlay: setTouchDebug };
 }

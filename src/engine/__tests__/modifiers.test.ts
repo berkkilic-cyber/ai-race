@@ -1,5 +1,7 @@
 import { getModifierTotal, step } from '@/engine';
-import { buildModifierTable, statMultiplier } from '../modifiers';
+import { cloneState } from '../clone';
+import { getContext } from '../context';
+import { buildModifierTable, labModifierTable, statMultiplier } from '../modifiers';
 import { editLab, newGame, PLAYER, quietPack } from '../__fixtures__/helpers';
 import type { Modifier } from '../types';
 
@@ -54,5 +56,28 @@ describe('modifiers', () => {
     state = step(state, pack);
     expect(state.labs[PLAYER].timedModifiers).toEqual([]);
     expect(getModifierTotal(state, pack, PLAYER, 'hypeIncome')).toBe(1);
+  });
+
+  it('a copied lab reuses its table, and a copy with different modifiers gets its own', () => {
+    const context = getContext(pack, undefined);
+    const state = editLab(newGame(pack, { founderId: 'thinker' }), PLAYER, (lab) => {
+      lab.ownedNodes = ['c2'];
+      lab.timedModifiers = [{ modifier: { stat: 'agiRate', op: 'mul', value: 2 }, untilTick: 10 }];
+    });
+    const table = labModifierTable(state.labs[PLAYER], context, 0);
+    // step() copies every lab each tick: same content, new arrays.
+    const copy = cloneState(state);
+    expect(copy.labs[PLAYER].ownedNodes).not.toBe(state.labs[PLAYER].ownedNodes);
+    expect(labModifierTable(copy.labs[PLAYER], context, 0)).toBe(table);
+    // Different nodes, a different timed modifier, or another founder: rebuilt, never the stale table.
+    const otherNode = editLab(state, PLAYER, (lab) => (lab.ownedNodes = ['s1']));
+    expect(labModifierTable(otherNode.labs[PLAYER], context, 0)).not.toBe(table);
+    expect(getModifierTotal(otherNode, pack, PLAYER, 'agiRate')).toBeCloseTo(1.1 * 2, 12);
+    const otherTimed = editLab(state, PLAYER, (lab) => (lab.timedModifiers = [{ modifier: { stat: 'agiRate', op: 'mul', value: 3 }, untilTick: 10 }]));
+    expect(getModifierTotal(otherTimed, pack, PLAYER, 'agiRate')).toBeCloseTo(1.2 * 3, 12);
+    const noFounder = editLab(state, PLAYER, (lab) => (lab.founderId = undefined));
+    expect(getModifierTotal(noFounder, pack, PLAYER, 'agiRate')).toBeCloseTo(1.1 * 2, 12);
+    // And back to the original content: the same figures as at first.
+    expect(getModifierTotal(cloneState(state), pack, PLAYER, 'agiRate')).toBeCloseTo(2.4, 12);
   });
 });

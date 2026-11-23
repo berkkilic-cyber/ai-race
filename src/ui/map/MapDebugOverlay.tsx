@@ -1,6 +1,8 @@
 import { StyleSheet, Text, View } from 'react-native';
 
 import { buildLabel } from '../diagnostics/build';
+import { PerfHud } from '../diagnostics/PerfHud';
+import { noteOverlayCommit } from '../diagnostics/perfStats';
 import { useInsets } from '../hooks/useInsets';
 import { t } from '../i18n';
 import { colors, radius, spacing, type } from '../theme';
@@ -23,6 +25,7 @@ export function MapDebugOverlay() {
 
 function Panel() {
   usePoll(true, POLL_MS);
+  noteOverlayCommit();
   const insets = useInsets();
   const d = touchDebugInfo();
   const lines = [
@@ -42,6 +45,7 @@ function Panel() {
           {line}
         </Text>
       ))}
+      <PerfHud />
     </View>
   );
 }

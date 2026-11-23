@@ -70,12 +70,42 @@ interface CachedTable {
   table: ModifierTable;
 }
 
+/** What a table was built from, to recognise the same lab in a copied state. */
+interface TableSource {
+  nodes: readonly string[];
+  founderId: string | undefined;
+  timed: readonly Modifier[];
+  table: ModifierTable;
+}
+
 /**
  * Tables keyed by the lab's ownedNodes array. The engine only ever appends to
  * ownedNodes and timedModifiers (or replaces the arrays), so identity plus
  * length tells whether a cached table is still valid. Saves rebuilding it every tick.
  */
 const tableCache = new WeakMap<LabState['ownedNodes'], CachedTable>();
+
+/**
+ * The last table built per context and lab id, with what it was built from. The public
+ * `step` copies the state every tick (new arrays), so the identity cache above misses on
+ * every tick of a UI run; this finds the same table again by content (same founder, same
+ * nodes in the same order, same timed modifiers in the same order: a table built from them
+ * would be identical, down to the order of the floating-point sums and products).
+ */
+const sourceCache = new WeakMap<EngineContext, Map<string, TableSource>>();
+
+function sameSource(src: TableSource, lab: LabState): boolean {
+  if (src.founderId !== lab.founderId) return false;
+  const nodes = lab.ownedNodes;
+  if (src.nodes.length !== nodes.length || src.timed.length !== lab.timedModifiers.length) return false;
+  for (let i = 0; i < nodes.length; i++) if (src.nodes[i] !== nodes[i]) return false;
+  for (let i = 0; i < src.timed.length; i++) {
+    const a = src.timed[i];
+    const b = lab.timedModifiers[i].modifier;
+    if (a !== b && (a.stat !== b.stat || a.op !== b.op || a.value !== b.value || a.regionTag !== b.regionTag)) return false;
+  }
+  return true;
+}
 
 export function labModifierTable(lab: LabState, context: EngineContext, tick: number): ModifierTable {
   const cacheable = lab.timedModifiers.every((timed) => timed.untilTick > tick);
@@ -91,7 +121,19 @@ export function labModifierTable(lab: LabState, context: EngineContext, tick: nu
   ) {
     return cached.table;
   }
-  const table = buildModifierTable(collectModifiers(lab, context, tick));
+  let byLab = sourceCache.get(context);
+  if (!byLab) {
+    byLab = new Map();
+    sourceCache.set(context, byLab);
+  }
+  const source = byLab.get(lab.id);
+  let table: ModifierTable;
+  if (source && sameSource(source, lab)) {
+    table = source.table;
+  } else {
+    table = buildModifierTable(collectModifiers(lab, context, tick));
+    byLab.set(lab.id, { nodes: lab.ownedNodes.slice(), founderId: lab.founderId, timed: lab.timedModifiers.map((tm) => tm.modifier), table });
+  }
   tableCache.set(lab.ownedNodes, {
     context,
     nodeCount: lab.ownedNodes.length,

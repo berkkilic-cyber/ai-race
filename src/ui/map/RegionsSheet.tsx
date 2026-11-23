@@ -5,10 +5,10 @@ import { Sheet } from '../components/Sheet';
 import { fmtPct } from '../format';
 import { t } from '../i18n';
 import { cased, lower } from '../locale/casing';
-import { useGameStore } from '../store/game';
 import { useTutorialTarget } from '../tutorial/targets';
 import { colors, radius, spacing, touch, type } from '../theme';
 import { regionGroups, type RegionRow } from './regionList';
+import { useTabStore } from '../shell/tabActive';
 
 export interface RegionsSheetProps {
   visible: boolean;
@@ -28,8 +28,8 @@ export function RegionsSheet({ visible, onPick, onClose }: RegionsSheetProps) {
 
 function OpenRegionsSheet({ onPick, onClose }: Omit<RegionsSheetProps, 'visible'>) {
   const [query, setQuery] = useState('');
-  const state = useGameStore((s) => s.state);
-  const pack = useGameStore((s) => s.pack);
+  const state = useTabStore((s) => s.state);
+  const pack = useTabStore((s) => s.pack);
   const panelRef = useTutorialTarget('map.regionList');
   if (!state) return null;
   const groups = regionGroups(state, pack, query);

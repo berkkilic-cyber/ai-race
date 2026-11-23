@@ -7,12 +7,12 @@ import { usePackEntry } from '../hooks/useGame';
 import { layoutModeFor } from '../hooks/useLayoutMode';
 import { t } from '../i18n';
 import { AmbientGate } from '../motion/ambient';
-import { useGameStore } from '../store/game';
 import { useTutorialTarget } from '../tutorial/targets';
 import { colors, radius, spacing, touch, type, voice } from '../theme';
 import { RegionSheet } from './RegionSheet';
 import { RegionsSheet } from './RegionsSheet';
 import { WorldMap } from './WorldMap';
+import { useTabStore } from '../shell/tabActive';
 
 /**
  * Map tab: the world map, the region panel and the Regions list.
@@ -24,7 +24,7 @@ import { WorldMap } from './WorldMap';
  */
 export function MapScreen() {
   const { geometry } = usePackEntry();
-  const home = useGameStore((s) => (s.state ? s.state.labs[s.state.playerLabId].homeRegion : undefined));
+  const home = useTabStore((s) => (s.state ? s.state.labs[s.state.playerLabId].homeRegion : undefined));
   const [selected, setSelected] = useState<string | null>(null);
   const [listOpen, setListOpen] = useState(false);
   const [centre, setCentre] = useState<{ regionId: string; nonce: number } | null>(null);

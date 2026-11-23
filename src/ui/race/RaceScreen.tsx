@@ -3,13 +3,14 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Icon } from '../icons';
 import { t } from '../i18n';
-import { useGameStore, type GameStore } from '../store/game';
+import { type GameStore } from '../store/game';
 import { colors, flatShadow, radius, shape, spacing, tabular, touch, type, voice } from '../theme';
 import { PanelDeco } from '../components/Deco';
 import { Bar } from './Bar';
 import { raceView, sortRows, type RaceRow, type RaceSort, type RaceView, type WinBar } from './logic';
 import { RivalSheet } from './RivalSheet';
 import { shareSamples, useShareSampler } from './trend';
+import { useTabStore } from '../shell/tabActive';
 
 /** Formatted view as a string: the tab re-renders only when something it shows changes. */
 const selectView = (s: GameStore): string => (s.state ? JSON.stringify(raceView(s.state, s.pack, shareSamples())) : '');
@@ -21,7 +22,7 @@ const selectView = (s: GameStore): string => (s.state ? JSON.stringify(raceView(
  */
 export function RaceScreen() {
   useShareSampler();
-  const json = useGameStore(selectView);
+  const json = useTabStore(selectView);
   const [sort, setSort] = useState<RaceSort>('share');
   const [rival, setRival] = useState<string | null>(null);
   const close = useCallback(() => setRival(null), []);

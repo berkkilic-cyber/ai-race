@@ -6,15 +6,15 @@ import { useShallow } from 'zustand/react/shallow';
 import { AchievementsSheet } from '../achievements/AchievementsSheet';
 import { useWide } from '../events/useWide';
 import { labColor, t } from '../i18n';
-import { useGameStore } from '../store/game';
 import { colors, radius, spacing, touch, type } from '../theme';
 import { buildNewsRows, NEWS_FILTERS, type NewsFilter, type NewsRow as Row } from './feed';
 import { DayHeader, NewsRow } from './NewsRow';
 import { useNewsLog, useNewsSeen } from './useNews';
+import { useTabStore } from '../shell/tabActive';
 
 /** Lab id -> display colour; a stable object while no lab changes colour. */
 function useLabColors(): Record<string, string> {
-  return useGameStore(
+  return useTabStore(
     useShallow((s) => {
       const out: Record<string, string> = {};
       if (s.state) for (const id of s.state.labOrder) out[id] = labColor(s.state.labs[id]);
@@ -50,9 +50,9 @@ export function NewsScreen() {
   const focused = useIsFocused();
   const wide = useWide();
   const news = useNewsLog();
-  const playerId = useGameStore((s) => s.state?.playerLabId ?? '');
-  const earned = useGameStore((s) => s.state?.achievements.length ?? 0);
-  const total = useGameStore((s) => s.pack.achievements.length);
+  const playerId = useTabStore((s) => s.state?.playerLabId ?? '');
+  const earned = useTabStore((s) => s.state?.achievements.length ?? 0);
+  const total = useTabStore((s) => s.pack.achievements.length);
   const colorsById = useLabColors();
   const markSeen = useNewsSeen((s) => s.markSeen);
   const [filter, setFilter] = useState<NewsFilter>('all');

@@ -6,14 +6,14 @@ import { useShallow } from 'zustand/react/shallow';
 import { getComputeRequired, getNodeCost, type TreeId } from '@/engine';
 
 import { haveText, needText } from '../explain/model';
-import { useModelStatus } from '../explain/useModelStatus';
 import { t } from '../i18n';
-import { useGameStore } from '../store/game';
 import { colors, shape, spacing } from '../theme';
 import { TREE_ACCENT } from './accent';
 import { layoutTree, type TreeEdge } from './layout';
 import { NodeTile } from './NodeTile';
 import { nodeStatus, treeNodes, type NodeStatus } from './status';
+import { useTabStore } from '../shell/tabActive';
+import { useTabModelStatus } from './useTabModelStatus';
 
 export interface TreeGraphProps {
   tree: TreeId;
@@ -57,10 +57,10 @@ const EDGE_ORDER: Record<EdgeTone, number> = { dim: 0, ready: 1, lit: 2 };
 const DASH_READY = [4, 4];
 
 function TreeGraphImpl({ tree, flash, onSelect, horizontal, selected, insetRight }: TreeGraphProps) {
-  const pack = useGameStore((s) => s.pack);
+  const pack = useTabStore((s) => s.pack);
   const nodes = useMemo(() => treeNodes(pack, tree), [pack, tree]);
   // Model nodes show the compute their tier needs; compute changes with data centres, not every tick.
-  const { compute } = useModelStatus();
+  const { compute } = useTabModelStatus();
   const [size, setSize] = useState({ width: 0, height: 0 });
   const layout = useMemo(() => {
     if (size.width <= 0) return null;
@@ -70,7 +70,7 @@ function TreeGraphImpl({ tree, flash, onSelect, horizontal, selected, insetRight
   const scrollX = useRef(0);
 
   // One primitive per node: re-renders only when a status or price changes, not on every tick.
-  const encoded = useGameStore(
+  const encoded = useTabStore(
     useShallow((s) => {
       const state = s.state;
       if (!state) return [] as string[];

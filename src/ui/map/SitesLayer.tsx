@@ -10,6 +10,7 @@ import { useGameStore } from '../store/game';
 import { colors } from '../theme';
 import { parseSites, sitesKey, type SiteMarker } from './mapColors';
 import { allFinite, nonNegative, unitInterval } from './svgSafe';
+import { useTabStore } from '../shell/tabActive';
 
 const AnimatedG = Animated.createAnimatedComponent(G);
 
@@ -40,9 +41,9 @@ interface Placed extends SiteMarker {
  * by population). The sites themselves are rack chips at a constant size (live/ObjectsLayer).
  */
 export const SitesLayer = memo(function SitesLayer({ geometry }: { geometry: MapGeometry }) {
-  const key = useGameStore((s) => (s.state ? sitesKey(s.state) : ''));
-  const playerId = useGameStore((s) => s.state?.playerLabId ?? '');
-  const pack = useGameStore((s) => s.pack);
+  const key = useTabStore((s) => (s.state ? sitesKey(s.state) : ''));
+  const playerId = useTabStore((s) => s.state?.playerLabId ?? '');
+  const pack = useTabStore((s) => s.pack);
 
   const served = useMemo(() => {
     const byId = new Map(pack.regions.map((r) => [r.id, r]));

@@ -5,12 +5,12 @@ import { useShallow } from 'zustand/react/shallow';
 import type { TreeId } from '@/engine';
 
 import { t } from '../i18n';
-import { useGameStore } from '../store/game';
 import { useTutorialTarget } from '../tutorial/targets';
 import { colors, flatShadow, radius, shape, spacing, tabular, touch, type, voice } from '../theme';
 import { TREE_ACCENT } from './accent';
 import { TREES } from './status';
 import { useBuyableByTree } from './useBuyableNodeCount';
+import { useTabStore } from '../shell/tabActive';
 
 export interface TreePickerProps {
   selected: TreeId;
@@ -23,7 +23,7 @@ export interface TreePickerProps {
 
 /** Owned and total node counts per tree, in TREES order: [owned0, total0, owned1, total1, ...]. */
 function useTreeCounts(): number[] {
-  return useGameStore(
+  return useTabStore(
     useShallow((s) => {
       const owned = s.state ? s.state.labs[s.state.playerLabId].ownedNodes : [];
       const out: number[] = [];

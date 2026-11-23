@@ -22,6 +22,7 @@ import { installMapLiveDebug } from './debug';
 import { collectHaptic, landHaptic } from './haptics';
 import { BUBBLE, BUBBLE_HIT, BUBBLE_RISE, assignSlots, bubbleOffset, collectLines, effectLines, snapshot, type DeltaLine } from './logic';
 import { placeEdgeMarkers, pointAngle, relaxBubbles } from './relax';
+import { useTabStore } from '../shell/tabActive';
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
@@ -349,7 +350,7 @@ const Bubble = memo(function Bubble({
 }) {
   const live = item.phase === 'live';
   const [dx, dy] = bubbleOffset(item.slot);
-  const still = useGameStore(selectStill);
+  const still = useTabStore(selectStill);
   const clock = useAmbientClock(live && !still);
   const progress = useLifetime(item.uid, live);
   const appear = useSharedValue(reduced ? 1 : 0);

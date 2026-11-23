@@ -8,18 +8,18 @@ import { Button } from '../components/Button';
 import { Sheet } from '../components/Sheet';
 import { describeNode } from '../explain/describe';
 import { haveText, needText } from '../explain/model';
-import { useModelStatus } from '../explain/useModelStatus';
 import { Icon } from '../icons';
 import { useTutorialTarget } from '../tutorial/targets';
 import { fmtCash, fmtCompact } from '../format';
 import { failureText, t } from '../i18n';
 import { cased } from '../locale/casing';
-import { useGameStore } from '../store/game';
 import { colors, radius, shape, spacing, tabular, type, voice } from '../theme';
 import { TREE_ACCENT } from './accent';
 import { CheckGlyph, CrossGlyph, LockGlyph } from './Glyphs';
 import { nodeStatus, type NodeStatus } from './status';
 import { useWide } from './useWide';
+import { useTabStore } from '../shell/tabActive';
+import { useTabModelStatus } from './useTabModelStatus';
 
 export interface NodeSheetProps {
   nodeId: string | null;
@@ -31,7 +31,7 @@ export interface NodeSheetProps {
 
 /** Bottom sheet for one node: what it does, cost, prerequisites and the Buy button. */
 export function NodeSheet({ nodeId, justBought, onClose, onBuy }: NodeSheetProps) {
-  const node = useGameStore((s) => (nodeId ? s.pack.nodes.find((n) => n.id === nodeId) : undefined));
+  const node = useTabStore((s) => (nodeId ? s.pack.nodes.find((n) => n.id === nodeId) : undefined));
   return (
     <Sheet visible={!!node} onClose={onClose} maxHeight="90%" testID="node-sheet">
       {node ? <NodeSheetBody key={node.id} node={node} justBought={justBought} onClose={onClose} onBuy={onBuy} /> : null}
@@ -53,7 +53,7 @@ interface SheetView {
 const NO_VIEW: SheetView = { status: 'locked', reason: 'gameEnded', costHype: 0, costCash: 0, hype: 0, cash: 0, ownedReqs: '' };
 
 function useSheetView(node: NodeDef): SheetView {
-  return useGameStore(
+  return useTabStore(
     useShallow((s) => {
       const state = s.state;
       if (!state) return NO_VIEW;
@@ -77,9 +77,9 @@ function useSheetView(node: NodeDef): SheetView {
 
 function NodeSheetBody({ node, justBought, onClose, onBuy }: { node: NodeDef; justBought: boolean; onClose: () => void; onBuy: (id: string) => void }) {
   const tutorialRef = useTutorialTarget(`node.buy:${node.id}`);
-  const pack = useGameStore((s) => s.pack);
+  const pack = useTabStore((s) => s.pack);
   const view = useSheetView(node);
-  const model = useModelStatus();
+  const model = useTabModelStatus();
   const lines = useMemo(() => describeNode(node, { channels: pack.channels, computeFor: (tier) => getComputeRequired(pack, tier) }), [node, pack]);
   // Model nodes: the compute this tier needs to run, against what the player has.
   const tier = node.capabilityLevel;

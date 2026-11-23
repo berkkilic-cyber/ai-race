@@ -5,12 +5,12 @@ import { getIncome } from '@/engine';
 
 import { fmtCompact, fmtPerDay } from '../format';
 import { t } from '../i18n';
-import { useGameStore } from '../store/game';
 import { colors, flatShadow, radius, shape, spacing, tabular, type, voice } from '../theme';
+import { useTabStore } from '../shell/tabActive';
 
 /** Current Hype and Hype per day, compact. Re-renders only when the shown figures change. */
 export function HypeBalance() {
-  const [hype, perDay] = useGameStore(
+  const [hype, perDay] = useTabStore(
     useShallow((s) => {
       if (!s.state) return ['0', '0'];
       const id = s.state.playerLabId;

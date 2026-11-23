@@ -10,6 +10,7 @@ import { useGameStore, type GameStore } from '../../store/game';
 import { mixColor } from '../../color';
 import { colors, flatShadow, radius, shape, spacing, voice } from '../../theme';
 import { useProjection } from './projection';
+import { useTabStore, useTabSelector } from '../../shell/tabActive';
 
 /** Below this visible map width the strip shows colour dots only. */
 export const LEADERBOARD_DOTS_BELOW = 520;
@@ -45,8 +46,8 @@ export function shortName(name: string): string {
  * visible map is narrow.
  */
 export const Leaderboard = memo(function Leaderboard({ insetRight, visibleWidth }: { insetRight: number; visibleWidth: number }) {
-  const key = useKeyedSelector(selectRows, ident);
-  const playerId = useGameStore((s) => s.state?.playerLabId);
+  const key = useKeyedSelector(useTabSelector(selectRows), ident);
+  const playerId = useTabStore((s) => s.state?.playerLabId);
   // Bubbles and edge indicators keep clear of the strip.
   const p = useProjection();
   const setObstacle = p?.setObstacle;

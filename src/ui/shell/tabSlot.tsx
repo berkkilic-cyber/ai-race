@@ -3,6 +3,8 @@ import { StyleSheet } from 'react-native';
 import { Screen } from 'react-native-screens';
 import type { defaultTabsSlotRender } from 'expo-router/ui';
 
+import { TabActiveContext } from './tabActive';
+
 const never = { then() {} };
 
 /** Suspends its children while `freeze` is set: the tree keeps its state but does not render. */
@@ -33,7 +35,9 @@ function DelayedFreeze({ freeze, children }: { freeze: boolean; children: ReactN
  * rendering on each game tick (the map's dots, the trees, the news list) while another tab
  * shows; here an unfocused tab is frozen (a Suspense boundary that stays suspended, the
  * same technique as react-freeze, which native stacks use) and catches up in one render
- * when it is shown again. Otherwise the same as expo-router's defaultTabsSlotRender.
+ * when it is shown again. Selectors inside a tab hold still while it is hidden
+ * (useTabSelector, TabActiveContext), so the frozen tree is not asked to render on every
+ * tick. Otherwise the same as expo-router's defaultTabsSlotRender.
  */
 export const renderFrozenTab: typeof defaultTabsSlotRender = (descriptor, { isFocused, loaded, detachInactiveScreens }) => {
   const { lazy = true, unmountOnBlur } = descriptor.options;
@@ -47,7 +51,9 @@ export const renderFrozenTab: typeof defaultTabsSlotRender = (descriptor, { isFo
       freezeOnBlur={false}
       style={[styles.screen, isFocused ? styles.focused : styles.unfocused]}
     >
-      <DelayedFreeze freeze={!isFocused}>{descriptor.render()}</DelayedFreeze>
+      <TabActiveContext value={isFocused}>
+        <DelayedFreeze freeze={!isFocused}>{descriptor.render()}</DelayedFreeze>
+      </TabActiveContext>
     </Screen>
   );
 };

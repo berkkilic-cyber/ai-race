@@ -4,10 +4,10 @@ import { useShallow } from 'zustand/react/shallow';
 
 import type { MapGeometry } from '@/content/packs/ai-lab/geometry';
 
-import { useGameStore } from '../store/game';
 import { colors } from '../theme';
 import { regionFills } from './mapColors';
 import { isDrawablePath } from './svgSafe';
+import { useTabStore } from '../shell/tabActive';
 
 interface RegionPathProps {
   d: string;
@@ -29,7 +29,7 @@ const EMPTY: Record<string, string> = {};
 
 /** All region fills. Subscribes to a shallow-compared fill map so unchanged regions skip rendering. */
 export const RegionLayer = memo(function RegionLayer({ geometry, regionIds }: RegionLayerProps) {
-  const fills = useGameStore(useShallow((s) => (s.state ? regionFills(s.state, regionIds) : EMPTY)));
+  const fills = useTabStore(useShallow((s) => (s.state ? regionFills(s.state, regionIds) : EMPTY)));
   return (
     <G pointerEvents="none">
       {regionIds.map((id) => (

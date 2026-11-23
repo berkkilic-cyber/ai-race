@@ -12,6 +12,7 @@ import {
 } from '@/engine';
 
 import { logLifecycle } from '../diagnostics/log';
+import { noteTick, perfNow } from '../diagnostics/perfStats';
 import { setI18nContext } from '../i18n';
 import { DEFAULT_PACK_ID, getPackEntry } from '../packs';
 
@@ -82,8 +83,11 @@ export const useGameStore = create<GameStore>()((set, get) => ({
   tick() {
     const { state, pack } = get();
     if (!state) return;
+    const t0 = perfNow();
     const next = step(state, pack);
+    const t1 = perfNow();
     if (next !== state) set({ state: next });
+    noteTick(t1 - t0, perfNow() - t0);
   },
 
   setSpeed(speed) {
