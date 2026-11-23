@@ -6,7 +6,7 @@
 import { getCompute, getUsers, type ContentPack, type Effect, type GameState, type MomentDef, type MomentState } from '@/engine';
 
 import { describeEffect } from '../explain/describe';
-import { fmtCash, fmtCompact, fmtUsers } from '../format';
+import { fmtCash, fmtCompact, fmtNum, fmtUsers } from '../format';
 import { t } from '../i18n';
 
 /** Visual bubble diameter and touch target (points). */
@@ -88,7 +88,7 @@ export interface DeltaLine {
 }
 
 const sign = (n: number) => (n > 0 ? '+' : '−');
-const one = (n: number) => String(Math.round(Math.abs(n) * 10) / 10);
+const one = (n: number) => fmtNum(Math.round(Math.abs(n) * 10) / 10, 1);
 
 /** Changes between two snapshots worth showing, biggest news first. */
 export function deltaLines(before: Snapshot, after: Snapshot): DeltaLine[] {

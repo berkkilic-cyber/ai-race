@@ -7,9 +7,12 @@
  *
  * Shots (per size, into docs/screenshots/tr/<w>x<h>/): the start flow (every step and How to
  * play), the map mid-game, a region panel, the trees tab with a node sheet, an event card and
- * its result, the news and race tabs, the end screen, the first tutorial steps, the Garage main
- * screen and the Garage settings with the language row. Then it switches the language back to
- * English with the row and checks the text changes without a reload.
+ * its result, the news and race tabs, the run menu, the Continue card, the end screen with its
+ * close-call line, the first tutorial steps, and the Garage: main screen, upgrades, each stage
+ * with its move-in card, the Lab tab (training candidates, kept models, staff, helpers), a lab
+ * happening, the bonus offer, the three ship-day steps and the launch, stats and the settings
+ * with the language row. Then it switches the language back to English with the row and checks
+ * the text changes without a reload.
  *
  * English leftovers: a visible line that is exactly an English string whose Turkish text
  * differs, or a line with several common English words. Exits non-zero when anything is found.
@@ -220,6 +223,22 @@ async function runSize(browser, width, height, base) {
   await shot('game-11-critical');
   await page.evaluate(() => window.__game.forceComposure(null));
 
+  // ── Run menu, Save and quit, the Continue card ──
+  if (await has('[data-testid="run-menu-button"]')) {
+    await click('[data-testid="run-menu-button"]', 700);
+    await shot('game-12-run-menu');
+    await click('[data-testid="run-menu-restart"]', 600);
+    await shot('game-13-run-menu-restart');
+    await click('[data-testid="run-menu-cancel"]', 500);
+    await click('[data-testid="run-menu-save-quit"]', 1200);
+    await page.waitForSelector('[data-testid="continue-card"]', { timeout: 8000 });
+    await sleep(600);
+    await shot('start-continue');
+    await click('[data-testid="continue-run"]', 1500);
+    await page.waitForFunction(() => location.pathname === '/game' && !!window.__game, { timeout: 15000 });
+    await page.evaluate(() => window.__game.store.getState().setSpeed(0));
+  }
+
   // ── End ──
   for (let i = 0; i < 60; i++) {
     await advance(500, { bot: true });
@@ -228,6 +247,10 @@ async function runSize(browser, width, height, base) {
   await page.waitForFunction(() => location.pathname === '/end', { timeout: 15000 }).catch(() => undefined);
   await sleep(2000);
   await shot('end');
+  if (await has('[data-testid="end-close-call"]')) {
+    const call = await page.$eval('[data-testid="end-close-call"]', (el) => el.textContent);
+    console.log(`     close call: ${call}`);
+  }
 
   // ── Tutorial: first steps ──
   await page.goto(`${base}/?autostart=1&seed=${SEED}&debug=1&tutorial=1&${q}`, { waitUntil: 'networkidle0' });
@@ -240,9 +263,17 @@ async function runSize(browser, width, height, base) {
   }
 
   // ── Garage ──
-  await page.goto(`${base}/garage?debug=1&${q}`, { waitUntil: 'networkidle0' });
+  const gclick = async (id, wait = 600) => {
+    await page.waitForSelector(`[data-testid="${id}"]`, { timeout: 8000 });
+    await page.evaluate((tid) => document.querySelector(`[data-testid="${tid}"]`).scrollIntoView({ block: 'nearest' }), id);
+    await page.click(`[data-testid="${id}"]`);
+    await sleep(wait);
+  };
+  const scrollTo = (id) => page.evaluate((tid) => document.querySelector(`[data-testid="${tid}"]`)?.scrollIntoView(), id);
+  const g = (fn, ...args) => page.evaluate(fn, ...args);
+  await page.goto(`${base}/garage?debug=1&adseconds=2&${q}`, { waitUntil: 'networkidle0' });
   await page.waitForFunction(() => window.__garage && window.__garage.state(), { timeout: 15000 });
-  await page.evaluate(() => window.__garage.scene('mid'));
+  await g(() => window.__garage.scene('mid'));
   await sleep(800);
   await shot('garage-1-main');
   for (const id of ['garage-tab-upgrades', 'garage-tab-ship']) {
@@ -251,6 +282,83 @@ async function runSize(browser, width, height, base) {
       await shot(`garage-${id.replace('garage-tab-', '2-')}`);
     }
   }
+  // Ship day: reveal, press, choose, launch.
+  await g(() => window.__garage.scene('ship'));
+  await gclick('garage-tab-ship');
+  await shot('garage-5-ship-ready');
+  await gclick('garage-ship-button', 900);
+  await shot('garage-6-shipday-1-reveal');
+  await gclick('garage-shipday-next', 700);
+  await shot('garage-6-shipday-2-press');
+  await gclick('garage-shipday-next', 700);
+  await gclick('garage-shipday-choice-safe', 300);
+  await shot('garage-6-shipday-3-choose');
+  await gclick('garage-shipday-ship', 900);
+  await shot('garage-6-shipday-4-launch');
+  await gclick('garage-launch-continue');
+  // Stages, each with the Lab tab as it grows.
+  await g(() => window.__garage.scene('office'));
+  await g(() => window.__garage.store.setState({ stageCard: 1 }));
+  await page.waitForSelector('[data-testid="garage-stage-card"]', { timeout: 5000 });
+  await shot('garage-7-stage-card-office');
+  await gclick('garage-stage-continue');
+  await gclick('garage-tab-build');
+  await shot('garage-8-stage-office');
+  await gclick('garage-tab-lab');
+  await g(() => window.__garage.training());
+  await page.waitForSelector('[data-testid="garage-lab-training"]', { timeout: 5000 });
+  await shot('garage-9-lab-candidates');
+  const cand = await g(() => window.__garage.state().training.candidates[0].uid);
+  if (await has(`[data-testid="garage-keep-${cand}"]`)) {
+    await gclick(`garage-keep-${cand}`, 300);
+    if (await g(() => window.__garage.state().training.candidates !== null)) {
+      await shot('garage-9-lab-swap');
+      const old = await g(() => window.__garage.state().models[0].uid);
+      await gclick(`garage-replace-${old}`, 300);
+    }
+  }
+  await shot('garage-9-lab-models');
+  await g(() => window.__garage.happening('reporter'));
+  await page.waitForSelector('[data-testid="garage-happening"]', { timeout: 5000 });
+  await shot('garage-10-happening');
+  await gclick('garage-happening', 400);
+  await shot('garage-10-happening-collected');
+  await g(() => window.__garage.bonusOffer('happening'));
+  await page.waitForSelector('[data-testid="garage-bonus-offer"]', { timeout: 5000 });
+  await shot('garage-11-bonus-offer');
+  await g(() => window.__garage.scene('datacentre'));
+  await g(() => window.__garage.store.setState({ stageCard: 2 }));
+  await page.waitForSelector('[data-testid="garage-stage-card"]', { timeout: 5000 });
+  await shot('garage-12-stage-card-datacentre');
+  await gclick('garage-stage-continue');
+  await gclick('garage-tab-build');
+  await g(() => window.__garage.happening('gpu-truck'));
+  await shot('garage-12-stage-datacentre');
+  await gclick('garage-tab-lab');
+  await scrollTo('garage-lab-staff');
+  await shot('garage-13-lab-staff');
+  await g(() => window.__garage.scene('town'));
+  await g(() => window.__garage.store.setState({ stageCard: 3 }));
+  await page.waitForSelector('[data-testid="garage-stage-card"]', { timeout: 5000 });
+  await shot('garage-14-stage-card-town');
+  await gclick('garage-stage-continue');
+  await gclick('garage-tab-build');
+  await g(() => window.__garage.happening('petition'));
+  await shot('garage-14-stage-town');
+  await g(() => window.__garage.scene('latent'));
+  await g(() => window.__garage.store.setState({ stageCard: 4 }));
+  await page.waitForSelector('[data-testid="garage-stage-card"]', { timeout: 5000 });
+  await shot('garage-15-stage-card-latent');
+  await gclick('garage-stage-continue');
+  await g(() => window.__garage.happening('hallucination'));
+  await shot('garage-15-stage-latent');
+  await gclick('garage-tab-lab');
+  await scrollTo('garage-lab-auto');
+  await shot('garage-16-lab-helpers');
+  await gclick('garage-tab-build');
+  await gclick('garage-stats', 900);
+  await shot('garage-17-stats');
+  await gclick('sheet-close');
   await click('[data-testid="garage-settings"]', 900);
   await shot('garage-3-settings');
 

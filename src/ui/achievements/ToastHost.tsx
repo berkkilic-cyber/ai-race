@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 
 import { t } from '../i18n';
+import { Text } from '../locale/Text';
 import { upper } from '../locale/casing';
 import { useWide } from '../events/useWide';
 import { useInsets } from '../hooks/useInsets';

@@ -12,7 +12,7 @@ Every Turkish string follows this table. If a term changes, change it here first
 - **The player is "sen".** Informal, second person singular, everywhere: buttons are imperatives ("Kur", "Satın al", "Yayınla").
 - **Parody names are never translated.** MVIDIA, NopenAI, Zlaude, Germini, ChatJPT, DeepSleek, Llamarama, LeaderBored, the rival labs and the brands keep their exact spelling. Suffixes go after an apostrophe: MVIDIA'nın.
 - **Placeholders** ({lab}, {region}, {model} ...) are kept exactly. Turkish puts case suffixes on nouns, and we cannot know what a variable's last vowel will be. So we write around them: "{lab} lab'ı" or "{region} bölgesinde" instead of "{region}'da", or we put the variable where it needs no suffix (as the subject, or before a colon or dash).
-- **Casing:** text shown in capitals is upper-cased in code with the Turkish rules (i → İ, ı → I), through `src/ui/locale/casing.ts`. Never write capitals into the strings to get that effect.
+- **Casing:** text shown in capitals is upper-cased in code with the Turkish rules (i → İ, ı → I), through `src/ui/locale/casing.ts`. Never write capitals into the strings to get that effect. Any Text whose style changes the case (the theme's voice presets, `textTransform`) is the locale Text (`src/ui/locale/Text.tsx`), which does this in JS and switches the style's transform off; a test fails if a file renders React Native's Text under such a style.
 
 ## Core terms
 
@@ -112,3 +112,38 @@ The level cards fit about nine capitals, so the names are short game words rathe
 | Golden moment | Altın an | |
 | Away earnings | Uzaktayken kazanç | |
 | Owned | Sahip olunan | "{count} adet" in tight rows |
+| Stage (where the lab lives) | Aşama | "{stage} aşamasında açılır": the suffix goes on "aşama", never on the stage name |
+| The Garage / The Office / The Data Centre | Garaj / Ofis / Veri Merkezi | Stage names, no article |
+| The Company Town | Şirket Kasabası | |
+| Latent Space | Gizil Uzay | The term Turkish ML papers use for "latent space" |
+| Training run | Eğitim turu | "Eğitim turları" as a title. Only in Garage, where the tutorial ("Eğitim") never appears |
+| Candidate (model) | Aday | "{count} aday" |
+| Slot | Slot | As Turkish gamers say it ("boş slot") |
+| Keep / Swap in / Scrap | Tut / Değiştir / Çöpe at | |
+| Rarity: Weekend Project / Series A / Frontier / Allegedly Sentient | Hafta Sonu Projesi / A Serisi / Öncü / Sözde Bilinçli | "A Serisi" as in startup funding; "Öncü" as in the difficulty |
+| Staff | Ekip | |
+| Research / Product / Safety (lanes) | Araştırma / Ürün / Güvenlik | |
+| Helpers / townsfolk | Yardımcılar / kasabalılar | |
+| Auto-buy | Otomatik alım | |
+| Lab happening | Lab olayı | "Olay" alone where the context is clear |
+| Incident | Arıza | Also "onarılan arıza" in the stats |
+| Ship day | Yayın günü | The three steps: Benchmark günü, Son dakika, Lansman günü |
+| Launch (plan) | Lansman (planı) | |
+| Hype it / Play it safe / Open the weights | Hype'la / Garantiye oyna / Ağırlıkları aç | |
+| Milestone | Eşik | "{count} adette ×{mult}" |
+| Model names (VibeOracle 3.5 ...) | Unchanged | English puns built from prefix + suffix: never translated |
+
+## Numbers
+
+Formatted by hand in `src/ui/format.ts` (no `Intl`, no `toLocaleString`): it is on hot paths.
+
+| What | English | Türkçe | Note |
+| --- | --- | --- | --- |
+| Decimal | 0.5 | 0,5 | |
+| Thousands | 2,526 | 2.526 | |
+| Percent | 43% | %43 | Sign in front: "+%6", "−%20" |
+| Thousand / million / billion / trillion | K / M / B / T | B / Mn / Mr / Tn | "2,5 Mn", "1,2 Mr". The Unicode CLDR short forms for Turkish, and what YouTube, Instagram and the Turkish app stores show. Written with a no-break space before the unit |
+| Bigger (idle) | Qa, Qi, Sx ... | Qa, Qi, Sx ... | Turkish has no short forms past trilyon; the idle-game letters stay |
+| Cash (dollars) | $850M, $1.2B | 850 Mn $, 1,2 Mr $ | Dollar sign after the amount, as Turkish news write "1,2 milyar $" and as CLDR places it in short amounts; small amounts too ("0,5 Mn $") |
+| Hours, minutes, seconds | 3h 12m, 4m 05s | 3 sa 12 dk, 4 dk 05 sn | |
+| Days (durations) | 2d 4h | 2 gün 4 sa | |

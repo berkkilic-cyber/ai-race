@@ -1,8 +1,9 @@
-import { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { useInsets } from '../hooks/useInsets';
 import { t } from '../i18n';
 import { colors, radius, shape, spacing, touch, type, voice } from '../theme';
+import { Text } from './Text';
 import { cased } from './casing';
 import { LOCALES, type Locale } from './current';
 import { setLocale, useLocale } from './store';

@@ -7,9 +7,10 @@
  */
 import { useLocalSearchParams } from 'expo-router';
 import { useSyncExternalStore } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { Icon, iconGroups } from '@/ui/icons';
+import { Text } from '@/ui/locale/Text';
 import { palettes } from '@/ui/theme';
 
 const noopSubscribe = () => () => undefined;

@@ -1,11 +1,12 @@
 import { useRouter } from 'expo-router';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { currentStage, hypeMultiplier } from '@/idle';
 
 import { BannerSlot } from '../ads';
 import { Icon } from '../icons';
 import { t } from '../i18n';
+import { Text } from '../locale/Text';
 import { colors, radius, shape, spacing, tabular, touch, type, voice } from '../theme';
 import { useGarage } from './hooks';
 import { useGarageStore, type GarageStore } from './store';

@@ -1,9 +1,10 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
-import { Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 
 import { Button } from '../components/Button';
 import { useInsets } from '../hooks/useInsets';
 import { t } from '../i18n';
+import { Text } from '../locale/Text';
 import { useGameStore } from '../store/game';
 import { colors, layer, spacing, type, voice } from '../theme';
 import { errorMessage, logError } from './log';

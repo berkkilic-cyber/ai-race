@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
 import type { MapGeometry } from '@/content/packs/ai-lab/geometry';
 import type { ContentPack } from '@/engine';
@@ -8,6 +8,7 @@ import { Button } from '../components/Button';
 import { Pips } from '../components/Pips';
 import { fmtUsers, toPips } from '../format';
 import { readableLabColor, t } from '../i18n';
+import { Text } from '../locale/Text';
 import { colors, radius, spacing, type, voice } from '../theme';
 import { regionRead } from './logic';
 import { RegionPickerMap, type RivalHome } from './RegionPickerMap';

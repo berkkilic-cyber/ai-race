@@ -1,6 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 
+import { pctText } from '../format';
 import { useAmbientClock, wave } from '../motion/ambient';
 
 import { colors, radius, shape, spacing, tabular, type, voice } from '../theme';
@@ -34,7 +35,7 @@ export function Meter({ label, value, color = colors.bad, pulseAbove = 75, testI
         <Text style={styles.label} numberOfLines={1}>
           {label}
         </Text>
-        <Text style={[styles.value, pulsing && { color }]}>{Math.floor(pct)}%</Text>
+        <Text style={[styles.value, pulsing && { color }]}>{pctText(Math.floor(pct))}</Text>
       </View>
       <View style={styles.track}>
         <Animated.View style={[styles.fill, { width: `${pct}%`, backgroundColor: color }, fillStyle]} />

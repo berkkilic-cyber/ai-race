@@ -1,10 +1,11 @@
 import { memo, type ReactNode } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { useShallow } from 'zustand/react/shallow';
 
 import type { TreeId } from '@/engine';
 
 import { t } from '../i18n';
+import { Text } from '../locale/Text';
 import { useTutorialTarget } from '../tutorial/targets';
 import { colors, flatShadow, radius, shape, spacing, tabular, touch, type, voice } from '../theme';
 import { TREE_ACCENT } from './accent';

@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Button } from '../components/Button';
 import { Stamp } from '../components/Deco';
 import { Overlay } from '../components/Overlay';
 import { useInsets } from '../hooks/useInsets';
 import { t } from '../i18n';
+import { Text } from '../locale/Text';
 import { colors, spacing, tabular, touch, type, voice } from '../theme';
 import { mockSeconds } from './config';
 import { useAdStore } from './store';

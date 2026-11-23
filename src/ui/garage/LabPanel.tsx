@@ -1,5 +1,5 @@
 import { memo, useState, type ReactNode } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import {
   autoBuyActive,
@@ -18,12 +18,13 @@ import {
 import { Button } from '../components/Button';
 import { Icon } from '../icons';
 import { t } from '../i18n';
+import { Text } from '../locale/Text';
 import { colors, radius, shape, spacing, tabular, touch, type, voice } from '../theme';
 import { buyHaptic, successHaptic } from './haptics';
 import { useGarage, useNowEvery } from './hooks';
 import { modelDesc, modelName, rarityName, rarityRank, traitLine } from './labText';
 import { useGarageStore, type GarageStore } from './store';
-import { fmtMult, fmtTime, gt } from './text';
+import { fmtMult, fmtPct, fmtTime, gt } from './text';
 
 const selKey = (s: GarageStore) => {
   const st = s.state;
@@ -287,14 +288,14 @@ function Automation({ state, content }: { state: GarageState; content: GarageCon
   return (
     <Card testID="garage-lab-auto">
       <Text style={styles.label}>{t('ui.garage.lab.helpers')}</Text>
-      {collect ? <Text style={styles.small}>{t('ui.garage.lab.autoCollect', { pct: `${Math.round(auto.collectShare * 100)}%` })}</Text> : null}
+      {collect ? <Text style={styles.small}>{t('ui.garage.lab.autoCollect', { pct: fmtPct(auto.collectShare) })}</Text> : null}
       {buy ? (
         <Button
           compact
           variant={state.autoBuy ? 'primary' : 'secondary'}
           selected={state.autoBuy}
           label={state.autoBuy ? t('ui.garage.lab.autoBuyOn') : t('ui.garage.lab.autoBuyOff')}
-          sublabel={autoBuyActive(state, content) ? t('ui.garage.lab.autoBuyAbout', { pct: `${Math.round(auto.buyBudgetShare * 100)}%` }) : undefined}
+          sublabel={autoBuyActive(state, content) ? t('ui.garage.lab.autoBuyAbout', { pct: fmtPct(auto.buyBudgetShare) }) : undefined}
           onPress={() => useGarageStore.getState().setAutoBuy(!state.autoBuy)}
           testID="garage-autobuy"
         />

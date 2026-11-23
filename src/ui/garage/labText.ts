@@ -1,5 +1,6 @@
 import { traitDef, type GarageContent, type ModelCandidate, type ModelStat } from '@/idle';
 
+import { fmtHours, pctText } from '../format';
 import { t } from '../i18n';
 import { garageContent } from './content';
 import { gt } from './text';
@@ -32,8 +33,8 @@ export function rarityRank(id: string, content: GarageContent = garageContent())
 /** A stat value in words: "+6%", "-20%", "+0.5 h". */
 export function statValue(stat: ModelStat, value: number): string {
   const sign = value > 0 ? '+' : value < 0 ? '−' : '';
-  if (stat === 'offlineCap') return `${sign}${Math.abs(Math.round(value * 10) / 10)} h`;
-  return `${sign}${Math.abs(Math.round(value * 1000) / 10)}%`;
+  if (stat === 'offlineCap') return `${sign}${fmtHours(Math.abs(Math.round(value * 10) / 10))}`;
+  return `${sign}${pctText(Math.abs(Math.round(value * 1000) / 10))}`;
 }
 
 /** Whether a stat change helps the player (fewer incidents help). */

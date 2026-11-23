@@ -5,6 +5,7 @@
  */
 import { getDifficulties, getDifficulty, type ContentPack, type DifficultyDef, type GameState } from '@/engine';
 
+import { fmtNum } from '../format';
 import { t } from '../i18n';
 import { readValue, writeValue } from '../tutorial/storage';
 import { TUTORIAL_DONE_KEY } from '../tutorial/store';
@@ -50,7 +51,7 @@ export function saveDifficultyChoice(id: string | undefined): void {
 
 /** "×1.35", "×1", "×0.75". */
 export function multiplierText(m: number): string {
-  return String(Math.round(m * 100) / 100);
+  return fmtNum(Math.round(m * 100) / 100, 2);
 }
 
 export interface DifficultyOption {

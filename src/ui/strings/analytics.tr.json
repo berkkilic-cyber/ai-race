@@ -10,7 +10,7 @@
   "ui.analytics.install": "kurulum {id} · gün D{day}",
   "ui.analytics.sessions": "bugün {today} oturum · toplam {total} · aktif gün başına {perDay}",
   "ui.analytics.length": "bu oturum {now} · ortalama {avg}",
-  "ui.analytics.returned": "geri döndü D1 {d1} · D7 {d7} · D30 {d30}",
+  "ui.analytics.returned": "geri dönüş D1 {d1} · D7 {d7} · D30 {d30}",
   "ui.analytics.yes": "evet",
   "ui.analytics.no": "hayır",
   "ui.analytics.ahead": "-",

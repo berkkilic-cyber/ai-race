@@ -1,6 +1,6 @@
 import { Redirect, useRouter } from 'expo-router';
 import { useEffect, useState, type ReactNode } from 'react';
-import { Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 
 import type { GameState, NewsItem } from '@/engine';
 
@@ -12,6 +12,7 @@ import { fmtInt, fmtPct, fmtUsers } from '../format';
 import { usePackEntry } from '../hooks/useGame';
 import { useInsets } from '../hooks/useInsets';
 import { labName, readableLabColor, regionName, t } from '../i18n';
+import { Text } from '../locale/Text';
 import { cased } from '../locale/casing';
 import { mixColor } from '../map/mapColors';
 import { newsText } from '../news/newsText';

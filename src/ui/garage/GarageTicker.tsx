@@ -1,11 +1,12 @@
 import { Fragment, memo, useState } from 'react';
-import { StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
+import { StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import Animated, { useAnimatedStyle, useReducedMotion } from 'react-native-reanimated';
 
 import type { GarageNews } from '@/idle';
 
 import { useInsets } from '../hooks/useInsets';
 import { t } from '../i18n';
+import { Text } from '../locale/Text';
 import { useAmbientClock } from '../motion/ambient';
 import { crawlGeometry } from '../shell/crawl';
 import { colors, layout, spacing, voice } from '../theme';

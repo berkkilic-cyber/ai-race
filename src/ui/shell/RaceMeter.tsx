@@ -1,10 +1,12 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, useAnimatedStyle } from 'react-native-reanimated';
 
 import { getLeadRival, getMeters } from '@/engine';
 
+import { pctText } from '../format';
 import { useKeyedSelector } from '../hooks/useKeyedSelector';
 import { labName, readableLabColor, t } from '../i18n';
+import { Text } from '../locale/Text';
 import { useAmbientClock, wave } from '../motion/ambient';
 import { useShareSampler } from '../race/trend';
 import type { GameStore } from '../store/game';
@@ -53,8 +55,8 @@ export function RaceMeter({ tag, testID }: { tag: string | null; testID?: string
   const clock = useAmbientClock(pulsing);
   const markStyle = useAnimatedStyle(() => ({ opacity: clock ? 1 - 0.6 * wave(clock.get(), 0.9) : 1 }));
   const a11y = rivalLab
-    ? t('ui.strip.raceA11y', { you: `${Math.floor(you)}%`, rival: labName(rivalLab), them: `${Math.floor(rival)}%` })
-    : t('ui.strip.raceA11yNone', { you: `${Math.floor(you)}%` });
+    ? t('ui.strip.raceA11y', { you: pctText(Math.floor(you)), rival: labName(rivalLab), them: pctText(Math.floor(rival)) })
+    : t('ui.strip.raceA11yNone', { you: pctText(Math.floor(you)) });
 
   return (
     <View style={[styles.wrap, tag ? styles.wrapTagged : null]} testID={testID} accessibilityRole="progressbar" accessibilityLabel={tag ? `${a11y}. ${tag}` : a11y}>
@@ -73,10 +75,11 @@ export function RaceMeter({ tag, testID }: { tag: string | null; testID?: string
           {rivalLab ? <Animated.View style={[styles.mark, { left: `${rival}%`, backgroundColor: rivalColor }, markStyle]} testID="race-rival" /> : null}
         </View>
         <Text style={styles.value} numberOfLines={1}>
+          {pctFirst() ? <Text style={styles.pct}>%</Text> : null}
           <Text style={styles.you}>{Math.floor(you)}</Text>
           {rivalLab ? <Text style={styles.vs}>{` ${t('ui.strip.vs')} `}</Text> : null}
           {rivalLab ? <Text style={{ color: pulsing ? colors.bad : rivalText }}>{Math.floor(rival)}</Text> : null}
-          <Text style={styles.pct}>%</Text>
+          {pctFirst() ? null : <Text style={styles.pct}>%</Text>}
         </Text>
       </View>
     </View>
@@ -84,6 +87,8 @@ export function RaceMeter({ tag, testID }: { tag: string | null; testID?: string
 }
 
 const clampPct = (v: number) => Math.max(0, Math.min(100, v));
+/** Turkish writes the percent sign first ("%4"). */
+const pctFirst = () => pctText(0).startsWith('%');
 
 const selectRivalLab = (s: GameStore) => {
   const st = s.state;

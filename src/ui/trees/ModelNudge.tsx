@@ -1,9 +1,10 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { haveText, needText } from '../explain/model';
 import { isStuck, useNudgeStore } from '../explain/useModelStatus';
 import { t } from '../i18n';
 import { Icon } from '../icons';
+import { Text } from '../locale/Text';
 import { useStripPanel } from '../shell/panels/store';
 import { colors, radius, shape, spacing, touch, type, voice } from '../theme';
 import { useTabModelStatus } from './useTabModelStatus';

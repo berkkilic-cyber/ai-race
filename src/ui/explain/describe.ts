@@ -7,7 +7,7 @@
  */
 import type { ChannelDef, Effect, EffectTarget, Modifier, NodeDef, RegionScope, Stat } from '@/engine';
 
-import { fmtCash, fmtCompact } from '../format';
+import { fmtCash, fmtCompact, pctText } from '../format';
 import { barrierInline, hasString, regionName, t } from '../i18n';
 import { lower, lowerFirst } from '../locale/casing';
 
@@ -82,7 +82,7 @@ export function scopeLabel(scope: RegionScope, other = false): string {
 
 /** The pack's sentence for a stat change: "Spreads 20% faster", "Regulators notice you 25% less". */
 export function statPhrase(stat: Stat, change: number): string {
-  const pct = `${Math.abs(percentChange(change))}%`;
+  const pct = pctText(Math.abs(percentChange(change)));
   return t(`stat.${stat}.${change >= 0 ? 'gain' : 'loss'}`, { pct });
 }
 
@@ -159,15 +159,15 @@ export function describeEffect(effect: Effect, options: DescribeOptions = {}): D
     }
     case 'resourcePercent': {
       const up = effect.percent >= 0;
-      return line(up ? 'ui.explain.fx.gainPct' : 'ui.explain.fx.losePct', { pct: `${trimNumber(Math.abs(effect.percent))}%`, resource: t(`term.${effect.resource}`) }, up);
+      return line(up ? 'ui.explain.fx.gainPct' : 'ui.explain.fx.losePct', { pct: pctText(trimNumber(Math.abs(effect.percent))), resource: t(`term.${effect.resource}`) }, up);
     }
     case 'meter': {
       const up = effect.amount >= 0;
-      return line(up ? 'ui.explain.fx.meterUp' : 'ui.explain.fx.meterDown', { meter: t(`term.${effect.meter}`), amount: `${trimNumber(Math.abs(effect.amount))}%` }, !up);
+      return line(up ? 'ui.explain.fx.meterUp' : 'ui.explain.fx.meterDown', { meter: t(`term.${effect.meter}`), amount: pctText(trimNumber(Math.abs(effect.amount))) }, !up);
     }
     case 'agiProgress': {
       const up = effect.amount >= 0;
-      return line(up ? 'ui.explain.fx.agiUp' : 'ui.explain.fx.agiDown', { amount: `${trimNumber(Math.abs(effect.amount))}%` }, up);
+      return line(up ? 'ui.explain.fx.agiUp' : 'ui.explain.fx.agiDown', { amount: pctText(trimNumber(Math.abs(effect.amount))) }, up);
     }
     case 'compute': {
       const up = effect.amount >= 0;
@@ -176,7 +176,7 @@ export function describeEffect(effect: Effect, options: DescribeOptions = {}): D
     case 'adoption': {
       const change = effect.factor - 1;
       const up = change >= 0;
-      return line(up ? 'ui.explain.fx.usersUp' : 'ui.explain.fx.usersDown', { pct: `${Math.abs(percentChange(change))}%`, where: scopeLabel(effect.scope, other) }, up);
+      return line(up ? 'ui.explain.fx.usersUp' : 'ui.explain.fx.usersDown', { pct: pctText(Math.abs(percentChange(change))), where: scopeLabel(effect.scope, other) }, up);
     }
     case 'ban': {
       const where = scopeLabel(effect.scope, other);

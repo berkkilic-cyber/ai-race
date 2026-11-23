@@ -1,11 +1,12 @@
 import { memo, useCallback, useEffect, useImperativeHandle, useRef, useState, type Ref } from 'react';
-import { StyleSheet, Text, View, type GestureResponderEvent, type LayoutChangeEvent } from 'react-native';
+import { StyleSheet, View, type GestureResponderEvent, type LayoutChangeEvent } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 
 import { comboAt, comboMultiplier, currentStage, nextStage, totalRate } from '@/idle';
 
 import { Icon } from '../icons';
 import { t } from '../i18n';
+import { Text } from '../locale/Text';
 import { Mascot, type MascotMood } from '../mascot';
 import { useAmbientClock, wave } from '../motion/ambient';
 import { colors, flatShadow, radius, shape, spacing, tabular, type, voice } from '../theme';

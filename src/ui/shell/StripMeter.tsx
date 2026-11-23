@@ -1,6 +1,8 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, useAnimatedStyle } from 'react-native-reanimated';
 
+import { pctText } from '../format';
+import { Text } from '../locale/Text';
 import { useAmbientClock, wave } from '../motion/ambient';
 
 import { Icon, type IconName } from '../icons';
@@ -57,7 +59,7 @@ export function StripMeter({ label, value, color, pulseAbove = 75, tag, shortLab
           <Animated.View style={[styles.fill, { width: `${pct}%`, backgroundColor: color }, fillStyle]} />
         </View>
         <Text style={[styles.value, pulsing && { color: colors.bad }]} numberOfLines={1}>
-          {Math.floor(pct)}%
+          {pctText(Math.floor(pct))}
         </Text>
       </View>
     </View>

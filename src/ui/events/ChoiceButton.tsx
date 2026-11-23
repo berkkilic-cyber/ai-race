@@ -1,11 +1,12 @@
 import { memo, useMemo } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import type { EventChoiceDef } from '@/engine';
 
 import { fmtCash, fmtCompact } from '../format';
 import { t } from '../i18n';
 import { Icon } from '../icons';
+import { Text } from '../locale/Text';
 import { useGameStore } from '../store/game';
 import { colors, shape, spacing, touch, voice } from '../theme';
 import { effectHints } from './hints';

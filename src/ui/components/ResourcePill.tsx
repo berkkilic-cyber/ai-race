@@ -1,5 +1,6 @@
-import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
+import { Text } from '../locale/Text';
 import { colors, radius, shape, spacing, tabular, type, voice } from '../theme';
 
 export interface ResourcePillProps {

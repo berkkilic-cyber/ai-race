@@ -1,4 +1,5 @@
 export { applyTransform, cased, lower, lowerFirst, upper, upperFirst } from './casing';
+export { Text, type CasedTextProps } from './Text';
 export { BASE_LOCALE, getCurrentLocale, isLocale, LOCALES, type Locale } from './current';
 export { detectDeviceLocale, localeFromTag } from './detect';
 export { LanguageRow, LanguageToggle } from './LanguageRow';

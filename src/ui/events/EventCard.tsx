@@ -1,10 +1,11 @@
 import { useEffect, useMemo } from 'react';
-import { StyleSheet, Text } from 'react-native';
+import { StyleSheet } from 'react-native';
 
 import type { ContentPack, EventDef, GameState } from '@/engine';
 
 import { fmtDay } from '../format';
 import { t } from '../i18n';
+import { Text } from '../locale/Text';
 import { colors, voice } from '../theme';
 import { ChoiceButton } from './ChoiceButton';
 import { explainChoice } from './choiceInfo';

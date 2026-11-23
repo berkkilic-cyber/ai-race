@@ -1,6 +1,7 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { t } from '../i18n';
+import { Text } from '../locale/Text';
 import { colors, spacing, voice } from '../theme';
 import { AD_CONFIG, bannerEnabled } from './config';
 

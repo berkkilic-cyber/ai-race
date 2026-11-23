@@ -1,7 +1,8 @@
 import { memo, useId } from 'react';
-import { StyleSheet, Text, View, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';
+import { StyleSheet, View, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';
 import Svg, { Circle, Defs, Line, Path, Pattern, Polygon, Rect } from 'react-native-svg';
 
+import { Text } from '../locale/Text';
 import { colors, shape, voice } from '../theme';
 
 /**

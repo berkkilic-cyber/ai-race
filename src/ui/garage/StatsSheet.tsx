@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { labPerks } from '@/idle';
 
@@ -6,6 +6,7 @@ import { PLACEMENTS, useAdStore } from '../ads';
 import { Sheet } from '../components/Sheet';
 import { Icon } from '../icons';
 import { t } from '../i18n';
+import { Text } from '../locale/Text';
 import { colors, radius, shape, spacing, tabular, type, voice } from '../theme';
 import { useGarageStore } from './store';
 import { fmt, fmtTime, gt } from './text';

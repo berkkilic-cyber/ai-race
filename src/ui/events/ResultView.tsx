@@ -1,10 +1,11 @@
 import { useEffect } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import type { EventDef, GameState } from '@/engine';
 
 import { Button } from '../components/Button';
 import { describeEffects } from '../explain/describe';
+import { Text } from '../locale/Text';
 import { useGameStore } from '../store/game';
 import { t } from '../i18n';
 import type { EventResult } from '../store/game';

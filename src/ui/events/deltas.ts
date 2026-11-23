@@ -1,6 +1,6 @@
 import { getCompute, getWorldShare, isBanned, type ContentPack, type GameState } from '@/engine';
 
-import { fmtCash, fmtCompact } from '../format';
+import { fmtCash, fmtCompact, fmtNum } from '../format';
 
 /** The player numbers the result view compares before and after a choice. */
 export interface PlayerSnapshot {
@@ -122,7 +122,7 @@ function sign(n: number): string {
 }
 
 function trimmed(n: number): string {
-  return n.toFixed(1).replace(/\.0$/, '');
+  return fmtNum(n, 1);
 }
 
 /** "+20", "−$40M", "+0.4 pts" (world share in percentage points), "2" for counts lost. */

@@ -1,10 +1,11 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { getDifficulty, getRunLength, type ContentPack } from '@/engine';
 
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
 import { t } from '../i18n';
+import { Text } from '../locale/Text';
 import { Mascot } from '../mascot';
 import type { RunSave } from '../store/runSave';
 import { colors, spacing, type, voice } from '../theme';
