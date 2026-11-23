@@ -6,6 +6,7 @@ import { StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { installDebugHandle } from '@/ui/debug';
+import { installFeel, useFeelRoutes } from '@/ui/feel';
 import { ErrorBoundary } from '@/ui/diagnostics/ErrorBoundary';
 import { installGlobalErrorHandlers } from '@/ui/diagnostics/log';
 import { InsetsEmulator } from '@/ui/hooks/useInsets';
@@ -14,10 +15,12 @@ import { colors, isDark } from '@/ui/theme';
 
 installGlobalErrorHandlers();
 installDebugHandle();
+installFeel();
 SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
 export default function RootLayout() {
   const ready = useAppFonts();
+  useFeelRoutes();
   useEffect(() => {
     if (ready) SplashScreen.hideAsync().catch(() => undefined);
   }, [ready]);

@@ -21,6 +21,7 @@
     "@expo/ui": "~58.0.29",
     "@react-native-async-storage/async-storage": "2.2.0",
     "expo": "~58.0.26",
+    "expo-audio": "~58.0.12",
     "expo-constants": "~58.0.16",
     "expo-font": "~58.0.12",
     "expo-haptics": "~58.0.8",
@@ -74,7 +75,8 @@
     "balance": "esbuild scripts/balance/main.ts --bundle --platform=node --format=esm --alias:@=./src --log-level=warning --outfile=node_modules/.cache/balance/main.mjs && node node_modules/.cache/balance/main.mjs",
     "balance:trace": "esbuild scripts/balance/trace.ts --bundle --platform=node --format=esm --alias:@=./src --log-level=warning --outfile=node_modules/.cache/balance/trace.mjs && node node_modules/.cache/balance/trace.mjs",
     "balance:reach": "esbuild scripts/balance/reachability.ts --bundle --platform=node --format=esm --alias:@=./src --log-level=warning --outfile=node_modules/.cache/balance/reach.mjs && node node_modules/.cache/balance/reach.mjs",
-    "balance:garage": "esbuild scripts/balance/garage.ts --bundle --platform=node --format=esm --alias:@=./src --log-level=warning --outfile=node_modules/.cache/balance/garage.mjs && node node_modules/.cache/balance/garage.mjs"
+    "balance:garage": "esbuild scripts/balance/garage.ts --bundle --platform=node --format=esm --alias:@=./src --log-level=warning --outfile=node_modules/.cache/balance/garage.mjs && node node_modules/.cache/balance/garage.mjs",
+    "sfx": "node scripts/sfx/generate.js"
   },
   "private": true
 }

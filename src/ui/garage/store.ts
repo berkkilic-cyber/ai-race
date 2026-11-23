@@ -21,12 +21,12 @@ import {
 } from '@/idle';
 
 import { logError, logLifecycle } from '../diagnostics/log';
+import { useFeelSettings } from '../feel/settings';
 import { readValue, writeValue } from '../tutorial/storage';
 import { garageNow } from './clock';
 import { garageContent } from './content';
 
 export const SAVE_KEY = 'garage.save';
-const SETTINGS_KEY = 'garage.settings';
 /** Saves at most this often while playing (and at once on important actions and in the background). */
 export const SAVE_THROTTLE_MS = 5000;
 
@@ -110,20 +110,15 @@ export const useGarageStore = create<GarageStore>()((set, get) => {
     async load() {
       if (get().state) return;
       const content = get().content;
-      const [text, settingsText] = await Promise.all([readValue(SAVE_KEY), readValue(SETTINGS_KEY)]);
+      const text = await readValue(SAVE_KEY);
       if (get().state) return;
       const loaded = deserialize(text, content, now());
       if (loaded.error) logError('garage load', new Error(loaded.error));
       if (loaded.migratedFrom) logLifecycle('garage save migrated', { from: loaded.migratedFrom });
       // Catch up to now: a long gap becomes the "While you were away" report.
       const state = advance(loaded.state, content, now());
-      let settings = get().settings;
-      try {
-        const raw = settingsText ? (JSON.parse(settingsText) as Partial<GarageSettings>) : null;
-        if (raw && typeof raw.haptics === 'boolean') settings = { ...settings, haptics: raw.haptics };
-      } catch {
-        // defaults
-      }
+      // Haptics live in the feel settings (they adopt the old garage.settings flag once); this is a mirror.
+      const settings = { ...get().settings, haptics: useFeelSettings.getState().haptics };
       set({ state, settings });
       logLifecycle('garage opened', { generation: state.generation, away: state.offline ? Math.round(state.offline.awayMs / 1000) : 0 });
       writeSave(state);
@@ -230,9 +225,8 @@ export const useGarageStore = create<GarageStore>()((set, get) => {
     },
 
     setHaptics(on) {
-      const settings = { ...get().settings, haptics: on };
-      set({ settings });
-      void writeValue(SETTINGS_KEY, JSON.stringify(settings));
+      useFeelSettings.getState().setHaptics(on);
+      set({ settings: { ...get().settings, haptics: on } });
     },
 
     reset() {

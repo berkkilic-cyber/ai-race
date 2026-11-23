@@ -1,17 +1,16 @@
 import { useState } from 'react';
-import { StyleSheet, Switch, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 import { RemoveAdsPanel } from '../ads';
 import { Button } from '../components/Button';
 import { Sheet } from '../components/Sheet';
+import { SoundSettingsRows } from '../feel/SoundSettingsRows';
 import { t } from '../i18n';
 import { colors, shape, spacing, type, voice } from '../theme';
 import { useGarageStore } from './store';
 
 /** Haptics, the "Remove ads" placeholder and a reset with a confirmation step. */
 export function SettingsSheet({ visible, onClose }: { visible: boolean; onClose: () => void }) {
-  const haptics = useGarageStore((s) => s.settings.haptics);
-  const setHaptics = useGarageStore((s) => s.setHaptics);
   const [confirm, setConfirm] = useState(false);
   const close = () => {
     setConfirm(false);
@@ -19,10 +18,7 @@ export function SettingsSheet({ visible, onClose }: { visible: boolean; onClose:
   };
   return (
     <Sheet visible={visible} onClose={close} title={t('ui.garage.settings.title')} safeArea testID="garage-settings-sheet">
-      <View style={styles.row}>
-        <Text style={styles.label}>{t('ui.garage.settings.haptics')}</Text>
-        <Switch value={haptics} onValueChange={setHaptics} accessibilityLabel={t('ui.garage.settings.haptics')} testID="garage-haptics" />
-      </View>
+      <SoundSettingsRows />
       <View style={styles.rule} />
       <RemoveAdsPanel />
       <View style={styles.rule} />
@@ -50,8 +46,6 @@ export function SettingsSheet({ visible, onClose }: { visible: boolean; onClose:
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 44 },
-  label: { ...voice.bodyStrong, color: colors.text, fontSize: type.m },
   rule: { height: shape.hairline, backgroundColor: colors.border },
   confirm: { gap: spacing.s },
   warn: { ...voice.body, color: colors.bad, fontSize: type.s, lineHeight: 19 },

@@ -1,0 +1,6 @@
+{
+  "ui.feel.sound": "Sound effects",
+  "ui.feel.soundHint": "Follows the silent switch",
+  "ui.feel.haptics": "Haptics",
+  "ui.feel.hapticsHint": "Taps and buzzes on supported phones"
+}
