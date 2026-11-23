@@ -23,6 +23,9 @@ import { closeCall, closeCallText, endStats, pickNotableHeadlines, playAgainSetu
 import { runEndLine } from '../start/runLength';
 import { useWide } from '../start/useWide';
 import { useCountUp } from './useCountUp';
+import { EndReward } from '../meta/EndReward';
+import { LabTitle } from '../meta/LabTitle';
+import { useMetaStore, withPerks } from '../meta/store';
 
 const TONE = { good: colors.good, bad: colors.bad, neutral: colors.info } as const;
 
@@ -111,7 +114,8 @@ function EndView({ state }: { state: GameState }) {
   const achievements = state.achievements.flatMap((id) => pack.achievements.filter((a) => a.id === id));
 
   const playAgain = () => {
-    newGame(playAgainSetup(state));
+    // A new world: the perk bonus is worked out again (the reward may have raised Lab Rep); the switch is the run's.
+    newGame(withPerks(playAgainSetup(state), useGameStore.getState().setup?.perksOn ?? useMetaStore.getState().perksOn));
     router.replace('/game');
   };
   const rematch = () => {
@@ -121,6 +125,10 @@ function EndView({ state }: { state: GameState }) {
   const newLab = () => {
     reset();
     router.replace('/');
+  };
+  const garage = () => {
+    reset();
+    router.replace('/garage');
   };
 
   // How close it was, in one line: in the banner (narrow), above the score outside the scroll (wide).
@@ -156,6 +164,7 @@ function EndView({ state }: { state: GameState }) {
       <Text style={styles.labLine} numberOfLines={2}>
         {t('ui.end.labLine', { name: labName(player), founder: founder ? t(founder.nameKey) : '', region: regionName(player.homeRegion) })}
       </Text>
+      <LabTitle style={styles.titleLine} />
       {level ? (
         <Text style={styles.levelLine} numberOfLines={1} testID="end-difficulty">
           {level}
@@ -170,6 +179,7 @@ function EndView({ state }: { state: GameState }) {
         <Text style={styles.labLineLeft} numberOfLines={2}>
           {t('ui.end.labLine', { name: labName(player), founder: founder ? t(founder.nameKey) : '', region: regionName(player.homeRegion) })}
         </Text>
+        <LabTitle style={styles.titleLineLeft} />
         {level ? (
           <Text style={styles.levelLineLeft} numberOfLines={1} testID="end-difficulty">
             {level}
@@ -236,6 +246,7 @@ function EndView({ state }: { state: GameState }) {
         <Button label={t('ui.sprint.end.rematch')} sublabel={t('ui.sprint.end.rematchHint')} variant="primary" onPress={rematch} style={styles.footerBtn} testID="end-rematch" />
     </View>
   );
+  const rewardEl = <EndReward state={state} pack={pack} onGarage={garage} />;
   const newLabEl = (
     <Button label={t('ui.sprint.end.newLab')} variant="ghost" compact onPress={newLab} style={styles.newLab} testID="end-new-lab" />
   );
@@ -248,6 +259,7 @@ function EndView({ state }: { state: GameState }) {
           {closeCallEl}
           {scoreRowEl}
           {buttonsEl}
+          {rewardEl}
           {newLabEl}
         </View>
         <ScrollView style={styles.rightPane} contentContainerStyle={styles.rightContent} testID="end-right">
@@ -262,6 +274,7 @@ function EndView({ state }: { state: GameState }) {
       <ScrollView contentContainerStyle={styles.content}>
         {bannerEl}
         {scoreEl}
+        {rewardEl}
         {sectionsEl}
         {newLabEl}
       </ScrollView>
@@ -279,6 +292,8 @@ const styles = StyleSheet.create({
   scoreRowText: { flex: 1, gap: 2 },
   labLineLeft: { ...voice.body, color: colors.dim, fontSize: type.xs },
   levelLineLeft: { ...voice.calmLabel, color: colors.playerText },
+  titleLineLeft: { ...voice.body, color: colors.info, fontSize: type.xs },
+  titleLine: { ...voice.body, color: colors.info, fontSize: type.xs, textAlign: 'center' },
   scoreCompact: { ...voice.calmNumber, color: colors.playerText, fontSize: type.display, lineHeight: type.display + 6 },
   rightPane: { flex: 1 },
   rightContent: { padding: spacing.l, gap: spacing.m },

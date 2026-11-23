@@ -17,6 +17,7 @@ const content: GarageContent = {
     difficulty: { easy: 0.5, hard: 2 },
     runLength: { short: 0.5, long: 1 },
     scoreBonus: 0.5,
+    scoreForBest: 1000,
     repeatFactor: 0.5,
     seedMemory: 3,
     boostMult: 1.5,
@@ -24,7 +25,7 @@ const content: GarageContent = {
     boostCapMs: 60 * MIN,
   },
 };
-const win: RaceRewardInput = { won: true, difficulty: 'hard', runLength: 'long', quality: 0, seed: 1 };
+const win: RaceRewardInput = { won: true, difficulty: 'hard', runLength: 'long', score: 0, seed: 1 };
 
 /** A garage with some production and no random events. */
 function garage(): GarageState {
@@ -48,9 +49,9 @@ describe('race reward (race -> Garage)', () => {
     expect(q({ difficulty: 'easy' })).toBe(1);
     expect(q({ difficulty: 'unknown' })).toBe(2);
     expect(q({ runLength: 'short' })).toBe(2);
-    expect(q({ quality: 1 })).toBe(6);
-    expect(q({ quality: 7 })).toBe(6); // quality is clamped to 0..1
-    expect(q({ quality: Number.NaN })).toBe(4);
+    expect(q({ score: 1000 })).toBe(6);
+    expect(q({ score: 7000 })).toBe(6); // the score bonus stops at scoreForBest
+    expect(q({ score: Number.NaN })).toBe(4);
     expect(q({ won: false })).toBeLessThan(q({}));
     expect(q({ runLength: 'short' })).toBeLessThan(q({ runLength: 'long' }));
   });

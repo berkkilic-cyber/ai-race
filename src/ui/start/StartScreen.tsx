@@ -5,6 +5,11 @@ import { Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text,
 import { getFounderStart } from '@/engine';
 
 import { ModalCard } from '../components/ModalCard';
+import { cosmeticsAt } from '../meta/logic';
+import { PerksChip } from '../meta/PerksChip';
+import { PerksSheet } from '../meta/PerksSheet';
+import { useMetaStore, withPerks } from '../meta/store';
+import { garageContent } from '../garage/content';
 import { clearRunSave, loadRunSave, restoreRun, type RunSave } from '../store/runSave';
 import { ContinueCard } from './ContinueCard';
 import { loadRunLengthChoice, runLengthOptions, runLengthParam, saveRunLengthChoice } from './runLength';
@@ -70,6 +75,9 @@ export function StartScreen({ beforeEnter }: StartScreenProps = {}) {
   const [showContinue, setShowContinue] = useState(true);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   const [howTo, setHowTo] = useState(false);
+  const [perksSheet, setPerksSheet] = useState(false);
+  const labRep = useMetaStore((s) => s.labRep);
+  const frame = cosmeticsAt(garageContent(), Math.floor(labRep + 1e-9)).frame;
   const [list, setList] = useState(false);
   const [focus, setFocus] = useState<{ regionId: string; nonce: number } | null>(null);
   const scroll = useRef<ScrollViewInstance>(null);
@@ -158,7 +166,7 @@ export function StartScreen({ beforeEnter }: StartScreenProps = {}) {
       void clearRunSave();
       setSave(null);
     }
-    newGame({ playerName: nameCheck.name, founderId, homeRegion: home, ...(difficulty ? { difficulty } : {}), ...(runLength ? { runLength } : {}) });
+    newGame(withPerks({ playerName: nameCheck.name, founderId, homeRegion: home, ...(difficulty ? { difficulty } : {}), ...(runLength ? { runLength } : {}) }));
     void enterWhenReady(beforeEnter, () => router.replace('/game'));
   };
 
@@ -230,6 +238,8 @@ export function StartScreen({ beforeEnter }: StartScreenProps = {}) {
         runLength={runLength}
         onRunLength={pickRunLength}
         starts={Object.fromEntries(pack.founders.map((f) => [f.id, getFounderStart(pack, f.id, difficulty, runLength)]))}
+        extra={<PerksChip onOpen={() => setPerksSheet(true)} />}
+        frameColor={frame?.effect.color}
       />
     ) : (
       <RegionStep
@@ -303,6 +313,14 @@ export function StartScreen({ beforeEnter }: StartScreenProps = {}) {
       <BuildStamp style={[styles.stamp, { top: insets.top + 2, right: insets.right + spacing.s }]} />
       <LanguageToggle visible={step === 0} />
       <HowToSheet visible={howTo} onClose={() => setHowTo(false)} />
+      <PerksSheet
+        visible={perksSheet}
+        onClose={() => setPerksSheet(false)}
+        onGarage={() => {
+          setPerksSheet(false);
+          void enterWhenReady(beforeEnter, () => router.replace('/garage'));
+        }}
+      />
       <RegionListSheet visible={list} regions={pack.regions} selected={home} onSelect={pickFromList} onClose={() => setList(false)} />
       <ModalCard visible={confirmDiscard} title={t('ui.sprint.discard.title')} tone="bad" onRequestClose={() => setConfirmDiscard(false)} testID="discard-confirm">
         <Text style={styles.discardBody}>

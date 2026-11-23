@@ -175,6 +175,7 @@ export function validateGarage(c: GarageContent): string[] {
     pos(r.baseRep, 'raceReward.baseRep');
     nonNeg(r.lossFactor, 'raceReward.lossFactor');
     nonNeg(r.scoreBonus, 'raceReward.scoreBonus');
+    pos(r.scoreForBest, 'raceReward.scoreForBest');
     if (!(r.repeatFactor >= 0 && r.repeatFactor <= 0.5)) err('raceReward.repeatFactor must be in 0..0.5 (a replayed seed grants at most half)');
     pos(r.seedMemory, 'raceReward.seedMemory');
     if (!(r.boostMult >= 1)) err('raceReward.boostMult must be at least 1');

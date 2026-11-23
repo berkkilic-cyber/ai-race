@@ -35,7 +35,7 @@ export function raceRewardQuote(state: GarageState, content: GarageContent, inpu
     (input.won ? 1 : cfg.lossFactor) *
     factorOf(cfg.difficulty, input.difficulty) *
     factorOf(cfg.runLength, input.runLength) *
-    (1 + cfg.scoreBonus * clamp01(input.quality)) *
+    (1 + cfg.scoreBonus * clamp01(cfg.scoreForBest > 0 ? input.score / cfg.scoreForBest : 0)) *
     Math.pow(cfg.repeatFactor, plays);
   const rep = Math.max(0, Math.round(raw * 10) / 10);
   return { rep, boostMs: Math.round(rep * cfg.boostMsPerRep), plays };

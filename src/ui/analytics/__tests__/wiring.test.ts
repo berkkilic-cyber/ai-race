@@ -5,6 +5,7 @@ import { useAdStore } from '../../ads/store';
 import { logError } from '../../diagnostics/log';
 import { useGarageStore } from '../../garage/store';
 import { useGameStore } from '../../store/game';
+import { useMetaStore, withPerks } from '../../meta/store';
 import { setStorageBackend } from '../../tutorial/storage';
 import { resetTutorialStore, useTutorialStore } from '../../tutorial/store';
 import { STEPS } from '../../tutorial/machine';
@@ -64,6 +65,21 @@ describe('analytics wiring', () => {
     const props = rt.memory.userProps;
     expect(Object.keys(props).sort()).toEqual(['build', 'installId', 'locale', 'platform', 'theme']);
     expect(props.installId).toMatch(/^i-[0-9a-f]{16}$/);
+  });
+
+  it('run_start counts the perks the run started with; perks_toggle and race_reward_granted from the meta store', async () => {
+    useGameStore.getState().newGame(SETUP);
+    expect(last('run_start')?.params).toMatchObject({ perks: 0 });
+    useMetaStore.setState({ loaded: true, labRep: 4, perksOn: true });
+    useGameStore.getState().newGame(withPerks({ ...SETUP, seed: 43 }));
+    expect(last('run_start')?.params).toMatchObject({ perks: 2 });
+    useMetaStore.getState().setPerksOn(false);
+    expect(last('perks_toggle')?.params).toEqual({ on: false });
+    useMetaStore.getState().setPerksOn(false); // no change, no event
+    expect(names().filter((n) => n === 'perks_toggle')).toHaveLength(1);
+    useMetaStore.setState({ reward: { rep: 1.2, boostMs: 24 * 60_000, won: true, repeat: false, at: 0, seen: false, seq: 99 } });
+    expect(last('race_reward_granted')?.params).toEqual({ rep: 1.2, boost: 24 });
+    useMetaStore.setState({ perksOn: true, labRep: 0, reward: null });
   });
 
   it('1,000 game ticks produce no events and no storage writes', async () => {

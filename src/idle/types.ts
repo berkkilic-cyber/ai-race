@@ -288,7 +288,8 @@ export interface LabPerkDef {
  * What a finished race run grants the Garage (grantRaceReward): Lab Rep (whole points go to
  * labRep, the rest waits in race.repProgress) and "blueprints", a temporary production boost.
  *
- * rep = baseRep × (won ? 1 : lossFactor) × difficulty[id] × runLength[id] × (1 + scoreBonus × quality)
+ * rep = baseRep × (won ? 1 : lossFactor) × difficulty[id] × runLength[id]
+ *       × (1 + scoreBonus × min(1, score / scoreForBest))
  *       × repeatFactor ^ (earlier rewarded plays of the same seed), rounded to 0.1.
  */
 export interface RaceRewardConfig {
@@ -298,8 +299,10 @@ export interface RaceRewardConfig {
   difficulty: Record<string, number>;
   /** Factor per race run-length id (missing: 1). */
   runLength: Record<string, number>;
-  /** Extra share at the best score (quality 1). */
+  /** Extra share at the best score. */
   scoreBonus: number;
+  /** A race score (before the race's own difficulty and length multipliers) that earns the whole scoreBonus. */
+  scoreForBest: number;
   /** Each earlier rewarded play of the same seed multiplies the reward by this (0.5 = half). */
   repeatFactor: number;
   /** How many recent seeds are remembered. */
@@ -315,8 +318,8 @@ export interface RaceRewardInput {
   won: boolean;
   difficulty?: string;
   runLength?: string;
-  /** 0..1: how good the score was (the UI normalises it). */
-  quality: number;
+  /** The run's score before the race's difficulty and run-length multipliers (they are counted above). */
+  score: number;
   seed: number;
 }
 

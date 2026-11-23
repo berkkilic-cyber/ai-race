@@ -20,8 +20,20 @@ import { DEFAULT_PACK_ID, getPackEntry } from '../packs';
 export type Speed = 0 | 1 | 2 | 3;
 export const SPEEDS: readonly Speed[] = [0, 1, 2, 3];
 
+/**
+ * Facts about a run's setup that the engine does not need: whether Lab Rep perks were on and
+ * which went into `bonus` (src/ui/meta). Kept with the setup (Restart, Rematch, the run save).
+ */
+export interface RunPerks {
+  perksOn?: boolean;
+  perkIds?: string[];
+}
+
 /** What the start screen passes in; the seed defaults to a random one. */
-export type NewGameSetup = Omit<GameSetup, 'seed'> & { seed?: number; packId?: string };
+export type NewGameSetup = Omit<GameSetup, 'seed'> & RunPerks & { seed?: number; packId?: string };
+
+/** The setup the current run was started with (seed resolved). */
+export type RunSetup = GameSetup & RunPerks & { packId: string };
 
 export type EventResult = NonNullable<GameState['lastEventResult']>;
 
@@ -30,6 +42,8 @@ export interface GameStore {
   pack: ContentPack;
   /** Null before the first run. */
   state: GameState | null;
+  /** The setup of the current run (null before the first run, or for a run restored from an old save). */
+  setup: RunSetup | null;
   speed: Speed;
   /** Result of the event choice just made, shown once until `dismissEventResult`. */
   eventResult: EventResult | null;
@@ -55,14 +69,16 @@ export const useGameStore = create<GameStore>()((set, get) => ({
   packId: initial.pack.id,
   pack: initial.pack,
   state: null,
+  setup: null,
   speed: 1,
   eventResult: null,
 
   newGame(setup) {
-    const { packId = DEFAULT_PACK_ID, seed = randomSeed(), ...rest } = setup;
+    const { packId = DEFAULT_PACK_ID, seed = randomSeed(), perksOn, perkIds, ...rest } = setup;
     const { pack } = getPackEntry(packId);
     const state = createGame(pack, { ...rest, seed });
-    set({ packId, pack, state, speed: 1, eventResult: null });
+    const runSetup: RunSetup = { ...rest, seed, packId, ...(perksOn !== undefined ? { perksOn } : {}), ...(perkIds ? { perkIds } : {}) };
+    set({ packId, pack, state, setup: runSetup, speed: 1, eventResult: null });
     logLifecycle('run started', { seed, founder: rest.founderId, home: rest.homeRegion, difficulty: state.difficulty ?? '-' });
   },
 

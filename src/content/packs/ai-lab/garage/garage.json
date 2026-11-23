@@ -2725,6 +2725,7 @@
    "full": 1
   },
   "scoreBonus": 0.5,
+  "scoreForBest": 3000,
   "repeatFactor": 0.5,
   "seedMemory": 50,
   "boostMult": 1.5,

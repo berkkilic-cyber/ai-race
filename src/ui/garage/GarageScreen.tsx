@@ -3,6 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { MockAdHost, useAdStore } from '../ads';
 import { Ground } from '../components/Deco';
+import { GarageRaceNote } from '../meta/GarageRaceNote';
 import { useInsets } from '../hooks/useInsets';
 import { useLayoutMode } from '../hooks/useLayoutMode';
 import { t } from '../i18n';
@@ -77,6 +78,7 @@ export function GarageScreen() {
         <SettingsSheet visible={settings} onClose={() => setSettings(false)} />
         <OfflinePanel hidden={launch} />
         <StageCard hidden={launch || offline || shipDay} />
+        <GarageRaceNote />
         <ShipDay />
         <LaunchCard />
         <MockAdHost />

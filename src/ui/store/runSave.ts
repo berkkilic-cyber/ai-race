@@ -19,7 +19,7 @@ import { logLifecycle } from '../diagnostics/log';
 import { getPackEntry } from '../packs';
 import { readValue, writeValue } from '../tutorial/storage';
 import { useTutorialStore } from '../tutorial/store';
-import { useGameStore, type NewGameSetup } from './game';
+import { useGameStore, type NewGameSetup, type RunPerks } from './game';
 
 /** Storage key of the saved run. */
 export const RUN_SAVE_KEY = 'ai-race.run.v1';
@@ -36,8 +36,8 @@ export interface RunSave {
   packVersion: number;
   /** Date.now() when written. */
   savedAt: number;
-  /** What the run was started with (Restart and Rematch replay it). */
-  setup: GameSetup;
+  /** What the run was started with (Restart and Rematch replay it), with its perk facts. */
+  setup: GameSetup & RunPerks;
   state: GameState;
   /** The tutorial step to continue at, when the tutorial was running in this run. */
   tutorialStep?: number;
@@ -58,9 +58,21 @@ export function setupOf(state: GameState): GameSetup {
   };
 }
 
-/** The same run again from day one: same seed, same setup and pack. */
+/**
+ * The setup the store recorded for this run (with its start bonus and perk facts), or null
+ * when the store holds another run's setup.
+ */
+function recordedSetup(state: GameState): (GameSetup & RunPerks) | null {
+  const setup = useGameStore.getState().setup;
+  if (!setup || setup.seed !== state.seed || setup.packId !== state.packId || setup.founderId !== state.labs[state.playerLabId]?.founderId) return null;
+  const rest: GameSetup & RunPerks & { packId?: string } = { ...setup };
+  delete rest.packId;
+  return rest;
+}
+
+/** The same run again from day one: same seed, same setup (start bonus included) and pack. */
 export function restartSetup(state: GameState): NewGameSetup {
-  return { ...setupOf(state), packId: state.packId };
+  return { ...(recordedSetup(state) ?? setupOf(state)), packId: state.packId };
 }
 
 /** A save record for a run in progress, or null when there is nothing worth saving. */
@@ -71,7 +83,7 @@ export function makeRunSave(state: GameState | null, packVersion: number, tutori
     packId: state.packId,
     packVersion,
     savedAt: now,
-    setup: setupOf(state),
+    setup: recordedSetup(state) ?? setupOf(state),
     state,
     ...(tutorialStep !== null && tutorialStep !== undefined ? { tutorialStep } : {}),
   };
@@ -151,7 +163,7 @@ export function autosaveTick(): void {
  */
 export function restoreRun(save: RunSave): void {
   const { pack } = getPackEntry(save.packId);
-  useGameStore.setState({ packId: save.packId, pack, state: save.state, speed: 1, eventResult: null });
+  useGameStore.setState({ packId: save.packId, pack, state: save.state, setup: save.setup ? { ...save.setup, packId: save.packId } : null, speed: 1, eventResult: null });
   lastSavedTick = save.state.tick;
   if (save.tutorialStep !== undefined) {
     useTutorialStore.setState({ tutorial: { status: 'active', step: save.tutorialStep, dcBaseline: null, runSeed: save.state.seed } });
