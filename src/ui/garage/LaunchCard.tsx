@@ -17,7 +17,8 @@ export function LaunchCard() {
   const insets = useInsets();
   if (!launch) return null;
   const named = content.generations[launch.generation];
-  const headline = named ? gt(named.headlineKey) : gt(content.endlessHeadlineKey, { n: launch.generation + 1 });
+  const choice = launch.choice ? content.shipDay?.choices.find((c) => c.id === launch.choice) : undefined;
+  const headline = choice ? t('ui.garage.launch.live', { model: generationLabel(launch.generation) }) : named ? gt(named.headlineKey) : gt(content.endlessHeadlineKey, { n: launch.generation + 1 });
   const close = () => useGarageStore.getState().dismissLaunch();
   return (
     <Overlay visible layer={layer.event} onRequestClose={close} testID="garage-launch">
@@ -29,6 +30,7 @@ export function LaunchCard() {
           </Text>
           <View style={styles.rule} />
           <Text style={styles.sub}>{t('ui.garage.launch.sub', { model: generationLabel(launch.generation), hype: launch.gain })}</Text>
+          {choice ? <Text style={styles.sub}>{t('ui.garage.launch.choice', { choice: gt(choice.labelKey) })}</Text> : null}
           {named ? <Text style={styles.sub}>{t('ui.garage.ship.unlocks', { text: gt(named.unlockKey) })}</Text> : null}
           <Button label={t('ui.garage.launch.continue')} variant="ink" onPress={close} style={styles.button} testID="garage-launch-continue" />
         </Animated.View>

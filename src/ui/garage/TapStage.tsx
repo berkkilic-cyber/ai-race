@@ -2,7 +2,7 @@ import { memo, useCallback, useEffect, useImperativeHandle, useRef, useState, ty
 import { StyleSheet, Text, View, type GestureResponderEvent, type LayoutChangeEvent } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 
-import { comboAt, comboMultiplier, totalRate } from '@/idle';
+import { comboAt, comboMultiplier, currentStage, nextStage, totalRate } from '@/idle';
 
 import { Icon } from '../icons';
 import { t } from '../i18n';
@@ -12,10 +12,13 @@ import { colors, flatShadow, radius, shape, spacing, tabular, type, voice } from
 import { garageNow } from './clock';
 import { tapHaptic } from './haptics';
 import { useGarage } from './hooks';
-import { StatusRow } from './StatusRow';
+import { OfferSlot } from './adOffer';
 import { GoldenBubble } from './GoldenBubble';
+import { HappeningBubble } from './HappeningBubble';
+import { bucketKey, LabRoom, roomBuckets, type RoomBuckets } from './LabRoom';
+import { StatusRow } from './StatusRow';
 import { useGarageStore, type GarageStore } from './store';
-import { fmt, fmtMult } from './text';
+import { fmt, fmtMult, gt, requirementText } from './text';
 
 /** Pop-out numbers kept mounted and reused round-robin (no mounting per tap). */
 const POPS = 12;
@@ -77,7 +80,7 @@ export const LiveCounter = memo(function LiveCounter() {
   return (
     <View style={styles.counter} accessibilityRole="summary" accessibilityLabel={`${shown.tokens} ${t('ui.garage.tokens')}, ${t('ui.garage.perSec', { amount: shown.rate })}`}>
       <View style={styles.tokensRow}>
-        <Icon name="speech" size={26} color={colors.text} accent={colors.player} />
+        <Icon name="speech" size={22} color={colors.text} accent={colors.player} />
         <Text style={styles.tokens} numberOfLines={1} adjustsFontSizeToFit testID="garage-tokens">
           {shown.tokens}
         </Text>
@@ -254,42 +257,102 @@ function FlashLine() {
   );
 }
 
-/** The left half of the screen: counter, status chips, the tap target, the combo meter and golden moments. */
+/** Room buckets from the generator counts: the first tier fills desks, the next four racks, the rest a shelf. */
+const selBuckets = (s: GarageStore): RoomBuckets => {
+  const st = s.state;
+  const gens = s.content.generators;
+  if (!st) return { desks: 0, racks: 0, shelf: [] };
+  return roomBuckets(st.generators, gens.slice(0, 1).map((g) => g.id), gens.slice(1, 5).map((g) => g.id), gens.slice(5).map((g) => ({ id: g.id, icon: g.icon })));
+};
+const selScene = (s: GarageStore) => (s.state ? (currentStage(s.state, s.content)?.scene ?? 'garage') : 'garage');
+const same = (v: string) => v;
+
+/** The room itself, re-rendered only when the stage or a bucket changes. */
+const Room = memo(function Room({ w, h }: { w: number; h: number }) {
+  const buckets = useGarage(selBuckets, bucketKey);
+  const scene = useGarage(selScene, same);
+  return <LabRoom scene={scene} buckets={buckets} w={w} h={h} />;
+});
+
+const selNextStage = (s: GarageStore) => {
+  const st = s.state;
+  if (!st) return '';
+  const next = nextStage(st, s.content);
+  return next ? `${next.index}|${Math.floor(next.progress * 100)}` : '';
+};
+
+/** The next stage as a goal: where the lab moves next and what it takes. */
+export const NextStageGoal = memo(function NextStageGoal() {
+  const key = useGarage(selNextStage, same);
+  const { state, content } = useGarageStore.getState();
+  if (!key || !state) return null;
+  const next = nextStage(state, content);
+  if (!next) return null;
+  return (
+    <View style={styles.goal} testID="garage-next-stage" accessibilityLabel={t('ui.garage.stage.next', { name: gt(next.def.nameKey), goal: requirementText(next.requirement) })}>
+      <Text style={styles.goalText} numberOfLines={2}>
+        {t('ui.garage.stage.next', { name: gt(next.def.nameKey), goal: requirementText(next.requirement) })}
+      </Text>
+      <View style={styles.goalTrack}>
+        <View style={[styles.goalFill, { width: `${Math.round(next.progress * 100)}%` }]} />
+      </View>
+    </View>
+  );
+});
+
+/**
+ * The left half of the screen: the lab as a room you can see, with the counter and the
+ * next goal over its back wall, timed effects and the one ad offer at the top right, the
+ * model (the tap target) on the floor, the combo meter, golden moments and lab happenings.
+ */
 export function TapStage({ compact }: { compact?: boolean }) {
   const [box, setBox] = useState({ w: 0, h: 0 });
-  const [target, setTarget] = useState(180);
+  const [target, setTarget] = useState(150);
   const onLayout = (e: LayoutChangeEvent) => {
     const { width, height } = e.nativeEvent.layout;
     setBox((b) => (Math.abs(b.w - width) < 1 && Math.abs(b.h - height) < 1 ? b : { w: width, h: height }));
   };
   const onTargetLayout = (e: LayoutChangeEvent) => {
     const { width, height } = e.nativeEvent.layout;
-    const s = Math.max(96, Math.min(height * 0.96, width / 1.5, 280));
+    const s = Math.max(80, Math.min(height * 0.92, width / 2.2, compact ? 120 : 150));
     setTarget((prev) => (Math.abs(prev - s) < 2 ? prev : Math.floor(s)));
   };
   return (
     <View style={styles.stage} onLayout={onLayout} testID="garage-stage">
-      <LiveCounter />
+      <Room w={box.w} h={box.h} />
+      <View style={styles.hud} pointerEvents="box-none">
+        <View style={styles.hudLeft} pointerEvents="box-none">
+          <LiveCounter />
+          <NextStageGoal />
+        </View>
+        <OfferSlot />
+      </View>
       <StatusRow />
-      <View style={[styles.targetArea, compact && styles.targetAreaCompact]} onLayout={onTargetLayout}>
+      <View style={[styles.targetArea, compact && styles.targetAreaCompact]} onLayout={onTargetLayout} pointerEvents="box-none">
         <TapTarget size={target} />
         <FlashLine />
       </View>
       <ComboMeter />
+      <HappeningBubble width={box.w} height={box.h} />
       <GoldenBubble width={box.w} height={box.h} />
     </View>
   );
 }
 
-
 const styles = StyleSheet.create({
-  stage: { flex: 1, paddingHorizontal: spacing.m, paddingTop: spacing.s, paddingBottom: spacing.xs },
-  counter: { alignItems: 'center' },
-  tokensRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.s, maxWidth: '100%' },
-  tokens: { ...voice.calmNumber, ...tabular, color: colors.text, fontSize: 38, lineHeight: 44, letterSpacing: -0.5 },
-  rate: { ...voice.calmNumber, ...tabular, color: colors.playerText, fontSize: type.m },
-  targetArea: { flex: 1, alignItems: 'center', justifyContent: 'center', minHeight: 110 },
-  targetAreaCompact: { minHeight: 96 },
+  stage: { flex: 1, paddingHorizontal: spacing.s, paddingTop: spacing.xs, paddingBottom: spacing.xs, overflow: 'hidden' },
+  hud: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: spacing.s },
+  hudLeft: { flexShrink: 1, minWidth: 0 },
+  counter: { alignItems: 'flex-start' },
+  tokensRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, maxWidth: '100%' },
+  tokens: { ...voice.calmNumber, ...tabular, color: colors.text, fontSize: 30, lineHeight: 34, letterSpacing: -0.5 },
+  rate: { ...voice.calmNumber, ...tabular, color: colors.playerText, fontSize: type.s },
+  goal: { marginTop: 2, maxWidth: 210, gap: 2 },
+  goalText: { ...voice.calmLabel, color: colors.dim, fontSize: 10 },
+  goalTrack: { height: 3, backgroundColor: colors.raised, borderRadius: radius.pill, overflow: 'hidden' },
+  goalFill: { height: '100%', backgroundColor: colors.player },
+  targetArea: { flex: 1, alignItems: 'center', justifyContent: 'flex-end', minHeight: 90 },
+  targetAreaCompact: { minHeight: 80 },
   targetBox: { alignItems: 'center', justifyContent: 'center' },
   surface: { alignItems: 'center', justifyContent: 'center' },
   centre: { flex: 1, alignItems: 'center', justifyContent: 'center' },

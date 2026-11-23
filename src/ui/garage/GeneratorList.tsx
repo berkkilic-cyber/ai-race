@@ -1,7 +1,7 @@
 import { memo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { buyQuote, generatorRows } from '@/idle';
+import { buyQuote, generatorRows, lastMilestone, nextMilestone } from '@/idle';
 
 import { Icon } from '../icons';
 import { t } from '../i18n';
@@ -9,7 +9,7 @@ import { colors, flatShadow, radius, shape, spacing, tabular, touch, type, voice
 import { buyHaptic } from './haptics';
 import { useGarage } from './hooks';
 import { useGarageStore, type BuyMode, type GarageStore } from './store';
-import { fmt, generationLabel, gt } from './text';
+import { fmt, fmtMult, generationLabel, gt } from './text';
 
 interface Row {
   id: string;
@@ -24,6 +24,8 @@ interface Row {
   cost: string;
   affordable: boolean;
   rate: string;
+  /** Next milestone: count, multiplier and progress from the last one (0..1). */
+  milestone: { count: number; mult: string; progress: number } | null;
 }
 
 /** The rows as displayed; the list re-renders only when this text changes. */
@@ -45,16 +47,31 @@ function rowsOf(s: GarageStore): Row[] {
       cost: fmt(q.cost),
       affordable: st.tokens >= q.cost,
       rate: fmt(r.rate),
+      milestone: (() => {
+        const next = nextMilestone(s.content, r.owned);
+        if (!next) return null;
+        const last = lastMilestone(s.content, r.owned);
+        return { count: next.count, mult: fmtMult(next.mult), progress: Math.max(0, Math.min(1, (r.owned - last) / Math.max(1, next.count - last))) };
+      })(),
     };
   });
 }
-const keyRows = (rows: Row[]) => rows.map((r) => `${r.id}:${r.owned}:${r.revealed ? 1 : 0}:${r.count}:${r.cost}:${r.affordable ? 1 : 0}:${r.rate}`).join('|');
+const keyRows = (rows: Row[]) => rows.map((r) => `${r.id}:${r.owned}:${r.revealed ? 1 : 0}:${r.count}:${r.cost}:${r.affordable ? 1 : 0}:${r.rate}:${r.milestone?.count ?? 0}`).join('|');
 
-/** The generator list: owned tiers and the next to buy in full, then a teaser and the next locked tier. */
+/**
+ * The generator list: the buy amount, owned tiers and the next to buy in full (each with
+ * its next milestone), then a teaser and the next locked tier.
+ */
 export const GeneratorList = memo(function GeneratorList() {
   const rows = useGarage(rowsOf, keyRows);
   return (
     <View style={styles.list} testID="garage-generators">
+      <View style={styles.listHead}>
+        <Text style={styles.listHint} numberOfLines={1}>
+          {t('ui.garage.milestone.hint')}
+        </Text>
+        <BuyModeToggle />
+      </View>
       {rows.map((r) => (r.revealed ? <GeneratorRow key={r.id} row={r} /> : <TeaserRow key={r.id} row={r} />))}
     </View>
   );
@@ -81,6 +98,16 @@ function GeneratorRow({ row }: { row: Row }) {
         <Text style={styles.meta} numberOfLines={1}>
           {row.owned > 0 ? t('ui.garage.rowRate', { amount: row.rate }) : row.desc}
         </Text>
+        {row.milestone && row.owned > 0 ? (
+          <View style={styles.milestone} testID={`milestone-${row.id}`}>
+            <View style={styles.msTrack}>
+              <View style={[styles.msFill, { width: `${Math.round(row.milestone.progress * 100)}%` }]} />
+            </View>
+            <Text style={styles.msText} numberOfLines={1}>
+              {t('ui.garage.milestone.next', { mult: row.milestone.mult, count: row.milestone.count })}
+            </Text>
+          </View>
+        ) : null}
       </View>
       <Pressable
         onPress={press}
@@ -153,6 +180,12 @@ export function BuyModeToggle() {
 
 const styles = StyleSheet.create({
   list: { gap: spacing.xs },
+  listHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.s },
+  listHint: { ...voice.calmLabel, color: colors.dim, fontSize: 10, flexShrink: 1 },
+  milestone: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, marginTop: 2 },
+  msTrack: { width: 44, height: 4, borderRadius: radius.pill, backgroundColor: colors.raised, overflow: 'hidden' },
+  msFill: { height: '100%', backgroundColor: colors.player },
+  msText: { ...voice.calmLabel, ...tabular, color: colors.playerText, fontSize: 10, flexShrink: 1 },
   row: {
     flexDirection: 'row',
     alignItems: 'center',

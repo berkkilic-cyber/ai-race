@@ -7,13 +7,21 @@ import {
   buyUpgrade,
   claimOffer,
   collectGolden,
+  collectHappening,
   createGarage,
   deserialize,
   dismissOffline,
+  keepModel,
+  launchTraining,
+  moveStaff,
   prestige,
+  retireModel,
+  scrapCandidates,
   serialize,
+  setAutoBuy,
   tap,
   tapIncident,
+  type StaffLane,
   type ActionResult,
   type GarageContent,
   type GarageState,
@@ -31,7 +39,7 @@ const SETTINGS_KEY = 'garage.settings';
 export const SAVE_THROTTLE_MS = 5000;
 
 export type BuyMode = 1 | 10 | 'max';
-export type GarageTab = 'build' | 'upgrades' | 'ship';
+export type GarageTab = 'build' | 'upgrades' | 'lab' | 'ship';
 
 export interface GarageSettings {
   haptics: boolean;
@@ -40,6 +48,13 @@ export interface GarageSettings {
 export interface LaunchInfo {
   generation: number;
   gain: number;
+  /** The launch-day choice, when the ship went through ship day. */
+  choice?: string;
+}
+
+/** Ship day: the short launch sequence before a ship (reveal, headline, choice). */
+export interface ShipDayInfo {
+  step: 'reveal' | 'press' | 'choose';
 }
 
 /** A short centred message over the stage (a golden reward, a crate). */
@@ -56,6 +71,10 @@ export interface GarageStore {
   tab: GarageTab;
   launch: LaunchInfo | null;
   flash: Flash | null;
+  /** Ship day in progress (null otherwise). */
+  shipDay: ShipDayInfo | null;
+  /** A stage the lab just moved into, for the "you moved" card (index, null when none). */
+  stageCard: number | null;
   load(): Promise<void>;
   /** Advances to the clock (the screen calls this on a timer). */
   tick(): void;
@@ -63,10 +82,21 @@ export interface GarageStore {
   tap(): number;
   buy(id: string): boolean;
   buyUpgrade(id: string): boolean;
-  ship(bonus?: boolean): boolean;
+  ship(bonus?: boolean, choice?: string): boolean;
+  openShipDay(): void;
+  shipDayStep(step: ShipDayInfo['step']): void;
+  closeShipDay(): void;
+  dismissStage(): void;
+  collectHappening(): ActionResult | null;
+  launchTraining(): boolean;
+  keepModel(uid: number, replaceUid?: number): boolean;
+  scrapCandidates(): void;
+  retireModel(uid: number): void;
+  moveStaff(from: StaffLane, to: StaffLane): boolean;
+  setAutoBuy(on: boolean): void;
   collectGolden(): ActionResult | null;
   tapIncident(): void;
-  claim(offer: OfferId): ActionResult | null;
+  claim(offer: OfferId, choice?: string): ActionResult | null;
   dismissOffline(): void;
   dismissLaunch(): void;
   setFlash(text: string): void;
@@ -92,12 +122,21 @@ function writeSave(state: GarageState): void {
 export const useGarageStore = create<GarageStore>()((set, get) => {
   /** Applies an action result: keeps the state, saves on success when `important`. */
   const apply = (r: ActionResult, important: boolean): boolean => {
+    const before = get().state;
     set({ state: r.state });
+    noteStage(before, r.state);
     if (r.ok && important) get().save(true);
     else get().save();
     return r.ok;
   };
   const now = () => garageNow();
+  /** Shows the "you moved" card when the lab reaches a new stage. */
+  const noteStage = (before: GarageState | null, after: GarageState) => {
+    if (before && after.stage > before.stage) {
+      logLifecycle('garage stage', { stage: after.stage });
+      set({ stageCard: after.stage });
+    }
+  };
   return {
     content: garageContent(),
     state: null,
@@ -106,6 +145,8 @@ export const useGarageStore = create<GarageStore>()((set, get) => {
     tab: 'build',
     launch: null,
     flash: null,
+    shipDay: null,
+    stageCard: null,
 
     async load() {
       if (get().state) return;
@@ -135,6 +176,7 @@ export const useGarageStore = create<GarageStore>()((set, get) => {
       const next = advance(s, get().content, now());
       if (next !== s) {
         set({ state: next });
+        noteStage(s, next);
         get().save();
       }
     },
@@ -144,6 +186,7 @@ export const useGarageStore = create<GarageStore>()((set, get) => {
       if (!s) return 0;
       const r = tap(s, get().content, now());
       set({ state: r.state });
+      noteStage(s, r.state);
       get().save();
       return r.gained;
     },
@@ -165,14 +208,79 @@ export const useGarageStore = create<GarageStore>()((set, get) => {
       return apply(r, true);
     },
 
-    ship(bonus = false) {
+    ship(bonus = false, choice) {
       const s = get().state;
       if (!s) return false;
-      const r = prestige(s, get().content, now(), { bonus });
+      const r = prestige(s, get().content, now(), { bonus, choice });
       if (!r.ok) return apply(r, false);
-      logLifecycle('garage shipped', { generation: r.state.generation, hype: r.state.hype - s.hype, bonus });
-      set({ launch: { generation: r.state.generation, gain: r.state.hype - s.hype }, tab: 'build' });
+      logLifecycle('garage shipped', { generation: r.state.generation, hype: r.state.hype - s.hype, bonus, choice: choice ?? null });
+      set({ launch: { generation: r.state.generation, gain: r.state.hype - s.hype, ...(choice ? { choice } : {}) }, tab: 'build', shipDay: null });
       return apply(r, true);
+    },
+
+    openShipDay() {
+      const s = get().state;
+      if (!s) return;
+      logLifecycle('garage ship day', { generation: s.generation });
+      set({ shipDay: { step: 'reveal' } });
+    },
+
+    shipDayStep(step) {
+      if (get().shipDay) set({ shipDay: { step } });
+    },
+
+    closeShipDay() {
+      set({ shipDay: null });
+    },
+
+    dismissStage() {
+      set({ stageCard: null });
+    },
+
+    collectHappening() {
+      const s = get().state;
+      if (!s) return null;
+      const r = collectHappening(s, get().content, now());
+      if (r.ok) logLifecycle('garage happening', { id: s.happening?.id });
+      apply(r, false);
+      return r;
+    },
+
+    launchTraining() {
+      const s = get().state;
+      if (!s) return false;
+      const r = launchTraining(s, get().content, now());
+      if (r.ok) logLifecycle('garage training run');
+      return apply(r, true);
+    },
+
+    keepModel(uid, replaceUid) {
+      const s = get().state;
+      if (!s) return false;
+      const r = keepModel(s, get().content, uid, now(), replaceUid);
+      if (r.ok) logLifecycle('garage model kept', { uid });
+      return apply(r, true);
+    },
+
+    scrapCandidates() {
+      const s = get().state;
+      if (s) apply(scrapCandidates(s, get().content, now()), true);
+    },
+
+    retireModel(uid) {
+      const s = get().state;
+      if (s) apply(retireModel(s, get().content, uid, now()), true);
+    },
+
+    moveStaff(from, to) {
+      const s = get().state;
+      if (!s) return false;
+      return apply(moveStaff(s, get().content, from, to, now()), true);
+    },
+
+    setAutoBuy(on) {
+      const s = get().state;
+      if (s) apply(setAutoBuy(s, get().content, on, now()), true);
     },
 
     collectGolden() {
@@ -191,12 +299,12 @@ export const useGarageStore = create<GarageStore>()((set, get) => {
       apply(r, !r.state.incident);
     },
 
-    claim(offer) {
+    claim(offer, choice) {
       const s = get().state;
       if (!s) return null;
       if (offer === 'prestigeBonus') {
-        get().ship(true);
-        return { state: get().state!, ok: true };
+        const ok = get().ship(true, choice);
+        return { state: get().state!, ok };
       }
       const r = claimOffer(s, get().content, offer, now());
       if (r.ok) logLifecycle('garage offer claimed', { offer });
@@ -237,7 +345,7 @@ export const useGarageStore = create<GarageStore>()((set, get) => {
 
     reset() {
       const state = createGarage(get().content, now());
-      set({ state, launch: null, flash: null, tab: 'build' });
+      set({ state, launch: null, flash: null, tab: 'build', shipDay: null, stageCard: null });
       logLifecycle('garage reset');
       writeSave(state);
     },
@@ -260,7 +368,7 @@ export const useGarageStore = create<GarageStore>()((set, get) => {
     },
 
     replace(state) {
-      set({ state });
+      set({ state, stageCard: null });
       get().save(true);
     },
   };

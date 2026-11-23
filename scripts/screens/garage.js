@@ -9,12 +9,17 @@
  *
  * Captures: the mode choice on the title step, a fresh garage, mid-progress, the upgrades
  * panel, a golden moment, an incident, the offline-return panel with its ad option, the
- * test ad, the doubled offline panel, the ship panel and launch headline, stats and
- * achievements, settings, a late save, and (default size only) a narrow portrait window.
+ * test ad, the doubled offline panel, the ship panel and the three ship-day steps and the
+ * launch result, every stage's room (garage, office, data centre, company town, latent
+ * space) with its Lab tab (training candidates, kept models, staff, helpers), a lab
+ * happening, the stage card, stats and achievements, settings, a late save, and (default
+ * size only) a narrow portrait window.
  * Checks (exits 1 if any fails): the mode choice opens /garage; one touch tap earns tokens;
  * two fingers at once count as two taps; a buy works; the golden moment collects; the
- * incident fixes by taps; the offline report doubles through the test ad; shipping shows
- * the launch headline; no page errors; no raw string keys on screen.
+ * incident fixes by taps; the offline report doubles through the test ad; ship day ships
+ * with the chosen plan; a training candidate can be kept; staff moves; a happening
+ * collects; at most one ad offer is on screen in every capture; no page errors; no raw
+ * string keys on screen.
  * Screenshots go to docs/screenshots/garage/<theme>-<W>x<H>-NN-name.png.
  * Serves dist/ in-process; the server and browser are closed before exiting.
  * Env: CHROME, PORT (default 8781), W, H, INSETS, THEME (names the files only).
@@ -32,7 +37,7 @@ const PORT = Number(process.env.PORT || 8781);
 const CHROME = process.env.CHROME || '/usr/bin/google-chrome';
 const VIEW = { width: Number(process.env.W || 844), height: Number(process.env.H || 390) };
 const INSETS = process.env.INSETS || '';
-const THEME = process.env.THEME || 'blueprint';
+const THEME = process.env.THEME || 'neon';
 const TAG = `${THEME}-${VIEW.width}x${VIEW.height}`;
 const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.ico': 'image/x-icon', '.ttf': 'font/ttf' };
 /** Garage keys are not in textScan's list; catch them here. */
@@ -92,6 +97,11 @@ async function main() {
         return { x: r.x + r.width / 2, y: r.y + r.height / 2, w: r.width, h: r.height };
       }, id);
     const tapId = async (id) => {
+      await page.evaluate((tid) => {
+        const el = document.querySelector(`[data-testid="${tid}"]`);
+        if (el) el.scrollIntoView({ block: 'nearest' });
+      }, id);
+      await sleep(60);
       const b = await box(id);
       if (!b) throw new Error(`no ${id}`);
       await tapAt(b);
@@ -107,6 +117,8 @@ async function main() {
       const raw = await page.evaluate(() => document.body.innerText);
       const hit = GARAGE_KEY.exec(raw);
       check(!hit, `${name}: no raw garage keys${hit ? ` (${hit[0]})` : ''}`);
+      const ads = await page.evaluate(() => [...document.querySelectorAll('[data-testid^="ad-"]')].map((e) => e.getAttribute('data-testid')));
+      check(ads.length <= 1, `${name}: at most one ad offer on screen${ads.length > 1 ? ` (${ads.join(', ')})` : ''}`);
       console.log(`     ${path.relative(ROOT, file)}`);
     };
     const q = `debug=1&adseconds=2${INSETS ? `&insets=${INSETS}` : ''}`;
@@ -194,17 +206,93 @@ async function main() {
     await shot('offline-doubled');
     await tapId('garage-offline-collect');
 
-    // 8. Ship panel and launch headline.
+    // 8. Ship panel, ship day (reveal, press, choice) and the launch result.
     await g(() => window.__garage.scene('ship'));
     await tapId('garage-tab-ship');
     await shot('ship-panel');
     await tapId('garage-ship-button');
+    await page.waitForSelector('[data-testid="garage-shipday-reveal"]', { timeout: 5000 });
+    await sleep(700);
+    await shot('shipday-reveal');
+    await tapId('garage-shipday-next');
+    await page.waitForSelector('[data-testid="garage-shipday-press"]', { timeout: 5000 });
+    await sleep(500);
+    await shot('shipday-press');
+    await tapId('garage-shipday-next');
+    await page.waitForSelector('[data-testid="garage-shipday-choose"]', { timeout: 5000 });
+    await tapId('garage-shipday-choice-hype');
+    await shot('shipday-choose');
+    await tapId('garage-shipday-ship');
     await page.waitForSelector('[data-testid="garage-launch"]', { timeout: 5000 });
     check((await g(() => window.__garage.state().generation)) === 1, 'shipping advances the model generation');
-    await shot('launch-headline');
+    check((await g(() => window.__garage.state().shipChoice)) === 'hype', 'ship day ships with the chosen plan');
+    await shot('launch-result');
     await tapId('garage-launch-continue');
 
-    // 9. Stats and achievements, settings.
+    // 9. The stages: each room, and the Lab tab as it grows.
+    await g(() => window.__garage.scene('office'));
+    await g(() => window.__garage.store.setState({ stageCard: 1 }));
+    await page.waitForSelector('[data-testid="garage-stage-card"]', { timeout: 5000 });
+    await shot('stage-card');
+    await tapId('garage-stage-continue');
+    await tapId('garage-tab-build');
+    await shot('office');
+    await tapId('garage-tab-lab');
+    await g(() => window.__garage.training());
+    await page.waitForSelector('[data-testid="garage-lab-training"]', { timeout: 5000 });
+    await shot('lab-candidates');
+    const cand = await g(() => window.__garage.state().training.candidates[0].uid);
+    const keepId = (await has(`garage-keep-${cand}`)) ? `garage-keep-${cand}` : null;
+    if (keepId) {
+      await tapId(keepId);
+      await sleep(150);
+      const full = await g(() => window.__garage.state().training.candidates !== null);
+      if (full) {
+        await shot('lab-swap');
+        const old = await g(() => window.__garage.state().models[0].uid);
+        await tapId(`garage-replace-${old}`);
+      }
+    }
+    await sleep(150);
+    check(await g((u) => window.__garage.state().models.some((m) => m.uid === u), cand), 'a training candidate can be kept');
+    await shot('lab-models');
+    await g(() => window.__garage.happening('overheat'));
+    await page.waitForSelector('[data-testid="garage-happening"]', { timeout: 5000 });
+    await shot('happening');
+    const caught0 = await g(() => window.__garage.state().stats.happeningsCaught);
+    await tapId('garage-happening');
+    await sleep(150);
+    check((await g(() => window.__garage.state().stats.happeningsCaught)) === caught0 + 1, 'tapping a happening collects it');
+
+    await g(() => window.__garage.scene('datacentre'));
+    await tapId('garage-tab-build');
+    await g(() => window.__garage.happening('gpu-truck'));
+    await shot('datacentre');
+    await tapId('garage-tab-lab');
+    const safety0 = await g(() => window.__garage.state().staff.safety);
+    await tapId('garage-staff-safety-plus');
+    check((await g(() => window.__garage.state().staff.safety)) === safety0 + 1, 'staff moves between lanes');
+    await page.evaluate(() => {
+      const el = document.querySelector('[data-testid="garage-lab-staff"]');
+      if (el) el.scrollIntoView();
+    });
+    await shot('lab-staff');
+
+    await g(() => window.__garage.scene('town'));
+    await tapId('garage-tab-build');
+    await g(() => window.__garage.happening('petition'));
+    await shot('town');
+    await g(() => window.__garage.scene('latent'));
+    await shot('latent');
+    await tapId('garage-tab-lab');
+    await page.evaluate(() => {
+      const el = document.querySelector('[data-testid="garage-lab-auto"]');
+      if (el) el.scrollIntoView();
+    });
+    await shot('lab-helpers');
+    await tapId('garage-tab-build');
+
+    // 10. Stats and achievements, settings.
     await g(() => window.__garage.scene('late'));
     await sleep(200);
     await shot('late-save');
@@ -217,7 +305,7 @@ async function main() {
     await shot('settings');
     await tapId('sheet-close');
 
-    // 10. Narrow portrait window (usable, not polished).
+    // 11. Narrow portrait window (usable, not polished).
     if (!INSETS) {
       await page.setViewport({ width: 390, height: 780, deviceScaleFactor: 1, hasTouch: true });
       await sleep(400);
