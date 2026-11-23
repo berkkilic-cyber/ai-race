@@ -1,6 +1,157 @@
 # Balance
 
-## Task 21: Sprint run length (current numbers)
+## Task 27: routes and founders (current numbers)
+
+Why: the three upgrade routes and three founders should each be a real choice. Before this pass the shadow-focused bot won 54 to 61% on Frontier while the sensible (mixed) bot won 32 to 35% and the capability bot about 25%, and the Hustler was the weakest founder. A dominant route kills replay value. Goal: routes within 12 points of each other, mixing rewarded, founders within 8 points, and the game neither harder nor easier overall.
+
+### Method
+
+`npm run balance -- --runs 300 --difficulty all --runLength sprint,full --brief --routes --seed 7` (14,400 runs; seed 7 is the task 21 seed, so the "before" numbers below are exactly task 21's table). Tuning used seed 1 (Frontier, 100 to 300 runs per step); seed 7 was played only for the before and after tables. New tooling:
+
+- `--routes`: per run length and difficulty, every policy's win rate overall and per founder, triggers, run length, nodes owned per tree, how often each tree's two top rows were bought (and when), event risks fired and rivals bought per run, and the target checks below.
+- `--patch file.json`: what-if node, founder and difficulty changes for sweeps (`PackPatch` in `scripts/balance/simulate.ts`), e.g. `{"nodes":{"shadow-ma-team":{"grantsFlags":[]}}}`.
+- `npm run balance:reach -- --cloud-native [--max-built 0|1]`: a determined human probe for the Cloud Native achievement (see below).
+
+Expect about ±2.7 points of seed noise at 300 runs per cell (±4.7 per founder, 100 runs each).
+
+### Diagnosis: why Shadow won
+
+Probes on seed 1, Frontier, 300 runs, sprint / full (win rates of shadow, sensible, capability):
+
+| Probe | shadow | sensible | capability | Reading |
+| --- | --- | --- | --- | --- |
+| Baseline | 59.0 / 53.3 | 31.7 / 34.0 | 23.0 / 25.3 | |
+| No buy-outs (M&A Team grants no `canAcquire`) | 24.0 / 21.0 | 28.7 / 31.0 | 23.0 / 25.3 | Buy-outs are the whole lead: without them shadow is a capability bot |
+| Benchmark Tuning without its Hype ×1.3 | 57.7 / 53.3 | 14.3 / 18.7 | 7.7 / 14.0 | A universal must-buy, not a shadow edge (kept) |
+| Staged Demos without its Hype ×1.25 | 49.3 / 39.7 | 27.7 / 22.3 | 22.3 / 25.0 | Hurts everyone (kept) |
+| Talent Poaching without its rival slow-down | 51.3 / 52.7 | 32.3 / 34.3 | 24.3 / 27.0 | Small for shadow; the sensible bot leans on it more (a ×0.9 version dropped sensible to 18% on Sprint), kept |
+
+1. **Buy-outs turned idle Cash into deleted rivals.** Cash ends most runs unspent; the M&A Team (×0.75 price, no downside) let the shadow bot spend it on 1.8 rivals per run. Each buy-out removes an AGI racer, so the shadow bot lost to a rival's AGI in 13 to 17% of runs against 37 to 42% for the others, and it won by AGI (21 to 24%) as often as the capability bot, plus 24 to 31% by monopoly.
+2. **Its exposure never landed.** The tree's risk was `riskChance`, which only scales event-choice gambles; bots (and any human who reads the card) pick the safe choice, so risks fired 0.03 to 0.11 times per shadow run. The Backlash costs sat on nodes the shadow bot skips (Revolving Door 10 to 23%, Regulatory Capture 3 to 9%, Hostile Takeovers 0%).
+3. **A human exploits it the same way or harder:** "buy the cheapest rival, repeat" is obvious from the race screen, and a human would also pick off the AGI leader.
+
+Why Capability was weak: its tree had almost no regulation defence (Interpretability ×0.9 only) and its bot has little taste for Shadow's lobbying, so it was banned in 25 to 28% of Frontier runs (sensible 14 to 17%; peak Regulation p50 79 vs 66). Why the Hustler was weak: faster spread means more users in strict regions and more world share, which both feed Regulation, with no protection and no help in the AGI race (the capability bot with the Hustler was banned in 40 of 100 runs). The Researcher's AGI ×1.25 was the strongest perk (39 to 49%).
+
+A trap for later passes: **node changes act on rivals too.** Rivals buy from the same trees; the capability safety nodes now also keep them out of bans, so they reach AGI more often, which the rivals' AGI clock (`aiAgiFactor`) compensates. Making the M&A Team dearer also changes which rivals buy it (a rival with it carries the antitrust Regulation), so small M&A changes moved the sensible bot by several points.
+
+### What changed
+
+| Item | Before | After | Why |
+| --- | --- | --- | --- |
+| M&A Team | 75 Hype + 80 Cash; buy-outs ×0.75 | 85 + 100; buy-outs ×0.9; **Regulation +25%** (antitrust) | Buy-outs stay the payoff but cost real money and draw regulators |
+| Hostile Takeovers | 120 Hype + 100 Cash; ×0.7; −5 lead rival AGI, +8 Backlash | 130 Hype, no Cash; ×0.85; −5 lead rival AGI, **+10 Backlash, +8 Regulation** | The shadow bot saved its Cash and never reached it; now it is the route's top node (bought in 77% of shadow runs) and the monopoly ending stays alive, at a visible price |
+| Benchmark Tuning | Hype ×1.3, risk ×1.1 | adds **Backlash +5%** | Shadow carries a standing scandal cost |
+| Bot Farm | spread ×1.25, seeding ×1.2, risk ×1.25 | adds **Backlash +10%** | Same |
+| Interpretability | Backlash ×0.85, Regulation ×0.9 | Regulation ×0.8 | Capability's safety branch defends against bans |
+| Alignment Program | Backlash ×0.8, AGI ×1.05 | adds Regulation ×0.9 | Same |
+| Own Chips | compute ×1.4, upkeep ×0.85 | adds AGI ×1.1 | Rewards the compute branch, which the shadow route skips to keep Cash for buy-outs |
+| Researcher | AGI ×1.25 | AGI ×1.11 | Strongest founder |
+| Hustler | spread ×1.12 | spread ×1.12, **Hype +3%** | Spreading alone fed Regulation without helping the race |
+| Insider | 16 Hype; Regulation ×0.75 | 22 Hype; Regulation ×0.75, **Backlash ×0.9, Hype +2%** | Bans are rarer now, so a Regulation-only perk lost value; Backlash is the live danger |
+| `acquireBaseCost` pack / Frontier / Arms Race / Hard Takeoff | 550 / 600 / 700 / 850 | 690 / 750 / 875 / 1060 | Buy-outs dearer |
+| `acquirePerAgi` (Hard Takeoff) | 7 (9) | 10 (12) | The AGI leader costs more to buy than a straggler |
+| `acquireAdoptionShare` | 0.3 | 0.25 | Buy-outs snowball less |
+| `aiAgiFactor` pack (= Frontier) / Sandbox / Arms Race / Hard Takeoff | 1.18 / 1.16 / 1.31 / 1.36 | 1.13 / 1.09 / 1.24 / 1.25 | Restores each level's overall win rate after rivals gained from the safety nodes |
+| Cloud Native achievement | AGI win, 0 data centres built | AGI win, at most 1 data centre built | Could not be earned (below) |
+
+Texts: founder descriptions carry the new numbers; M&A Team, Hostile Takeovers and Bot Farm now say what they expose you to (English and Turkish). No engine rule changed; runLengths.json is untouched.
+
+### Before / after (seed 7, 300 runs per cell)
+
+Frontier, sprint / full:
+
+| Policy | Before | After |
+| --- | --- | --- |
+| sensible (mixed) | 35.0 / 31.7 | 31.3 / 33.3 |
+| capability | 24.7 / 26.3 | 26.3 / 35.0 |
+| reach | 31.0 / 32.0 | 27.7 / 35.0 |
+| shadow | 60.7 / 54.0 | 33.3 / 32.7 |
+| random | 7.3 / 1.7 | 13.7 / 5.3 |
+| idle | 0.0 / 0.0 | 0.0 / 0.0 |
+| Single-route spread (target ≤ 12) | 36.0 / 27.7 | **7.0 / 2.3** |
+| Mixed − best single (target ≥ −5) | −25.7 / −22.3 | **−2.0 / −1.7** |
+
+Frontier, sensible bot by founder, sprint / full (target: within 8):
+
+| Founder | Before | After |
+| --- | --- | --- |
+| Researcher | 47.0 / 39.0 | 28.0 / 38.0 |
+| Hustler | 21.0 / 27.0 | 34.0 / 31.0 |
+| Insider | 37.0 / 29.0 | 32.0 / 31.0 |
+| Spread | 26.0 / 12.0 | **6.0 / 7.0** |
+
+How each route plays on Frontier (after; sprint / full): shadow wins agi 20.3 / 19.7, dependence 5.0 / 8.0, monopoly 8.0 / 5.0, and loses by revolt 23.0 / 30.0 (sensible 15.3 / 18.3) with 1.42 rivals bought per run (was 1.86 / 1.76; revolt was 6.0 / 15.0). Capability wins agi 18.0 / 29.7 and is banned 9.7 / 7.0 (was 27.0 / 24.7). Reach wins dependence 20.0 / 21.3. Shadow-route top nodes: M&A Team 86.7 / 85% of shadow runs, Hostile Takeovers 77% (was 0%); Own Chips is bought in 90% of capability runs and 4% of shadow runs.
+
+Sensible bot per difficulty, sprint / full (target: within 5 of before):
+
+| Difficulty | Before | After | Change |
+| --- | --- | --- | --- |
+| Sandbox | 62.0 / 67.0 | 59.7 / 63.7 | −2.3 / −3.3 |
+| Frontier | 35.0 / 31.7 | 31.3 / 33.3 | −3.7 / +1.6 |
+| Arms Race | 17.3 / 15.0 | 12.3 / 19.0 | −5.0 / +4.0 |
+| Hard Takeoff | 6.7 / 11.0 | 5.3 / 9.3 | −1.4 / −1.7 |
+
+Sprint vs Full: every one of the 24 policy and difficulty cells is within 10 points (largest: Sandbox reach −9.3, Frontier capability −8.7, Sandbox and Frontier random +8.3). Median Frontier run: sensible 846 / 2,843 ticks (8.5 / 26.6 min at 1x with cards), as before.
+
+Endings, all policies and difficulties pooled, sprint / full:
+
+| Ending | Before | After |
+| --- | --- | --- |
+| rival-agi | 35.0 / 34.7 | 38.2 / 35.6 |
+| revolt | 8.7 / 10.4 | 18.1 / 19.8 |
+| dependence | 9.4 / 7.8 | 10.8 / 10.0 |
+| agi-aligned | 8.6 / 10.2 | 8.2 / 10.6 |
+| rival-agi-close | 7.3 / 7.7 | 8.1 / 8.3 |
+| banned | 16.4 / 16.6 | 8.0 / 7.2 |
+| banned-captured | 7.6 / 5.3 | 4.5 / 3.6 |
+| revolt-robots | 1.2 / 1.3 | 2.3 / 2.5 |
+| monopoly-hostile | 0.0 / 0.1 | 1.4 / 1.1 |
+| monopoly | 4.1 / 3.4 | 0.0 / 0.1 |
+| banned-home | 0.8 / 1.4 | 0.3 / 0.7 |
+| banned-home-defiant | 0.5 / 0.8 | 0.2 / 0.5 |
+| agi | 0.3 / 0.4 | 0.0 / 0.0 (a few runs) |
+
+On Frontier the largest single ending is 26.3 / 28.0% for the sensible bot and 24.2 / 22.8% for the four planning bots pooled (target ≤ 45%).
+
+### Against the targets
+
+| Target (Frontier, both lengths) | Result | Met |
+| --- | --- | --- |
+| Single-route bots within 12 points | spread 7.0 / 2.3 | yes |
+| Mixed ≥ best single − 5 | −2.0 / −1.7 | yes |
+| Founders (sensible) within 8 points | 6.0 / 7.0 | yes |
+| Sensible per difficulty within 5 of before | all within 5; Arms Race Sprint exactly −5.0 | yes, at the edge on Arms Race Sprint |
+| Every ending still occurs; none above 45% on Frontier | all 13 occur; largest 28.0% | yes, but `monopoly` (without Hostile Takeovers) and `agi` (without the safety team) are now a handful of runs |
+| Sprint and Full within 10 in every cell | largest 9.3 | yes |
+| Idle wins 0% | 0.0% everywhere | yes |
+
+### How each route plays now
+
+- **Capability.** Early: first model, GPU lease, safety team; data centres in cheap, quiet regions. Middle: Interpretability and Alignment keep regulators off while the models climb; the compute branch (megadeal, Own Chips) is where Cash goes and Own Chips speeds AGI. End: tier 4 to 5 and a straight AGI race, usually against one rival close behind. What goes wrong: Backlash from big models and many data centres (revolt, the robots ending), or a rival simply gets there first. Bans are rare if you take the safety branch.
+- **Reach.** Early: Chat App, social and the language nodes. Middle: oceans and strict regions open, launches get cheaper and the map lights up; Compliance and PR hold the meters. End: dependence at 43% of the world, sometimes AGI. What goes wrong: fast spread into strict regions builds Regulation (bans), and rivals that enter early box you out of the dependence path on the harder levels.
+- **Shadow.** Early: Benchmark Tuning and Staged Demos make the most Hype in the game, at a standing Backlash cost. Middle: poaching slows rivals; the M&A Team unlocks buy-outs, but antitrust scrutiny makes Regulation build 25% faster and each buy-out is expensive (the AGI leader most of all). End: Hostile Takeovers makes buy-outs cheaper and can finish a monopoly, or buying out the racers clears the way to AGI. What goes wrong: Backlash. Shadow runs end in a public revolt far more often than mixed play (30% vs 18% on Full Frontier; 23% vs 15% on Sprint); Bot Farm and Hostile Takeovers add Backlash, and regulators come for a lab that buys its rivals. Strong when it works, but it is now the route that blows up.
+- **Mixed (sensible).** Take what is cheap and useful from all three: the Hype nodes, the safety branch, the channels, poaching. It wins as often as the best single route.
+
+### Cloud Native
+
+The achievement asked for an AGI win without ever building a data centre. Without one, compute comes only from one-off sources: GPU Lease and Megadeal (15), event choices (parking lot 4, cloud credits 4, billboard 2, shell company 6, GPU shortage 10 each time, rent 3) and the chip tape-out (10, needs Own Chips, which is pointless without data centres). The probe player (plans like the sensible bot, never builds, takes every compute choice, taps every moment; rivals build as usual) peaked at compute 25 to 39 (p50), model tier 2, and reached AGI in **0 of 240 runs** (Sandbox and Frontier, Sprint and Full; it often won by dependence or monopoly instead). The condition now allows one data centre of your own ("rent the rest"); the same probe with one data centre earns it in 3 / 1 (Full Sandbox / Frontier) and 7 / 1 (Sprint) of 60 runs: rare, as a secret achievement should be.
+
+### In tension
+
+- **Monopoly is rarer.** Shadow used to win by monopoly in a quarter of runs; now 5 to 8% on Frontier. Bringing Hostile Takeovers to ×0.75 restored about 13% monopoly but pushed shadow to 40% (above sensible + 5), so the win-rate targets were favoured. The `monopoly` ending without Hostile Takeovers is now very rare because the shadow bot buys it first; `monopoly-hostile` replaced it.
+- **Revolt replaced bans as the common loss** (pooled bans 16% → 8%, revolts 9% → 19%): the capability safety nodes and the Insider make bans rarer, and Shadow's exposure is Backlash. Intended for Shadow; worth watching for everyone.
+- **Random play wins more** (Frontier 7.3 / 1.7 → 13.7 / 5.3, Sandbox 23 / 14 → 38 / 30): a button-masher stumbles into the safety branch and is banned less often. It is still far below every planning bot.
+- **Arms Race Sprint** sits exactly at the −5 line (12.3% vs 17.3%) while Arms Race Full is +4.0; one `aiAgiFactor` serves both lengths, and moving it would push Full out instead.
+- **Founders on other levels** were not a target: on Sandbox and Arms Race the Insider leads (71 to 76% and 18 to 27%), the Hustler trails. Frontier is balanced.
+- **Hype is very sensitive:** a 1% Hype perk moves a founder by several points, and Benchmark Tuning's Hype is load-bearing for every route.
+
+### Where humans will differ
+
+The bots never read a card for its story and pick risk-free choices, so the riskChance part of Shadow still bites humans more than bots. A human on Shadow will likely target the AGI leader with buy-outs (dearer now: 10 Cash per AGI point) and will feel the antitrust Regulation and the Backlash of Hostile Takeovers. A human on Capability will notice that the safety branch makes bans rare; on Reach, that strict regions still need Compliance first.
+
+---
+
+## Task 21: Sprint run length
 
 Why: a full run takes 20 to 25 minutes, long for a phone sitting, and the first session decides whether a player comes back. A **Sprint** plays the whole arc in about a third of the time and is preselected for a first-time player (no finished run stored). Presets live in `src/content/packs/ai-lab/runLengths.json` (`ContentPack.runLengths`, default `full`); the balance layers are engine defaults ← pack ← difficulty ← run length, then paced (`docs/ARCHITECTURE.md`, "Run length").
 
@@ -123,7 +274,9 @@ The tutorial lost about a third of its words (same steps; home region, Compute a
 
 ---
 
-## Task 17: difficulty levels (current numbers)
+## Task 17: difficulty levels
+
+(`aiAgiFactor` and the buy-out prices per level were changed by task 27; see above.)
 
 Why: the first full phone run was "easily won". The sensible bot won 45.6% at one fixed difficulty and a person plays better than the bot. Four levels now live in `src/content/packs/ai-lab/difficulties.json` (`ContentPack.difficulties`, default `frontier`); each is a balance override merged over the pack's `balance` (engine defaults ← pack ← level) plus a score multiplier. The "Task 12b" numbers below are the pack balance with no level, i.e. the game as it was.
 
@@ -567,7 +720,7 @@ Achievements and ending variants the bots do not earn, and why each is reachable
 | shadow-cabinet (all 12 Shadow nodes) | Not earned by bots (they win first); full-stack, the same for Capability, is earned. A long Shadow run affords all 12. |
 | monk-mode, agi-reckless, agi (default), monopoly (default) | `balance:reach` probes with the needed node priced out: 12, 33, 40 and 56 of 200 runs. |
 | broke-genius (AGI win with ≤ 5 cash) | A deliberate choice: spend down before the last AGI tick. Bots keep a cash reserve. |
-| cloud-native (AGI win, never built a data centre) | Hard on purpose. Without data centres compute comes from nodes (15), events (parking lot 4, cloud credits 4, billboard 2, export-ban shell 6, gpu-shortage 10 each time, rent 3 each time) and the chip tape-out (10): 50 to 60 reaches model tier 3 to 4, about 0.04 AGI per tick, so it needs rivals slowed or bought. The probe (no lab may build) never sees it because the bot does not pick the compute choices. |
+| cloud-native (AGI win, never built a data centre) | (Task 27: it could not be earned; now at most one data centre, see above.) Hard on purpose. Without data centres compute comes from nodes (15), events (parking lot 4, cloud credits 4, billboard 2, export-ban shell 6, gpu-shortage 10 each time, rent 3 each time) and the chip tape-out (10): 50 to 60 reaches model tier 3 to 4, about 0.04 AGI per tick, so it needs rivals slowed or bought. The probe (no lab may build) never sees it because the bot does not pick the compute choices. |
 | speedrun-to-nowhere | Now "lose within 1,500 days"; earned in 55 of the 1,800 coverage runs. |
 | Egg names | office-supplies, doors-please and the paperclips ending are earned in coverage runs with the secret names. |
 
