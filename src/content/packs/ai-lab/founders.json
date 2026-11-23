@@ -9,7 +9,7 @@
       {
         "stat": "agiRate",
         "op": "mul",
-        "value": 1.13
+        "value": 1.11
       }
     ]
   },
