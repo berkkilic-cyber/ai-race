@@ -30,7 +30,7 @@ export default function RootLayout() {
     <GestureHandlerRootView style={styles.root}>
       <StatusBar style={isDark ? 'light' : 'dark'} />
       <InsetsEmulator>
-        <ErrorBoundary>{ready ? <Stack screenLayout={localeScreenLayout} screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }} /> : null}</ErrorBoundary>
+        <ErrorBoundary>{ready ? <Stack screenLayout={localeScreenLayout} screenOptions={{ headerShown: false, gestureEnabled: false, contentStyle: { backgroundColor: colors.bg } }} /> : null}</ErrorBoundary>
         <AnalyticsRoot />
       </InsetsEmulator>
     </GestureHandlerRootView>
