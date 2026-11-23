@@ -8,7 +8,19 @@
  *   npm run balance:reach -- [--runs 200]
  */
 import { aiLabPack } from '@/content';
-import { runHeadless, type ContentPack, type GameState } from '@/engine';
+import {
+  applyAction,
+  chooseAiActions,
+  chooseEventChoice,
+  createGame,
+  getCompute,
+  getCapabilityLevel,
+  getMoments,
+  runHeadless,
+  step,
+  type ContentPack,
+  type GameState,
+} from '@/engine';
 
 import { FOUNDERS, HOME_REGIONS } from './jobs';
 
@@ -39,9 +51,75 @@ const PROBES: Probe[] = [
   },
 ];
 
+/**
+ * Cloud Native with the real pack (rivals build as usual): the player plans like the sensible
+ * bot but never builds or upgrades a data centre, takes an event choice that gives compute
+ * whenever one is offered and affordable, and taps every moment. A determined human, not a bot.
+ */
+function cloudNativeRun(pack: ContentPack, seed: number, founderId: string, homeRegion: string, difficulty: string, runLength?: string): { state: GameState; peakCompute: number; peakTier: number } {
+  let state = createGame(pack, { playerName: 'Probe Lab', founderId, homeRegion, seed, difficulty, ...(runLength ? { runLength } : {}) });
+  const me = state.playerLabId;
+  let peakCompute = 0;
+  let peakTier = 0;
+  const apply = (action: Parameters<typeof applyAction>[2]): void => {
+    const result = applyAction(state, pack, action);
+    if (result.ok) state = result.state;
+  };
+  while (state.status === 'running' && state.tick < 8000) {
+    if (state.pendingEvent) {
+      const event = pack.events.find((e) => e.id === state.pendingEvent?.eventId);
+      const lab = state.labs[me];
+      const computeChoice = event?.choices.find(
+        (c) => c.effects.some((e) => e.type === 'compute' && e.amount > 0) && (c.cost?.cash ?? 0) <= lab.cash && (c.cost?.hype ?? 0) <= lab.hype,
+      );
+      const choiceId = computeChoice?.id ?? chooseEventChoice(state, pack, me);
+      if (choiceId !== undefined) apply({ type: 'resolveEvent', labId: me, choiceId });
+      if (state.pendingEvent) break;
+    }
+    for (const moment of getMoments(state, me)) apply({ type: 'collectMoment', labId: me, uid: moment.uid });
+    if (state.tick % 10 === 0) {
+      for (const action of chooseAiActions(state, pack, me)) {
+        if (action.type === 'buildDataCentre' || action.type === 'upgradeDataCentre') continue;
+        apply(action);
+      }
+    }
+    state = step(state, pack);
+    if (state.tick % 20 === 0) {
+      peakCompute = Math.max(peakCompute, getCompute(state, pack, me));
+      peakTier = Math.max(peakTier, getCapabilityLevel(state, pack, me));
+    }
+  }
+  return { state, peakCompute, peakTier };
+}
+
 const args = process.argv.slice(2);
 const runsArg = args.indexOf('--runs');
 const runs = runsArg >= 0 ? Number(args[runsArg + 1]) : 200;
+
+const only = args.includes('--cloud-native');
+for (const runLength of ['full', 'sprint']) {
+  for (const difficulty of ['sandbox', 'frontier']) {
+    const pack = aiLabPack;
+    let hits = 0;
+    let agiWins = 0;
+    const computes: number[] = [];
+    const tiers: number[] = [];
+    const n = Math.min(runs, 60);
+    for (let i = 0; i < n; i++) {
+      const { state, peakCompute, peakTier } = cloudNativeRun(pack, 70_000 + i, FOUNDERS[i % FOUNDERS.length], HOME_REGIONS[Math.floor(i / FOUNDERS.length) % HOME_REGIONS.length], difficulty, runLength);
+      if (state.achievements.includes('cloud-native')) hits++;
+      if (state.ending?.trigger === 'agi') agiWins++;
+      computes.push(peakCompute);
+      tiers.push(peakTier);
+    }
+    computes.sort((a, b) => a - b);
+    tiers.sort((a, b) => a - b);
+    console.log(
+      `cloud-native, real pack, no data centres (${runLength}, ${difficulty}): ${hits} of ${n} runs earned it; AGI wins ${agiWins}; peak compute p50 ${computes[n >> 1].toFixed(0)} max ${computes[n - 1].toFixed(0)}; peak tier p50 ${tiers[n >> 1]} max ${tiers[n - 1]}`,
+    );
+  }
+}
+if (only) process.exit(0);
 
 for (const probe of PROBES) {
   let hits = 0;

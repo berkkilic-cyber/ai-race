@@ -100,8 +100,31 @@ export let PACK: ContentPack = aiLabPack;
  * Balance overrides on top of the pack's own (for quick sweeps: --balance '{"key":1}'), and
  * optionally a replacement moment list (--moments file.json) to try moment changes side by side.
  */
-export function setBalanceOverrides(overrides: Record<string, unknown>, moments?: ContentPack['moments']): void {
+export function setBalanceOverrides(overrides: Record<string, unknown>, moments?: ContentPack['moments'], patch?: PackPatch): void {
   PACK = { ...aiLabPack, balance: { ...aiLabPack.balance, ...overrides }, ...(moments ? { moments } : {}) };
+  if (patch) PACK = applyPackPatch(PACK, patch);
+}
+
+/**
+ * A what-if change to the pack for diagnosis sweeps (--patch file.json): fields replaced per
+ * node or founder id (e.g. {"nodes": {"shadow-benchmarks": {"modifiers": []}}}), and difficulty
+ * balance overrides merged per level id.
+ */
+export interface PackPatch {
+  nodes?: Record<string, Partial<ContentPack['nodes'][number]>>;
+  founders?: Record<string, Partial<ContentPack['founders'][number]>>;
+  difficulties?: Record<string, Record<string, unknown>>;
+}
+
+export function applyPackPatch(pack: ContentPack, patch: PackPatch): ContentPack {
+  return {
+    ...pack,
+    nodes: pack.nodes.map((n) => ({ ...n, ...(patch.nodes?.[n.id] ?? {}) })),
+    founders: pack.founders.map((f) => ({ ...f, ...(patch.founders?.[f.id] ?? {}) })),
+    ...(pack.difficulties
+      ? { difficulties: pack.difficulties.map((d) => ({ ...d, balance: { ...d.balance, ...(patch.difficulties?.[d.id] ?? {}) } })) }
+      : {}),
+  };
 }
 const MAX_TICKS = 8000;
 

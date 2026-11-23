@@ -11,6 +11,7 @@
  *                      [--runLength sprint|a,b|all]   (default: the pack's default run length;
  *                                                      with several, adds a table comparing them)
  *                      [--brief]                      (summary tables only, no per-policy detail)
+ *                      [--patch file.json]            (what-if node / founder / difficulty changes, see PackPatch)
  *                      [--routes]                     (routes and founders: per-founder win rates, top
  *                                                      nodes bought, risks fired, target checks)
  *
@@ -26,7 +27,7 @@ import type { BotPolicy, ContentPack } from '@/engine';
 import { coverageReport } from './coverage';
 import { FOUNDERS, HOME_REGIONS } from './jobs';
 import { difficultyTable, policyReport, routeReport, runLengthTables, summaryTable } from './report';
-import { PACK, setBalanceOverrides, simulate, type Job, type RunRecord } from './simulate';
+import { PACK, setBalanceOverrides, simulate, type Job, type PackPatch, type RunRecord } from './simulate';
 
 const ALL_POLICIES: BotPolicy[] = ['sensible', 'capability', 'reach', 'shadow', 'random', 'idle'];
 
@@ -50,6 +51,8 @@ interface Options {
   brief: boolean;
   /** Add the routes and founders report. */
   routes: boolean;
+  /** What-if pack changes for diagnosis sweeps. */
+  patch?: PackPatch;
 }
 
 function parseArgs(argv: string[]): Options {
@@ -75,6 +78,7 @@ function parseArgs(argv: string[]): Options {
       for (const id of options.runLengths) if (!(PACK.runLengths ?? []).some((r) => r.id === id)) throw new Error(`Unknown run length ${id}`);
     } else if (arg === '--brief') options.brief = true;
     else if (arg === '--routes') options.routes = true;
+    else if (arg === '--patch') options.patch = JSON.parse(readFileSync(next(), 'utf8')) as PackPatch;
     else if (arg === '--moments') options.moments = JSON.parse(readFileSync(next(), 'utf8')) as ContentPack['moments'];
     else throw new Error(`Unknown argument ${arg}`);
   }
@@ -108,7 +112,7 @@ export function jobsFor(policy: BotPolicy, runs: number, seed: number, coverage:
   return jobs;
 }
 
-function runInWorkers(jobs: Job[], workers: number, balance: Record<string, unknown>, moments?: ContentPack['moments']): Promise<RunRecord[]> {
+function runInWorkers(jobs: Job[], workers: number, balance: Record<string, unknown>, moments?: ContentPack['moments'], patch?: PackPatch): Promise<RunRecord[]> {
   const results: RunRecord[] = new Array(jobs.length);
   if (workers <= 1) {
     jobs.forEach((job, i) => (results[i] = simulate(job)));
@@ -126,7 +130,7 @@ function runInWorkers(jobs: Job[], workers: number, balance: Record<string, unkn
       worker.postMessage({ index, job: jobs[index] });
     };
     for (let w = 0; w < Math.min(workers, jobs.length); w++) {
-      const worker = new Worker(new URL(import.meta.url), { workerData: { worker: true, balance, moments } });
+      const worker = new Worker(new URL(import.meta.url), { workerData: { worker: true, balance, moments, patch } });
       worker.on('message', (msg: { index: number; record: RunRecord }) => {
         results[msg.index] = msg.record;
         done++;
@@ -150,8 +154,8 @@ async function main(): Promise<void> {
       options.policies.flatMap((p) => skills.flatMap((skill) => jobsFor(p, options.runs, options.seed, options.coverage, skill, level, length))),
     ),
   );
-  setBalanceOverrides(options.balance, options.moments);
-  const records = await runInWorkers(jobs, options.workers, options.balance, options.moments);
+  setBalanceOverrides(options.balance, options.moments, options.patch);
+  const records = await runInWorkers(jobs, options.workers, options.balance, options.moments, options.patch);
   const seconds = (performance.now() - start) / 1000;
   const byPolicy = new Map<string, RunRecord[]>();
   const multiLevel = levels.length > 1;
@@ -168,6 +172,7 @@ async function main(): Promise<void> {
   );
   if (Object.keys(options.balance).length > 0) out.push(`\nBalance overrides: \`${JSON.stringify(options.balance)}\``);
   if (options.moments) out.push(`\nMoments replaced (${options.moments.length} from --moments).`);
+  if (options.patch) out.push(`\nPack patch: \`${JSON.stringify(options.patch)}\``);
   out.push(`\nRun length: ${lengths.map((l) => l ?? `${PACK.defaultRunLength ?? 'none'} (pack default)`).join(', ')}.`);
   out.push(`\nDifficulty: ${levels.map((l) => l ?? `${PACK.defaultDifficulty ?? 'none'} (pack default)`).join(', ')}.`);
   out.push('');
@@ -207,7 +212,7 @@ if (isMainThread) {
     process.exit(1);
   });
 } else if (workerData?.worker) {
-  setBalanceOverrides(workerData.balance as Record<string, unknown>, workerData.moments as ContentPack['moments'] | undefined);
+  setBalanceOverrides(workerData.balance as Record<string, unknown>, workerData.moments as ContentPack['moments'] | undefined, workerData.patch as PackPatch | undefined);
   parentPort?.on('message', (msg: { index: number; job: Job }) => {
     parentPort?.postMessage({ index: msg.index, record: simulate(msg.job) });
   });
