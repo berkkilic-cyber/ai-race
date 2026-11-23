@@ -1,7 +1,8 @@
 import { createGame, type GameState, type NewsItem } from '@/engine';
 
 import { getPackEntry } from '../../packs';
-import { endStats, isAboutLab, pickNotableHeadlines, playAgainSetup } from '../logic';
+import { closeCall, closeCallText, endStats, isAboutLab, pickNotableHeadlines, playAgainSetup, rematchSetup } from '../logic';
+import { setI18nContext } from '../../i18n';
 
 const { pack } = getPackEntry();
 const SETUP = { playerName: 'Moon Lab', founderId: 'hustler', homeRegion: 'canada', seed: 42 };
@@ -71,5 +72,76 @@ describe('endStats', () => {
     expect(stats).toMatchObject({ days: 100, nodesBought: 4, dataCentresBuilt: 2, eventsResolved: 7, peakWorldShare: 0.12 });
     expect(stats.users).toBeGreaterThan(0);
     expect(stats.meters).toEqual(expect.objectContaining({ regulation: expect.any(Number), backlash: expect.any(Number), rival: expect.any(Number) }));
+  });
+});
+
+describe('close call and rematch', () => {
+  const ended = (edit: (s: GameState) => void, kind: 'win' | 'lose'): GameState => {
+    const s = JSON.parse(JSON.stringify(createGame(pack, { ...SETUP, runLength: 'sprint' }))) as GameState;
+    s.status = 'ended';
+    s.ending = { endingId: kind === 'win' ? 'agi-aligned' : 'banned', kind, trigger: kind === 'win' ? 'agi' : 'banned', tick: 10, score: 1 };
+    for (const id of s.labOrder) if (id !== s.playerLabId) s.labs[id].active = true;
+    edit(s);
+    setI18nContext(pack, s.labs);
+    return s;
+  };
+
+  it('a win reports the nearest threat: a rival’s AGI or the highest meter', () => {
+    const byRival = ended((s) => {
+      s.labs.player.agiProgress = 100;
+      const rival = s.labOrder[1];
+      s.labs[rival].agiProgress = 92;
+      s.labs.player.backlash = 40;
+    }, 'win');
+    const call = closeCall(byRival, pack);
+    expect(call).toMatchObject({ kind: 'win', threat: { type: 'rivalAgi', labId: byRival.labOrder[1] }, near: true });
+    expect(call.value).toBeCloseTo(0.92);
+    expect(closeCallText(call)).toMatch(/^Close call: .*92%\.$/);
+
+    const byMeter = ended((s) => {
+      s.labs.player.backlash = 61;
+      s.labs.player.regulation = 20;
+    }, 'win');
+    const meterCall = closeCall(byMeter, pack);
+    expect(meterCall).toMatchObject({ kind: 'win', threat: { type: 'meter', meter: 'backlash' }, near: false });
+    expect(closeCallText(meterCall)).toMatch(/^Comfortable: .*61%\.$/);
+  });
+
+  it('a loss reports the best win condition', () => {
+    const lost = ended((s) => {
+      s.labs.player.agiProgress = 85;
+    }, 'lose');
+    const call = closeCall(lost, pack);
+    expect(call).toMatchObject({ kind: 'lose', goal: 'agi', near: true });
+    expect(closeCallText(call)).toBe('So close: you were 85% of the way to AGI.');
+    const far = ended((s) => {
+      s.labs.player.agiProgress = 12;
+      const rival = s.labOrder[1];
+      s.labs[rival].eliminated = { reason: 'acquired', tick: 5, byLabId: 'player' };
+      s.labs[rival].active = false;
+    }, 'lose');
+    const farCall = closeCall(far, pack);
+    expect(farCall).toMatchObject({ kind: 'lose', goal: 'monopoly', near: false });
+    expect(closeCallText(farCall)).toMatch(/^You got 25% of the way to a monopoly\.$/);
+  });
+
+  it('never rounds a near miss up to 100%', () => {
+    const s = ended((x) => {
+      x.labs.player.agiProgress = 100;
+      x.labs[x.labOrder[1]].agiProgress = 99.6;
+    }, 'win');
+    expect(closeCallText(closeCall(s, pack))).toMatch(/99%\.$/);
+  });
+
+  it('never reports NaN', () => {
+    const s = ended((x) => (x.labs.player.agiProgress = Number.NaN), 'lose');
+    expect(Number.isFinite(closeCall(s, pack).value)).toBe(true);
+  });
+
+  it('rematch keeps the seed and the whole setup; play again keeps the run length', () => {
+    const s = ended(() => undefined, 'lose');
+    expect(rematchSetup(s)).toMatchObject({ seed: 42, playerName: 'Moon Lab', founderId: 'hustler', homeRegion: 'canada', runLength: 'sprint', packId: pack.id });
+    expect(createGame(pack, { ...rematchSetup(s), seed: rematchSetup(s).seed ?? -1 })).toEqual(createGame(pack, { ...SETUP, runLength: 'sprint' }));
+    expect(playAgainSetup(s, () => 0.5)).toMatchObject({ runLength: 'sprint' });
   });
 });

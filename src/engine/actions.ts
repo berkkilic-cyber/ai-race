@@ -218,11 +218,11 @@ export function applyActionInPlace(state: GameState, context: EngineContext, act
 }
 
 export function canApply(state: GameState, pack: ContentPack, action: Action): ActionCheck {
-  return checkAction(state, getContext(pack, state.difficulty), action);
+  return checkAction(state, getContext(pack, state.difficulty, state.runLength), action);
 }
 
 export function applyAction(state: GameState, pack: ContentPack, action: Action): ActionResult {
-  const context = getContext(pack, state.difficulty);
+  const context = getContext(pack, state.difficulty, state.runLength);
   const check = checkAction(state, context, action);
   if (!check.ok) return check;
   const draft = cloneState(state);

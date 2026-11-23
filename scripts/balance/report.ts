@@ -239,3 +239,75 @@ export function difficultyTable(records: RunRecord[], levels: string[], defaultL
     rows,
   );
 }
+
+/** Ticks per second at 1x in the app (src/ui/hooks/useGameLoop.ts BASE_TICK_MS = 500). */
+export const TICKS_PER_SECOND = 2;
+/** Seconds a person spends on an event card (the clock stops while it is up); an estimate for real time. */
+export const CARD_SECONDS = 8;
+
+/** Real minutes of a run at 1x: its ticks, plus the time its event cards hold the clock. */
+export function realMinutes(r: RunRecord, withCards: boolean): number {
+  return (r.ticks / TICKS_PER_SECOND + (withCards ? r.eventsResolved * CARD_SECONDS : 0)) / 60;
+}
+
+/**
+ * Run lengths side by side (the first is compared against the last, e.g. sprint vs full):
+ * per difficulty and policy the win rates and their gap, median real minutes at 1x, event
+ * cards, moments and rival model launches per run; then every ending's frequency per length
+ * (all runs pooled) with the ratio, flagged under a third.
+ */
+export function runLengthTables(records: RunRecord[], lengths: string[], defaultLevel: string): string {
+  const [short, long] = [lengths[0], lengths[lengths.length - 1]];
+  const levels = [...new Set(records.map((r) => r.job.difficulty ?? defaultLevel))];
+  const policies = [...new Set(records.map((r) => r.job.policy))];
+  const winRate = (runs: RunRecord[]) => (runs.length === 0 ? 0 : runs.filter((r) => r.kind === 'win').length / runs.length);
+  const rows: string[][] = [];
+  for (const level of levels) {
+    for (const policy of policies) {
+      const of = (length: string) => records.filter((r) => r.job.runLength === length && (r.job.difficulty ?? defaultLevel) === level && r.job.policy === policy);
+      const a = of(short);
+      const b = of(long);
+      if (a.length === 0 || b.length === 0) continue;
+      const gap = (winRate(a) - winRate(b)) * 100;
+      const med = (runs: RunRecord[], f: (r: RunRecord) => number, d = 0) => fmt(median(runs.map(f)), d);
+      rows.push([
+        level,
+        policy,
+        String(a.length),
+        pct(a.filter((r) => r.kind === 'win').length, a.length),
+        pct(b.filter((r) => r.kind === 'win').length, b.length),
+        `${gap >= 0 ? '+' : ''}${gap.toFixed(1)}${Math.abs(gap) > 10 ? ' (!)' : ''}`,
+        `${med(a, (r) => realMinutes(r, false), 1)} / ${med(a, (r) => realMinutes(r, true), 1)}`,
+        `${med(b, (r) => realMinutes(r, false), 1)} / ${med(b, (r) => realMinutes(r, true), 1)}`,
+        `${med(a, (r) => r.eventsResolved)} / ${med(b, (r) => r.eventsResolved)}`,
+        `${med(a, (r) => r.momentsCollected + r.momentsMissed)} / ${med(b, (r) => r.momentsCollected + r.momentsMissed)}`,
+        `${med(a, (r) => r.launches.rivals)} / ${med(b, (r) => r.launches.rivals)}`,
+      ]);
+    }
+  }
+  const out: string[] = [];
+  out.push(`${short} vs ${long}. Minutes at 1x: ticks only / with ${CARD_SECONDS} s per event card.\n`);
+  out.push(
+    table(
+      ['Difficulty', 'Policy', 'Runs', `${short} win`, `${long} win`, 'Gap pp', `${short} min p50`, `${long} min p50`, 'Cards', 'Moments', 'Rival launches'],
+      rows,
+    ),
+  );
+  // Endings: every ending id seen in the long runs, frequency per length.
+  const endingRows: string[][] = [];
+  const shortRuns = records.filter((r) => r.job.runLength === short);
+  const longRuns = records.filter((r) => r.job.runLength === long);
+  const longCounts = countBy(longRuns, (r) => r.endingId ?? 'none');
+  const shortCounts = countBy(shortRuns, (r) => r.endingId ?? 'none');
+  for (const [id, n] of [...longCounts.entries()].sort((x, y) => y[1] - x[1])) {
+    const fl = n / longRuns.length;
+    const fs = (shortCounts.get(id) ?? 0) / Math.max(1, shortRuns.length);
+    const ratio = fl === 0 ? 0 : fs / fl;
+    endingRows.push([id, pct(shortCounts.get(id) ?? 0, shortRuns.length), pct(n, longRuns.length), `${ratio.toFixed(2)}${ratio < 1 / 3 ? ' (!)' : ''}`]);
+  }
+  for (const [id, n] of shortCounts) if (!longCounts.has(id)) endingRows.push([id, pct(n, shortRuns.length), '0.0%', 'new']);
+  out.push('');
+  out.push(`Endings, all policies and difficulties pooled (${shortRuns.length} ${short} and ${longRuns.length} ${long} runs):\n`);
+  out.push(table(['Ending', short, long, 'Ratio'], endingRows));
+  return out.join('\n');
+}

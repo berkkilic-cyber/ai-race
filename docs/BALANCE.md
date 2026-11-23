@@ -1,5 +1,128 @@
 # Balance
 
+## Task 21: Sprint run length (current numbers)
+
+Why: a full run takes 20 to 25 minutes, long for a phone sitting, and the first session decides whether a player comes back. A **Sprint** plays the whole arc in about a third of the time and is preselected for a first-time player (no finished run stored). Presets live in `src/content/packs/ai-lab/runLengths.json` (`ContentPack.runLengths`, default `full`); the balance layers are engine defaults ← pack ← difficulty ← run length, then paced (`docs/ARCHITECTURE.md`, "Run length").
+
+### How a Sprint is made
+
+Scale rates, not the clock: `pace` 3.4 multiplies every per-tick rate and divides every tick count, effect duration, rival entry tick and tick condition, so spread, income, AGI, meters, bans, rival entries and AI decisions all happen 3.4 times as fast per tick and every ratio between them is the Full game's. Moments stay in real time (a person taps them). On top of pace, a few Sprint-only levers, chosen among those no difficulty sets (a run-length override replaces a difficulty's value, so a lever a difficulty uses would erase the difference between levels):
+
+| Lever (Full value) | Sprint | Why |
+| --- | --- | --- |
+| `pace` (1) | 3.4 | 1x real time: about 850 ticks instead of 2,800. At 3.4 the AI decides every 3 ticks (10.2 standard ticks), the closest to Full's 10. |
+| `eventIntervalMin` / `Max` (100 / 160, paced) | 220 / 340 | Paced alone a card would come every 15 to 23 s of play and the cards would hold the clock for a third of the run; now one every 32 to 50 s, about 10 per Sprint (Full: 21, every 50 to 80 s). |
+| `headlineIntervalMin` / `Max` (25 / 50) | 50 / 100 | A ticker headline every 7 to 15 s (paced alone: every 4 to 7 s; Full: 12 to 25 s). |
+| `regulationDecay` / `backlashDecay` (0.01) | 0.014 / 0.013 | Fewer cards means less meter relief (cards are where bots and players calm the meters). |
+| `momentBoostWeightFactor` (1) | 1.6 | A Sprint has a third as many moments (real time); more of them are boosts. Threat weights stay with the difficulty. |
+| `rivalStartHype` / `rivalStartCash` (15 / 100) | 12 / 85 | Rivals' flat start is relatively larger in a short run. |
+| `aiMeterGainFactor` (0.6) | 0.71 | Rivals get no cards either way; in a Sprint the player gets fewer, so rivals feel their meters a little sooner (they turn cautious and slow down). |
+| Score multiplier | ×0.6 | A third of the time; the score's speed bonus is paced, so raw Sprint and Full scores are comparable before the multiplier. |
+
+Real time at 1x: 2 ticks a second (`BASE_TICK_MS` 500) while no card is up; cards are estimated at 8 s each.
+
+### Sprint vs Full (seed 7, 300 runs per policy, difficulty and length, never used for tuning)
+
+Tuning used seed 1 and seed 7 at 150 to 300 runs per step. Command: `npm run balance -- --runs 300 --difficulty all --runLength sprint,full --brief --seed 7` (14,400 runs, 13.5 min on 2 workers).
+
+| Difficulty   | Policy     | Runs | sprint win | full win | Gap pp | sprint min p50 | full min p50 | Cards   | Moments | Rival launches |
+| ------------ | ---------- | ---- | ---------- | -------- | ------ | -------------- | ------------ | ------- | ------- | -------------- |
+| sandbox      | sensible   | 300  | 62.0%      | 67.0%    | -5.0   | 6.7 / 8.0      | 22.9 / 25.8  | 10 / 21 | 18 / 67 | 16 / 16        |
+| sandbox      | capability | 300  | 53.0%      | 56.3%    | -3.3   | 6.8 / 8.1      | 22.4 / 25.1  | 10 / 21 | 19 / 66 | 16 / 16        |
+| sandbox      | reach      | 300  | 73.3%      | 70.3%    | +3.0   | 4.4 / 5.3      | 14.7 / 16.7  | 7 / 14  | 12 / 44 | 13 / 14        |
+| sandbox      | shadow     | 300  | 80.3%      | 81.7%    | -1.3   | 6.0 / 7.2      | 19.8 / 22.2  | 9 / 18  | 15 / 54 | 15 / 14        |
+| sandbox      | random     | 300  | 23.3%      | 14.0%    | +9.3   | 4.3 / 5.2      | 14.6 / 16.4  | 7 / 13  | 11 / 41 | 13 / 13        |
+| sandbox      | idle       | 300  | 0.0%       | 0.0%     | +0.0   | 7.9 / 9.5      | 27.3 / 30.7  | 12 / 25 | 18 / 65 | 17 / 17        |
+| frontier     | sensible   | 300  | 35.0%      | 31.7%    | +3.3   | 7.1 / 8.5      | 24.0 / 26.9  | 10 / 22 | 19 / 65 | 16 / 16        |
+| frontier     | capability | 300  | 24.7%      | 26.3%    | -1.7   | 6.9 / 8.3      | 23.0 / 25.9  | 10 / 21 | 18 / 65 | 16 / 16        |
+| frontier     | reach      | 300  | 31.0%      | 32.0%    | -1.0   | 6.4 / 7.7      | 21.5 / 24.1  | 10 / 20 | 18 / 63 | 16 / 16        |
+| frontier     | shadow     | 300  | 60.7%      | 54.0%    | +6.7   | 6.3 / 7.5      | 21.6 / 24.3  | 9 / 20  | 16 / 60 | 16 / 16        |
+| frontier     | random     | 300  | 7.3%       | 1.7%     | +5.7   | 4.4 / 5.3      | 14.3 / 16.1  | 7 / 13  | 11 / 39 | 14 / 14        |
+| frontier     | idle       | 300  | 0.0%       | 0.0%     | +0.0   | 7.7 / 9.3      | 26.4 / 29.6  | 11 / 24 | 18 / 63 | 17 / 17        |
+| arms-race    | sensible   | 300  | 17.3%      | 15.0%    | +2.3   | 7.0 / 8.4      | 23.6 / 26.6  | 10 / 22 | 18 / 63 | 16 / 16        |
+| arms-race    | capability | 300  | 11.0%      | 12.0%    | -1.0   | 6.7 / 8.1      | 22.6 / 25.3  | 10 / 21 | 17 / 60 | 16 / 16        |
+| arms-race    | reach      | 300  | 12.3%      | 14.0%    | -1.7   | 6.6 / 7.9      | 20.9 / 23.6  | 10 / 20 | 18 / 60 | 16 / 16        |
+| arms-race    | shadow     | 300  | 25.0%      | 23.0%    | +2.0   | 6.7 / 8.0      | 22.7 / 25.3  | 10 / 21 | 17 / 60 | 16 / 16        |
+| arms-race    | random     | 300  | 2.3%       | 1.3%     | +1.0   | 4.7 / 5.6      | 14.9 / 16.8  | 7 / 14  | 12 / 40 | 15 / 14        |
+| arms-race    | idle       | 300  | 0.0%       | 0.0%     | +0.0   | 7.4 / 8.8      | 23.9 / 26.9  | 11 / 22 | 17 / 57 | 17 / 16        |
+| hard-takeoff | sensible   | 300  | 6.7%       | 11.0%    | -4.3   | 6.7 / 8.1      | 22.5 / 25.2  | 10 / 21 | 17 / 58 | 16 / 16        |
+| hard-takeoff | capability | 300  | 3.7%       | 7.0%     | -3.3   | 6.5 / 7.7      | 22.2 / 25.0  | 10 / 20 | 16 / 57 | 16 / 16        |
+| hard-takeoff | reach      | 300  | 2.7%       | 3.0%     | -0.3   | 6.5 / 7.8      | 20.5 / 23.2  | 10 / 19 | 17 / 56 | 16 / 16        |
+| hard-takeoff | shadow     | 300  | 8.3%       | 3.7%     | +4.7   | 6.5 / 7.8      | 22.4 / 25.2  | 10 / 20 | 16 / 57 | 16 / 16        |
+| hard-takeoff | random     | 300  | 1.0%       | 0.3%     | +0.7   | 4.6 / 5.6      | 15.1 / 16.9  | 7 / 14  | 12 / 40 | 15 / 15        |
+| hard-takeoff | idle       | 300  | 0.0%       | 0.0%     | +0.0   | 6.9 / 8.2      | 23.0 / 25.8  | 10 / 21 | 16 / 55 | 17 / 16        |
+
+Endings, all policies and difficulties pooled (7,200 runs per length):
+
+| Ending              | sprint | full  | Ratio |
+| ------------------- | ------ | ----- | ----- |
+| rival-agi           | 35.0%  | 34.7% | 1.01  |
+| banned              | 16.4%  | 16.6% | 0.99  |
+| revolt              | 8.7%   | 10.4% | 0.84  |
+| agi-aligned         | 8.6%   | 10.2% | 0.85  |
+| dependence          | 9.4%   | 7.8%  | 1.21  |
+| rival-agi-close     | 7.3%   | 7.7%  | 0.96  |
+| banned-captured     | 7.6%   | 5.3%  | 1.43  |
+| monopoly            | 4.1%   | 3.4%  | 1.21  |
+| banned-home         | 0.8%   | 1.4%  | 0.55  |
+| revolt-robots       | 1.2%   | 1.3%  | 0.92  |
+| banned-home-defiant | 0.5%   | 0.8%  | 0.64  |
+| agi                 | 0.3%   | 0.4%  | 0.80  |
+| monopoly-hostile    | 0.0%   | 0.1%  | 0.33  |
+
+Sprint by difficulty:
+
+| Difficulty   | Sensible win | Sensible ticks p50 | Best focused | capability agi | reach dependence | shadow monopoly | Random win | Idle win | Endings (sensible) | Weakest founder  | Weakest home   |
+| ------------ | ------------ | ------------------ | ------------ | -------------- | ---------------- | --------------- | ---------- | -------- | ------------------ | ---------------- | -------------- |
+| sandbox      | 62.0%        | 802                | shadow 80.3% | 29.3%          | 59.7%            | 45.3%           | 23.3%      | 0.0%     | 6/6                | hustler 56.0%    | china 50.0%    |
+| frontier     | 35.0%        | 848                | shadow 60.7% | 19.3%          | 19.0%            | 31.0%           | 7.3%       | 0.0%     | 6/6                | hustler 21.0%    | india 20.8%    |
+| arms-race    | 17.3%        | 841                | shadow 25.0% | 10.3%          | 6.7%             | 11.0%           | 2.3%       | 0.0%     | 5/6                | hustler 8.0%     | china 0.0% (!) |
+| hard-takeoff | 6.7%         | 808                | shadow 8.3%  | 3.7%           | 0.3%             | 0.0%            | 1.0%       | 0.0%     | 4/6                | insider 2.0% (!) | japan 0.0% (!) |
+
+Full by difficulty (same seeds):
+
+| Difficulty   | Sensible win | Sensible ticks p50 | Best focused    | capability agi | reach dependence | shadow monopoly | Random win | Idle win | Endings (sensible) | Weakest founder  | Weakest home     |
+| ------------ | ------------ | ------------------ | --------------- | -------------- | ---------------- | --------------- | ---------- | -------- | ------------------ | ---------------- | ---------------- |
+| sandbox      | 67.0%        | 2754               | shadow 81.7%    | 32.7%          | 54.7%            | 38.3%           | 14.0%      | 0.0%     | 6/6                | hustler 55.0%    | japan 50.0%      |
+| frontier     | 31.7%        | 2880               | shadow 54.0%    | 25.0%          | 15.3%            | 24.0%           | 1.7%       | 0.0%     | 6/6                | hustler 27.0%    | china 8.3%       |
+| arms-race    | 15.0%        | 2835               | shadow 23.0%    | 12.0%          | 8.7%             | 5.0%            | 1.3%       | 0.0%     | 5/6                | hustler 2.0% (!) | usa 0.0% (!)     |
+| hard-takeoff | 11.0%        | 2697               | capability 7.0% | 7.0%           | 0.3%             | 0.0%            | 0.3%       | 0.0%     | 5/6                | insider 2.0% (!) | nordics 0.0% (!) |
+
+### Against the targets
+
+| Target | Result | Met |
+| --- | --- | --- |
+| Median Sprint run 8 to 10 min at 1x, sensible, default difficulty | Frontier 8.5 min with cards (7.1 min of ticks alone, 848 ticks, 10 cards); every good policy and level 7.5 to 8.5 min with cards | yes with card time; ticks alone are a little under 8 |
+| Win rate per policy and difficulty within 10 pp of Full | all 24 cells; largest gaps Sandbox random +9.3, Frontier shadow +6.7, Sandbox sensible −5.0, Hard Takeoff sensible −4.3 | yes |
+| No ending below a third of its Full frequency | lowest ratios: `monopoly-hostile` 0.33 (3 Sprint runs vs 9 Full runs of 7,200), `banned-home` 0.55, `banned-home-defiant` 0.64 | yes, `monopoly-hostile` exactly at the line (very rare in both) |
+| All three routes viable | capability agi / reach dependence / shadow monopoly on Frontier: Sprint 19.3% / 19.0% / 31.0%, Full 25.0% / 15.3% / 24.0% | yes |
+| Events, rival pressure and moments still land | about 10 cards, 16 rival model launches (Full 16) and 16 to 19 moments per Sprint | yes |
+| Idle never wins | 0.0% everywhere | yes |
+
+### First session (fresh install: Sprint on Sandbox, the tutorial on)
+
+`scripts/balance/firstSession.ts` drives the real tutorial state machine against the engine on a simulated clock: a caption takes 0.8 s + 4.5 words a second to read, then 0.7 s for its tap; the game runs at 2 ticks a second whenever the tutorial does not pause it; a card takes 8 s; after the tutorial the player plays like the sensible bot. 200 seeds, founders and homes rotating:
+
+| Milestone | Target | p50 (p10 to p90) |
+| --- | --- | --- |
+| First purchase (the first model) | ≤ 30 s | 20 s |
+| First data centre | | 30 s |
+| First model launch (tier 1 running) | ≤ 60 s | 43 s |
+| First paid region launch (the bot's own choice; the tutorial does not prompt it) | | 283 s (71 to 388) |
+| Tutorial finished | ≤ 3 min | 68 s |
+| Ending | 8 to 10 min | 9.3 min (5.9 to 10.3); Frontier 9.6 |
+
+The tutorial lost about a third of its words (same steps; home region, Compute and the meters still explained) and its last line now says how to win.
+
+### In tension
+
+- **Card time is an estimate.** Real minutes depend on how long a person reads a card (8 s assumed). At 15 s a card the Frontier median would be about 9.7 min.
+- **Hard Takeoff Sprint sees 4 of 6 endings for the sensible bot** (Full 5 of 6); pooled across policies every ending occurs.
+- **Random gains most from the Sprint** (+9.3 on Sandbox): extra meter decay keeps a button-masher alive longer. Bots that plan are within ±7.
+- **Sprint-only levers are global.** A run-length override replaces a difficulty's value rather than scaling it, so levers the difficulties use (`aiAgiFactor`, player meter factors, entry factors) are off limits; if per-level Sprint tuning is ever needed, the engine would need multiplicative run-length factors.
+
+---
+
 ## Task 17: difficulty levels (current numbers)
 
 Why: the first full phone run was "easily won". The sensible bot won 45.6% at one fixed difficulty and a person plays better than the bot. Four levels now live in `src/content/packs/ai-lab/difficulties.json` (`ContentPack.difficulties`, default `frontier`); each is a balance override merged over the pack's `balance` (engine defaults ← pack ← level) plus a score multiplier. The "Task 12b" numbers below are the pack balance with no level, i.e. the game as it was.

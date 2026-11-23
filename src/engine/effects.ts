@@ -1,4 +1,5 @@
 import { addAdoptionCapped, banLab, setAdoption } from './adoption';
+import { pacedTicks } from './balance';
 import type { EngineContext } from './context';
 import { adoptionIn, clamp, leadRivalOf, otherActiveLabs } from './derived';
 import { pushNews } from './news';
@@ -85,7 +86,8 @@ function applyDataCentreEffect(
     lab.dataCentres = lab.dataCentres.filter((dc) => !regionIds.has(dc.regionId));
     return;
   }
-  const until = state.tick + (effect.durationTicks ?? context.balance.defaultDisableTicks);
+  // defaultDisableTicks is already paced; a content duration is paced here.
+  const until = state.tick + (effect.durationTicks !== undefined ? pacedTicks(context.pace, effect.durationTicks) : context.balance.defaultDisableTicks);
   for (const dc of lab.dataCentres) {
     if (regionIds.has(dc.regionId)) dc.disabledUntilTick = max(dc.disabledUntilTick ?? 0, until);
   }
@@ -113,13 +115,13 @@ function applyToLab(
     case 'adoption':
       return applyAdoptionFactor(state, context, lab, effect, momentRegion);
     case 'ban':
-      for (const region of resolveScope(effect.scope, lab, context, state)) banLab(state, context, lab, region.id, effect.durationTicks);
+      for (const region of resolveScope(effect.scope, lab, context, state)) banLab(state, context, lab, region.id, effect.durationTicks === -1 ? -1 : pacedTicks(context.pace, effect.durationTicks));
       return;
     case 'unban':
       for (const region of resolveScope(effect.scope, lab, context, state)) delete lab.bans[region.id];
       return;
     case 'timedModifier':
-      lab.timedModifiers.push({ modifier: { ...effect.modifier }, untilTick: state.tick + effect.durationTicks });
+      lab.timedModifiers.push({ modifier: { ...effect.modifier }, untilTick: state.tick + pacedTicks(context.pace, effect.durationTicks) });
       return;
     case 'dataCentre':
       return applyDataCentreEffect(state, context, lab, effect, momentRegion);
@@ -148,7 +150,7 @@ export function applyEffect(
       const timers = (source.flagTimers ??= {});
       const permanent = source.flags.includes(effect.flag) && timers[effect.flag] === undefined;
       // A timed flag never shortens a permanent one; a second timed one extends the first.
-      if (!permanent) timers[effect.flag] = max(timers[effect.flag] ?? 0, state.tick + floor(effect.durationTicks));
+      if (!permanent) timers[effect.flag] = max(timers[effect.flag] ?? 0, state.tick + floor(pacedTicks(context.pace, effect.durationTicks)));
     } else if (source.flagTimers?.[effect.flag] !== undefined) {
       delete source.flagTimers[effect.flag];
     }

@@ -219,6 +219,6 @@ export function stepInPlace(state: GameState, context: EngineContext): void {
 export function step(state: GameState, pack: ContentPack): GameState {
   if (state.status === 'ended' || state.pendingEvent) return state;
   const draft = cloneState(state);
-  stepInPlace(draft, getContext(pack, state.difficulty));
+  stepInPlace(draft, getContext(pack, state.difficulty, state.runLength));
   return draft;
 }

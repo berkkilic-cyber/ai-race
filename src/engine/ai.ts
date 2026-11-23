@@ -336,10 +336,10 @@ export function chooseActionsFor(state: GameState, context: EngineContext, labId
 
 /** The heuristic controller used for rivals (and for a bot in the player's seat). */
 export function chooseAiActions(state: GameState, pack: ContentPack, labId: string): Action[] {
-  return chooseActionsFor(state, getContext(pack, state.difficulty), labId, 'sensible');
+  return chooseActionsFor(state, getContext(pack, state.difficulty, state.runLength), labId, 'sensible');
 }
 
 /** The choice id a bot with `policy` would pick for the event pending for `labId`. */
 export function chooseEventChoice(state: GameState, pack: ContentPack, labId: string, policy: BotPolicy = 'sensible'): string | undefined {
-  return chooseEventChoiceFor(state, getContext(pack, state.difficulty), labId, policy);
+  return chooseEventChoiceFor(state, getContext(pack, state.difficulty, state.runLength), labId, policy);
 }

@@ -809,5 +809,11 @@
   "stat.acquireCost.gain": "Rakip satın almak {pct} daha pahalı",
   "stat.acquireCost.loss": "Rakip satın almak {pct} daha ucuz",
   "stat.banDuration.gain": "Yasaklar {pct} daha uzun sürer",
-  "stat.banDuration.loss": "Yasaklar {pct} daha kısa sürer"
+  "stat.banDuration.loss": "Yasaklar {pct} daha kısa sürer",
+  "runLength.sprint.name": "Sprint",
+  "runLength.sprint.desc": "Bütün yarış, hızlı tempoda. İlk oyun için en iyisi.",
+  "runLength.sprint.minutes": "8–10 dk",
+  "runLength.full.name": "Tam oyun",
+  "runLength.full.desc": "Uzun oyun: daha çok kart, plan yapmaya daha çok yer.",
+  "runLength.full.minutes": "20–25 dk"
 }

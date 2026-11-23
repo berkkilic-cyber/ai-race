@@ -1,7 +1,7 @@
 // Public engine API. See docs/ARCHITECTURE.md.
 export * from './types';
 export { defaultBalance, mergeBalance, type BalanceConfig } from './balance';
-export { resolveDifficulty } from './context';
+export { resolveDifficulty, resolveRunLength } from './context';
 export { createGame, PLAYER_LAB_ID, DEFAULT_PLAYER_COLOR } from './game';
 export { step } from './step';
 export { applyAction, canApply } from './actions';
@@ -35,6 +35,9 @@ export {
   getDifficulty,
   getBalance,
   getFounderStart,
+  getRunLengths,
+  getRunLength,
+  getScoreMultiplier,
   type WinProgress,
   type StandingRow,
   type IncomeSource,

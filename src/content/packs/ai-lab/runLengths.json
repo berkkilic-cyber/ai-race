@@ -1,0 +1,28 @@
+[
+  {
+    "id": "sprint",
+    "nameKey": "runLength.sprint.name",
+    "descKey": "runLength.sprint.desc",
+    "scoreMultiplier": 0.6,
+    "balance": {
+      "pace": 3.4,
+      "eventIntervalMin": 220,
+      "eventIntervalMax": 340,
+      "headlineIntervalMin": 50,
+      "headlineIntervalMax": 100,
+      "regulationDecay": 0.014,
+      "backlashDecay": 0.013,
+      "momentBoostWeightFactor": 1.6,
+      "rivalStartHype": 12,
+      "rivalStartCash": 85,
+      "aiMeterGainFactor": 0.71
+    }
+  },
+  {
+    "id": "full",
+    "nameKey": "runLength.full.name",
+    "descKey": "runLength.full.desc",
+    "scoreMultiplier": 1,
+    "balance": {}
+  }
+]

@@ -7,6 +7,8 @@ import { colors, radius, spacing, type, voice } from '../theme';
 import type { DifficultyOption } from './difficulty';
 import { DifficultyPicker } from './DifficultyPicker';
 import { founderPerkLines } from './logic';
+import type { RunLengthOption } from './runLength';
+import { RunLengthPicker } from './RunLengthPicker';
 
 export interface FounderStepProps {
   founders: readonly FounderDef[];
@@ -18,6 +20,10 @@ export interface FounderStepProps {
   difficulties?: readonly DifficultyOption[];
   difficulty?: string;
   onDifficulty?: (id: string) => void;
+  /** Run lengths beside the difficulty picker (none: no picker). */
+  runLengths?: readonly RunLengthOption[];
+  runLength?: string;
+  onRunLength?: (id: string) => void;
   /** What each founder really starts with at the chosen difficulty, by founder id. */
   starts?: Readonly<Record<string, { hype: number; cash: number }>>;
 }
@@ -25,14 +31,21 @@ export interface FounderStepProps {
 const TONE = { good: colors.good, bad: colors.bad, neutral: colors.text } as const;
 
 /** Step 2: the founders as selectable cards with their perks. */
-export function FounderStep({ founders, selected, onSelect, wide, difficulties = [], difficulty, onDifficulty, starts }: FounderStepProps) {
+export function FounderStep({ founders, selected, onSelect, wide, difficulties = [], difficulty, onDifficulty, runLengths = [], runLength, onRunLength, starts }: FounderStepProps) {
   return (
     <View style={[styles.wrap, wide && styles.wrapWide]}>
       <View style={[styles.head, wide && styles.headWide]}>
-        <Text style={styles.title} accessibilityRole="header">
+        <Text style={[styles.title, wide && styles.titleWide]} accessibilityRole="header" numberOfLines={wide ? 1 : undefined}>
           {t('ui.start.founderTitle')}
         </Text>
-        <Text style={styles.hint}>{t('ui.start.founderHint')}</Text>
+        <Text style={[styles.hint, wide && styles.hintWide]} numberOfLines={wide ? 2 : undefined}>
+          {t('ui.start.founderHint')}
+        </Text>
+        {wide && onRunLength ? (
+          <View style={styles.lengthWide}>
+            <RunLengthPicker options={runLengths} selected={runLength} onSelect={onRunLength} wide />
+          </View>
+        ) : null}
       </View>
       <View accessibilityRole="radiogroup" style={[styles.list, wide && styles.listWide]}>
         {founders.map((f) => {
@@ -51,8 +64,8 @@ export function FounderStep({ founders, selected, onSelect, wide, difficulties =
                 <Text style={styles.name}>{t(f.nameKey)}</Text>
                 <View style={[styles.radio, on && styles.radioOn]}>{on ? <View style={styles.radioDot} /> : null}</View>
               </View>
-              <Text style={styles.desc}>{t(f.descKey)}</Text>
-              <View style={styles.perks}>
+              <Text style={[styles.desc, wide && styles.descWide]}>{t(f.descKey)}</Text>
+              <View style={[styles.perks, wide && styles.perksWide]}>
                 {founderPerkLines(f, starts?.[f.id]).map((line) => (
                   <View key={line.text} style={styles.perk}>
                     <View style={[styles.bullet, { backgroundColor: line.tone === 'neutral' ? colors.dim : TONE[line.tone] }]} />
@@ -64,6 +77,7 @@ export function FounderStep({ founders, selected, onSelect, wide, difficulties =
           );
         })}
       </View>
+      {!wide && onRunLength ? <RunLengthPicker options={runLengths} selected={runLength} onSelect={onRunLength} /> : null}
       {onDifficulty ? <DifficultyPicker options={difficulties} selected={difficulty} onSelect={onDifficulty} wide={wide} /> : null}
     </View>
   );
@@ -73,13 +87,13 @@ const styles = StyleSheet.create({
   wrap: { gap: spacing.l },
   wrapWide: { flex: 1, gap: spacing.s },
   head: { gap: spacing.xs },
-  headWide: { flexDirection: 'row', alignItems: 'baseline', gap: spacing.m, flexWrap: 'wrap' },
+  headWide: { flexDirection: 'row', alignItems: 'baseline', gap: spacing.m },
   title: { ...voice.calmHeading, color: colors.text, fontSize: type.xl },
   hint: { color: colors.dim, fontSize: type.s },
   list: { gap: spacing.m },
   listWide: { flex: 1, flexDirection: 'row' },
   card: { backgroundColor: colors.surface, borderRadius: radius.l, borderWidth: 2, borderColor: colors.border, padding: spacing.l, gap: spacing.s },
-  cardWide: { flex: 1, padding: spacing.m },
+  cardWide: { flex: 1, padding: spacing.m, paddingVertical: spacing.s, gap: spacing.xs },
   cardOn: { borderColor: colors.player, backgroundColor: colors.raised },
   pressed: { opacity: 0.85 },
   cardHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.s },
@@ -92,4 +106,9 @@ const styles = StyleSheet.create({
   perk: { flexDirection: 'row', alignItems: 'center', gap: spacing.s },
   bullet: { width: 6, height: 6, borderRadius: 3 },
   perkText: { fontSize: type.s, fontWeight: '600' },
+  lengthWide: { marginLeft: 'auto', alignSelf: 'center' },
+  titleWide: { flexShrink: 0 },
+  descWide: { fontSize: type.s - 1, lineHeight: 17 },
+  perksWide: { gap: 2, marginTop: 2 },
+  hintWide: { flex: 1, minWidth: 0 },
 });

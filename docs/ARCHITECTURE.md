@@ -73,6 +73,13 @@ getDifficulty(state, pack): DifficultyDef | undefined       // the run's level a
 getBalance(state, pack): BalanceConfig                      // the merged balance the run plays with
 getFounderStart(pack, founderId, difficulty?): { hype, cash } // a founder's start at a level (start screen)
 resolveDifficulty(pack, id?): DifficultyDef | undefined     // named -> pack default -> none
+
+// run length
+getRunLengths(pack): RunLengthDef[]                         // the pack's presets, shortest first ([] if none)
+getRunLength(state, pack): RunLengthDef | undefined         // the run's preset after fallback
+getScoreMultiplier(state, pack): number                     // difficulty × run length multipliers
+resolveRunLength(pack, id?): RunLengthDef | undefined       // named -> pack default -> none
+getFounderStart(pack, founderId, difficulty?, runLength?)   // (the start screen passes both)
 ```
 
 - State is immutable from the caller's point of view: `step` and `applyAction` return a new state and never mutate their input. Internally the engine may clone once and mutate.
@@ -122,9 +129,22 @@ A pack may define `difficulties` (`DifficultyDef`: id, name and description keys
 
 Balance levers added for difficulty (all neutral at their defaults): `playerStartHypeFactor` / `playerStartCashFactor` (founder start × factor), `rivalEntryTickFactor` (every rival's `entryTick` ×, rounded), `aiExpansionFactor` (rivals' personality `expansion` ×), `playerRegulationGainFactor` / `playerBacklashGainFactor` (human labs' per-tick meter gains ×), `momentBoostWeightFactor` / `momentThreatWeightFactor` (spawn weight by moment kind ×) and `momentLifetimeFactor` (moment lifetime ×, at least 1 tick). Levels and their numbers: `docs/BALANCE.md`.
 
+## Run length
+
+A pack may define `runLengths` (`RunLengthDef`: id, name and description keys, a `balance` override and a `scoreMultiplier`) and a `defaultRunLength`, resolved exactly like a difficulty: `GameSetup.runLength` names one, an unknown or missing id falls back to the pack default, then to none; `createGame` stores the resolved id in `GameState.runLength`, and every entry point reads `getContext(pack, state.difficulty, state.runLength)` (one context per pack, level and length). Balance layers: engine defaults ← pack `balance` ← difficulty `balance` ← run-length `balance`, then **paced**. The final score is multiplied by both multipliers (rounded once). A pack without run lengths, or a preset with no overrides, plays bit for bit as before (tested).
+
+**Pace.** `BalanceConfig.pace` (default 1; only a run length may set it, `validatePack` keeps it out of the pack balance and difficulties) is how much game happens per tick, so a short run plays the same arc in fewer ticks instead of stopping early. Everything is written for the standard run and converted once, in `applyPace` (src/engine/balance.ts) and at the few places content carries ticks:
+
+- per-tick rates (`PACE_RATE_KEYS`: spread, steal, seed chance, ban and elimination decay, income bases and per-user cash, AGI base, meter per-tick gains and decays, upkeep, the score's per-tick speed bonus) × pace; per-tick fractions stay at most 1;
+- tick counts (`PACE_TICK_KEYS`: AI decision interval and cash reserve, event and headline timing, ban duration, offline durations, the score's target tick) ÷ pace, rounded, at least 1;
+- content: effect durations (`timedModifier`, `ban`, `dataCentre` disable, timed `setFlag`), rivals' entry ticks (after `rivalEntryTickFactor`) and `tickAtLeast` / `tickAtMost` conditions ÷ pace;
+- not paced: per-event amounts (Hype per new user, Regulation per new user), costs, thresholds, start resources, and moment spawn timing and lifetimes, which are real time because a person taps them (the effects a moment applies are paced like any other effect; its income-scaled rewards follow the paced income).
+
+`runHeadless` takes `opts.runLength` (replaces `setup.runLength`). UI code that needs a balance number reads `getBalance(state, pack)`, which is the paced balance. Content and numbers: `docs/BALANCE.md` ("Task 21").
+
 ## Bots and balance tooling
 
-`runHeadless` plays the player's seat with a `BotPolicy`. Its `momentSkill` option (0..1, default `DEFAULT_MOMENT_SKILL`: 0.7 for sensible and the focused policies, 0.3 random, 0 idle) is the chance the bot taps a moment before it expires, rolled when the moment appears with a generator of its own (so the roll never shifts the game's random stream); a tapped moment is collected after a reaction delay of up to 60% of its lifetime. Policies: `sensible` (the same planner as the rivals, default personality), `random`, `idle`, and the tree-focused `capability`, `reach` and `shadow` policies, which plan like `sensible` with their own personality and a push towards their win (model tiers and spare compute; launches every decision; buy-out tools and saving cash for acquisitions). `scripts/balance/` plays many runs per policy across founders and home regions and prints a report (`npm run balance`, see `docs/BALANCE.md`; `--moment-skill` plays each policy at several tap skills, `--moments file.json` swaps the pack's moments for a sweep; `--difficulty id,id|all` plays each policy at each level and adds a table across levels; `--brief` prints only the summary tables).
+`runHeadless` plays the player's seat with a `BotPolicy`. Its `momentSkill` option (0..1, default `DEFAULT_MOMENT_SKILL`: 0.7 for sensible and the focused policies, 0.3 random, 0 idle) is the chance the bot taps a moment before it expires, rolled when the moment appears with a generator of its own (so the roll never shifts the game's random stream); a tapped moment is collected after a reaction delay of up to 60% of its lifetime. Policies: `sensible` (the same planner as the rivals, default personality), `random`, `idle`, and the tree-focused `capability`, `reach` and `shadow` policies, which plan like `sensible` with their own personality and a push towards their win (model tiers and spare compute; launches every decision; buy-out tools and saving cash for acquisitions). `scripts/balance/` plays many runs per policy across founders and home regions and prints a report (`npm run balance`, see `docs/BALANCE.md`; `--moment-skill` plays each policy at several tap skills, `--moments file.json` swaps the pack's moments for a sweep; `--difficulty id,id|all` plays each policy at each level and adds a table across levels; `--runLength id,id|all` plays each policy at each run length and adds a table comparing the first with the last: win rates and their gap, real minutes at 1x, event cards, moments, rival launches, and every ending's frequency; `--brief` prints only the summary tables). `scripts/balance/firstSession.ts` times a fresh install's first run with a prompt player following the real tutorial state machine (see its header).
 
 ## UI state
 
