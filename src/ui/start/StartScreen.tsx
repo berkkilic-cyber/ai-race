@@ -14,6 +14,7 @@ import { useGameStore } from '../store/game';
 import { colors, shape, spacing } from '../theme';
 import { FounderStep } from './FounderStep';
 import { BuildStamp } from '../diagnostics/BuildStamp';
+import { LanguageToggle } from '../locale';
 import { HowToSheet } from './HowToSheet';
 import { difficultyOptions, difficultyParam, loadDifficultyChoice, saveDifficultyChoice } from './difficulty';
 import { defaultHomeRegion, missingText, randomLabName, validateLabName } from './logic';
@@ -248,6 +249,7 @@ export function StartScreen({ beforeEnter }: StartScreenProps = {}) {
       </View>
       {/* Which build is running (long-press two seconds: touch diagnostics on the map). */}
       <BuildStamp style={[styles.stamp, { top: insets.top + 2, right: insets.right + spacing.s }]} />
+      <LanguageToggle />
       <HowToSheet visible={howTo} onClose={() => setHowTo(false)} />
       <RegionListSheet visible={list} regions={pack.regions} selected={home} onSelect={pickFromList} onClose={() => setList(false)} />
     </View>

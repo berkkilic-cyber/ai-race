@@ -1,0 +1,8 @@
+{
+  "ui.locale.label": "Dil",
+  "ui.locale.en": "English",
+  "ui.locale.tr": "Türkçe",
+  "ui.locale.short.en": "EN",
+  "ui.locale.short.tr": "TR",
+  "ui.locale.switchTo": "Dil: {language}"
+}

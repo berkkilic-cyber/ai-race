@@ -12,6 +12,7 @@ import { fmtInt, fmtPct, fmtUsers } from '../format';
 import { usePackEntry } from '../hooks/useGame';
 import { useInsets } from '../hooks/useInsets';
 import { labName, readableLabColor, regionName, t } from '../i18n';
+import { cased } from '../locale/casing';
 import { mixColor } from '../map/mapColors';
 import { newsText } from '../news/newsText';
 import { useGameStore } from '../store/game';
@@ -205,7 +206,7 @@ function EndView({ state }: { state: GameState }) {
                   <Text style={[styles.achName, a.secret && styles.secretName]}>{t(a.nameKey)}</Text>
                   {a.secret ? (
                     <View style={styles.secretPill}>
-                      <Text style={styles.secretPillText}>{t('ui.end.secret')}</Text>
+                      <Text style={styles.secretPillText}>{cased(styles.secretPillText, t('ui.end.secret'))}</Text>
                     </View>
                   ) : null}
                 </View>

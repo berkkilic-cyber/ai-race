@@ -5,6 +5,7 @@ import { RemoveAdsPanel } from '../ads';
 import { Button } from '../components/Button';
 import { Sheet } from '../components/Sheet';
 import { t } from '../i18n';
+import { LanguageRow } from '../locale';
 import { colors, shape, spacing, type, voice } from '../theme';
 import { useGarageStore } from './store';
 
@@ -23,6 +24,7 @@ export function SettingsSheet({ visible, onClose }: { visible: boolean; onClose:
         <Text style={styles.label}>{t('ui.garage.settings.haptics')}</Text>
         <Switch value={haptics} onValueChange={setHaptics} accessibilityLabel={t('ui.garage.settings.haptics')} testID="garage-haptics" />
       </View>
+      <LanguageRow />
       <View style={styles.rule} />
       <RemoveAdsPanel />
       <View style={styles.rule} />

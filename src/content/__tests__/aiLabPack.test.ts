@@ -26,7 +26,7 @@ describe('ai-lab content pack', () => {
     expect(pack.id).toBe('ai-lab');
     expect(pack.version).toBe(1);
     expect(Object.keys(pack.balance).length).toBeGreaterThan(0);
-    expect(Object.keys(pack.strings)).toEqual(['en']);
+    expect(Object.keys(pack.strings)).toEqual(['en', 'tr']);
   });
 
   it('has 40 regions', () => {

@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-na
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 
 import { t } from '../i18n';
+import { upper } from '../locale/casing';
 import { useWide } from '../events/useWide';
 import { useInsets } from '../hooks/useInsets';
 import { wideShellLayout } from '../shell/shellLayout';
@@ -41,7 +42,7 @@ function AchievementToast({ toast, onDone, wide }: { toast: Toast; onDone: (key:
         </View>
         <View style={styles.texts}>
           <Text style={[styles.kicker, { color: secret ? colors.info : colors.playerText }]}>
-            {t(secret ? 'ui.achievements.secretFound' : 'ui.achievements.unlocked').toUpperCase()}
+            {upper(t(secret ? 'ui.achievements.secretFound' : 'ui.achievements.unlocked'))}
           </Text>
           <Text style={styles.name} numberOfLines={1}>
             {t(def.nameKey)}

@@ -744,7 +744,20 @@ function checkIntegrity(pack: ContentPack): string[] {
 
   for (const k of REQUIRED_KEYS) used.add(k);
 
+  // The first locale is the base (complete). Other locales may lack keys (the UI falls back
+  // to the base) but may not add keys, and a translated key keeps the base's placeholders.
+  const [baseLocale, baseTable] = Object.entries(pack.strings)[0] ?? ['', {}];
+  const placeholderSet = (text: string) => [...new Set([...text.matchAll(/\{([^}]*)\}/g)].map((m) => m[1]))].sort().join(',');
   for (const [locale, table] of Object.entries(pack.strings)) {
+    const isBase = locale === baseLocale;
+    if (!isBase) {
+      for (const [k, text] of Object.entries(table)) {
+        if (!(k in baseTable)) err(`strings.${locale}: "${k}" is not in ${baseLocale}`);
+        else if (placeholderSet(text) !== placeholderSet(baseTable[k])) {
+          err(`strings.${locale}: "${k}" placeholders {${placeholderSet(text)}} differ from ${baseLocale} {${placeholderSet(baseTable[k])}}`);
+        }
+      }
+    }
     for (const k of Object.keys(table)) {
       const brand = /^brand\.([a-z0-9-]+)\.(name|kind)$/.exec(k);
       if (k.startsWith('brand.') && !brand) err(`strings.${locale}: brand keys are brand.<id>.name or brand.<id>.kind, not "${k}"`);
@@ -752,7 +765,7 @@ function checkIntegrity(pack: ContentPack): string[] {
         err(`strings.${locale}: "${k}" has no matching brand.${brand[1]}.${brand[2] === 'name' ? 'kind' : 'name'}`);
       }
     }
-    for (const k of used) if (!(k in table)) err(`strings.${locale}: missing key "${k}"`);
+    if (isBase) for (const k of used) if (!(k in table)) err(`strings.${locale}: missing key "${k}"`);
     for (const [k, text] of Object.entries(table)) {
       if (!used.has(k) && !EXTERNAL_KEY_PREFIXES.some((prefix) => k.startsWith(prefix))) err(`strings.${locale}: unused key "${k}"`);
       if (text.trim() === '') err(`strings.${locale}: "${k}" is empty`);

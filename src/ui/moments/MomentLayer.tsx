@@ -8,6 +8,7 @@ import { getMomentProgress, getMoments, type GameState, type MomentDef } from '@
 
 import { logLifecycle } from '../diagnostics/log';
 import { t } from '../i18n';
+import { cased } from '../locale/casing';
 import { hasIcon } from '../icons';
 import { fallbackGlyph, registry } from '../icons/registry';
 import { useAmbientClock, wave } from '../motion/ambient';
@@ -534,7 +535,7 @@ const Floater = memo(function Floater({ p, item, reduced }: { p: MapProjection; 
       <View style={styles.lines}>
         {item.lines.slice(0, 3).map((l, i) => (
           <Text key={i} style={[styles.line, lost ? styles.lineLost : item.avoided ? styles.lineAvoided : l.good ? styles.lineGood : styles.lineBad]} numberOfLines={1}>
-            {l.text}
+            {cased(styles.line, l.text)}
           </Text>
         ))}
       </View>

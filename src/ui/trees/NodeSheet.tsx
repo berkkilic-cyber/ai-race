@@ -13,6 +13,7 @@ import { Icon } from '../icons';
 import { useTutorialTarget } from '../tutorial/targets';
 import { fmtCash, fmtCompact } from '../format';
 import { failureText, t } from '../i18n';
+import { cased } from '../locale/casing';
 import { useGameStore } from '../store/game';
 import { colors, radius, shape, spacing, tabular, type, voice } from '../theme';
 import { TREE_ACCENT } from './accent';
@@ -99,7 +100,7 @@ function NodeSheetBody({ node, justBought, onClose, onBuy }: { node: NodeDef; ju
   const costView = !owned && !confirming ? (
     <View style={styles.costRow}>
       <View style={styles.flex}>
-        <Text style={styles.sectionTitle}>{t('ui.trees.cost')}</Text>
+        <Text style={styles.sectionTitle}>{cased(styles.sectionTitle, t('ui.trees.cost'))}</Text>
         <Text style={styles.cost}>
           <Text style={{ color: hypeShort ? colors.bad : colors.text }}>{`${fmtCompact(view.costHype)} ${t('term.hype')}`}</Text>
           {view.costCash > 0 ? <Text style={{ color: cashShort ? colors.bad : colors.text }}>{` + ${fmtCash(view.costCash)}`}</Text> : null}
@@ -200,7 +201,7 @@ function NodeSheetBody({ node, justBought, onClose, onBuy }: { node: NodeDef; ju
       <Text style={styles.desc}>{t(node.descKey)}</Text>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>{t('ui.trees.effects')}</Text>
+        <Text style={styles.sectionTitle}>{cased(styles.sectionTitle, t('ui.trees.effects'))}</Text>
         {lines.length === 0 ? <Text style={styles.desc}>{t('ui.trees.noEffects')}</Text> : null}
         {lines.map((line, i) => (
           <View key={i} style={styles.lineRow}>
@@ -211,7 +212,7 @@ function NodeSheetBody({ node, justBought, onClose, onBuy }: { node: NodeDef; ju
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>{t('ui.trees.prereqs')}</Text>
+        <Text style={styles.sectionTitle}>{cased(styles.sectionTitle, t('ui.trees.prereqs'))}</Text>
         {node.requires.length === 0 ? <Text style={styles.desc}>{t('ui.trees.noPrereqs')}</Text> : null}
         {node.requires.map((id) => {
           const have = ownedReqs.includes(id);

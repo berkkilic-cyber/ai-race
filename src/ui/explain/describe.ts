@@ -9,6 +9,7 @@ import type { ChannelDef, Effect, EffectTarget, Modifier, NodeDef, RegionScope, 
 
 import { fmtCash, fmtCompact } from '../format';
 import { barrierInline, hasString, regionName, t } from '../i18n';
+import { lower, lowerFirst } from '../locale/casing';
 
 export type LineTone = 'good' | 'bad';
 
@@ -130,9 +131,6 @@ function whoOf(target: EffectTarget): string {
   return t(`ui.explain.who.${target}`);
 }
 
-function lowerFirst(s: string): string {
-  return s.charAt(0).toLowerCase() + s.slice(1);
-}
 
 export interface DescribeOptions {
   /** The pack's channels, for timed channel flags. */
@@ -173,7 +171,7 @@ export function describeEffect(effect: Effect, options: DescribeOptions = {}): D
     }
     case 'compute': {
       const up = effect.amount >= 0;
-      return line(up ? 'ui.explain.fx.computeUp' : 'ui.explain.fx.computeDown', { amount: fmtCompact(Math.abs(effect.amount)), compute: t('term.compute').toLowerCase() }, up);
+      return line(up ? 'ui.explain.fx.computeUp' : 'ui.explain.fx.computeDown', { amount: fmtCompact(Math.abs(effect.amount)), compute: lower(t('term.compute')) }, up);
     }
     case 'adoption': {
       const change = effect.factor - 1;

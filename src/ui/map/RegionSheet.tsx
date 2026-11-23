@@ -17,6 +17,7 @@ import { Sheet } from '../components/Sheet';
 import { useTutorialTarget } from '../tutorial/targets';
 import { fmtCash, fmtPct, fmtUsers, toPips } from '../format';
 import { failureText, labName, readableLabColor, t } from '../i18n';
+import { lower } from '../locale/casing';
 import { useGameStore } from '../store/game';
 import { ReachNote } from './live/ReachNote';
 import { colors, spacing, type, voice } from '../theme';
@@ -75,7 +76,7 @@ function OpenRegionSheet({ regionId, onClose }: { regionId: string; onClose: () 
     const action: Action = { type: 'buildDataCentre', labId: playerId, regionId: region.id };
     actions.push({
       key: 'build',
-      label: `${t('ui.region.build')} ${t('term.dataCentre').toLowerCase()}`,
+      label: `${t('ui.region.build')} ${lower(t('term.dataCentre'))}`,
       action,
       cost: getDataCentreCost(state, pack, playerId, region.id),
       check: canApply(state, pack, action),

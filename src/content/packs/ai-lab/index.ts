@@ -30,6 +30,7 @@ import nodes from './nodes.json';
 import regions from './regions.json';
 import rivals from './rivals.json';
 import en from './strings/en.json';
+import tr from './strings/tr.json';
 
 /**
  * JSON imports widen string literals (e.g. `tree: string`), so each file is
@@ -53,7 +54,9 @@ export const aiLabPack: ContentPack = {
   balance,
   difficulties: difficulties as DifficultyDef[],
   defaultDifficulty: 'frontier',
-  strings: { en: en as Record<string, string> },
+  // English first: it is the base locale (complete; the engine counts variants in it). Other
+  // locales may lack keys, which fall back to English in the UI.
+  strings: { en: en as Record<string, string>, tr: tr as Record<string, string> },
 };
 
 /**
