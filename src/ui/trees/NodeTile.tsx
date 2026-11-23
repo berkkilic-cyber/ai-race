@@ -1,11 +1,12 @@
 import { memo, useEffect } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
 
 import { mixColor } from '../color';
 import { fmtCash, fmtCompact } from '../format';
 import { t } from '../i18n';
 import { Icon } from '../icons';
+import { Text } from '../locale/Text';
 import { useAmbientClock, wave } from '../motion/ambient';
 import { useTutorialTarget } from '../tutorial/targets';
 import { PanelDeco } from '../components/Deco';

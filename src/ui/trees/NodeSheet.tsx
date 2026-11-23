@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useShallow } from 'zustand/react/shallow';
 
 import { canApply, getComputeRequired, getNodeCost, type ActionFailure, type NodeDef } from '@/engine';
@@ -9,6 +9,7 @@ import { Sheet } from '../components/Sheet';
 import { describeNode } from '../explain/describe';
 import { haveText, needText } from '../explain/model';
 import { Icon } from '../icons';
+import { Text } from '../locale/Text';
 import { useTutorialTarget } from '../tutorial/targets';
 import { fmtCash, fmtCompact } from '../format';
 import { failureText, t } from '../i18n';

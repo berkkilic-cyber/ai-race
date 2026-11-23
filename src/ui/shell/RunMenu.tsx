@@ -10,7 +10,7 @@
  */
 import * as Router from 'expo-router';
 import { useEffect, type ReactNode } from 'react';
-import { BackHandler, Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { BackHandler, Platform, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { create } from 'zustand';
 
 import { Button } from '../components/Button';
@@ -21,6 +21,7 @@ import { layoutModeFor, useLayoutMode } from '../hooks/useLayoutMode';
 import { Icon } from '../icons';
 import { labName, t } from '../i18n';
 import { LanguageRow } from '../locale';
+import { Text } from '../locale/Text';
 import { useGameStore, type Speed } from '../store/game';
 import { clearRunSave, restartSetup, saveCurrentRun, startAutosave } from '../store/runSave';
 import { useTutorialStore } from '../tutorial/store';

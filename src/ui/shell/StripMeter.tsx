@@ -1,6 +1,7 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, useAnimatedStyle } from 'react-native-reanimated';
 
+import { Text } from '../locale/Text';
 import { useAmbientClock, wave } from '../motion/ambient';
 
 import { Icon, type IconName } from '../icons';

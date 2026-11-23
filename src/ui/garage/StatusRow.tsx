@@ -1,10 +1,11 @@
 import { memo } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { incidentDef, offerDef } from '@/idle';
 
 import { Icon } from '../icons';
 import { t } from '../i18n';
+import { Text } from '../locale/Text';
 import { colors, radius, shape, spacing, tabular, touch, type, voice } from '../theme';
 import { tapHaptic } from './haptics';
 import { useGarage, useNowEvery } from './hooks';

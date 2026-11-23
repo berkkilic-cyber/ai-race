@@ -1,5 +1,5 @@
 import { memo, useState, type ReactNode } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import {
   autoBuyActive,
@@ -18,6 +18,7 @@ import {
 import { Button } from '../components/Button';
 import { Icon } from '../icons';
 import { t } from '../i18n';
+import { Text } from '../locale/Text';
 import { colors, radius, shape, spacing, tabular, touch, type, voice } from '../theme';
 import { buyHaptic, successHaptic } from './haptics';
 import { useGarage, useNowEvery } from './hooks';

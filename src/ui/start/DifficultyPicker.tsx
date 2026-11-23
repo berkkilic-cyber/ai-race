@@ -1,6 +1,7 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { t } from '../i18n';
+import { Text } from '../locale/Text';
 import { colors, radius, spacing, type, voice } from '../theme';
 import type { DifficultyOption } from './difficulty';
 

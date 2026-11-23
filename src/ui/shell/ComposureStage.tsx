@@ -1,11 +1,12 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
+import { StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import Animated, { Easing, FadeIn, SlideInLeft, SlideOutLeft, ZoomIn, interpolate, interpolateColor, useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
 
 import { dangerKey, useComposure, useComposureProgress, type ComposureLevel } from '../composure';
 import { useMeters } from '../hooks/useGame';
 import { t } from '../i18n';
+import { Text } from '../locale/Text';
 import { useAmbientClock, useAmbientRunning, wave } from '../motion/ambient';
 import { mixColor } from '../color';
 import { Ground, Stamp, Stripes } from '../components/Deco';

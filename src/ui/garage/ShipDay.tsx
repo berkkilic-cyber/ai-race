@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeInLeft, FadeInUp, useReducedMotion, ZoomIn } from 'react-native-reanimated';
 
 import { offerStatus, prestigePreview, shipReveal } from '@/idle';
@@ -10,6 +10,7 @@ import { Stamp } from '../components/Deco';
 import { Overlay } from '../components/Overlay';
 import { useInsets } from '../hooks/useInsets';
 import { t } from '../i18n';
+import { Text } from '../locale/Text';
 import { colors, flatShadow, layer, radius, spacing, tabular, type, voice } from '../theme';
 import { useAdPlacement } from './adOffer';
 import { successHaptic } from './haptics';

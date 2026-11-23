@@ -1,5 +1,5 @@
 import { useEffect, useRef, type ReactNode } from 'react';
-import { BackHandler, Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { BackHandler, Platform, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import Animated, { SlideInRight } from 'react-native-reanimated';
 
 import { logLifecycle } from '../diagnostics/log';
@@ -7,6 +7,7 @@ import { pressFeedback } from '../feel/cues';
 import { useInsets } from '../hooks/useInsets';
 import { layoutModeFor } from '../hooks/useLayoutMode';
 import { t } from '../i18n';
+import { Text } from '../locale/Text';
 import { colors, flatShadow, layout, radius, shape, spacing, touch, type, voice } from '../theme';
 import { PanelDeco, Stripes } from './Deco';
 

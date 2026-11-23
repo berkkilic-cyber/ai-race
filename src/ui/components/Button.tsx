@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Animated, Platform, Pressable, StyleSheet, Text, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';
+import { Animated, Platform, Pressable, StyleSheet, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';
 
 import { pressFeedback } from '../feel/cues';
+import { Text } from '../locale/Text';
 import { colors, flatShadow, glow, radius, shape, spacing, touch, type, voice } from '../theme';
 import { cased } from '../locale/casing';
 

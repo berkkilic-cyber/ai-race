@@ -1,10 +1,11 @@
 import type { TabTriggerSlotProps } from 'expo-router/ui';
 import type { ReactNode } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { useLayoutMode } from '../hooks/useLayoutMode';
 import { Icon, type IconName } from '../icons';
 import { PanelDeco } from '../components/Deco';
+import { Text } from '../locale/Text';
 import { colors, flatShadow, glow, layout, radius, shape, spacing, touch, type, voice } from '../theme';
 import { useTutorialTarget } from '../tutorial/targets';
 

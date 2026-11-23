@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { labPerks, nextLabPerk, prestigePreview, type LabPerkDef } from '@/idle';
 
@@ -7,6 +7,7 @@ import { Button } from '../components/Button';
 import { fmtCash, pctText } from '../format';
 import { Icon } from '../icons';
 import { t } from '../i18n';
+import { Text } from '../locale/Text';
 import { colors, radius, shape, spacing, tabular, type, voice } from '../theme';
 import { successHaptic } from './haptics';
 import { useGarage } from './hooks';

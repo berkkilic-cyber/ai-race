@@ -1,8 +1,9 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { Button } from '../components/Button';
 import { ModalCard } from '../components/ModalCard';
 import { t } from '../i18n';
+import { Text } from '../locale/Text';
 import { colors, spacing, type, voice } from '../theme';
 import { useGarageStore } from './store';
 import { gt } from './text';

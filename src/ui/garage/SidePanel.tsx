@@ -1,8 +1,9 @@
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { availableUpgrades, mechanicOn, prestigePreview } from '@/idle';
 
 import { t } from '../i18n';
+import { Text } from '../locale/Text';
 import { colors, shape, spacing, touch, type, voice } from '../theme';
 import { GeneratorList } from './GeneratorList';
 import { LabPanel } from './LabPanel';

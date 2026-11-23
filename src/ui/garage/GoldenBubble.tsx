@@ -1,11 +1,12 @@
 import { memo, useEffect } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { type GoldenState } from '@/idle';
 
 import { Icon } from '../icons';
 import { t } from '../i18n';
+import { Text } from '../locale/Text';
 import { useAmbientClock, wave } from '../motion/ambient';
 import { colors, radius, shape, spacing, voice } from '../theme';
 import { garageNow } from './clock';

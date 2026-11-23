@@ -1,10 +1,11 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { computeUpgrades, haveText, modelFacts, needText, ownsMoreThanRuns } from '../../explain/model';
 import { lineStyles, Note, SectionTitle } from '../../explain/Lines';
 import { fmtCash, fmtCompact } from '../../format';
 import { t } from '../../i18n';
 import { Icon } from '../../icons';
+import { Text } from '../../locale/Text';
 import { useGameStore, type GameStore } from '../../store/game';
 import { colors, radius, shape, spacing, tabular, type, voice } from '../../theme';
 

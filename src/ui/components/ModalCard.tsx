@@ -1,9 +1,10 @@
 import type { ReactNode } from 'react';
-import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { useInsets } from '../hooks/useInsets';
 import { layoutModeFor } from '../hooks/useLayoutMode';
+import { Text } from '../locale/Text';
 import { colors, flatShadow, layer, layout, radius, shape, spacing, type, voice } from '../theme';
 import { Overlay } from './Overlay';
 

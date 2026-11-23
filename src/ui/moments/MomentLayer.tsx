@@ -1,5 +1,5 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated, { Easing, cancelAnimation, useAnimatedProps, useAnimatedStyle, useDerivedValue, useReducedMotion, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
 import Svg, { Circle, G } from 'react-native-svg';
 
@@ -8,6 +8,7 @@ import { getMomentProgress, getMoments, type GameState, type MomentDef } from '@
 
 import { logLifecycle } from '../diagnostics/log';
 import { t } from '../i18n';
+import { Text } from '../locale/Text';
 import { cased } from '../locale/casing';
 import { hasIcon } from '../icons';
 import { fallbackGlyph, registry } from '../icons/registry';

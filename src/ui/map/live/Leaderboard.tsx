@@ -1,11 +1,12 @@
 import { memo, useCallback, useEffect } from 'react';
-import { StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
+import { StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 
 import { getStandings } from '@/engine';
 
 import { fmtPct } from '../../format';
 import { useKeyedSelector } from '../../hooks/useKeyedSelector';
 import { labName, readableLabColor, t } from '../../i18n';
+import { Text } from '../../locale/Text';
 import { useGameStore, type GameStore } from '../../store/game';
 import { mixColor } from '../../color';
 import { colors, flatShadow, radius, shape, spacing, voice } from '../../theme';

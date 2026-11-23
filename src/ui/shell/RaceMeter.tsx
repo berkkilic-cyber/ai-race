@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, useAnimatedStyle } from 'react-native-reanimated';
 
 import { getLeadRival, getMeters } from '@/engine';
@@ -6,6 +6,7 @@ import { getLeadRival, getMeters } from '@/engine';
 import { pctText } from '../format';
 import { useKeyedSelector } from '../hooks/useKeyedSelector';
 import { labName, readableLabColor, t } from '../i18n';
+import { Text } from '../locale/Text';
 import { useAmbientClock, wave } from '../motion/ambient';
 import { useShareSampler } from '../race/trend';
 import type { GameStore } from '../store/game';

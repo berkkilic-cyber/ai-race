@@ -1,5 +1,5 @@
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated, { Easing, cancelAnimation, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import type { MapGeometry } from '@/content/packs/ai-lab/geometry';
@@ -8,6 +8,7 @@ import { getCompute, getReachableRegions, type GameState } from '@/engine';
 import { readableLabColor, t } from '../../i18n';
 import { Icon } from '../../icons';
 import { useKeyedSelector } from '../../hooks/useKeyedSelector';
+import { Text } from '../../locale/Text';
 import { useGameStore, type GameStore } from '../../store/game';
 import { colors, fonts, spacing, voice } from '../../theme';
 import { sitesKey } from '../mapColors';

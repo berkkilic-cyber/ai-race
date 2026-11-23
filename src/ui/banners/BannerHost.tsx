@@ -1,5 +1,5 @@
 import { memo, useEffect, useRef, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated, { Easing, cancelAnimation, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { getCapabilityLevel } from '@/engine';
@@ -8,6 +8,7 @@ import { logLifecycle } from '../diagnostics/log';
 import { freshNews } from '../hooks/useRegionFlashes';
 import { labName, readableLabColor, t } from '../i18n';
 import { Icon } from '../icons';
+import { Text } from '../locale/Text';
 import { MOVING } from '../map/live/projection';
 import { launchHaptic } from '../moments/haptics';
 import { useGameStore } from '../store/game';

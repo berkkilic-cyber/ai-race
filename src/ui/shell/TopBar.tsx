@@ -1,9 +1,10 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Button } from '../components/Button';
 import { fmtDay } from '../format';
 import { labName, t } from '../i18n';
 import { DEBUG_LONG_PRESS_MS } from '../diagnostics/BuildStamp';
+import { Text } from '../locale/Text';
 import { toggleTouchDebug } from '../map/touchDebug';
 import { Mascot, useMascotMood } from '../mascot';
 import { SPEEDS, useGameStore } from '../store/game';

@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { type OfferStatus } from '@/idle';
 
 import { useAdOfferShown } from '../analytics/hooks';
 import { fmtDuration } from '../format';
 import { t } from '../i18n';
+import { Text } from '../locale/Text';
 import { colors, flatShadow, radius, shape, spacing, tabular, touch, type, voice } from '../theme';
 import { adReady, requestRewardedAd } from './ads';
 import { useAdStore } from './store';

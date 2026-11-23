@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { ZoomIn } from 'react-native-reanimated';
 
 import { Button } from '../components/Button';
@@ -6,6 +6,7 @@ import { Stamp } from '../components/Deco';
 import { Overlay } from '../components/Overlay';
 import { useInsets } from '../hooks/useInsets';
 import { t } from '../i18n';
+import { Text } from '../locale/Text';
 import { colors, flatShadow, layer, spacing, type, voice } from '../theme';
 import { useGarageStore } from './store';
 import { generationLabel, gt } from './text';

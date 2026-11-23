@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { offerStatus, offlineCapMs, offlineRate } from '@/idle';
 
@@ -7,6 +7,7 @@ import { Button } from '../components/Button';
 import { ModalCard } from '../components/ModalCard';
 import { Icon } from '../icons';
 import { t } from '../i18n';
+import { Text } from '../locale/Text';
 import { colors, spacing, tabular, type, voice } from '../theme';
 import { useAdPlacement } from './adOffer';
 import { successHaptic } from './haptics';

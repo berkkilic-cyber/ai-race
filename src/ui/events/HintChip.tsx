@@ -1,7 +1,8 @@
 import { memo } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { t } from '../i18n';
+import { Text } from '../locale/Text';
 import { colors, spacing, voice } from '../theme';
 import { HINT_LABEL_KEYS, type EffectHint } from './hints';
 

@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { Keyboard, StyleSheet, Text, TextInput, View, type ViewStyle } from 'react-native';
+import { Keyboard, StyleSheet, TextInput, View, type ViewStyle } from 'react-native';
 
 import { Button } from '../components/Button';
 import { PanelDeco, Stripes } from '../components/Deco';
 import { t } from '../i18n';
 import { ModeChoice } from '../garage/ModeChoice';
+import { Text } from '../locale/Text';
 import { Mascot } from '../mascot';
 import { colors, flatShadow, radius, shape, spacing, tabular, touch, type, voice } from '../theme';
 import { MAX_LAB_NAME, missingText } from './logic';

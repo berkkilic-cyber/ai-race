@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { Fragment, useEffect, useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
+import { Pressable, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import Animated, {
   Easing,
   cancelAnimation,
@@ -19,6 +19,7 @@ import type { NewsItem } from '@/engine';
 import { TICKER_SPEED, useComposure, useComposureProgress } from '../composure';
 import { useWide } from '../events/useWide';
 import { useInsets } from '../hooks/useInsets';
+import { Text } from '../locale/Text';
 import { useAmbientRunning } from '../motion/ambient';
 import { useTutorialTarget } from '../tutorial/targets';
 import { t } from '../i18n';

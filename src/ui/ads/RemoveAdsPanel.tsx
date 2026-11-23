@@ -1,6 +1,7 @@
-import { StyleSheet, Switch, Text, View } from 'react-native';
+import { StyleSheet, Switch, View } from 'react-native';
 
 import { t } from '../i18n';
+import { Text } from '../locale/Text';
 import { colors, spacing, type, voice } from '../theme';
 import { useAdStore } from './store';
 

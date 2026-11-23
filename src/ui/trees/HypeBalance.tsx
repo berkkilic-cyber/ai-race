@@ -1,10 +1,11 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useShallow } from 'zustand/react/shallow';
 
 import { getIncome } from '@/engine';
 
 import { fmtCompact, fmtPerDay } from '../format';
 import { t } from '../i18n';
+import { Text } from '../locale/Text';
 import { colors, flatShadow, radius, shape, spacing, tabular, type, voice } from '../theme';
 import { useTabStore } from '../shell/tabActive';
 

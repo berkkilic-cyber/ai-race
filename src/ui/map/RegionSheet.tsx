@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import {
   canApply,
@@ -14,6 +14,7 @@ import {
 import { Button } from '../components/Button';
 import { Pips } from '../components/Pips';
 import { Sheet } from '../components/Sheet';
+import { Text } from '../locale/Text';
 import { useTutorialTarget } from '../tutorial/targets';
 import { fmtCash, fmtPct, fmtUsers, toPips } from '../format';
 import { failureText, labName, readableLabColor, t } from '../i18n';

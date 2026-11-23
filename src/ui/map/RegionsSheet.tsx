@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Keyboard, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Keyboard, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { Sheet } from '../components/Sheet';
 import { fmtPct } from '../format';
 import { t } from '../i18n';
+import { Text } from '../locale/Text';
 import { cased, lower } from '../locale/casing';
 import { useTutorialTarget } from '../tutorial/targets';
 import { colors, radius, spacing, touch, type } from '../theme';

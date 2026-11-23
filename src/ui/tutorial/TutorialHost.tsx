@@ -1,6 +1,6 @@
 import { usePathname } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, StyleSheet, Text, View, useWindowDimensions, type LayoutChangeEvent } from 'react-native';
+import { Pressable, StyleSheet, View, useWindowDimensions, type LayoutChangeEvent } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import Svg, { Path, Rect } from 'react-native-svg';
 import { useShallow } from 'zustand/react/shallow';
@@ -14,6 +14,7 @@ import { BuildStamp } from '../diagnostics/BuildStamp';
 import { useInsets } from '../hooks/useInsets';
 import { useLayoutMode } from '../hooks/useLayoutMode';
 import { t } from '../i18n';
+import { Text } from '../locale/Text';
 import { lower } from '../locale/casing';
 import { requestMapFocus } from '../map/mapFocus';
 import { isDrawablePath } from '../map/svgSafe';

@@ -1,10 +1,11 @@
 import { useEffect, type ReactNode } from 'react';
-import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 
 import type { NewsTone } from '@/engine';
 
 import { useInsets } from '../hooks/useInsets';
+import { Text } from '../locale/Text';
 import { useAmbientClock, wave } from '../motion/ambient';
 import { useTutorialTarget } from '../tutorial/targets';
 import { PanelDeco, Stripes } from '../components/Deco';
