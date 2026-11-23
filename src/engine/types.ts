@@ -363,6 +363,21 @@ export interface DifficultyDef {
   scoreMultiplier: number;
 }
 
+/**
+ * A run-length preset (for example a short "sprint"): balance overrides merged over the
+ * run's difficulty balance, and a further multiplier on the final score. Names and
+ * descriptions are string keys in the pack.
+ */
+export interface RunLengthDef {
+  id: string;
+  nameKey: string;
+  descKey: string;
+  /** Merged over defaults ← pack balance ← difficulty balance for runs of this length. */
+  balance: Partial<BalanceConfig>;
+  /** The final score is multiplied by this too (> 0). */
+  scoreMultiplier: number;
+}
+
 export interface ContentPack {
   id: string;
   version: number;
@@ -386,6 +401,10 @@ export interface ContentPack {
   difficulties?: DifficultyDef[];
   /** Id of the level used when a run names none (or an unknown one). */
   defaultDifficulty?: string;
+  /** Run-length presets, shortest first. Optional: without them every run is the standard length. */
+  runLengths?: RunLengthDef[];
+  /** Id of the preset used when a run names none (or an unknown one). */
+  defaultRunLength?: string;
   /** locale -> key -> text. Text may contain {lab}, {region}, {rival}, {amount}. */
   strings: Record<string, Record<string, string>>;
 }
@@ -521,6 +540,8 @@ export interface GameState {
   nextMomentTick: number;
   /** Id of the run's difficulty level (resolved at createGame); absent when the pack has none. */
   difficulty?: string;
+  /** Id of the run's length preset (resolved at createGame); absent when the pack has none. */
+  runLength?: string;
 }
 
 export interface GameSetup {
@@ -532,6 +553,8 @@ export interface GameSetup {
   rivalIds?: LabId[];
   /** Difficulty id from ContentPack.difficulties; unknown or missing = the pack default, then none. */
   difficulty?: string;
+  /** Run-length id from ContentPack.runLengths; unknown or missing = the pack default, then none. */
+  runLength?: string;
 }
 
 // ───────────────────────────── Actions ─────────────────────────────
