@@ -20,7 +20,7 @@
    "requires": [
     {
      "type": "allTime",
-     "tokens": 1500000.0
+     "tokens": 5000000.0
     }
    ],
    "mechanic": "training",
@@ -39,7 +39,7 @@
     },
     {
      "type": "allTime",
-     "tokens": 20000000000.0
+     "tokens": 50000000000.0
     }
    ],
    "mechanic": "staff",
@@ -54,7 +54,7 @@
    "requires": [
     {
      "type": "generation",
-     "min": 3
+     "min": 5
     }
    ],
    "mechanic": "autoCollect",
@@ -69,7 +69,7 @@
    "requires": [
     {
      "type": "generation",
-     "min": 6
+     "min": 8
     }
    ],
    "mechanic": "autoBuy",
@@ -80,34 +80,30 @@
   "steps": [
    {
     "count": 10,
-    "mult": 1.5
+    "mult": 1.1
    },
    {
     "count": 25,
-    "mult": 2
+    "mult": 1.25
    },
    {
     "count": 50,
-    "mult": 2
+    "mult": 1.25
    },
    {
     "count": 100,
-    "mult": 2
-   },
-   {
-    "count": 150,
-    "mult": 2
+    "mult": 1.5
    },
    {
     "count": 200,
-    "mult": 3
+    "mult": 1.5
    }
   ],
   "repeatEvery": 100,
-  "repeatMult": 2
+  "repeatMult": 1.2
  },
  "training": {
-  "cooldownMs": 180000,
+  "cooldownMs": 300000,
   "queueMax": 3,
   "candidates": 3,
   "rarities": [
@@ -152,40 +148,40 @@
    {
     "id": "t-production",
     "stat": "production",
-    "min": 0.06,
-    "max": 0.14,
+    "min": 0.03,
+    "max": 0.07,
     "weight": 5,
     "labelKey": "garage.trait.production"
    },
    {
     "id": "t-tap",
     "stat": "tap",
-    "min": 0.15,
-    "max": 0.4,
+    "min": 0.09,
+    "max": 0.24,
     "weight": 4,
     "labelKey": "garage.trait.tap"
    },
    {
     "id": "t-offlineCap",
     "stat": "offlineCap",
-    "min": 0.5,
-    "max": 1.5,
+    "min": 0.25,
+    "max": 0.5,
     "weight": 3,
     "labelKey": "garage.trait.offlineCap"
    },
    {
     "id": "t-offlineRate",
     "stat": "offlineRate",
-    "min": 0.04,
-    "max": 0.1,
+    "min": 0.01,
+    "max": 0.03,
     "weight": 3,
     "labelKey": "garage.trait.offlineRate"
    },
    {
     "id": "t-shipHype",
     "stat": "shipHype",
-    "min": 0.04,
-    "max": 0.1,
+    "min": 0.024,
+    "max": 0.06,
     "weight": 3,
     "labelKey": "garage.trait.shipHype"
    },
@@ -420,8 +416,8 @@
     "icon": "heart",
     "weight": 4,
     "spot": "door",
-    "rewardSeconds": 15,
-    "rewardMinTaps": 10
+    "rewardSeconds": 5,
+    "rewardMinTaps": 6
    },
    {
     "id": "intern-question",
@@ -430,8 +426,8 @@
     "icon": "mortarboard",
     "weight": 3,
     "spot": "desk",
-    "rewardSeconds": 8,
-    "rewardMinTaps": 6,
+    "rewardSeconds": 3,
+    "rewardMinTaps": 4,
     "trainingMs": 30000
    },
    {
@@ -441,8 +437,8 @@
     "icon": "bug",
     "weight": 3,
     "spot": "desk",
-    "rewardSeconds": 10,
-    "rewardMinTaps": 8,
+    "rewardSeconds": 3,
+    "rewardMinTaps": 5,
     "penaltySeconds": 10,
     "missKey": "garage.happening.bug.miss"
    },
@@ -453,8 +449,8 @@
     "icon": "thermometer",
     "weight": 3,
     "spot": "rack",
-    "rewardSeconds": 10,
-    "rewardMinTaps": 8,
+    "rewardSeconds": 3,
+    "rewardMinTaps": 5,
     "penaltySeconds": 15,
     "missKey": "garage.happening.overheat.miss"
    },
@@ -465,8 +461,8 @@
     "icon": "cash",
     "weight": 2,
     "spot": "door",
-    "rewardSeconds": 25,
-    "rewardMinTaps": 15
+    "rewardSeconds": 8,
+    "rewardMinTaps": 9
    },
    {
     "id": "reporter",
@@ -476,8 +472,8 @@
     "weight": 2,
     "spot": "door",
     "minStage": 1,
-    "rewardSeconds": 10,
-    "rewardMinTaps": 8,
+    "rewardSeconds": 3,
+    "rewardMinTaps": 5,
     "penaltySeconds": 8,
     "missKey": "garage.happening.reporter.miss"
    },
@@ -489,8 +485,8 @@
     "weight": 2,
     "spot": "rack",
     "minStage": 1,
-    "rewardSeconds": 20,
-    "rewardMinTaps": 12
+    "rewardSeconds": 6,
+    "rewardMinTaps": 7
    },
    {
     "id": "lawyer",
@@ -500,8 +496,8 @@
     "weight": 2,
     "spot": "desk",
     "minStage": 2,
-    "rewardSeconds": 12,
-    "rewardMinTaps": 8
+    "rewardSeconds": 4,
+    "rewardMinTaps": 5
    },
    {
     "id": "power",
@@ -511,8 +507,8 @@
     "weight": 2,
     "spot": "rack",
     "minStage": 2,
-    "rewardSeconds": 10,
-    "rewardMinTaps": 8,
+    "rewardSeconds": 3,
+    "rewardMinTaps": 5,
     "penaltySeconds": 15,
     "missKey": "garage.happening.power.miss"
    },
@@ -524,8 +520,8 @@
     "weight": 2,
     "spot": "door",
     "minStage": 3,
-    "rewardSeconds": 20,
-    "rewardMinTaps": 12
+    "rewardSeconds": 6,
+    "rewardMinTaps": 7
    },
    {
     "id": "hallucination",
@@ -535,15 +531,15 @@
     "weight": 2,
     "spot": "desk",
     "minStage": 4,
-    "rewardSeconds": 12,
-    "rewardMinTaps": 8,
+    "rewardSeconds": 4,
+    "rewardMinTaps": 5,
     "penaltySeconds": 12,
     "missKey": "garage.happening.hallucination.miss"
    }
   ]
  },
  "automation": {
-  "collectShare": 0.5,
+  "collectShare": 0.25,
   "buyIntervalMs": 4000,
   "buyBudgetShare": 0.25
  },
