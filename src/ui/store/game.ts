@@ -75,6 +75,7 @@ export const useGameStore = create<GameStore>()((set, get) => ({
     const eventResult = action.type === 'resolveEvent' ? (last?.resultKey ? last : null) : get().eventResult;
     set({ state: result.state, eventResult });
     logAction(action, result.state);
+    for (const l of actionListeners) l(action, result.state, state);
     return { ok: true };
   },
 
@@ -97,6 +98,15 @@ export const useGameStore = create<GameStore>()((set, get) => ({
     set({ state: null, eventResult: null, speed: 1 });
   },
 }));
+
+type ActionListener = (action: Action, state: GameState, before: GameState) => void;
+const actionListeners = new Set<ActionListener>();
+
+/** Called after every successful dispatch with the action, the new state and the state before (analytics). Returns an unsubscribe. */
+export function onGameAction(listener: ActionListener): () => void {
+  actionListeners.add(listener);
+  return () => actionListeners.delete(listener);
+}
 
 /** Lifecycle lines for the actions worth knowing about when reading a crash log. */
 function logAction(action: Action, state: GameState): void {

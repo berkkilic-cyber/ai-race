@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 import { StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
+import { AnalyticsRoot } from '@/ui/analytics/AnalyticsRoot';
 import { installDebugHandle } from '@/ui/debug';
 import { installFeel, useFeelRoutes } from '@/ui/feel';
 import { ErrorBoundary } from '@/ui/diagnostics/ErrorBoundary';
@@ -29,6 +30,7 @@ export default function RootLayout() {
       <StatusBar style={isDark ? 'light' : 'dark'} />
       <InsetsEmulator>
         <ErrorBoundary>{ready ? <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }} /> : null}</ErrorBoundary>
+        <AnalyticsRoot />
       </InsetsEmulator>
     </GestureHandlerRootView>
   );
