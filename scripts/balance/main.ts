@@ -8,6 +8,8 @@
  *                      [--moment-skill 0,0.4,0.7,1]   (each policy once per skill)
  *                      [--moments file.json]          (replace the pack's moments for a sweep)
  *                      [--difficulty frontier|a,b|all] (default: the pack's default level)
+ *                      [--runLength sprint|a,b|all]   (default: the pack's default run length;
+ *                                                      with several, adds a table comparing them)
  *                      [--brief]                      (summary tables only, no per-policy detail)
  *
  * Seeds are base + run index, so a report is reproducible; tune on one --seed
@@ -21,7 +23,7 @@ import type { BotPolicy, ContentPack } from '@/engine';
 
 import { coverageReport } from './coverage';
 import { FOUNDERS, HOME_REGIONS } from './jobs';
-import { difficultyTable, policyReport, summaryTable } from './report';
+import { difficultyTable, policyReport, runLengthTables, summaryTable } from './report';
 import { PACK, setBalanceOverrides, simulate, type Job, type RunRecord } from './simulate';
 
 const ALL_POLICIES: BotPolicy[] = ['sensible', 'capability', 'reach', 'shadow', 'random', 'idle'];
@@ -40,6 +42,8 @@ interface Options {
   moments?: ContentPack['moments'];
   /** Difficulty ids to play (each policy once per level); default: the pack's default. */
   difficulties?: string[];
+  /** Run-length ids to play (each policy once per length); default: the pack's default. */
+  runLengths?: string[];
   /** Only the summary tables. */
   brief: boolean;
 }
@@ -61,6 +65,10 @@ function parseArgs(argv: string[]): Options {
       const value = next();
       options.difficulties = value === 'all' ? (PACK.difficulties ?? []).map((d) => d.id) : value.split(',');
       for (const id of options.difficulties) if (!(PACK.difficulties ?? []).some((d) => d.id === id)) throw new Error(`Unknown difficulty ${id}`);
+    } else if (arg === '--runLength' || arg === '--run-length') {
+      const value = next();
+      options.runLengths = value === 'all' ? (PACK.runLengths ?? []).map((r) => r.id) : value.split(',');
+      for (const id of options.runLengths) if (!(PACK.runLengths ?? []).some((r) => r.id === id)) throw new Error(`Unknown run length ${id}`);
     } else if (arg === '--brief') options.brief = true;
     else if (arg === '--moments') options.moments = JSON.parse(readFileSync(next(), 'utf8')) as ContentPack['moments'];
     else throw new Error(`Unknown argument ${arg}`);
@@ -77,7 +85,7 @@ const SECRET_NAMES = [
   ),
 ];
 
-export function jobsFor(policy: BotPolicy, runs: number, seed: number, coverage: boolean, momentSkill?: number, difficulty?: string): Job[] {
+export function jobsFor(policy: BotPolicy, runs: number, seed: number, coverage: boolean, momentSkill?: number, difficulty?: string, runLength?: string): Job[] {
   const jobs: Job[] = [];
   for (let i = 0; i < runs; i++) {
     jobs.push({
@@ -89,6 +97,7 @@ export function jobsFor(policy: BotPolicy, runs: number, seed: number, coverage:
       coverage,
       ...(momentSkill !== undefined ? { momentSkill } : {}),
       ...(difficulty !== undefined ? { difficulty } : {}),
+      ...(runLength !== undefined ? { runLength } : {}),
     });
   }
   return jobs;
@@ -130,16 +139,20 @@ async function main(): Promise<void> {
   const start = performance.now();
   const skills: (number | undefined)[] = options.momentSkills ?? [undefined];
   const levels: (string | undefined)[] = options.difficulties ?? [undefined];
-  const jobs = levels.flatMap((level) =>
-    options.policies.flatMap((p) => skills.flatMap((skill) => jobsFor(p, options.runs, options.seed, options.coverage, skill, level))),
+  const lengths: (string | undefined)[] = options.runLengths ?? [undefined];
+  const jobs = lengths.flatMap((length) =>
+    levels.flatMap((level) =>
+      options.policies.flatMap((p) => skills.flatMap((skill) => jobsFor(p, options.runs, options.seed, options.coverage, skill, level, length))),
+    ),
   );
   setBalanceOverrides(options.balance, options.moments);
   const records = await runInWorkers(jobs, options.workers, options.balance, options.moments);
   const seconds = (performance.now() - start) / 1000;
   const byPolicy = new Map<string, RunRecord[]>();
   const multiLevel = levels.length > 1;
+  const multiLength = lengths.length > 1;
   const labelOf = (job: Job): string =>
-    `${multiLevel ? `${job.difficulty}/` : ''}${job.momentSkill === undefined ? job.policy : `${job.policy}@${job.momentSkill}`}`;
+    `${multiLength ? `${job.runLength}:` : ''}${multiLevel ? `${job.difficulty}/` : ''}${job.momentSkill === undefined ? job.policy : `${job.policy}@${job.momentSkill}`}`;
   for (const record of records) byPolicy.set(labelOf(record.job), [...(byPolicy.get(labelOf(record.job)) ?? []), record]);
 
   const out: string[] = [];
@@ -150,12 +163,21 @@ async function main(): Promise<void> {
   );
   if (Object.keys(options.balance).length > 0) out.push(`\nBalance overrides: \`${JSON.stringify(options.balance)}\``);
   if (options.moments) out.push(`\nMoments replaced (${options.moments.length} from --moments).`);
+  out.push(`\nRun length: ${lengths.map((l) => l ?? `${PACK.defaultRunLength ?? 'none'} (pack default)`).join(', ')}.`);
   out.push(`\nDifficulty: ${levels.map((l) => l ?? `${PACK.defaultDifficulty ?? 'none'} (pack default)`).join(', ')}.`);
   out.push('');
   out.push(summaryTable(byPolicy));
   out.push('');
   if (multiLevel || options.difficulties) {
-    out.push(difficultyTable(records, levels.map((l) => l ?? PACK.defaultDifficulty ?? 'none'), PACK.defaultDifficulty ?? 'none'));
+    for (const length of lengths) {
+      if (multiLength) out.push(`Run length ${length}:\n`);
+      const at = records.filter((r) => r.job.runLength === length);
+      out.push(difficultyTable(at, levels.map((l) => l ?? PACK.defaultDifficulty ?? 'none'), PACK.defaultDifficulty ?? 'none'));
+      out.push('');
+    }
+  }
+  if (multiLength) {
+    out.push(runLengthTables(records, lengths as string[], PACK.defaultDifficulty ?? 'none'));
     out.push('');
   }
   if (!options.brief) {

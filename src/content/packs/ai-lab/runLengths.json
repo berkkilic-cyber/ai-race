@@ -5,7 +5,16 @@
     "descKey": "runLength.sprint.desc",
     "scoreMultiplier": 0.6,
     "balance": {
-      "pace": 2.6
+      "pace": 3.0,
+      "eventIntervalMin": 190,
+      "eventIntervalMax": 300,
+      "headlineIntervalMin": 50,
+      "headlineIntervalMax": 100,
+      "regulationDecay": 0.016,
+      "backlashDecay": 0.016,
+      "momentBoostWeightFactor": 1.6,
+      "rivalStartHype": 12,
+      "rivalStartCash": 85
     }
   },
   {

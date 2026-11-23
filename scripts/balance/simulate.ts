@@ -28,6 +28,8 @@ export interface Job {
   momentSkill?: number;
   /** Difficulty id; default: the pack's default difficulty. */
   difficulty?: string;
+  /** Run-length id; default: the pack's default run length. */
+  runLength?: string;
 }
 
 export interface RivalRecord {
@@ -76,6 +78,8 @@ export interface RunRecord {
   momentCash: number;
   momentsCollected: number;
   momentsMissed: number;
+  /** Event cards the player resolved. */
+  eventsResolved: number;
   /** News items without a kind (should stay empty). */
   kindlessNews: number;
   /** Model launches announced: player, rivals. */
@@ -231,6 +235,7 @@ export function simulate(job: Job): RunRecord {
         homeRegion: job.homeRegion,
         seed: job.seed,
         ...(job.difficulty !== undefined ? { difficulty: job.difficulty } : {}),
+        ...(job.runLength !== undefined ? { runLength: job.runLength } : {}),
       },
       { policy: job.policy, maxTicks: MAX_TICKS, onTick, onMomentCollected, ...(job.momentSkill !== undefined ? { momentSkill: job.momentSkill } : {}) },
     );
@@ -283,6 +288,7 @@ export function simulate(job: Job): RunRecord {
     momentCash,
     momentsCollected: player.stats.momentsCollected,
     momentsMissed: player.stats.momentsMissed,
+    eventsResolved: player.stats.eventsResolved,
     kindlessNews,
     launches,
     seenEvents: job.coverage ? state.seenEvents.slice() : [],
@@ -323,6 +329,7 @@ function emptyRecord(job: Job, error: string): RunRecord {
     momentCash: 0,
     momentsCollected: 0,
     momentsMissed: 0,
+    eventsResolved: 0,
     kindlessNews: 0,
     launches: { player: 0, rivals: 0 },
     seenEvents: [],
