@@ -9,6 +9,13 @@
  * continuously, taps a lot), each with and without ad boosts. Bots buy greedily by payback
  * time, catch most golden moments, fix incidents and ship a model when the Hype gained is
  * worth it. Time is simulated through the engine's own advance (closed form while away).
+ *
+ * The lab layer: bots tap most lab happenings while they play, launch every training run
+ * and keep the candidate that scores best for their style (replacing a weaker kept model
+ * when the slots are full), split staff by a fixed policy once staff unlocks, pick a
+ * launch-day choice, and switch the auto-buy helper on when it arrives.
+ *
+ *   npm run balance:garage -- --legacy     # the same bots on the content without the lab layer
  */
 import {
   advance,
@@ -18,13 +25,21 @@ import {
   buyUpgrade,
   claimOffer,
   collectGolden,
+  collectHappening,
   createGarage,
   dismissOffline,
   formatAmount,
   formatDuration,
   generatorRate,
   isGeneratorUnlocked,
+  keepModel,
+  launchTraining,
+  mechanicOn,
   nextRandom,
+  scrapCandidates,
+  setAutoBuy,
+  setStaff,
+  traitDef,
   offerStatus,
   prestige,
   prestigePreview,
@@ -34,11 +49,29 @@ import {
   unitCost,
   type GarageContent,
   type GarageState,
+  type ModelCandidate,
+  type ModelStat,
   type OfferId,
+  type StaffSplit,
 } from '@/idle';
 import { aiLabGarage } from '@/content/packs/ai-lab/garage';
 
-const content: GarageContent = aiLabGarage;
+const LEGACY = process.argv.includes('--legacy');
+/** `--legacy`: the content without the lab layer (what the game played like before it). */
+const content: GarageContent = LEGACY
+  ? { ...aiLabGarage, stages: undefined, milestones: undefined, training: undefined, staff: undefined, shipDay: undefined, happenings: undefined, automation: undefined }
+  : withoutParts(aiLabGarage);
+
+/** `--without milestones,training,...`: drop lab parts to see what each one adds. */
+function withoutParts(c: GarageContent): GarageContent {
+  const i = process.argv.indexOf('--without');
+  if (i < 0) return c;
+  const out: Record<string, unknown> = { ...c };
+  for (const part of (process.argv[i + 1] ?? '').split(',')) out[part] = undefined;
+  if (!out.training) out.stages = (c.stages ?? []).map((st) => (st.mechanic === 'training' ? { ...st, mechanic: 'none' as const } : st));
+  if (!out.staff) out.stages = ((out.stages as GarageContent['stages']) ?? []).map((st) => (st.mechanic === 'staff' ? { ...st, mechanic: 'none' as const } : st));
+  return out as unknown as GarageContent;
+}
 const SEC = 1000;
 const MIN = 60 * SEC;
 const HOUR = 60 * MIN;
@@ -58,13 +91,24 @@ interface Profile {
   ads: boolean;
   /** Boost ads watched per session (ad profiles). */
   boostsPerSession: number;
+  /** Chance to tap a lab happening while playing. */
+  happeningSkill: number;
+  /** How much the bot values each model stat (per unit of the trait's value). */
+  modelTaste: Partial<Record<ModelStat, number>>;
+  staff: StaffSplit;
+  shipChoice: string;
 }
 
+const ACTIVE_TASTE: Partial<Record<ModelStat, number>> = { production: 3, tap: 1, offlineRate: 0.3, offlineCap: 0.02, shipHype: 2.5, happening: 0.4, incident: -0.6, trainingSpeed: 0.6 };
+const CASUAL_TASTE: Partial<Record<ModelStat, number>> = { production: 2.5, tap: 0.3, offlineRate: 5, offlineCap: 0.25, shipHype: 2.5, happening: 0.2, incident: -0.2, trainingSpeed: 0.8 };
+
+const CASUAL_SESSIONS: [number, number][] = [[8 * HOUR, 3 * MIN], [13 * HOUR, 3 * MIN], [21 * HOUR, 4 * MIN]];
+
 const PROFILES: Profile[] = [
-  { name: 'casual', sessions: [[8 * HOUR, 3 * MIN], [13 * HOUR, 3 * MIN], [21 * HOUR, 4 * MIN]], tapsPerSec: 3, tapSeconds: 40, goldenSkill: 0.6, ads: false, boostsPerSession: 0 },
-  { name: 'casual + ads', sessions: [[8 * HOUR, 3 * MIN], [13 * HOUR, 3 * MIN], [21 * HOUR, 4 * MIN]], tapsPerSec: 3, tapSeconds: 40, goldenSkill: 0.6, ads: true, boostsPerSession: 2 },
-  { name: 'active', sessions: null, tapsPerSec: 6, tapSeconds: Infinity, goldenSkill: 0.9, ads: false, boostsPerSession: 0 },
-  { name: 'active + ads', sessions: null, tapsPerSec: 6, tapSeconds: Infinity, goldenSkill: 0.9, ads: true, boostsPerSession: 1 },
+  { name: 'casual', sessions: CASUAL_SESSIONS, tapsPerSec: 3, tapSeconds: 40, goldenSkill: 0.6, ads: false, boostsPerSession: 0, happeningSkill: 0.6, modelTaste: CASUAL_TASTE, staff: { research: 4, product: 5, safety: 3 }, shipChoice: 'safe' },
+  { name: 'casual + ads', sessions: CASUAL_SESSIONS, tapsPerSec: 3, tapSeconds: 40, goldenSkill: 0.6, ads: true, boostsPerSession: 2, happeningSkill: 0.6, modelTaste: CASUAL_TASTE, staff: { research: 4, product: 5, safety: 3 }, shipChoice: 'safe' },
+  { name: 'active', sessions: null, tapsPerSec: 6, tapSeconds: Infinity, goldenSkill: 0.9, ads: false, boostsPerSession: 0, happeningSkill: 0.85, modelTaste: ACTIVE_TASTE, staff: { research: 3, product: 6, safety: 3 }, shipChoice: 'hype' },
+  { name: 'active + ads', sessions: null, tapsPerSec: 6, tapSeconds: Infinity, goldenSkill: 0.9, ads: true, boostsPerSession: 1, happeningSkill: 0.85, modelTaste: ACTIVE_TASTE, staff: { research: 3, product: 6, safety: 3 }, shipChoice: 'hype' },
 ];
 
 /** Bot randomness, separate from the game's PRNG. */
@@ -81,6 +125,10 @@ interface Log {
   news: number[];
   ships: { at: number; generation: number; gain: number }[];
   ads: Record<string, number>;
+  stages: Record<number, number>;
+  trainingRuns: number;
+  modelsKept: number;
+  happenings: number;
 }
 
 const seenAffordable = new Set<string>();
@@ -155,14 +203,49 @@ function maybeShip(s: GarageState, p: Profile, log: Log, t0: number): GarageStat
   const worth = s.hype === 0 || pv.multAfter / pv.multNow >= 1.5;
   if (!worth) return s;
   const bonus = p.ads && offerStatus(s, content, 'prestigeBonus', s.now).available;
-  const r = prestige(s, content, s.now, { bonus });
+  const choice = content.shipDay?.choices.some((c) => c.id === p.shipChoice) ? p.shipChoice : undefined;
+  const r = prestige(s, content, s.now, { bonus, choice });
   if (!r.ok) return s;
   if (bonus) log.ads.prestigeBonus = (log.ads.prestigeBonus ?? 0) + 1;
   log.ships.push({ at: s.now - t0, generation: r.state.generation, gain: r.state.hype - s.hype });
   return r.state;
 }
 
-/** One second of play: taps, golden moments, incidents, ads, shopping, shipping. */
+function modelScore(m: ModelCandidate, p: Profile): number {
+  let v = 0;
+  for (const b of [...m.boons, ...(m.drawback ? [m.drawback] : [])]) {
+    const def = traitDef(content, b.trait);
+    if (def) v += (p.modelTaste[def.stat] ?? 0) * b.value;
+  }
+  return v;
+}
+
+/** Training runs, kept models, staff and the auto-buy switch. */
+function runLab(s: GarageState, p: Profile, log: Log): GarageState {
+  if (log.stages[s.stage] === undefined) log.stages[s.stage] = s.now - START;
+  if (mechanicOn(s, content, 'staff') && content.staff && s.staff.product !== p.staff.product) s = setStaff(s, content, p.staff, s.now).state;
+  if (mechanicOn(s, content, 'autoBuy') && !s.autoBuy) s = setAutoBuy(s, content, true, s.now).state;
+  for (let i = 0; i < 6 && mechanicOn(s, content, 'training'); i++) {
+    if (!s.training.candidates) {
+      if (s.training.charges < 1) break;
+      const r = launchTraining(s, content, s.now);
+      if (!r.ok) break;
+      s = r.state;
+      log.trainingRuns++;
+    }
+    const cands = [...(s.training.candidates ?? [])].sort((a, b) => modelScore(b, p) - modelScore(a, p));
+    const best = cands[0];
+    const slots = content.stages?.slice(0, s.stage + 1).reduce((m, st) => Math.max(m, st.modelSlots), 0) ?? 0;
+    const worst = [...s.models].sort((a, b) => modelScore(a, p) - modelScore(b, p))[0];
+    if (best && modelScore(best, p) > 0 && s.models.length < slots) s = keepModel(s, content, best.uid, s.now).state;
+    else if (best && worst && modelScore(best, p) > modelScore(worst, p)) s = keepModel(s, content, best.uid, s.now, worst.uid).state;
+    else s = scrapCandidates(s, content, s.now).state;
+    if (s.stats.modelsKept > log.modelsKept) log.modelsKept = s.stats.modelsKept;
+  }
+  return s;
+}
+
+/** One second of play: taps, golden moments, incidents, happenings, ads, the lab, shopping, shipping. */
 function playSecond(s: GarageState, p: Profile, tapping: boolean, log: Log, t0: number): GarageState {
   const t = s.now;
   if (tapping) {
@@ -173,13 +256,23 @@ function playSecond(s: GarageState, p: Profile, tapping: boolean, log: Log, t0: 
   if (s.golden && s.now - s.golden.spawnedAt >= 2 * SEC) {
     const catchIt = roll() < p.goldenSkill;
     if (catchIt) s = collectGolden(s, content, s.now).state;
+    if (catchIt && p.ads) s = watchAd(s, 'bonusMultiply', log);
     if (p.ads) s = watchAd(s, 'frenzyExtend', log);
   }
   if (s.incident && s.now - s.incident.startedAt >= 3 * SEC) {
     if (p.ads) s = watchAd(s, 'incidentFix', log);
     for (let i = 0; i < 6 && s.incident; i++) s = tapIncident(s, content, s.now).state;
   }
+  if (s.happening && s.now - s.happening.spawnedAt >= 2 * SEC && s.happening.expiresAt - s.now > SEC) {
+    if (roll() < p.happeningSkill / 6) {
+      const r = collectHappening(s, content, s.now);
+      if (r.ok) log.happenings++;
+      s = r.state;
+      if (p.ads) s = watchAd(s, 'bonusMultiply', log);
+    }
+  }
   if (p.ads) s = watchAd(s, 'crate', log);
+  s = runLab(s, p, log);
   noteNew(s, log, s.now - t0);
   s = shop(s, p, tapping, log, t0);
   s = maybeShip(s, p, log, t0);
@@ -201,7 +294,7 @@ function run(p: Profile, days: number, activeHours: number): RunResult {
   tracing = p.name === 'active';
   seenAffordable.clear();
   let s = createGarage(content, START, 42);
-  const log: Log = { firstGenerator: null, news: [], ships: [], ads: {} };
+  const log: Log = { firstGenerator: null, news: [], ships: [], ads: {}, stages: {}, trainingRuns: 0, modelsKept: 0, happenings: 0 };
   const reached: Record<number, number> = { 0: 0 };
   const dayRows: RunResult['dayRows'] = [];
   const note = () => {
@@ -228,6 +321,7 @@ function run(p: Profile, days: number, activeHours: number): RunResult {
         if (p.ads) s = watchAd(s, 'offlineDouble', log);
         s = dismissOffline(s);
       }
+      s = runLab(s, p, log);
       if (p.ads) for (let b = 0; b < p.boostsPerSession; b++) s = watchAd(s, 'boost', log);
       const end = begin + length;
       while (s.now < end) {
@@ -257,7 +351,7 @@ const t0 = Date.now();
 const results = PROFILES.map((p) => run(p, DAYS, ACTIVE_HOURS));
 
 const fmt = (ms: number) => formatDuration(ms);
-console.log(`# Garage pacing (${DAYS} days casual, ${ACTIVE_HOURS} h active)\n`);
+console.log(`# Garage pacing (${DAYS} days casual, ${ACTIVE_HOURS} h active)${LEGACY ? ' — legacy content (no lab layer)' : ''}\n`);
 
 console.log('## Early game (active, no ads)\n');
 const active = results.find((r) => r.profile.name === 'active')!;
@@ -315,6 +409,18 @@ console.log(`- casual, all-time tokens after ${DAYS} days: ${tokRatio >= 100 ? f
 
 console.log('\n## Ads watched per day (ad profiles)\n');
 console.log('| Placement | casual + ads | active + ads (per hour) |\n| --- | --- | --- |');
-const ids: OfferId[] = ['offlineDouble', 'boost', 'frenzyExtend', 'incidentFix', 'crate', 'prestigeBonus'];
+const ids: OfferId[] = ['offlineDouble', 'boost', 'frenzyExtend', 'incidentFix', 'crate', 'prestigeBonus', 'bonusMultiply'];
 for (const id of ids) console.log(`| ${id} | ${((casualAds.log.ads[id] ?? 0) / DAYS).toFixed(1)} | ${((activeAds.log.ads[id] ?? 0) / ACTIVE_HOURS).toFixed(1)} |`);
+if (!LEGACY) {
+  console.log('\n## The lab\n');
+  console.log('| Profile | Office | Data centre | Company town | Latent space | training runs | models kept | happenings tapped |\n| --- | --- | --- | --- | --- | --- | --- | --- |');
+  const when = (r: RunResult, i: number) => {
+    const t = r.log.stages[i];
+    return t === undefined ? '-' : t < DAY ? fmt(t) : `day ${(t / DAY).toFixed(1)}`;
+  };
+  for (const r of results) {
+    const span = r.profile.sessions ? `${DAYS} d` : `${ACTIVE_HOURS} h`;
+    console.log(`| ${r.profile.name} | ${when(r, 1)} | ${when(r, 2)} | ${when(r, 3)} | ${when(r, 4)} | ${r.log.trainingRuns} / ${span} | ${r.log.modelsKept} | ${r.log.happenings} |`);
+  }
+}
 console.log(`\n(simulated in ${((Date.now() - t0) / 1000).toFixed(1)} s)`);

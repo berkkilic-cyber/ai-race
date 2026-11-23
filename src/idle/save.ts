@@ -5,9 +5,11 @@
  * fresh save). A save it cannot read at all gives a fresh save and `error`.
  */
 import { GARAGE_VERSION, createGarage, emptyStats } from './garage';
+import { evenStaff, labRequirementMet } from './lab';
+import { modelSlots, traitDef } from './labRates';
 import { amount, finite } from './num';
-import type { GarageContent, GarageNews, GarageState, OfferId } from './types';
-import { OFFER_IDS } from './types';
+import type { GarageContent, GarageNews, GarageState, ModelCandidate, OfferId, StaffSplit } from './types';
+import { OFFER_IDS, STAFF_LANES } from './types';
 
 export interface LoadResult {
   state: GarageState;
@@ -44,7 +46,37 @@ export function migrateV1(raw: Raw): Raw {
   };
 }
 
-const MIGRATIONS: Record<number, (raw: Raw) => Raw> = { 1: migrateV1 };
+/**
+ * Version 2 had no lab: no stage, training, models, staff, happenings or automation. The
+ * new fields are filled by `sanitize` (the stage is worked out from the save's progress,
+ * staff split evenly, one training run ready if the lab is already past the Garage).
+ */
+export function migrateV2(raw: Raw): Raw {
+  return { ...raw, version: 3, stage: undefined, training: undefined, models: [], staff: undefined, shipChoice: null, autoBuy: false, migratedLab: true };
+}
+
+const MIGRATIONS: Record<number, (raw: Raw) => Raw> = { 1: migrateV1, 2: migrateV2 };
+
+function sanitizeModel(v: unknown, content: GarageContent): ModelCandidate | null {
+  const cfg = content.training;
+  if (!cfg || !isObj(v)) return null;
+  if (typeof v.rarity !== 'string' || !cfg.rarities.some((r) => r.id === v.rarity)) return null;
+  const trait = (x: unknown) => (isObj(x) && typeof x.trait === 'string' && traitDef(content, x.trait) && typeof x.value === 'number' && Number.isFinite(x.value) ? { trait: x.trait, value: x.value } : null);
+  const boons = Array.isArray(v.boons) ? v.boons.map(trait).filter((x): x is { trait: string; value: number } => x !== null).slice(0, 6) : [];
+  if (boons.length === 0) return null;
+  const drawback = trait(v.drawback);
+  const idx = (x: unknown, n: number) => (n > 0 ? Math.floor(num(x)) % n : 0);
+  return {
+    uid: Math.floor(num(v.uid, 1)),
+    prefix: idx(v.prefix, cfg.prefixKeys.length),
+    suffix: idx(v.suffix, cfg.suffixKeys.length),
+    version: Math.min(99, num(v.version, 1)) || 1,
+    rarity: v.rarity,
+    desc: Math.floor(num(v.desc)),
+    boons,
+    ...(drawback ? { drawback } : {}),
+  };
+}
 
 function num(v: unknown, fallback = 0): number {
   return amount(finite(v, fallback));
@@ -85,8 +117,27 @@ export function sanitize(raw: Raw, content: GarageContent, fresh: GarageState): 
   const frenzy = isObj(raw.frenzy) && Number.isFinite(raw.frenzy.until) ? { mult: num(raw.frenzy.mult, 1) || 1, tapMult: num(raw.frenzy.tapMult, 1) || 1, until: time(raw.frenzy.until, 0) } : null;
   const news = Array.isArray(raw.news) ? (raw.news.filter((n) => isObj(n) && typeof n.key === 'string') as unknown as GarageNews[]).slice(-content.news.keep) : [];
   const offline = isObj(raw.offline) ? { awayMs: num(raw.offline.awayMs), creditedMs: num(raw.offline.creditedMs), tokens: num(raw.offline.tokens), doubled: raw.offline.doubled === true } : null;
-  const lastShip = isObj(raw.lastShip) ? { generation: num(raw.lastShip.generation), hypeGained: num(raw.lastShip.hypeGained), at: time(raw.lastShip.at, now) } : null;
-  return {
+  const choiceIds = new Set((content.shipDay?.choices ?? []).map((c) => c.id));
+  const lastShip = isObj(raw.lastShip)
+    ? { generation: num(raw.lastShip.generation), hypeGained: num(raw.lastShip.hypeGained), at: time(raw.lastShip.at, now), ...(typeof raw.lastShip.choice === 'string' && choiceIds.has(raw.lastShip.choice) ? { choice: raw.lastShip.choice } : {}) }
+    : null;
+  const stageMax = Math.max(0, (content.stages?.length ?? 1) - 1);
+  const h = isObj(raw.happening) ? raw.happening : null;
+  const happening =
+    h && content.happenings?.defs.some((d) => d.id === h.id)
+      ? { uid: Math.floor(num(h.uid, 1)), id: String(h.id), spawnedAt: time(h.spawnedAt, now), expiresAt: time(h.expiresAt, now), x: Math.min(1, num(h.x, 0.5)), y: Math.min(1, num(h.y, 0.5)) }
+      : null;
+  const tr = isObj(raw.training) ? raw.training : {};
+  const queueMax = content.training?.queueMax ?? 0;
+  const candidates = Array.isArray(tr.candidates) ? tr.candidates.map((c) => sanitizeModel(c, content)).filter((c): c is ModelCandidate => c !== null) : [];
+  const staffTotal = content.staff?.total ?? 0;
+  let staff: StaffSplit = evenStaff(staffTotal);
+  if (isObj(raw.staff)) {
+    const st = raw.staff;
+    const split = { research: Math.floor(num(st.research)), product: Math.floor(num(st.product)), safety: Math.floor(num(st.safety)) };
+    if (STAFF_LANES.reduce((sum, l) => sum + split[l], 0) === staffTotal) staff = split;
+  }
+  const state: GarageState = {
     version: GARAGE_VERSION,
     rng: Number.isInteger(raw.rng) && raw.rng !== 0 ? (raw.rng as number) : fresh.rng,
     createdAt: time(raw.createdAt, now),
@@ -113,7 +164,25 @@ export function sanitize(raw: Raw, content: GarageContent, fresh: GarageState): 
     stats,
     lastShip,
     uidSeq: Math.max(1, Math.floor(num(raw.uidSeq, 1))),
+    stage: Math.min(stageMax, Math.floor(num(raw.stage))),
+    happening,
+    nextHappeningAt: time(raw.nextHappeningAt, now + (content.happenings?.firstAfterMs ?? 0)),
+    training: { charges: Math.min(queueMax + 10, Math.floor(num(tr.charges))), nextChargeAt: time(tr.nextChargeAt, 0), candidates: candidates.length ? candidates : null },
+    models: [],
+    staff,
+    shipChoice: typeof raw.shipChoice === 'string' && choiceIds.has(raw.shipChoice) ? raw.shipChoice : null,
+    autoBuy: raw.autoBuy === true,
+    nextAutoBuyAt: time(raw.nextAutoBuyAt, 0),
+    bonusOffer: null,
   };
+  // Stages are earned by progress that never resets: a save is at least where its progress puts it.
+  const stages = content.stages ?? [];
+  while (state.stage + 1 < stages.length && stages[state.stage + 1].requires.every((r) => labRequirementMet(state, r))) state.stage += 1;
+  state.models = (Array.isArray(raw.models) ? raw.models.map((m) => sanitizeModel(m, content)).filter((m): m is ModelCandidate => m !== null) : []).slice(0, modelSlots(state, content));
+  const uids = [...state.models, ...candidates].map((m) => m.uid);
+  if (uids.length) state.uidSeq = Math.max(state.uidSeq, ...uids.map((u) => u + 1));
+  if (raw.migratedLab === true && content.training && stages.slice(0, state.stage + 1).some((st) => st.mechanic === 'training')) state.training = { charges: 1, nextChargeAt: now + content.training.cooldownMs, candidates: null };
+  return state;
 }
 
 /** Reads a save written by any version. `now` is used for a fresh save when the text is unusable. */

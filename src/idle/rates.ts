@@ -1,6 +1,7 @@
 /**
  * Pure reads of the economy: multipliers, rates, tap value and prices. No state changes.
  */
+import { factor, milestoneMult, modelEffects, staffEffects } from './labRates';
 import { amount } from './num';
 import type { GarageContent, GarageState, GeneratorDef, GeneratorId, OfferDef, OfferId, UpgradeDef, UpgradeEffect } from './types';
 
@@ -126,9 +127,42 @@ export function generatorRate(state: GarageState, content: GarageContent, id: Ge
   if (!def || count <= 0) return 0;
   const m = multipliers(state, content);
   let r = count * def.baseRate * (m.generator[id] ?? 1) * m.global * hypeMultiplier(state, content) * timedMultiplier(state, content, at);
+  r *= milestoneMult(content, count) * labProductionMult(state, content);
   const inc = state.incident;
-  if (inc && inc.generator === id && at < inc.until) r *= incidentDef(content, inc.id)?.mult ?? 1;
+  if (inc && inc.generator === id && at < inc.until) {
+    const idef = incidentDef(content, inc.id);
+    if (idef) r *= incidentSeverityMult(state, content, idef.mult);
+  }
   return amount(r);
+}
+
+/** Generator output multiplier from kept models and Product staff. */
+export function labProductionMult(state: Pick<GarageState, 'models' | 'staff' | 'stage'>, content: GarageContent): number {
+  return factor(modelEffects(state, content).production) * staffEffects(state, content).production;
+}
+
+/** A hit tier's rate multiplier during an incident, after Safety staff (base `mult` in 0..1). */
+export function incidentSeverityMult(state: Pick<GarageState, 'staff' | 'stage'>, content: GarageContent, mult: number): number {
+  const loss = (1 - mult) * staffEffects(state, content).severity;
+  return Math.max(0, Math.min(1, 1 - loss));
+}
+
+/** Incident frequency multiplier: Safety staff, kept models and the last launch choice. */
+export function incidentFrequency(state: Pick<GarageState, 'models' | 'staff' | 'stage' | 'shipChoice'>, content: GarageContent): number {
+  const choice = state.shipChoice ? content.shipDay?.choices.find((c) => c.id === state.shipChoice) : undefined;
+  return Math.max(0.1, staffEffects(state, content).incidentFreq * factor(modelEffects(state, content).incident, 0.2) * (choice?.incidentMult ?? 1));
+}
+
+/** Offline cap (ms) and rate after upgrades, generation perks and kept models. */
+export function offlineTerms(state: Pick<GarageState, 'upgrades' | 'generation' | 'models'>, content: GarageContent): { capMs: number; rate: number } {
+  const m = multipliers(state, content);
+  const e = modelEffects(state, content);
+  return { capMs: Math.max(HOUR_MS / 2, m.offlineCapMs + e.offlineCap * HOUR_MS), rate: Math.max(0.05, Math.min(1, m.offlineRate + e.offlineRate)) };
+}
+
+/** Training speed multiplier: Research staff and kept models. */
+export function trainingSpeed(state: Pick<GarageState, 'models' | 'staff' | 'stage'>, content: GarageContent): number {
+  return Math.max(0.1, staffEffects(state, content).trainingSpeed * factor(modelEffects(state, content).trainingSpeed, 0.2));
 }
 
 export function incidentDef(content: GarageContent, id: string) {
@@ -168,7 +202,7 @@ export function comboAt(state: GarageState, content: GarageContent, at: number):
 /** Tokens a tap at `at` with combo `count` produces. */
 export function tapValue(state: GarageState, content: GarageContent, at: number = state.now, count: number = comboAfterTap(state, content, at)): number {
   const m = multipliers(state, content);
-  const base = content.tap.base * m.tap * m.global * hypeMultiplier(state, content) * timedMultiplier(state, content, at);
+  const base = content.tap.base * m.tap * m.global * hypeMultiplier(state, content) * timedMultiplier(state, content, at) * factor(modelEffects(state, content).tap);
   const fromRate = m.tapFromRate * totalRate(state, content, at);
   const frenzyTap = state.frenzy && at < state.frenzy.until ? state.frenzy.tapMult : 1;
   return amount((base + fromRate) * comboMultiplier(state, content, count) * frenzyTap);

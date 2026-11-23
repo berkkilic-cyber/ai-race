@@ -1,5 +1,544 @@
 {
  "id": "ai-lab-garage",
+ "stages": [
+  {
+   "id": "garage",
+   "nameKey": "garage.stage.garage.name",
+   "descKey": "garage.stage.garage.desc",
+   "unlockKey": "garage.stage.garage.unlock",
+   "scene": "garage",
+   "requires": [],
+   "mechanic": "none",
+   "modelSlots": 0
+  },
+  {
+   "id": "office",
+   "nameKey": "garage.stage.office.name",
+   "descKey": "garage.stage.office.desc",
+   "unlockKey": "garage.stage.office.unlock",
+   "scene": "office",
+   "requires": [
+    {
+     "type": "allTime",
+     "tokens": 15000000.0
+    }
+   ],
+   "mechanic": "training",
+   "modelSlots": 1
+  },
+  {
+   "id": "datacentre",
+   "nameKey": "garage.stage.datacentre.name",
+   "descKey": "garage.stage.datacentre.desc",
+   "unlockKey": "garage.stage.datacentre.unlock",
+   "scene": "datacentre",
+   "requires": [
+    {
+     "type": "generation",
+     "min": 1
+    },
+    {
+     "type": "allTime",
+     "tokens": 50000000000.0
+    }
+   ],
+   "mechanic": "staff",
+   "modelSlots": 2
+  },
+  {
+   "id": "town",
+   "nameKey": "garage.stage.town.name",
+   "descKey": "garage.stage.town.desc",
+   "unlockKey": "garage.stage.town.unlock",
+   "scene": "town",
+   "requires": [
+    {
+     "type": "generation",
+     "min": 5
+    }
+   ],
+   "mechanic": "autoCollect",
+   "modelSlots": 3
+  },
+  {
+   "id": "latent",
+   "nameKey": "garage.stage.latent.name",
+   "descKey": "garage.stage.latent.desc",
+   "unlockKey": "garage.stage.latent.unlock",
+   "scene": "latent",
+   "requires": [
+    {
+     "type": "generation",
+     "min": 8
+    }
+   ],
+   "mechanic": "autoBuy",
+   "modelSlots": 4
+  }
+ ],
+ "milestones": {
+  "steps": [
+   {
+    "count": 25,
+    "mult": 1.25
+   },
+   {
+    "count": 50,
+    "mult": 1.25
+   },
+   {
+    "count": 100,
+    "mult": 1.5
+   },
+   {
+    "count": 200,
+    "mult": 1.5
+   }
+  ],
+  "repeatEvery": 100,
+  "repeatMult": 1.2
+ },
+ "training": {
+  "cooldownMs": 300000,
+  "queueMax": 3,
+  "candidates": 3,
+  "rarities": [
+   {
+    "id": "common",
+    "nameKey": "garage.rarity.common",
+    "weight": 60,
+    "boons": 1,
+    "power": 1,
+    "drawbackChance": 0.35,
+    "luck": 0
+   },
+   {
+    "id": "uncommon",
+    "nameKey": "garage.rarity.uncommon",
+    "weight": 28,
+    "boons": 2,
+    "power": 1.2,
+    "drawbackChance": 0.4,
+    "luck": 0.5
+   },
+   {
+    "id": "rare",
+    "nameKey": "garage.rarity.rare",
+    "weight": 10,
+    "boons": 2,
+    "power": 1.7,
+    "drawbackChance": 0.5,
+    "luck": 1
+   },
+   {
+    "id": "legendary",
+    "nameKey": "garage.rarity.legendary",
+    "weight": 2,
+    "boons": 3,
+    "power": 2.4,
+    "drawbackChance": 0.7,
+    "luck": 1.5
+   }
+  ],
+  "traits": [
+   {
+    "id": "t-production",
+    "stat": "production",
+    "min": 0.03,
+    "max": 0.07,
+    "weight": 5,
+    "labelKey": "garage.trait.production"
+   },
+   {
+    "id": "t-tap",
+    "stat": "tap",
+    "min": 0.09,
+    "max": 0.24,
+    "weight": 4,
+    "labelKey": "garage.trait.tap"
+   },
+   {
+    "id": "t-offlineCap",
+    "stat": "offlineCap",
+    "min": 0.25,
+    "max": 0.5,
+    "weight": 3,
+    "labelKey": "garage.trait.offlineCap"
+   },
+   {
+    "id": "t-offlineRate",
+    "stat": "offlineRate",
+    "min": 0.01,
+    "max": 0.03,
+    "weight": 3,
+    "labelKey": "garage.trait.offlineRate"
+   },
+   {
+    "id": "t-shipHype",
+    "stat": "shipHype",
+    "min": 0.024,
+    "max": 0.06,
+    "weight": 3,
+    "labelKey": "garage.trait.shipHype"
+   },
+   {
+    "id": "t-happening",
+    "stat": "happening",
+    "min": 0.2,
+    "max": 0.5,
+    "weight": 3,
+    "labelKey": "garage.trait.happening"
+   },
+   {
+    "id": "t-incident",
+    "stat": "incident",
+    "min": -0.3,
+    "max": -0.15,
+    "weight": 2,
+    "labelKey": "garage.trait.incident"
+   },
+   {
+    "id": "t-training",
+    "stat": "trainingSpeed",
+    "min": 0.08,
+    "max": 0.2,
+    "weight": 2,
+    "labelKey": "garage.trait.trainingSpeed"
+   }
+  ],
+  "drawbacks": [
+   {
+    "id": "d-incident",
+    "stat": "incident",
+    "min": 0.25,
+    "max": 0.6,
+    "weight": 4,
+    "labelKey": "garage.trait.incident"
+   },
+   {
+    "id": "d-production",
+    "stat": "production",
+    "min": -0.08,
+    "max": -0.04,
+    "weight": 2,
+    "labelKey": "garage.trait.production"
+   },
+   {
+    "id": "d-offlineRate",
+    "stat": "offlineRate",
+    "min": -0.06,
+    "max": -0.03,
+    "weight": 2,
+    "labelKey": "garage.trait.offlineRate"
+   },
+   {
+    "id": "d-tap",
+    "stat": "tap",
+    "min": -0.2,
+    "max": -0.1,
+    "weight": 2,
+    "labelKey": "garage.trait.tap"
+   },
+   {
+    "id": "d-training",
+    "stat": "trainingSpeed",
+    "min": -0.2,
+    "max": -0.1,
+    "weight": 1,
+    "labelKey": "garage.trait.trainingSpeed"
+   },
+   {
+    "id": "d-shipHype",
+    "stat": "shipHype",
+    "min": -0.06,
+    "max": -0.03,
+    "weight": 1,
+    "labelKey": "garage.trait.shipHype"
+   }
+  ],
+  "prefixKeys": [
+   "garage.mname.pre.0",
+   "garage.mname.pre.1",
+   "garage.mname.pre.2",
+   "garage.mname.pre.3",
+   "garage.mname.pre.4",
+   "garage.mname.pre.5",
+   "garage.mname.pre.6",
+   "garage.mname.pre.7",
+   "garage.mname.pre.8",
+   "garage.mname.pre.9",
+   "garage.mname.pre.10",
+   "garage.mname.pre.11"
+  ],
+  "suffixKeys": [
+   "garage.mname.suf.0",
+   "garage.mname.suf.1",
+   "garage.mname.suf.2",
+   "garage.mname.suf.3",
+   "garage.mname.suf.4",
+   "garage.mname.suf.5",
+   "garage.mname.suf.6",
+   "garage.mname.suf.7",
+   "garage.mname.suf.8",
+   "garage.mname.suf.9",
+   "garage.mname.suf.10",
+   "garage.mname.suf.11"
+  ],
+  "descKeys": {
+   "production": [
+    "garage.mdesc.production.0",
+    "garage.mdesc.production.1"
+   ],
+   "tap": [
+    "garage.mdesc.tap.0",
+    "garage.mdesc.tap.1"
+   ],
+   "offlineCap": [
+    "garage.mdesc.offlineCap.0",
+    "garage.mdesc.offlineCap.1"
+   ],
+   "offlineRate": [
+    "garage.mdesc.offlineRate.0",
+    "garage.mdesc.offlineRate.1"
+   ],
+   "shipHype": [
+    "garage.mdesc.shipHype.0",
+    "garage.mdesc.shipHype.1"
+   ],
+   "happening": [
+    "garage.mdesc.happening.0",
+    "garage.mdesc.happening.1"
+   ],
+   "incident": [
+    "garage.mdesc.incident.0",
+    "garage.mdesc.incident.1"
+   ],
+   "trainingSpeed": [
+    "garage.mdesc.trainingSpeed.0",
+    "garage.mdesc.trainingSpeed.1"
+   ]
+  }
+ },
+ "staff": {
+  "total": 12,
+  "productSwing": 0.5,
+  "safetySwing": 0.45,
+  "severitySwing": 0.4,
+  "trustSwing": 0.25,
+  "researchSwing": 0.6
+ },
+ "shipDay": {
+  "choices": [
+   {
+    "id": "hype",
+    "labelKey": "garage.shipday.choice.hype.label",
+    "descKey": "garage.shipday.choice.hype.desc",
+    "hypeMult": 1.3,
+    "incidentMult": 1.5
+   },
+   {
+    "id": "safe",
+    "labelKey": "garage.shipday.choice.safe.label",
+    "descKey": "garage.shipday.choice.safe.desc",
+    "hypeMult": 0.9,
+    "incidentMult": 0.5
+   },
+   {
+    "id": "open",
+    "labelKey": "garage.shipday.choice.open.label",
+    "descKey": "garage.shipday.choice.open.desc",
+    "hypeMult": 0.8,
+    "incidentMult": 1,
+    "trainingRuns": 2,
+    "labRep": 1
+   }
+  ],
+  "scoreBase": 40,
+  "scorePerGeneration": 9,
+  "scorePerHype": 4,
+  "rivals": [
+   {
+    "id": "nopenai",
+    "nameKey": "garage.shipday.rival.nopenai",
+    "base": 62,
+    "growth": 9
+   },
+   {
+    "id": "zlaude",
+    "nameKey": "garage.shipday.rival.zlaude",
+    "base": 58,
+    "growth": 9.5
+   },
+   {
+    "id": "germini",
+    "nameKey": "garage.shipday.rival.germini",
+    "base": 55,
+    "growth": 10
+   },
+   {
+    "id": "deepsleek",
+    "nameKey": "garage.shipday.rival.deepsleek",
+    "base": 50,
+    "growth": 10.5
+   }
+  ],
+  "reactionKeys": [
+   "garage.shipday.reaction.0",
+   "garage.shipday.reaction.1",
+   "garage.shipday.reaction.2",
+   "garage.shipday.reaction.3",
+   "garage.shipday.reaction.4",
+   "garage.shipday.reaction.5"
+  ],
+  "benchmarkKeys": [
+   "garage.shipday.bench.0",
+   "garage.shipday.bench.1",
+   "garage.shipday.bench.2",
+   "garage.shipday.bench.3",
+   "garage.shipday.bench.4"
+  ]
+ },
+ "happenings": {
+  "firstAfterMs": 20000,
+  "intervalMinMs": 20000,
+  "intervalMaxMs": 40000,
+  "lifetimeMs": 9000,
+  "penaltyCapShare": 0.05,
+  "defs": [
+   {
+    "id": "pizza",
+    "labelKey": "garage.happening.pizza.label",
+    "textKey": "garage.happening.pizza.text",
+    "icon": "heart",
+    "weight": 4,
+    "spot": "door",
+    "rewardSeconds": 5,
+    "rewardMinTaps": 6
+   },
+   {
+    "id": "intern-question",
+    "labelKey": "garage.happening.intern-question.label",
+    "textKey": "garage.happening.intern-question.text",
+    "icon": "mortarboard",
+    "weight": 3,
+    "spot": "desk",
+    "rewardSeconds": 3,
+    "rewardMinTaps": 4,
+    "trainingMs": 30000
+   },
+   {
+    "id": "bug",
+    "labelKey": "garage.happening.bug.label",
+    "textKey": "garage.happening.bug.text",
+    "icon": "bug",
+    "weight": 3,
+    "spot": "desk",
+    "rewardSeconds": 3,
+    "rewardMinTaps": 5,
+    "penaltySeconds": 10,
+    "missKey": "garage.happening.bug.miss"
+   },
+   {
+    "id": "overheat",
+    "labelKey": "garage.happening.overheat.label",
+    "textKey": "garage.happening.overheat.text",
+    "icon": "thermometer",
+    "weight": 3,
+    "spot": "rack",
+    "rewardSeconds": 3,
+    "rewardMinTaps": 5,
+    "penaltySeconds": 15,
+    "missKey": "garage.happening.overheat.miss"
+   },
+   {
+    "id": "investor",
+    "labelKey": "garage.happening.investor.label",
+    "textKey": "garage.happening.investor.text",
+    "icon": "cash",
+    "weight": 2,
+    "spot": "door",
+    "rewardSeconds": 8,
+    "rewardMinTaps": 9
+   },
+   {
+    "id": "reporter",
+    "labelKey": "garage.happening.reporter.label",
+    "textKey": "garage.happening.reporter.text",
+    "icon": "camera",
+    "weight": 2,
+    "spot": "door",
+    "minStage": 1,
+    "rewardSeconds": 3,
+    "rewardMinTaps": 5,
+    "penaltySeconds": 8,
+    "missKey": "garage.happening.reporter.miss"
+   },
+   {
+    "id": "gpu-truck",
+    "labelKey": "garage.happening.gpu-truck.label",
+    "textKey": "garage.happening.gpu-truck.text",
+    "icon": "chip",
+    "weight": 2,
+    "spot": "rack",
+    "minStage": 1,
+    "rewardSeconds": 6,
+    "rewardMinTaps": 7
+   },
+   {
+    "id": "lawyer",
+    "labelKey": "garage.happening.lawyer.label",
+    "textKey": "garage.happening.lawyer.text",
+    "icon": "gavel",
+    "weight": 2,
+    "spot": "desk",
+    "minStage": 2,
+    "rewardSeconds": 4,
+    "rewardMinTaps": 5
+   },
+   {
+    "id": "power",
+    "labelKey": "garage.happening.power.label",
+    "textKey": "garage.happening.power.text",
+    "icon": "bolt",
+    "weight": 2,
+    "spot": "rack",
+    "minStage": 2,
+    "rewardSeconds": 3,
+    "rewardMinTaps": 5,
+    "penaltySeconds": 15,
+    "missKey": "garage.happening.power.miss"
+   },
+   {
+    "id": "petition",
+    "labelKey": "garage.happening.petition.label",
+    "textKey": "garage.happening.petition.text",
+    "icon": "crowd",
+    "weight": 2,
+    "spot": "door",
+    "minStage": 3,
+    "rewardSeconds": 6,
+    "rewardMinTaps": 7
+   },
+   {
+    "id": "hallucination",
+    "labelKey": "garage.happening.hallucination.label",
+    "textKey": "garage.happening.hallucination.text",
+    "icon": "document",
+    "weight": 2,
+    "spot": "desk",
+    "minStage": 4,
+    "rewardSeconds": 4,
+    "rewardMinTaps": 5,
+    "penaltySeconds": 12,
+    "missKey": "garage.happening.hallucination.miss"
+   }
+  ]
+ },
+ "automation": {
+  "collectShare": 0.25,
+  "buyIntervalMs": 4000,
+  "buyBudgetShare": 0.25
+ },
  "generators": [
   {
    "id": "intern",
@@ -1408,7 +1947,7 @@
    "nameKey": "garage.model.turbo.name",
    "headlineKey": "garage.model.turbo.headline",
    "unlockKey": "garage.model.turbo.unlock",
-   "shipAt": 4000000000.0,
+   "shipAt": 6400000000.0,
    "perks": []
   },
   {
@@ -1416,7 +1955,7 @@
    "nameKey": "garage.model.final.name",
    "headlineKey": "garage.model.final.headline",
    "unlockKey": "garage.model.final.unlock",
-   "shipAt": 23200000000.0,
+   "shipAt": 59400000000.0,
    "perks": [
     {
      "kind": "offlineCap",
@@ -1429,7 +1968,7 @@
    "nameKey": "garage.model.omni.name",
    "headlineKey": "garage.model.omni.headline",
    "unlockKey": "garage.model.omni.unlock",
-   "shipAt": 195000000000.0,
+   "shipAt": 799000000000.0,
    "perks": []
   },
   {
@@ -1437,7 +1976,7 @@
    "nameKey": "garage.model.reasoner.name",
    "headlineKey": "garage.model.reasoner.headline",
    "unlockKey": "garage.model.reasoner.unlock",
-   "shipAt": 2380000000000.0,
+   "shipAt": 15600000000000.0,
    "perks": [
     {
      "kind": "comboStacks",
@@ -1454,7 +1993,7 @@
    "nameKey": "garage.model.agentic.name",
    "headlineKey": "garage.model.agentic.headline",
    "unlockKey": "garage.model.agentic.unlock",
-   "shipAt": 42100000000000.0,
+   "shipAt": 441000000000000.0,
    "perks": []
   },
   {
@@ -1462,7 +2001,7 @@
    "nameKey": "garage.model.feelings.name",
    "headlineKey": "garage.model.feelings.headline",
    "unlockKey": "garage.model.feelings.unlock",
-   "shipAt": 1080000000000000.0,
+   "shipAt": 1.81e+16,
    "perks": [
     {
      "kind": "offlineRate",
@@ -1475,7 +2014,7 @@
    "nameKey": "garage.model.bigone.name",
    "headlineKey": "garage.model.bigone.headline",
    "unlockKey": "garage.model.bigone.unlock",
-   "shipAt": 4.01e+16,
+   "shipAt": 1.08e+18,
    "perks": []
   },
   {
@@ -1483,7 +2022,7 @@
    "nameKey": "garage.model.ultralite.name",
    "headlineKey": "garage.model.ultralite.headline",
    "unlockKey": "garage.model.ultralite.unlock",
-   "shipAt": 1.8e+18,
+   "shipAt": 7.73e+19,
    "perks": [
     {
      "kind": "tapFromRate",
@@ -1496,7 +2035,7 @@
    "nameKey": "garage.model.preview.name",
    "headlineKey": "garage.model.preview.headline",
    "unlockKey": "garage.model.preview.unlock",
-   "shipAt": 8.12e+19,
+   "shipAt": 5.58e+21,
    "perks": [
     {
      "kind": "globalMult",
@@ -1509,7 +2048,7 @@
    "nameKey": "garage.model.super.name",
    "headlineKey": "garage.model.super.headline",
    "unlockKey": "garage.model.super.unlock",
-   "shipAt": 3.65e+21,
+   "shipAt": 4.01e+23,
    "perks": [
     {
      "kind": "globalMult",
@@ -1699,14 +2238,23 @@
    "id": "crate",
    "cooldownMs": 10800000,
    "dailyCap": 4,
-   "crateSeconds": 600,
-   "crateMinTaps": 40
+   "crateSeconds": 1200,
+   "crateMinTaps": 60
   },
   {
    "id": "prestigeBonus",
    "cooldownMs": 0,
    "dailyCap": 3,
-   "prestigeBonus": 0.25
+   "prestigeBonus": 0.3
+  },
+  {
+   "id": "bonusMultiply",
+   "cooldownMs": 0,
+   "dailyCap": 20,
+   "multiplyMult": 3,
+   "multiplyChance": 0.33,
+   "multiplyWindowMs": 6000,
+   "multiplyAfterMs": 180000
   }
  ],
  "achievements": [
@@ -1984,6 +2532,39 @@
     "gte": 10
    },
    "secret": true
+  },
+  {
+   "id": "happening-25",
+   "nameKey": "garage.ach.happening-25.name",
+   "descKey": "garage.ach.happening-25.desc",
+   "icon": "heart",
+   "rule": {
+    "type": "stat",
+    "stat": "happeningsCaught",
+    "gte": 25
+   }
+  },
+  {
+   "id": "training-10",
+   "nameKey": "garage.ach.training-10.name",
+   "descKey": "garage.ach.training-10.desc",
+   "icon": "cap-model-2",
+   "rule": {
+    "type": "stat",
+    "stat": "trainingRuns",
+    "gte": 10
+   }
+  },
+  {
+   "id": "kept-5",
+   "nameKey": "garage.ach.kept-5.name",
+   "descKey": "garage.ach.kept-5.desc",
+   "icon": "trophy",
+   "rule": {
+    "type": "stat",
+    "stat": "modelsKept",
+    "gte": 5
+   }
   }
  ],
  "labRep": {

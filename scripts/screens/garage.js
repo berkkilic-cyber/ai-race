@@ -9,15 +9,26 @@
  *
  * Captures: the mode choice on the title step, a fresh garage, mid-progress, the upgrades
  * panel, a golden moment, an incident, the offline-return panel with its ad option, the
- * test ad, the doubled offline panel, the ship panel and launch headline, stats and
- * achievements, settings, a late save, and (default size only) a narrow portrait window.
+ * test ad, the doubled offline panel, the ship panel and the three ship-day steps and the
+ * launch result, every stage's room (garage, office, data centre, company town, latent
+ * space) with its Lab tab (training candidates, kept models, staff, helpers), a lab
+ * happening, the stage card, stats and achievements, settings, a late save, and (default
+ * size only) a narrow portrait window.
  * Checks (exits 1 if any fails): the mode choice opens /garage; one touch tap earns tokens;
  * two fingers at once count as two taps; a buy works; the golden moment collects; the
- * incident fixes by taps; the offline report doubles through the test ad; shipping shows
- * the launch headline; no page errors; no raw string keys on screen.
+ * incident fixes by taps; the offline report doubles through the test ad; ship day ships
+ * with the chosen plan; a training candidate can be kept; staff moves; a happening
+ * collects; at most one ad offer is on screen in every capture; no page errors; no raw
+ * string keys on screen.
  * Screenshots go to docs/screenshots/garage/<theme>-<W>x<H>-NN-name.png.
  * Serves dist/ in-process; the server and browser are closed before exiting.
  * Env: CHROME, PORT (default 8781), W, H, INSETS, THEME (names the files only).
+ *
+ * PERF=1: instead, a throttled performance check (the method of scripts/screens/perf.js,
+ * CPU throttle THROTTLE, default 6x): the data-centre room with blinking racks, a lab
+ * happening and a golden moment on screen, then rapid touch tapping on the model for
+ * SECONDS (default 5) at TAPS per second (default 10). Prints frame times (average, p95,
+ * worst), long tasks, React commits per second and the components that rendered most.
  */
 const fs = require('node:fs');
 const http = require('node:http');
@@ -32,7 +43,7 @@ const PORT = Number(process.env.PORT || 8781);
 const CHROME = process.env.CHROME || '/usr/bin/google-chrome';
 const VIEW = { width: Number(process.env.W || 844), height: Number(process.env.H || 390) };
 const INSETS = process.env.INSETS || '';
-const THEME = process.env.THEME || 'blueprint';
+const THEME = process.env.THEME || 'neon';
 const TAG = `${THEME}-${VIEW.width}x${VIEW.height}`;
 const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.ico': 'image/x-icon', '.ttf': 'font/ttf' };
 /** Garage keys are not in textScan's list; catch them here. */
@@ -62,7 +73,123 @@ function check(ok, what) {
   if (!ok) failures++;
 }
 
+/** Installed before the app loads: counts React commits (and what rendered), long tasks and frame times. */
+function instrument() {
+  window.__perf = { commits: 0, longTasks: [], frames: [], recording: false, renders: {} };
+  const perf = window.__perf;
+  window.__REACT_DEVTOOLS_GLOBAL_HOOK__ = {
+    supportsFiber: true,
+    renderers: new Map(),
+    inject() {
+      return 1;
+    },
+    onScheduleFiberRoot() {},
+    onCommitFiberRoot(_id, root) {
+      if (!perf.recording) return;
+      perf.commits++;
+      const stack = [root.current];
+      while (stack.length) {
+        const f = stack.pop();
+        if (f.child && (!f.alternate || f.child !== f.alternate.child)) stack.push(f.child);
+        if (f.sibling) stack.push(f.sibling);
+        if ((f.flags & 1) === 1 && typeof f.type !== 'string' && f.type) {
+          const t = f.type.render || f.type.type || f.type;
+          const name = (t && (t.displayName || t.name)) || 'anon';
+          perf.renders[name] = (perf.renders[name] || 0) + 1;
+        }
+      }
+    },
+    onCommitFiberUnmount() {},
+    onPostCommitFiberRoot() {},
+    checkDCE() {},
+  };
+  try {
+    new PerformanceObserver((list) => {
+      if (!perf.recording) return;
+      for (const e of list.getEntries()) perf.longTasks.push(e.duration);
+    }).observe({ type: 'longtask', buffered: false });
+  } catch {
+    // no long-task support
+  }
+  let last = 0;
+  const loop = (t) => {
+    if (perf.recording && last) perf.frames.push(t - last);
+    last = t;
+    requestAnimationFrame(loop);
+  };
+  requestAnimationFrame(loop);
+}
+
+async function perfCheck() {
+  const THROTTLE = Number(process.env.THROTTLE || 6);
+  const SECONDS = Number(process.env.SECONDS || 5);
+  const TAPS = Number(process.env.TAPS || 10);
+  const server = await serve();
+  const browser = await puppeteer.launch({ executablePath: CHROME, headless: true, args: ['--no-sandbox', '--disable-gpu', `--window-size=${VIEW.width},${VIEW.height}`] });
+  try {
+    const page = await browser.newPage();
+    await page.evaluateOnNewDocument(instrument);
+    await page.setViewport({ ...VIEW, deviceScaleFactor: 1, hasTouch: true });
+    const q = `debug=1${INSETS ? `&insets=${INSETS}` : ''}`;
+    await page.goto(`http://127.0.0.1:${PORT}/garage?${q}`, { waitUntil: 'networkidle0' });
+    await page.waitForFunction(() => window.__garage && window.__garage.state(), { timeout: 15000 });
+    await page.evaluate((scene) => window.__garage.scene(scene), process.env.SCENE || 'datacentre');
+    await sleep(500);
+    await page.evaluate(() => {
+      if (window.__garage.happening) window.__garage.happening('overheat');
+      window.__garage.golden('angel');
+    });
+    const target = await page.evaluate(() => {
+      const r = document.querySelector('[data-testid="garage-tap"]').getBoundingClientRect();
+      return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
+    });
+    const cdp = await page.createCDPSession();
+    await cdp.send('Emulation.setCPUThrottlingRate', { rate: THROTTLE });
+    await sleep(1500);
+    await page.evaluate(() => Object.assign(window.__perf, { commits: 0, longTasks: [], frames: [], recording: true, renders: {} }));
+    const t0 = Date.now();
+    let taps = 0;
+    while (Date.now() - t0 < SECONDS * 1000) {
+      const p = { x: target.x + ((taps % 5) - 2) * 12, y: target.y + ((taps % 3) - 1) * 10, id: taps % 7 };
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ ...p, radiusX: 2, radiusY: 2, force: 1 }] });
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+      taps++;
+      const next = t0 + (taps * 1000) / TAPS;
+      if (next > Date.now()) await sleep(next - Date.now());
+    }
+    const secs = (Date.now() - t0) / 1000;
+    const raw = await page.evaluate(() => {
+      window.__perf.recording = false;
+      return { ...window.__perf, happening: !!document.querySelector('[data-testid="garage-happening"]'), golden: !!document.querySelector('[data-testid="garage-golden"]'), taps: window.__garage.state().stats.taps };
+    });
+    const frames = raw.frames.slice().sort((a, b) => a - b);
+    const avg = frames.reduce((a, f) => a + f, 0) / Math.max(1, frames.length);
+    const out = {
+      throttle: THROTTLE,
+      seconds: +secs.toFixed(1),
+      tapsSent: taps,
+      frames: frames.length,
+      avgFrameMs: +avg.toFixed(1),
+      p95FrameMs: +(frames[Math.floor(frames.length * 0.95)] ?? 0).toFixed(1),
+      worstFrameMs: +(frames[frames.length - 1] ?? 0).toFixed(1),
+      longTasks: raw.longTasks.length,
+      longTaskMs: Math.round(raw.longTasks.reduce((a, d) => a + d, 0)),
+      commits: raw.commits,
+      commitsPerSecond: +(raw.commits / secs).toFixed(1),
+      happeningOnScreen: raw.happening,
+      goldenOnScreen: raw.golden,
+    };
+    console.log(JSON.stringify(out));
+    const top = Object.entries(raw.renders).sort((a, b) => b[1] - a[1]).slice(0, 12);
+    console.log('renders:', top.map(([k, v]) => `${k} ${v}`).join(', '));
+  } finally {
+    await browser.close();
+    server.close();
+  }
+}
+
 async function main() {
+  if (process.env.PERF) return perfCheck();
   if (!fs.existsSync(path.join(DIST, 'index.html'))) throw new Error('dist/ missing: run npx expo export --platform web first');
   fs.mkdirSync(OUT, { recursive: true });
   const server = await serve();
@@ -92,6 +219,11 @@ async function main() {
         return { x: r.x + r.width / 2, y: r.y + r.height / 2, w: r.width, h: r.height };
       }, id);
     const tapId = async (id) => {
+      await page.evaluate((tid) => {
+        const el = document.querySelector(`[data-testid="${tid}"]`);
+        if (el) el.scrollIntoView({ block: 'nearest' });
+      }, id);
+      await sleep(60);
       const b = await box(id);
       if (!b) throw new Error(`no ${id}`);
       await tapAt(b);
@@ -107,6 +239,8 @@ async function main() {
       const raw = await page.evaluate(() => document.body.innerText);
       const hit = GARAGE_KEY.exec(raw);
       check(!hit, `${name}: no raw garage keys${hit ? ` (${hit[0]})` : ''}`);
+      const ads = await page.evaluate(() => [...document.querySelectorAll('[data-testid^="ad-"]')].map((e) => e.getAttribute('data-testid')));
+      check(ads.length <= 1, `${name}: at most one ad offer on screen${ads.length > 1 ? ` (${ads.join(', ')})` : ''}`);
       console.log(`     ${path.relative(ROOT, file)}`);
     };
     const q = `debug=1&adseconds=2${INSETS ? `&insets=${INSETS}` : ''}`;
@@ -194,17 +328,103 @@ async function main() {
     await shot('offline-doubled');
     await tapId('garage-offline-collect');
 
-    // 8. Ship panel and launch headline.
+    // 8. Ship panel, ship day (reveal, press, choice) and the launch result.
     await g(() => window.__garage.scene('ship'));
     await tapId('garage-tab-ship');
     await shot('ship-panel');
     await tapId('garage-ship-button');
+    await page.waitForSelector('[data-testid="garage-shipday-reveal"]', { timeout: 5000 });
+    await sleep(700);
+    await shot('shipday-reveal');
+    await tapId('garage-shipday-next');
+    await page.waitForSelector('[data-testid="garage-shipday-press"]', { timeout: 5000 });
+    await sleep(500);
+    await shot('shipday-press');
+    await tapId('garage-shipday-next');
+    await page.waitForSelector('[data-testid="garage-shipday-choose"]', { timeout: 5000 });
+    await tapId('garage-shipday-choice-hype');
+    await shot('shipday-choose');
+    await tapId('garage-shipday-ship');
     await page.waitForSelector('[data-testid="garage-launch"]', { timeout: 5000 });
     check((await g(() => window.__garage.state().generation)) === 1, 'shipping advances the model generation');
-    await shot('launch-headline');
+    check((await g(() => window.__garage.state().shipChoice)) === 'hype', 'ship day ships with the chosen plan');
+    await shot('launch-result');
     await tapId('garage-launch-continue');
 
-    // 9. Stats and achievements, settings.
+    // 9. The stages: each room, and the Lab tab as it grows.
+    await g(() => window.__garage.scene('office'));
+    await g(() => window.__garage.store.setState({ stageCard: 1 }));
+    await page.waitForSelector('[data-testid="garage-stage-card"]', { timeout: 5000 });
+    await shot('stage-card');
+    await tapId('garage-stage-continue');
+    await tapId('garage-tab-build');
+    await shot('office');
+    await tapId('garage-tab-lab');
+    await g(() => window.__garage.training());
+    await page.waitForSelector('[data-testid="garage-lab-training"]', { timeout: 5000 });
+    await shot('lab-candidates');
+    const cand = await g(() => window.__garage.state().training.candidates[0].uid);
+    const keepId = (await has(`garage-keep-${cand}`)) ? `garage-keep-${cand}` : null;
+    if (keepId) {
+      await tapId(keepId);
+      await sleep(150);
+      const full = await g(() => window.__garage.state().training.candidates !== null);
+      if (full) {
+        await shot('lab-swap');
+        const old = await g(() => window.__garage.state().models[0].uid);
+        await tapId(`garage-replace-${old}`);
+      }
+    }
+    await sleep(150);
+    check(await g((u) => window.__garage.state().models.some((m) => m.uid === u), cand), 'a training candidate can be kept');
+    await shot('lab-models');
+    await g(() => window.__garage.happening('overheat'));
+    await page.waitForSelector('[data-testid="garage-happening"]', { timeout: 5000 });
+    await shot('happening');
+    const caught0 = await g(() => window.__garage.state().stats.happeningsCaught);
+    await tapId('garage-happening');
+    await sleep(150);
+    check((await g(() => window.__garage.state().stats.happeningsCaught)) === caught0 + 1, 'tapping a happening collects it');
+    await g(() => window.__garage.bonusOffer('happening'));
+    await page.waitForSelector('[data-testid="garage-bonus-offer"]', { timeout: 5000 });
+    await shot('bonus-offer');
+    const t0b = await g(() => window.__garage.state().tokens);
+    await tapId('ad-bonusMultiply');
+    await page.waitForSelector('[data-testid="mock-ad"]', { timeout: 5000 });
+    await sleep(2300);
+    await tapId('mock-ad-claim');
+    await sleep(300);
+    check((await g(() => window.__garage.state().tokens)) >= t0b + 9999 && !(await has('garage-bonus-offer')), 'the bonus multiplier pays through the test ad and goes');
+
+    await g(() => window.__garage.scene('datacentre'));
+    await tapId('garage-tab-build');
+    await g(() => window.__garage.happening('gpu-truck'));
+    await shot('datacentre');
+    await tapId('garage-tab-lab');
+    const safety0 = await g(() => window.__garage.state().staff.safety);
+    await tapId('garage-staff-safety-plus');
+    check((await g(() => window.__garage.state().staff.safety)) === safety0 + 1, 'staff moves between lanes');
+    await page.evaluate(() => {
+      const el = document.querySelector('[data-testid="garage-lab-staff"]');
+      if (el) el.scrollIntoView();
+    });
+    await shot('lab-staff');
+
+    await g(() => window.__garage.scene('town'));
+    await tapId('garage-tab-build');
+    await g(() => window.__garage.happening('petition'));
+    await shot('town');
+    await g(() => window.__garage.scene('latent'));
+    await shot('latent');
+    await tapId('garage-tab-lab');
+    await page.evaluate(() => {
+      const el = document.querySelector('[data-testid="garage-lab-auto"]');
+      if (el) el.scrollIntoView();
+    });
+    await shot('lab-helpers');
+    await tapId('garage-tab-build');
+
+    // 10. Stats and achievements, settings.
     await g(() => window.__garage.scene('late'));
     await sleep(200);
     await shot('late-save');
@@ -217,7 +437,7 @@ async function main() {
     await shot('settings');
     await tapId('sheet-close');
 
-    // 10. Narrow portrait window (usable, not polished).
+    // 11. Narrow portrait window (usable, not polished).
     if (!INSETS) {
       await page.setViewport({ width: 390, height: 780, deviceScaleFactor: 1, hasTouch: true });
       await sleep(400);

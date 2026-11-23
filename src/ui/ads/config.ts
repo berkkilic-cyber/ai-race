@@ -25,6 +25,7 @@ export const AD_CONFIG = {
     incidentFix: 'garage_incident_fix',
     crate: 'garage_bonus_crate',
     prestigeBonus: 'garage_prestige_bonus',
+    bonusMultiply: 'garage_bonus_multiply',
   } satisfies Record<PlacementId, string>,
 } as const;
 

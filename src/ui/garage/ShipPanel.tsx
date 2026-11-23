@@ -1,9 +1,8 @@
 import { memo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { labPerks, nextLabPerk, offerStatus, prestigePreview, type LabPerkDef } from '@/idle';
+import { labPerks, nextLabPerk, prestigePreview, type LabPerkDef } from '@/idle';
 
-import { AdButton } from '../ads';
 import { Button } from '../components/Button';
 import { fmtCash } from '../format';
 import { Icon } from '../icons';
@@ -18,7 +17,7 @@ const selKey = (s: GarageStore) => {
   const st = s.state;
   if (!st) return '';
   const p = prestigePreview(st, s.content);
-  return `${st.generation}:${st.hype}:${st.labRep}:${p.canShip}:${p.gain}:${Math.floor(p.progress * 100)}:${offerStatus(st, s.content, 'prestigeBonus').available}`;
+  return `${st.generation}:${st.hype}:${st.labRep}:${p.canShip}:${p.gain}:${Math.floor(p.progress * 100)}`;
 };
 const same = (v: string) => v;
 
@@ -29,7 +28,7 @@ export function perkText(p: LabPerkDef): string {
   return gt(p.textKey, { amount });
 }
 
-/** "Ship a model": what you have, what you gain, the plain ship and the ad bonus; Lab Rep below. */
+/** "Ship a model": what you have, what you gain and the button that starts ship day; Lab Rep below. */
 export const ShipPanel = memo(function ShipPanel() {
   useGarage(selKey, same);
   const { state, content } = useGarageStore.getState();
@@ -38,8 +37,6 @@ export const ShipPanel = memo(function ShipPanel() {
   const next = content.generations[p.nextGeneration];
   const perks = labPerks(content, state.labRep);
   const upcoming = nextLabPerk(content, state.labRep);
-  const bonusStatus = offerStatus(state, content, 'prestigeBonus');
-  const pct = Math.round((content.offers.find((o) => o.id === 'prestigeBonus')?.prestigeBonus ?? 0) * 100);
   return (
     <View style={styles.wrap} testID="garage-ship">
       <Text style={styles.current}>{t('ui.garage.ship.current', { model: generationLabel(state.generation) })}</Text>
@@ -61,28 +58,18 @@ export const ShipPanel = memo(function ShipPanel() {
         <Text style={styles.small}>{t('ui.garage.ship.resets')}</Text>
         <View style={styles.buttons}>
           <Button
-            label={t('ui.garage.ship.button')}
+            label={content.shipDay ? t('ui.garage.ship.startDay') : t('ui.garage.ship.button')}
             sublabel={p.canShip ? t('ui.garage.ship.gain', { hype: p.gain }) : t('ui.garage.ship.notYet', { amount: fmt(Math.max(0, p.needed - state.genLifetime)) })}
             variant="primary"
             disabled={!p.canShip}
             onPress={() => {
-              if (useGarageStore.getState().ship(false)) successHaptic();
+              const store = useGarageStore.getState();
+              if (content.shipDay) store.openShipDay();
+              else if (store.ship(false)) successHaptic();
             }}
             style={styles.ship}
             testID="garage-ship-button"
           />
-          {p.canShip ? (
-            <AdButton
-              placement="prestigeBonus"
-              label={t('ui.ads.placement.prestigeBonus', { pct: `${pct}%` })}
-              reward={t('ui.ads.reward.prestigeBonus', { hype: p.bonusGain })}
-              status={bonusStatus}
-              onRewarded={() => {
-                useGarageStore.getState().claim('prestigeBonus');
-                successHaptic();
-              }}
-            />
-          ) : null}
         </View>
       </View>
       <View style={styles.card} testID="garage-labrep">

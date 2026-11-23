@@ -7,28 +7,33 @@ import { useInsets } from '../hooks/useInsets';
 import { useLayoutMode } from '../hooks/useLayoutMode';
 import { t } from '../i18n';
 import { AmbientProvider } from '../motion/ambient';
-import { colors, shape, spacing, voice } from '../theme';
+import { colors, shape, voice } from '../theme';
 import { installGarageDebug } from './debug';
-import { GarageHeader, OfferButtons } from './GarageHeader';
+import { GarageHeader } from './GarageHeader';
 import { GarageTicker } from './GarageTicker';
 import { useGarageLoop } from './hooks';
 import { LaunchCard } from './LaunchCard';
 import { OfflinePanel } from './OfflinePanel';
 import { SettingsSheet } from './SettingsSheet';
+import { ShipDay } from './ShipDay';
 import { SidePanel } from './SidePanel';
+import { StageCard } from './StageCard';
 import { StatsSheet } from './StatsSheet';
 import { useGarageStore } from './store';
 import { TapStage } from './TapStage';
 
 /**
- * Garage: the idle clicker. Landscape: the tap stage on the left, the Build / Upgrades /
- * Ship panel on the right, the ticker along the bottom. Narrow: stacked, with the offer
- * buttons in their own row. Everything that covers the screen is an in-tree overlay.
+ * Garage: the idle clicker. Landscape: the lab (a room you can see, with the model as the
+ * tap target) on the left, the Build / Upgrades / Lab / Ship panel on the right, the
+ * ticker along the bottom. Narrow: stacked.
+ * Everything that covers the screen is an in-tree overlay.
  */
 export function GarageScreen() {
   const active = useGarageLoop();
   const loaded = useGarageStore((s) => s.state !== null);
   const launch = useGarageStore((s) => s.launch !== null);
+  const offline = useGarageStore((s) => !!s.state?.offline);
+  const shipDay = useGarageStore((s) => s.shipDay !== null);
   const insets = useInsets();
   const wide = useLayoutMode() === 'wide';
   const [stats, setStats] = useState(false);
@@ -58,9 +63,6 @@ export function GarageScreen() {
             </View>
           ) : (
             <View style={styles.narrowBody}>
-              <View style={styles.narrowOffers}>
-                <OfferButtons compact />
-              </View>
               <View style={styles.narrowStage}>
                 <TapStage compact />
               </View>
@@ -74,6 +76,8 @@ export function GarageScreen() {
         <StatsSheet visible={stats} onClose={() => setStats(false)} />
         <SettingsSheet visible={settings} onClose={() => setSettings(false)} />
         <OfflinePanel hidden={launch} />
+        <StageCard hidden={launch || offline || shipDay} />
+        <ShipDay />
         <LaunchCard />
         <MockAdHost />
       </AmbientProvider>
@@ -90,7 +94,6 @@ const styles = StyleSheet.create({
   stageCol: { flex: 1, minWidth: 0 },
   panelCol: { flex: 1.15, minWidth: 0, borderLeftWidth: shape.hairline, borderColor: colors.border, backgroundColor: colors.bg },
   narrowBody: { flex: 1 },
-  narrowOffers: { flexDirection: 'row', justifyContent: 'center', paddingVertical: spacing.xs },
   narrowStage: { height: '42%' },
   narrowPanel: { flex: 1, borderTopWidth: shape.hairline, borderColor: colors.border },
 });

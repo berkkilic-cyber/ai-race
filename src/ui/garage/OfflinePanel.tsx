@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 
-import { multipliers, offerStatus } from '@/idle';
+import { offerStatus, offlineCapMs, offlineRate } from '@/idle';
 
 import { AdButton } from '../ads';
 import { Button } from '../components/Button';
@@ -8,6 +8,7 @@ import { ModalCard } from '../components/ModalCard';
 import { Icon } from '../icons';
 import { t } from '../i18n';
 import { colors, spacing, tabular, type, voice } from '../theme';
+import { useAdPlacement } from './adOffer';
 import { successHaptic } from './haptics';
 import { useGarage } from './hooks';
 import { useGarageStore, type GarageStore } from './store';
@@ -22,7 +23,6 @@ export function OfflinePanel({ hidden }: { hidden?: boolean }) {
   const { state, content } = useGarageStore.getState();
   const report = state?.offline;
   if (!key || !report || !state || hidden) return null;
-  const m = multipliers(state, content);
   const close = () => useGarageStore.getState().dismissOffline();
   return (
     <ModalCard visible title={t('ui.garage.offline.title')} tone="good" onRequestClose={close} testID="garage-offline">
@@ -36,23 +36,33 @@ export function OfflinePanel({ hidden }: { hidden?: boolean }) {
           </Text>
           {report.doubled ? <Text style={styles.doubled}>{t('ui.garage.offline.doubled')}</Text> : null}
         </View>
-        <Text style={styles.note}>{t('ui.garage.offline.note', { pct: fmtPct(m.offlineRate), cap: fmtTime(m.offlineCapMs) })}</Text>
+        <Text style={styles.note}>{t('ui.garage.offline.note', { pct: fmtPct(offlineRate(state, content)), cap: fmtTime(offlineCapMs(state, content)) })}</Text>
         <View style={styles.buttons}>
           <Button label={t('ui.garage.offline.collect')} variant={report.doubled ? 'primary' : 'secondary'} onPress={close} style={styles.collect} testID="garage-offline-collect" />
-          <AdButton
-            placement="offlineDouble"
-            variant="primary"
-            label={t('ui.ads.placement.offlineDouble')}
-            reward={t('ui.ads.reward.offlineDouble', { amount: fmt(report.tokens) })}
-            status={offerStatus(state, content, 'offlineDouble')}
-            onRewarded={() => {
-              useGarageStore.getState().claim('offlineDouble');
-              successHaptic();
-            }}
-          />
+          <DoubleOffer amount={fmt(report.tokens)} />
         </View>
       </View>
     </ModalCard>
+  );
+}
+
+/** The offline double ad, when the placement policy picks it. */
+function DoubleOffer({ amount }: { amount: string }) {
+  const placement = useAdPlacement();
+  const { state, content } = useGarageStore.getState();
+  if (placement !== 'offlineDouble' || !state) return null;
+  return (
+    <AdButton
+      placement="offlineDouble"
+      variant="primary"
+      label={t('ui.ads.placement.offlineDouble')}
+      reward={t('ui.ads.reward.offlineDouble', { amount })}
+      status={offerStatus(state, content, 'offlineDouble')}
+      onRewarded={() => {
+        useGarageStore.getState().claim('offlineDouble');
+        successHaptic();
+      }}
+    />
   );
 }
 

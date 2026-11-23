@@ -51,6 +51,9 @@ describe('ai-lab garage content', () => {
       [/^garage\.model\.endless\./, ['n']],
       [/^garage\.news\.achievement$/, ['name']],
       [/^garage\.perk\./, ['amount']],
+      [/^garage\.trait\./, ['value']],
+      [/^garage\.stage\.[a-z]+\.unlock$/, []],
+      [/^garage\.shipday\.reaction\./, ['rival']],
     ];
     for (const [key, text] of Object.entries(strings)) {
       const found = [...text.matchAll(/\{(\w+)\}/g)].map((m) => m[1]);
@@ -71,7 +74,7 @@ describe('ai-lab garage content', () => {
   });
 
   it('parody brands appear only in light flavour: headlines, golden moments and hardware jokes', () => {
-    const allowed = /^garage\.(headline\.|golden\.|gen\.gpu\.desc$|up\.gpu-b\.desc$|up\.global-3\.desc$)/;
+    const allowed = /^garage\.(headline\.|golden\.|shipday\.rival\.|shipday\.bench\.|gen\.gpu\.desc$|up\.gpu-b\.desc$|up\.global-3\.desc$)/;
     for (const [key, text] of Object.entries(strings)) {
       const brands = BRAND_NAMES.filter((name) => text.includes(name));
       if (brands.length > 0) expect({ key, brands, allowed: allowed.test(key) }).toEqual({ key, brands, allowed: true });
@@ -85,6 +88,32 @@ describe('ai-lab garage content', () => {
       expect(o.dailyCap).toBeGreaterThanOrEqual(1);
       expect(o.cooldownMs).toBeGreaterThanOrEqual(0);
     }
+  });
+
+  it('has five stages, each switching on something new, unlocked by progress that never resets', () => {
+    const stages = garage.stages ?? [];
+    expect(stages.length).toBeGreaterThanOrEqual(4);
+    expect(new Set(stages.map((s) => s.mechanic)).size).toBe(stages.length);
+    expect(new Set(stages.map((s) => s.scene)).size).toBe(stages.length);
+    expect(stages[1].mechanic).toBe('training');
+    expect(stages[2].mechanic).toBe('staff');
+  });
+
+  it('training candidates have enough variety for a real choice', () => {
+    const t = garage.training!;
+    expect(t.rarities.length).toBeGreaterThanOrEqual(3);
+    expect(new Set(t.traits.map((x) => x.stat)).size).toBeGreaterThanOrEqual(6);
+    expect(t.drawbacks.length).toBeGreaterThanOrEqual(4);
+    expect(t.prefixKeys.length * t.suffixKeys.length).toBeGreaterThanOrEqual(100);
+  });
+
+  it('lab happenings come every 20 to 40 seconds, expire on their own and never cost much', () => {
+    const h = garage.happenings!;
+    expect(h.intervalMinMs).toBeGreaterThanOrEqual(20_000);
+    expect(h.intervalMaxMs).toBeLessThanOrEqual(40_000);
+    expect(h.lifetimeMs).toBeLessThan(h.intervalMinMs);
+    expect(h.penaltyCapShare).toBeLessThanOrEqual(0.05);
+    expect(h.defs.length).toBeGreaterThanOrEqual(8);
   });
 
   it('has some secret achievements', () => {

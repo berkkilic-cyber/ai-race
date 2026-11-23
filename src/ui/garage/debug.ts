@@ -1,6 +1,6 @@
 import { Platform } from 'react-native';
 
-import { advance, createGarage, type GarageState, type OfferId } from '@/idle';
+import { advance, createGarage, evenStaff, launchTraining, nextStage, type GarageState, type OfferId } from '@/idle';
 
 import { requestRewardedAd } from '../ads';
 import { t } from '../i18n';
@@ -22,8 +22,20 @@ export interface GarageDebug {
   frenzy(seconds?: number): void;
   /** Opens a placement's ad as its button would (the mock shows its test ad). */
   ad(placement: OfferId): Promise<string>;
-  /** Replaces the save with a sample: 'fresh', 'mid', 'late', 'ship'. */
-  scene(name: 'fresh' | 'mid' | 'late' | 'ship'): void;
+  /** Replaces the save with a sample: 'fresh', 'mid', 'late', 'ship', or a stage's sample: 'office', 'datacentre', 'town', 'latent'. */
+  scene(name: SceneName): void;
+  /** Jumps to stage `n` (keeps the rest of the save). */
+  stage(n: number): void;
+  /** Grants tokens (this generation and all time). */
+  grant(n: number): void;
+  /** A training run with its three candidates, ready to pick. */
+  training(): void;
+  /** A lab happening now ('pizza', 'overheat' …). */
+  happening(id?: string): void;
+  /** Opens ship day (the save must be able to ship; use scene('ship')). */
+  shipDay(): void;
+  /** The bonus multiplier offer, as if a bonus had just been tapped (`source` golden or happening). */
+  bonusOffer(source?: 'golden' | 'happening'): void;
   state(): GarageState | null;
 }
 
@@ -33,11 +45,23 @@ function patch(change: (s: GarageState) => GarageState): void {
   st.replace(change(advance(st.state, st.content, garageNow())));
 }
 
-function sample(name: 'fresh' | 'mid' | 'late' | 'ship'): GarageState {
+type SceneName = 'fresh' | 'mid' | 'late' | 'ship' | 'office' | 'datacentre' | 'town' | 'latent';
+
+function sample(name: SceneName): GarageState {
   const { content } = useGarageStore.getState();
   const now = garageNow();
   const base = createGarage(content, now, 11);
-  const quiet = { ...base, nextGoldenAt: now + 10 * 60_000, nextIncidentAt: now + 10 * 60_000 };
+  const quiet = { ...base, nextGoldenAt: now + 10 * 60_000, nextIncidentAt: now + 10 * 60_000, nextHappeningAt: now + 10 * 60_000 };
+  const stageIndex = (id: string) => Math.max(0, content.stages?.findIndex((st) => st.id === id) ?? 0);
+  const kept = (state: GarageState, runs: number): GarageState => {
+    let st = state;
+    for (let i = 0; i < runs; i++) {
+      st = launchTraining({ ...st, training: { ...st.training, charges: Math.max(1, st.training.charges) } }, content, st.now).state;
+      const c = st.training.candidates;
+      if (c) st = { ...st, models: [...st.models, c[i % c.length]], training: { ...st.training, candidates: null } };
+    }
+    return st;
+  };
   const news = content.news.headlines.slice(0, 5).map((h, i) => ({ uid: 100 + i, key: h.key, kind: 'headline' as const, at: now - (5 - i) * 20_000 }));
   if (name === 'fresh') return { ...quiet, news: news.slice(0, 1) };
   if (name === 'mid')
@@ -64,8 +88,72 @@ function sample(name: 'fresh' | 'mid' | 'late' | 'ship'): GarageState {
       news,
       uidSeq: 200,
     };
+  if (name === 'office')
+    return kept(
+      {
+        ...quiet,
+        stage: stageIndex('office'),
+        tokens: 2.6e6,
+        genLifetime: 9.4e6,
+        generators: { intern: 41, gpu: 30, closet: 18, scraper: 7, hall: 1 },
+        upgrades: ['intern-a', 'intern-b', 'gpu-a', 'gpu-b', 'tap-1', 'tap-2', 'tap-rate-1', 'sticky-notes', 'closet-a', 'scraper-a'],
+        stats: { ...base.stats, taps: 3100, bestCombo: 80, tokensAllTime: 9.4e6, playMs: 11 * 60_000 },
+        training: { charges: 2, nextChargeAt: now + 140_000, candidates: null },
+        news,
+        uidSeq: 200,
+      },
+      1,
+    );
+  if (name === 'datacentre')
+    return kept(
+      {
+        ...quiet,
+        stage: stageIndex('datacentre'),
+        generation: 2,
+        hype: 18,
+        labRep: 2,
+        tokens: 4.1e9,
+        genLifetime: 2.2e10,
+        generators: { intern: 90, gpu: 80, closet: 66, scraper: 51, hall: 30, chips: 12, power: 3 },
+        upgrades: content.upgrades.filter((u) => u.requires.every((r) => r.type !== 'generation' || r.min <= 2)).slice(0, 34).map((u) => u.id),
+        stats: { ...base.stats, taps: 15_000, bestCombo: 120, tokensAllTime: 8e10, modelsShipped: 2, playMs: 50 * 60_000 },
+        training: { charges: 1, nextChargeAt: now + 95_000, candidates: null },
+        staff: { research: 3, product: 6, safety: 3 },
+        news,
+        uidSeq: 200,
+      },
+      2,
+    );
+  if (name === 'town' || name === 'latent') {
+    const gen = name === 'town' ? 5 : 8;
+    return kept(
+      {
+        ...quiet,
+        stage: stageIndex(name),
+        generation: gen,
+        hype: name === 'town' ? 240 : 21_000,
+        labRep: gen,
+        tokens: name === 'town' ? 7.4e15 : 3.3e21,
+        genLifetime: name === 'town' ? 2.2e16 : 9e21,
+        generators:
+          name === 'town'
+            ? { intern: 150, gpu: 140, closet: 120, scraper: 110, hall: 95, chips: 80, power: 61, robotics: 33 }
+            : { intern: 260, gpu: 230, closet: 210, scraper: 190, hall: 170, chips: 150, power: 120, robotics: 90, orbital: 50, universe: 4 },
+        upgrades: content.upgrades.filter((u) => u.requires.every((r) => r.type !== 'generation' || r.min <= gen)).slice(0, 50).map((u) => u.id),
+        stats: { ...base.stats, taps: 41_000, bestCombo: 166, tokensAllTime: name === 'town' ? 9.1e16 : 2e22, modelsShipped: gen, goldenCaught: 31, incidentsFixed: 12, playMs: 3 * 3_600_000 },
+        training: { charges: 3, nextChargeAt: 0, candidates: null },
+        staff: { research: 4, product: 5, safety: 3 },
+        autoBuy: name === 'latent',
+        nextAutoBuyAt: now + 4000,
+        news,
+        uidSeq: 200,
+      },
+      name === 'town' ? 3 : 4,
+    );
+  }
   return {
     ...quiet,
+    staff: evenStaff(content.staff?.total ?? 0),
     tokens: 7.4e15,
     genLifetime: 2.2e16,
     generation: 5,
@@ -109,7 +197,32 @@ export function installGarageDebug(): void {
       }),
     frenzy: (seconds = 30) => patch((s) => ({ ...s, frenzy: { mult: 7, tapMult: 1, until: s.now + seconds * 1000 } })),
     ad: (placement) => requestRewardedAd(placement, t(`ui.ads.name.${placement}`)),
-    scene: (name) => useGarageStore.getState().replace(sample(name)),
+    scene: (name) => {
+      // A sample sits in the stage its progress has earned (no "the lab moved" card).
+      let st = sample(name);
+      const { content } = useGarageStore.getState();
+      for (let next = nextStage(st, content); next && next.progress >= 1; next = nextStage(st, content)) st = { ...st, stage: next.index };
+      useGarageStore.getState().replace(st);
+    },
+    stage: (n) => patch((s) => ({ ...s, stage: Math.max(0, Math.min((useGarageStore.getState().content.stages?.length ?? 1) - 1, n)) })),
+    grant: (n) => patch((s) => ({ ...s, tokens: s.tokens + n, genLifetime: s.genLifetime + n, stats: { ...s.stats, tokensAllTime: s.stats.tokensAllTime + n } })),
+    training: () =>
+      patch((s) => {
+        const { content } = useGarageStore.getState();
+        const ready = { ...s, training: { ...s.training, charges: Math.max(1, s.training.charges), candidates: null } };
+        return launchTraining(ready, content, s.now).state;
+      }),
+    happening: (id) =>
+      patch((s) => {
+        const { content } = useGarageStore.getState();
+        const defs = content.happenings?.defs ?? [];
+        const def = defs.find((d) => d.id === id) ?? defs[0];
+        if (!def) return s;
+        return { ...s, happening: { uid: s.uidSeq + 1, id: def.id, spawnedAt: s.now, expiresAt: s.now + 60_000, x: 0.5, y: 0.5 }, nextHappeningAt: s.now + 120_000, uidSeq: s.uidSeq + 1 };
+      }),
+    shipDay: () => useGarageStore.getState().openShipDay(),
+    bonusOffer: (source = 'golden') =>
+      patch((s) => ({ ...s, bonusOffer: { reward: 5000, until: s.now + 60_000, source, id: source === 'golden' ? 'angel' : 'pizza', x: 0.62, y: 0.45 } })),
     state: () => useGarageStore.getState().state,
   };
   (window as unknown as { __garage: GarageDebug }).__garage = api;
