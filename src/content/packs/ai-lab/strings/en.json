@@ -488,7 +488,7 @@
   "achievement.clean-hands.name": "Clean Hands",
   "achievement.clean-hands.desc": "Finish a long run without a single Shadow node.",
   "achievement.cloud-native.name": "Cloud Native",
-  "achievement.cloud-native.desc": "Reach AGI without ever building a data centre.",
+  "achievement.cloud-native.desc": "Reach AGI with no more than one data centre of your own: rent the rest.",
   "achievement.monk-mode.name": "Monk Mode",
   "achievement.monk-mode.desc": "Reach AGI without ever shipping an app.",
   "achievement.office-supplies.name": "Office Supplies",
