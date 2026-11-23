@@ -30,7 +30,7 @@
   "ui.region.powerCost": "Elektrik fiyatı",
   "ui.region.launch": "Burada lansman yap",
   "ui.region.build": "Yeni",
-  "ui.region.upgrade": "Seviye {level} yap",
+  "ui.region.upgrade": "Yükselt: Seviye {level}",
   "ui.region.sites": "Tesislerin",
   "ui.region.siteLevel": "Seviye {level}",
   "ui.region.offline": "Kapalı",

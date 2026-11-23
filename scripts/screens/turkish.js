@@ -14,7 +14,8 @@
  * English leftovers: a visible line that is exactly an English string whose Turkish text
  * differs, or a line with several common English words. Exits non-zero when anything is found.
  * Env: CHROME (default /usr/bin/google-chrome), SIZES (default "926x428,844x390"),
- *      INSETS (default 0,47,21,47), SEED (default 7).
+ *      INSETS (default 0,47,21,47), SEED (default 7), SCALE (device pixel ratio, default 1),
+ *      LOCALE (tr, or en for the same shots in English).
  */
 const fs = require('node:fs');
 const http = require('node:http');
@@ -98,7 +99,7 @@ async function runSize(browser, width, height, base) {
   page.on('console', (m) => {
     if (m.type() === 'error' && /AI-RACE ERROR/.test(m.text())) errors.push(m.text());
   });
-  await page.setViewport({ width, height, deviceScaleFactor: 2 });
+  await page.setViewport({ width, height, deviceScaleFactor: Number(process.env.SCALE || 1) });
   const q = `lang=${LOCALE}${INSETS ? `&insets=${INSETS}` : ''}`;
   const tag = `${width}x${height}`;
   const shot = async (name) => {
