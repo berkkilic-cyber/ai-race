@@ -138,5 +138,8 @@
   "ui.ads.remove.simulate": "Test: reklamlar kaldırılmış gibi yap",
   "ui.ads.remove.active": "Reklamlar kaldırıldı: ödüller bedava",
   "ui.ads.stats.title": "Reklam yerleşimleri (bu cihaz)",
-  "ui.ads.stats.row": "{requested} istendi · {shown} gösterildi · {rewarded} ödüllendi"
+  "ui.ads.stats.row": "{requested} istendi · {shown} gösterildi · {rewarded} ödüllendi",
+  "ui.garage.stage.nextName": "Sıradaki: {name}",
+  "ui.garage.hint.tap": "Token kazanmak için modeline dokun",
+  "ui.garage.hint.buy": "Şimdi Kur sekmesinden al: {name} →"
 }

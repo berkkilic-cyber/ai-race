@@ -6,12 +6,13 @@ import { happeningDef, happeningQuote, type HappeningState } from '@/idle';
 
 import { Icon } from '../icons';
 import { t } from '../i18n';
+import { cased } from '../locale';
 import { useAmbientClock, wave } from '../motion/ambient';
 import { colors, radius, shape, spacing, voice } from '../theme';
 import { garageNow } from './clock';
 import { tapHaptic } from './haptics';
 import { useGarage } from './hooks';
-import { spotPosition } from './LabRoom';
+import { clearSpan, spotPosition, type StageRect } from './LabRoom';
 import { useGarageStore, type GarageStore } from './store';
 import { fmt, gt } from './text';
 
@@ -25,7 +26,7 @@ const key = (h: HappeningState | null) => (h ? h.uid : 0);
  * wobbles, its label and a timer bar. Tap it for the reward; untouched, it goes by itself
  * (some cost a little, never much).
  */
-export const HappeningBubble = memo(function HappeningBubble({ width, height }: { width: number; height: number }) {
+export const HappeningBubble = memo(function HappeningBubble({ width, height, avoid = null }: { width: number; height: number; avoid?: StageRect | null }) {
   const happening = useGarage(sel, key);
   const reduced = useReducedMotion();
   const clock = useAmbientClock(!reduced && !!happening);
@@ -45,8 +46,12 @@ export const HappeningBubble = memo(function HappeningBubble({ width, height }: 
   if (!def || !state) return null;
   const quote = happeningQuote(state, content);
   const p = spotPosition(def.spot, happening.x, happening.y, width, height);
-  const left = Math.max(2, Math.min(width - WRAP - 2, p.x - WRAP / 2));
-  const top = Math.max(2, Math.min(height - SIZE - 34, p.y - SIZE / 2));
+  // Keep the icon and its label on its side of the model: the label may wrap to two lines to fit.
+  const span = clearSpan(p.x, width, avoid);
+  const labelW = Math.max(SIZE + 20, Math.min(WRAP, span.hi - span.lo));
+  const cx = Math.max(span.lo + SIZE / 2, Math.min(span.hi - SIZE / 2, p.x));
+  const left = Math.max(span.lo, Math.min(span.hi - labelW, cx - labelW / 2));
+  const top = Math.max(2, Math.min(height - SIZE - 52, p.y - SIZE / 2));
   const risky = quote.penalty > 0;
   const collect = () => {
     const r = useGarageStore.getState().collectHappening();
@@ -55,10 +60,11 @@ export const HappeningBubble = memo(function HappeningBubble({ width, height }: 
     useGarageStore.getState().setFlash(`+${fmt(r.gained ?? 0)}`);
   };
   return (
-    <Animated.View entering={reduced ? undefined : ZoomIn.duration(180)} style={[styles.wrap, { left, top }]} pointerEvents="box-none">
+    <Animated.View entering={reduced ? undefined : ZoomIn.duration(180)} style={[styles.wrap, { left, top, width: labelW }]} pointerEvents="box-none" testID="garage-happening-wrap">
       <Pressable
         onPress={collect}
         hitSlop={8}
+        style={{ alignSelf: 'flex-start', marginLeft: cx - left - SIZE / 2 }}
         accessibilityRole="button"
         accessibilityLabel={`${gt(def.labelKey)}. ${risky ? t('ui.garage.happening.risk', { amount: fmt(quote.penalty) }) : t('ui.garage.happening.reward', { amount: fmt(quote.reward) })}`}
         testID="garage-happening"
@@ -67,9 +73,9 @@ export const HappeningBubble = memo(function HappeningBubble({ width, height }: 
           <Icon name={def.icon} size={26} color={risky ? colors.newsPaper : colors.newsInk} accent={risky ? colors.newsPaper : colors.newsRed} />
         </Animated.View>
       </Pressable>
-      <View style={styles.label} pointerEvents="none">
-        <Text style={styles.labelText} numberOfLines={1}>
-          {gt(def.labelKey)}
+      <View style={[styles.label, { maxWidth: labelW }]} pointerEvents="none">
+        <Text style={styles.labelText} numberOfLines={2}>
+          {cased(styles.labelText, gt(def.labelKey))}
         </Text>
         <View style={styles.track}>
           <Animated.View style={[styles.fill, risky && styles.fillRisky, bar]} />
@@ -92,8 +98,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   risky: { backgroundColor: colors.newsRed, borderColor: colors.newsPaper },
-  label: { marginTop: 3, alignItems: 'center', backgroundColor: colors.newsInk, paddingHorizontal: spacing.xs, paddingTop: 1, paddingBottom: 2, maxWidth: WRAP },
-  labelText: { ...voice.loudKicker, fontSize: 11, lineHeight: 13, color: colors.newsPaper },
+  label: { marginTop: 3, alignItems: 'center', backgroundColor: colors.newsInk, paddingHorizontal: spacing.xs, paddingTop: 1, paddingBottom: 2 },
+  labelText: { ...voice.loudKicker, fontSize: 11, lineHeight: 13, color: colors.newsPaper, textAlign: 'center' },
   track: { width: '100%', height: 2, backgroundColor: colors.newsDim, marginTop: 2 },
   fill: { height: '100%', backgroundColor: colors.player },
   fillRisky: { backgroundColor: colors.newsRed },
