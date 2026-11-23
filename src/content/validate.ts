@@ -745,7 +745,7 @@ function checkIntegrity(pack: ContentPack): string[] {
   for (const k of REQUIRED_KEYS) used.add(k);
 
   // The first locale is the base (complete). Other locales may lack keys (the UI falls back
-  // to the base) but may not add keys, and a translated key keeps the base's placeholders.
+  // to the base) but may not add keys or placeholders the base text lacks.
   const [baseLocale, baseTable] = Object.entries(pack.strings)[0] ?? ['', {}];
   const placeholderSet = (text: string) => [...new Set([...text.matchAll(/\{([^}]*)\}/g)].map((m) => m[1]))].sort().join(',');
   for (const [locale, table] of Object.entries(pack.strings)) {
@@ -753,8 +753,12 @@ function checkIntegrity(pack: ContentPack): string[] {
     if (!isBase) {
       for (const [k, text] of Object.entries(table)) {
         if (!(k in baseTable)) err(`strings.${locale}: "${k}" is not in ${baseLocale}`);
-        else if (placeholderSet(text) !== placeholderSet(baseTable[k])) {
-          err(`strings.${locale}: "${k}" placeholders {${placeholderSet(text)}} differ from ${baseLocale} {${placeholderSet(baseTable[k])}}`);
+        else {
+          // A placeholder the base text lacks would reach the screen raw. (One the translation
+          // drops is a stale translation: the Jest locale test and `npm run i18n:check` report it.)
+          const base = placeholderSet(baseTable[k]).split(',');
+          const extra = placeholderSet(text).split(',').filter((p) => p && !base.includes(p));
+          if (extra.length) err(`strings.${locale}: "${k}" uses placeholders not in ${baseLocale}: {${extra.join('}, {')}}`);
         }
       }
     }

@@ -39,7 +39,7 @@ Every Turkish string follows this table. If a term changes, change it here first
 | BREAKING | SON DAKİKA | |
 | EXCLUSIVE | ÖZEL HABER | |
 | DEVELOPING | GELİŞME VAR | |
-| Moment (tap bubble) | Fırsat (good) / Tehdit (bad) | |
+| Moment (tap bubble) | Balon | The bubbles on the map; a good one is a "fırsat", a bad one a "tehdit". "An" (moment) is avoided: "ana dokun" reads as "touch mother" |
 | Achievement | Başarım | Standard in Turkish games |
 | Score | Skor | |
 | Day | Gün | "Gün 12" |

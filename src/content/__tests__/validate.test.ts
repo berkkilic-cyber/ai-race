@@ -112,7 +112,7 @@ describe('validatePack', () => {
     // keys or change a key's placeholders.
     expect(problemsOf((p) => { p.strings.fr = { ...p.strings.en }; delete p.strings.fr['region.usa.name']; }).some((x) => /strings\.fr: missing key/.test(x))).toBe(false);
     expectProblem(problemsOf((p) => { p.strings.fr = { 'orphan.key': 'Bonjour' }; }), /strings\.fr: "orphan\.key" is not in en/);
-    expectProblem(problemsOf((p) => { p.strings.fr = { [p.headlines[0].textKey]: 'Rien' }; }), /strings\.fr: .* placeholders/);
+    expectProblem(problemsOf((p) => { p.strings.fr = { [p.headlines[0].textKey]: 'Rien {tier}' }; }), /strings\.fr: .* placeholders not in en: \{tier\}/);
   });
 
   it('checks moments: icons, kinds, effects, conditions, strings and name length', () => {
