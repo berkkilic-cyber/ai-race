@@ -149,8 +149,8 @@ function Backdrop({ scene, g }: { scene: string; g: Geometry }) {
       const dy = top + wall * 0.08;
       const dh = floor - dy;
       const slats = Array.from({ length: 5 }, (_, i) => `M${n1(dx)} ${n1(dy + (dh * (i + 1)) / 6)}h${n1(dw)}`).join('');
-      const bx = w * 0.64;
-      const by = top + wall * 0.45;
+      const bx = w * 0.7;
+      const by = top + wall * 0.28;
       const box = (x: number, y: number, s: number) => `M${n1(x)} ${n1(y)}h${n1(s)}v${n1(-s * 0.8)}h${n1(-s)}z`;
       const bs = Math.max(12, w * 0.06);
       return (
