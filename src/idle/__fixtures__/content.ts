@@ -58,6 +58,7 @@ export function fixture(): GarageContent {
       { id: 'incidentFix', cooldownMs: 60_000, dailyCap: 5 },
       { id: 'crate', cooldownMs: 3 * 3_600_000, dailyCap: 2, crateSeconds: 600, crateMinTaps: 50 },
       { id: 'prestigeBonus', cooldownMs: 0, dailyCap: 2, prestigeBonus: 0.25 },
+      { id: 'bonusMultiply', cooldownMs: 0, dailyCap: 20, multiplyMult: 3, multiplyChance: 0.5, multiplyWindowMs: 6000, multiplyAfterMs: 180_000 },
     ],
     achievements: [
       { id: 'tap1', nameKey: k('a.t'), descKey: k('a.t.d'), icon: 'x', rule: { type: 'stat', stat: 'taps', gte: 1 } },

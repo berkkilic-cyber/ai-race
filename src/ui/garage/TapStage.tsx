@@ -13,6 +13,7 @@ import { garageNow } from './clock';
 import { tapHaptic } from './haptics';
 import { useGarage } from './hooks';
 import { OfferSlot } from './adOffer';
+import { BonusOffer } from './BonusOffer';
 import { GoldenBubble } from './GoldenBubble';
 import { HappeningBubble } from './HappeningBubble';
 import { bucketKey, LabRoom, roomBuckets, type RoomBuckets } from './LabRoom';
@@ -340,6 +341,7 @@ export function TapStage({ compact }: { compact?: boolean }) {
       <ComboMeter />
       <HappeningBubble width={box.w} height={box.h} />
       <GoldenBubble width={box.w} height={box.h} />
+      <BonusOffer width={box.w} height={box.h} />
     </View>
   );
 }

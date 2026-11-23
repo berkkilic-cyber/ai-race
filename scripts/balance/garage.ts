@@ -256,6 +256,7 @@ function playSecond(s: GarageState, p: Profile, tapping: boolean, log: Log, t0: 
   if (s.golden && s.now - s.golden.spawnedAt >= 2 * SEC) {
     const catchIt = roll() < p.goldenSkill;
     if (catchIt) s = collectGolden(s, content, s.now).state;
+    if (catchIt && p.ads) s = watchAd(s, 'bonusMultiply', log);
     if (p.ads) s = watchAd(s, 'frenzyExtend', log);
   }
   if (s.incident && s.now - s.incident.startedAt >= 3 * SEC) {
@@ -267,6 +268,7 @@ function playSecond(s: GarageState, p: Profile, tapping: boolean, log: Log, t0: 
       const r = collectHappening(s, content, s.now);
       if (r.ok) log.happenings++;
       s = r.state;
+      if (p.ads) s = watchAd(s, 'bonusMultiply', log);
     }
   }
   if (p.ads) s = watchAd(s, 'crate', log);
@@ -407,7 +409,7 @@ console.log(`- casual, all-time tokens after ${DAYS} days: ${tokRatio >= 100 ? f
 
 console.log('\n## Ads watched per day (ad profiles)\n');
 console.log('| Placement | casual + ads | active + ads (per hour) |\n| --- | --- | --- |');
-const ids: OfferId[] = ['offlineDouble', 'boost', 'frenzyExtend', 'incidentFix', 'crate', 'prestigeBonus'];
+const ids: OfferId[] = ['offlineDouble', 'boost', 'frenzyExtend', 'incidentFix', 'crate', 'prestigeBonus', 'bonusMultiply'];
 for (const id of ids) console.log(`| ${id} | ${((casualAds.log.ads[id] ?? 0) / DAYS).toFixed(1)} | ${((activeAds.log.ads[id] ?? 0) / ACTIVE_HOURS).toFixed(1)} |`);
 if (!LEGACY) {
   console.log('\n## The lab\n');

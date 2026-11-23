@@ -111,6 +111,7 @@ export function createGarage(content: GarageContent, now: number, seed: number =
     shipChoice: null,
     autoBuy: false,
     nextAutoBuyAt: 0,
+    bonusOffer: null,
   };
 }
 
@@ -132,6 +133,7 @@ function clone(s: GarageState): GarageState {
     happening: s.happening ? { ...s.happening } : null,
     training: { ...s.training },
     staff: { ...s.staff },
+    bonusOffer: s.bonusOffer ? { ...s.bonusOffer } : null,
   };
 }
 
@@ -186,6 +188,7 @@ function processAt(s: GarageState, content: GarageContent, t: number): void {
   }
   if (s.incident && t >= s.incident.until) s.incident = null;
   if (s.frenzy && t >= s.frenzy.until) s.frenzy = null;
+  if (s.bonusOffer && t >= s.bonusOffer.until) s.bonusOffer = null;
   if (s.happening && t >= s.happening.expiresAt) expireHappening(s, content);
   if (!s.golden && t >= s.nextGoldenAt) spawnGolden(s, content, t);
   if (!s.incident && t >= s.nextIncidentAt) spawnIncident(s, content, t);
@@ -263,6 +266,7 @@ function awayCatchUp(s: GarageState, content: GarageContent, now: number): void 
   s.golden = null;
   s.incident = null;
   s.happening = null;
+  s.bonusOffer = null;
   const credited = Math.min(away, offlineCapMs(s, content));
   const tokens = grant(s, offlineEarnings(s, content, credited));
   s.now = now;
@@ -307,6 +311,7 @@ function rebase(s: GarageState, delta: number): void {
   s.nextHappeningAt += delta;
   if (s.training.nextChargeAt > 0) s.training.nextChargeAt += delta;
   if (s.nextAutoBuyAt > 0) s.nextAutoBuyAt += delta;
+  if (s.bonusOffer) s.bonusOffer.until += delta;
   for (const id of OFFER_IDS) s.offers[id] = s.offers[id].map((v) => v + delta);
 }
 
@@ -594,6 +599,7 @@ export function collectGolden(state: GarageState, content: GarageContent, now: n
     const prev = s.frenzy && s.frenzy.until > s.now ? s.frenzy : null;
     s.frenzy = r.kind === 'frenzy' ? { mult: r.mult, tapMult: prev?.tapMult ?? 1, until: Math.max(until, prev?.until ?? 0) } : { mult: prev?.mult ?? 1, tapMult: r.mult, until: Math.max(until, prev?.until ?? 0) };
   }
+  if (gained > 0) maybeOfferMultiply(s, content, gained, 'golden', golden.id, golden.x, golden.y);
   s.golden = null;
   s.stats.goldenCaught += 1;
   pushNews(s, content, def.textKey, 'golden', s.now);
@@ -666,6 +672,8 @@ export function offerStatus(state: GarageState, content: GarageContent, id: Offe
         return true;
       case 'prestigeBonus':
         return prestigePreview(state, content).canShip;
+      case 'bonusMultiply':
+        return !!state.bonusOffer && state.bonusOffer.until > now && state.bonusOffer.reward > 0;
     }
   })();
   return applicable ? { available: true, usesLeft } : { available: false, reason: 'notApplicable', usesLeft };
@@ -707,10 +715,26 @@ export function claimOffer(state: GarageState, content: GarageContent, id: Offer
       gained = grant(s, crateValue(s, content));
       s.stats.cratesOpened += 1;
       break;
+    case 'bonusMultiply':
+      gained = grant(s, s.bonusOffer!.reward * Math.max(0, (def.multiplyMult ?? 2) - 1));
+      s.bonusOffer = null;
+      break;
   }
   recordOffer(s, id);
   checkAchievements(s, content);
   return { state: s, ok: true, gained };
+}
+
+/**
+ * After a free bonus tap: with the offer's chance (and not in the first minutes of a save),
+ * the reward can be multiplied by the bonusMultiply offer for a few seconds.
+ */
+export function maybeOfferMultiply(s: GarageState, content: GarageContent, reward: number, source: 'golden' | 'happening', id: string, x: number, y: number): void {
+  const def = offerDef(content, 'bonusMultiply');
+  s.bonusOffer = null;
+  if (!def || !(reward > 0) || s.stats.playMs < (def.multiplyAfterMs ?? 0)) return;
+  if (random(s) >= (def.multiplyChance ?? 0)) return;
+  s.bonusOffer = { reward, until: s.now + (def.multiplyWindowMs ?? 6000), source, id, x, y };
 }
 
 /** Closes the "While you were away" report. */

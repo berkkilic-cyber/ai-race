@@ -2250,6 +2250,15 @@
    "cooldownMs": 0,
    "dailyCap": 3,
    "prestigeBonus": 0.25
+  },
+  {
+   "id": "bonusMultiply",
+   "cooldownMs": 0,
+   "dailyCap": 20,
+   "multiplyMult": 3,
+   "multiplyChance": 0.33,
+   "multiplyWindowMs": 6000,
+   "multiplyAfterMs": 180000
   }
  ],
  "achievements": [

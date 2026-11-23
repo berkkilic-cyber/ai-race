@@ -173,9 +173,9 @@ export interface OfflineConfig {
   reportMinMs: number;
 }
 
-export type OfferId = 'offlineDouble' | 'boost' | 'frenzyExtend' | 'incidentFix' | 'crate' | 'prestigeBonus';
+export type OfferId = 'offlineDouble' | 'boost' | 'frenzyExtend' | 'incidentFix' | 'crate' | 'prestigeBonus' | 'bonusMultiply';
 
-export const OFFER_IDS: readonly OfferId[] = ['offlineDouble', 'boost', 'frenzyExtend', 'incidentFix', 'crate', 'prestigeBonus'];
+export const OFFER_IDS: readonly OfferId[] = ['offlineDouble', 'boost', 'frenzyExtend', 'incidentFix', 'crate', 'prestigeBonus', 'bonusMultiply'];
 
 /**
  * A bonus the player opts into (the UI backs each with a rewarded ad). Every offer has a
@@ -198,6 +198,27 @@ export interface OfferDef {
   crateMinTaps?: number;
   /** prestigeBonus: extra share of the Hype gained (0.25 = +25%). */
   prestigeBonus?: number;
+  /**
+   * bonusMultiply: after a free tap on a token bonus (a golden burst or a lab happening),
+   * with chance `multiplyChance` the reward can be multiplied by `multiplyMult` (the free
+   * reward counts once) for `multiplyWindowMs`; never before `multiplyAfterMs` of play.
+   */
+  multiplyMult?: number;
+  multiplyChance?: number;
+  multiplyWindowMs?: number;
+  multiplyAfterMs?: number;
+}
+
+/** A bonus that was just tapped and may be multiplied by the bonusMultiply offer. */
+export interface BonusOfferState {
+  /** The free reward already granted. */
+  reward: number;
+  until: number;
+  /** Where the bonus was: a golden moment (x, y on the stage) or a happening (its id and x, y). */
+  source: 'golden' | 'happening';
+  id: string;
+  x: number;
+  y: number;
 }
 
 export type StatKey =
@@ -642,6 +663,8 @@ export interface GarageState {
   /** Auto-buy helper switched on (once unlocked). */
   autoBuy: boolean;
   nextAutoBuyAt: number;
+  /** A just-tapped bonus whose reward the bonusMultiply offer may multiply (null otherwise). */
+  bonusOffer: BonusOfferState | null;
 }
 
 export type GarageFailure = 'cantAfford' | 'locked' | 'owned' | 'unknownId' | 'notReady' | 'none' | 'cooldown' | 'dailyCap' | 'notApplicable' | 'full' | 'pending';

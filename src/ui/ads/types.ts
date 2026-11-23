@@ -7,7 +7,7 @@ import type { OfferId } from '@/idle';
  */
 export type PlacementId = OfferId;
 
-export const PLACEMENTS: readonly PlacementId[] = ['offlineDouble', 'boost', 'frenzyExtend', 'incidentFix', 'crate', 'prestigeBonus'];
+export const PLACEMENTS: readonly PlacementId[] = ['offlineDouble', 'boost', 'frenzyExtend', 'incidentFix', 'crate', 'prestigeBonus', 'bonusMultiply'];
 
 export type AdResult = 'rewarded' | 'dismissed' | 'unavailable';
 

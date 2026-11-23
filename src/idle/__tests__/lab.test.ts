@@ -1,5 +1,5 @@
 import { labFixture } from '../__fixtures__/content';
-import { advance, buy, createGarage, GARAGE_VERSION, offlineCapMs, prestige, prestigePreview, tap } from '../garage';
+import { advance, buy, claimOffer, createGarage, GARAGE_VERSION, offerStatus, offlineCapMs, prestige, prestigePreview, tap } from '../garage';
 import { autoBuyPick, evenStaff, happeningPenalty, happeningReward } from '../lab';
 import { collectHappening, happeningQuote, keepModel, launchTraining, moveStaff, nextStage, retireModel, scrapCandidates, setAutoBuy, setStaff, shipReveal, trainingStatus } from '../labActions';
 import { lastMilestone, mechanicOn, milestoneMult, modelEffects, modelSlots, nextMilestone, staffEffects } from '../labRates';
@@ -358,6 +358,47 @@ describe('lab happenings', () => {
   });
 });
 
+describe('bonus multiplier offer', () => {
+  const tapped = (seed: number, playMs: number) => {
+    const s = at(0, 0, { rng: seed, generators: { b: 10 }, stats: { ...createGarage(calm, T0).stats, playMs }, happening: { uid: 7, id: 'pizza', spawnedAt: T0, expiresAt: T0 + 9000, x: 0.4, y: 0.6 } });
+    return collectHappening(s, calm, T0 + 10);
+  };
+  it('after a free tap, some bonuses offer to multiply the reward for a few seconds', () => {
+    let offered = 0;
+    for (let seed = 1; seed <= 200; seed++) {
+      const r = tapped(seed, 600_000);
+      if (r.state.bonusOffer) {
+        offered++;
+        expect(r.state.bonusOffer).toMatchObject({ reward: r.gained, until: T0 + 10 + 6000, source: 'happening', id: 'pizza', x: 0.4, y: 0.6 });
+      }
+    }
+    // Chance 0.5 in the fixture.
+    expect(offered).toBeGreaterThan(70);
+    expect(offered).toBeLessThan(130);
+  });
+  it('never in the first minutes of a save', () => {
+    for (let seed = 1; seed <= 50; seed++) expect(tapped(seed, 60_000).state.bonusOffer).toBeNull();
+  });
+  it('the ad multiplies the free reward (the free part counts once), then the offer is gone', () => {
+    let r = tapped(1, 600_000);
+    for (let seed = 2; !r.state.bonusOffer; seed++) r = tapped(seed, 600_000);
+    const free = r.gained!;
+    expect(offerStatus(r.state, calm, 'bonusMultiply').available).toBe(true);
+    const claimed = claimOffer(r.state, calm, 'bonusMultiply', T0 + 2000);
+    expect(claimed.ok).toBe(true);
+    expect(claimed.gained).toBeCloseTo(free * 2, 6);
+    expect(claimed.state.bonusOffer).toBeNull();
+    expect(offerStatus(claimed.state, calm, 'bonusMultiply').reason).toBe('notApplicable');
+  });
+  it('expires on its own', () => {
+    let r = tapped(1, 600_000);
+    for (let seed = 2; !r.state.bonusOffer; seed++) r = tapped(seed, 600_000);
+    const later = advance(r.state, calm, T0 + 7000);
+    expect(later.bonusOffer).toBeNull();
+    expect(claimOffer(later, calm, 'bonusMultiply', T0 + 7000).ok).toBe(false);
+  });
+});
+
 describe('auto-buy', () => {
   it('is locked until its stage, then buys the best value within budget while the lab is open', () => {
     expect(setAutoBuy(at(3, 2), calm, true, T0 + 1).ok).toBe(false);
@@ -515,8 +556,9 @@ describe('lab property check', () => {
         expect(s.models.length).toBeLessThanOrEqual(modelSlots(s, c));
         expect(s.staff.research + s.staff.product + s.staff.safety).toBe(12);
       }
+      // The combo and a few-second bonus offer are not kept across a reload; everything else is.
       const back = deserialize(serialize(s), c, now).state;
-      expect(back).toEqual({ ...s, combo: { count: 0, lastAt: 0 } });
+      expect(back).toEqual({ ...s, combo: { count: 0, lastAt: 0 }, bonusOffer: null });
     }
   });
 });

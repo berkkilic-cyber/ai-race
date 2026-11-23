@@ -3,7 +3,7 @@
  * auto-buy switch) and its reads for screens and bots (next stage, training status, the
  * ship-day reveal). Every action advances to `now` first and returns a new state.
  */
-import { at, hypeForLifetime, requirementProgress } from './garage';
+import { at, hypeForLifetime, maybeOfferMultiply, requirementProgress } from './garage';
 import { accrueTraining, happeningDef, happeningPenalty, happeningReward, labRequirementMet, resolveHappening, rollCandidates, trainingCooldownMs } from './lab';
 import { mechanicOn, mechanicStage, modelSlots } from './labRates';
 import type { ActionResult, GarageContent, GarageState, ModelCandidate, Requirement, StaffSplit, StageDef } from './types';
@@ -120,8 +120,10 @@ export function moveStaff(state: GarageState, content: GarageContent, from: keyo
 /** Taps the happening on screen: its reward (and side effect) now. */
 export function collectHappening(state: GarageState, content: GarageContent, now: number): ActionResult {
   const s = at(state, content, now);
-  if (!s.happening || !happeningDef(content, s.happening.id)) return { state: s, ok: false, reason: 'none' };
+  const h = s.happening;
+  if (!h || !happeningDef(content, h.id)) return { state: s, ok: false, reason: 'none' };
   const gained = resolveHappening(s, content, 1);
+  maybeOfferMultiply(s, content, gained, 'happening', h.id, h.x, h.y);
   s.stats.happeningsCaught += 1;
   return { state: s, ok: true, gained };
 }

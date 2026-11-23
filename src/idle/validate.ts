@@ -140,6 +140,13 @@ export function validateGarage(c: GarageContent): string[] {
   need('frenzyExtend', 'extendMs');
   need('crate', 'crateSeconds');
   need('prestigeBonus', 'prestigeBonus');
+  need('bonusMultiply', 'multiplyWindowMs');
+  const bm = c.offers.find((x) => x.id === 'bonusMultiply');
+  if (bm) {
+    if (!((bm.multiplyMult ?? 0) > 1)) err('offer bonusMultiply multiplyMult must exceed 1');
+    if (!((bm.multiplyChance ?? -1) >= 0 && (bm.multiplyChance ?? 2) <= 1)) err('offer bonusMultiply multiplyChance must be in [0, 1]');
+    nonNeg(bm.multiplyAfterMs ?? -1, 'offer bonusMultiply multiplyAfterMs');
+  }
 
   unique(c.achievements.map((a) => a.id), 'achievements');
   for (const a of c.achievements) {

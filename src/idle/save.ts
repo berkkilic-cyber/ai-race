@@ -173,6 +173,7 @@ export function sanitize(raw: Raw, content: GarageContent, fresh: GarageState): 
     shipChoice: typeof raw.shipChoice === 'string' && choiceIds.has(raw.shipChoice) ? raw.shipChoice : null,
     autoBuy: raw.autoBuy === true,
     nextAutoBuyAt: time(raw.nextAutoBuyAt, 0),
+    bonusOffer: null,
   };
   // Stages are earned by progress that never resets: a save is at least where its progress puts it.
   const stages = content.stages ?? [];

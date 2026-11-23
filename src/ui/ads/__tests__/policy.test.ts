@@ -28,14 +28,20 @@ describe('ad placement policy', () => {
     expect(pickPlacement({ ...noCrate, secondsToNextBuy: BOOST_WAIT_S })).toBe('boost');
     expect(pickPlacement({ ...noCrate, secondsToNextBuy: Infinity })).toBe('boost');
   });
+  it('the bonus multiplier comes right after the modal offers, only while a bonus offers it', () => {
+    expect(pickPlacement({ ...calm, bonus: true, incident: true, frenzy: true })).toBe('bonusMultiply');
+    expect(pickPlacement({ ...calm, bonus: true, shipDay: true })).toBe('prestigeBonus');
+    expect(pickPlacement({ ...calm, bonus: false, available: { bonusMultiply: true } })).toBeNull();
+    expect(pickPlacement({ ...calm, bonus: true, available: { ...all, bonusMultiply: false } })).toBe('crate');
+  });
   it('shows nothing on the stage until the lab produces something', () => {
     expect(pickPlacement({ ...calm, settled: false, incident: true })).toBeNull();
     expect(pickPlacement({ ...calm, settled: false, offlineReport: true })).toBe('offlineDouble');
   });
   it('returns at most one placement for every combination', () => {
-    for (let mask = 0; mask < 1 << 11; mask++) {
+    for (let mask = 0; mask < 1 << 13; mask++) {
       const available = Object.fromEntries(PLACEMENTS.map((p, i) => [p, (mask >> i) & 1 ? true : false]));
-      const ctx: OfferContext = { available, offlineReport: !!(mask & 64), shipDay: !!(mask & 128), incident: !!(mask & 256), frenzy: !!(mask & 512), secondsToNextBuy: mask & 1024 ? 1000 : 0 };
+      const ctx: OfferContext = { available, offlineReport: !!(mask & 128), shipDay: !!(mask & 256), incident: !!(mask & 512), frenzy: !!(mask & 1024), secondsToNextBuy: mask & 2048 ? 1000 : 0, bonus: !!(mask & 4096) };
       const pick = pickPlacement(ctx);
       if (pick) expect(available[pick]).toBe(true);
     }

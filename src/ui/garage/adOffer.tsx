@@ -27,7 +27,7 @@ export function secondsToNextBuy(s: GarageStore): number {
 export function currentPlacement(s: GarageStore, now: number): PlacementId | null {
   const st = s.state;
   if (!st) return null;
-  const ids: PlacementId[] = ['offlineDouble', 'boost', 'frenzyExtend', 'incidentFix', 'crate', 'prestigeBonus'];
+  const ids: PlacementId[] = ['offlineDouble', 'boost', 'frenzyExtend', 'incidentFix', 'crate', 'prestigeBonus', 'bonusMultiply'];
   const available: Partial<Record<PlacementId, boolean>> = {};
   for (const id of ids) available[id] = offerStatus(st, s.content, id, now).available && adReady(id);
   return pickPlacement({
@@ -38,6 +38,7 @@ export function currentPlacement(s: GarageStore, now: number): PlacementId | nul
     frenzy: !!st.frenzy && st.frenzy.until > now,
     secondsToNextBuy: secondsToNextBuy(s),
     settled: totalRate(st, s.content, now) > 0,
+    bonus: !!st.bonusOffer && st.bonusOffer.until > now,
   });
 }
 
@@ -56,7 +57,7 @@ export function useAdPlacement(): PlacementId | null {
 export const OfferSlot = memo(function OfferSlot({ compact = true }: { compact?: boolean }) {
   const placement = useAdPlacement();
   const { state, content } = useGarageStore.getState();
-  if (!state || !placement || placement === 'offlineDouble' || placement === 'prestigeBonus') return null;
+  if (!state || !placement || placement === 'offlineDouble' || placement === 'prestigeBonus' || placement === 'bonusMultiply') return null;
   const status = offerStatus(state, content, placement, state.now);
   let label = '';
   let reward = '';

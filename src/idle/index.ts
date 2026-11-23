@@ -22,6 +22,7 @@ export {
   hypeForLifetime,
   isGeneratorUnlocked,
   isUpgradeAvailable,
+  maybeOfferMultiply,
   offerStatus,
   offlineCapMs,
   offlineEarnings,
