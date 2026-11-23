@@ -15,7 +15,7 @@
   "ui.start.howTo": "Nasıl oynanır",
   "ui.start.howTo.close": "Anladım",
   "ui.start.howTo.spread.title": "Haritaya yayıl",
-  "ui.start.howTo.spread.body": "{users} merkez bölgende başlar ve komşu bölgelere taşar. Dünyanın geri kalanına ulaşmak için yeni bölgelerde lansman yap.",
+  "ui.start.howTo.spread.body": "{users} tabanın merkez bölgende doğar ve komşu bölgelere taşar. Dünyanın geri kalanına ulaşmak için yeni bölgelerde lansman yap.",
   "ui.start.howTo.trees.title": "{hype} puanını ağaçlara harca",
   "ui.start.howTo.trees.body": "{hype}, kullanıcılardan ve manşetlerden gelir. {capability}, {reach} ve {shadow} geliştirmelerine harca.",
   "ui.start.howTo.compute.title": "Veri merkezi kur",

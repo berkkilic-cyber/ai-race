@@ -22,7 +22,7 @@ Every Turkish string follows this table. If a term changes, change it here first
 | Cash | Nakit | |
 | Compute | İşlem gücü | "İşlem" where very tight |
 | Model (tier) | Model | "Model 3", "Kademe" for tier where needed |
-| Tier | Seviye | "Seviye {tier}" |
+| Tier | Seviye | "Seviye {tier}"; "Sv. {tier}" in the top strip |
 | Regulation (meter) | Denetim | Shorter and more natural than "regülasyon"; regulators = "düzenleyiciler" / "denetçiler" |
 | Backlash (meter) | Tepki | Public backlash = "kamuoyu tepkisi" |
 | Rival AGI (meter) | Rakip AGI | |
@@ -55,7 +55,7 @@ Every Turkish string follows this table. If a term changes, change it here first
 
 | English | Türkçe | Note |
 | --- | --- | --- |
-| Trees (tab) | Ağaçlar | |
+| Trees (tab) | Ağaç | The rail label fits five or six letters; "Ağaçlar" in running text |
 | Capability | Yetenek | |
 | Reach | Erişim | |
 | Shadow | Gölge | |
@@ -83,12 +83,14 @@ Every Turkish string follows this table. If a term changes, change it here first
 
 ## Difficulty
 
+The level cards fit about nine capitals, so the names are short game words rather than translations.
+
 | English | Türkçe | Note |
 | --- | --- | --- |
-| Sandbox | Kum Havuzu | The usual Turkish term for sandbox mode |
+| Sandbox | Çaylak | "Rookie": the usual Turkish game word for the easiest level ("Kum Havuzu" did not fit) |
 | Frontier | Öncü | As in "öncü lab" (frontier lab) |
-| Arms Race | Silah Yarışı | "Silahlanma yarışı" is the full phrase; shortened to fit 14 characters |
-| Hard Takeoff | Sert Kalkış | AI-safety jargon, translated literally as Turkish AI writers do |
+| Arms Race | Kapışma | "Showdown"; "Silahlanma Yarışı" did not fit |
+| Hard Takeoff | Kıyamet | "Doomsday": the hardest level; "Sert Kalkış" (the AI-safety term) did not fit |
 | Difficulty | Zorluk | |
 
 ## Garage (idle mode)

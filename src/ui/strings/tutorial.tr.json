@@ -2,7 +2,7 @@
   "ui.tutorial.home": "Burası lab'ın, merkezi {region}. Yanan her nokta, modelini kullanan biri.",
   "ui.tutorial.home.openMap": "Haritadan başlayalım. Harita'ya dokun.",
   "ui.tutorial.strip": "{hype} geliştirme alır. {cash} bina kurar.",
-  "ui.tutorial.buyModel.openTrees": "Bir şey çıkarma vakti. Ağaçlar'ı aç.",
+  "ui.tutorial.buyModel.openTrees": "Bir şey çıkarma vakti. Ağaç sekmesini aç.",
   "ui.tutorial.buyModel.pickTree": "Modelin {capabilityTree} ağacında. Onu aç.",
   "ui.tutorial.buyModel.buy": "İşte ilk modelin. Dokun.",
   "ui.tutorial.buyModel.confirm": "Satın al. Bedeli {hype}, sende de var.",

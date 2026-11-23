@@ -1,6 +1,6 @@
-import { Fragment, type ReactNode } from 'react';
+import { Fragment, useEffect, type ReactNode } from 'react';
 
-import { useLocale } from './store';
+import { markMounted, useLocale } from './store';
 
 /**
  * Re-renders a screen's text when the language changes: text is looked up during render
@@ -11,6 +11,7 @@ import { useLocale } from './store';
  */
 export function LocaleRemount({ children }: { children: ReactNode }) {
   const locale = useLocale();
+  useEffect(markMounted, []);
   return <Fragment key={locale}>{children}</Fragment>;
 }
 

@@ -135,7 +135,7 @@
   "ui.strip.short.capability": "Model",
   "ui.strip.owns": "{tier} sende · işlem gücü lazım",
   "ui.strip.ownsShort": "{tier} sende",
-  "ui.strip.tier": "Seviye {tier}",
+  "ui.strip.tier": "Sv. {tier}",
   "ui.strip.tapHint": "Ayrıntı için dokun",
   "ui.explain.model.title": "Modelin",
   "ui.explain.model.running": "Model {tier} çalışıyor.",

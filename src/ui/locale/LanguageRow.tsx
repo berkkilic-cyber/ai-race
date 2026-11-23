@@ -46,11 +46,13 @@ export function LanguageRow({ style }: { style?: StyleProp<ViewStyle> }) {
 
 /**
  * A small EN | TR toggle for the start screen's top-left corner, placed inside the safe
- * area by itself (one element to mount).
+ * area by itself (one element to mount). `visible={false}` hides it (the start screen shows
+ * it on the first step only, where the corner is free).
  */
-export function LanguageToggle() {
+export function LanguageToggle({ visible = true }: { visible?: boolean }) {
   const locale = useLocale();
   const insets = useInsets();
+  if (!visible) return null;
   return (
     <View
       style={[styles.corner, { top: insets.top + spacing.xs, left: insets.left + spacing.s }]}

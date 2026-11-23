@@ -31,9 +31,15 @@ function apply(locale: Locale): void {
 }
 
 const override = urlLocale();
-// Synchronous start: the URL override, else the device language. The saved choice (async)
-// replaces it once read, normally before the fonts are ready and anything is shown.
-const initial: Locale = override ?? detectDeviceLocale();
+// The locale wanted at start: the URL override, else the device language. The saved choice
+// (async) replaces it once read, normally before the fonts are ready and anything is shown.
+const wanted: Locale = override ?? detectDeviceLocale();
+// Web pages are pre-rendered in the base locale, so on web the first render must match it
+// (or React reports a hydration mismatch); the wanted locale is applied right after the first
+// mount (markMounted, called by LocaleRemount). Native renders the wanted locale at once.
+let mounted = Platform.OS !== 'web';
+let pending: Locale | null = mounted ? null : wanted;
+const initial: Locale = mounted ? wanted : getCurrentLocale();
 apply(initial);
 
 export const useLocaleStore = create<LocaleStore>()((set, get) => ({
@@ -41,22 +47,43 @@ export const useLocaleStore = create<LocaleStore>()((set, get) => ({
   loaded: override !== null,
   setLocale(locale) {
     if (!isLocale(locale)) return;
+    void writeValue(LOCALE_KEY, locale).catch(() => undefined);
+    if (!mounted) {
+      pending = locale;
+      set({ loaded: true });
+      return;
+    }
     apply(locale);
     if (get().locale !== locale || !get().loaded) set({ locale, loaded: true });
-    void writeValue(LOCALE_KEY, locale).catch(() => undefined);
   },
 }));
+
+/** Shows a locale: at once when mounted, else after the first mount. */
+function show(locale: Locale): void {
+  if (!mounted) {
+    pending = locale;
+    return;
+  }
+  apply(locale);
+  useLocaleStore.setState({ locale });
+}
+
+/** Called once the first screen has mounted: applies a locale held back for hydration. */
+export function markMounted(): void {
+  if (mounted) return;
+  mounted = true;
+  const next = pending;
+  pending = null;
+  if (next && next !== useLocaleStore.getState().locale) show(next);
+}
 
 if (override === null) {
   void readValue(LOCALE_KEY)
     .then((saved) => {
       // A choice made while loading wins over the saved one.
-      if (isLocale(saved) && !useLocaleStore.getState().loaded && saved !== getCurrentLocale()) {
-        apply(saved);
-        useLocaleStore.setState({ locale: saved, loaded: true });
-      } else {
-        useLocaleStore.setState({ loaded: true });
-      }
+      const chosenMeanwhile = useLocaleStore.getState().loaded;
+      useLocaleStore.setState({ loaded: true });
+      if (isLocale(saved) && !chosenMeanwhile) show(saved);
     })
     .catch(() => useLocaleStore.setState({ loaded: true }));
 }

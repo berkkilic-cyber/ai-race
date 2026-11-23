@@ -12,7 +12,7 @@
   "ui.map.computeGain": "+{amount} {compute}",
   "ui.banner.kicker": "Yeni model",
   "ui.banner.kickerMine": "Yayında",
-  "ui.banner.ships": "{lab} yeni modeli {model} ile sahnede",
+  "ui.banner.ships": "{lab} yeni modelini tanıttı: {model}",
   "ui.banner.mineLine": "Seviye {tier}. Bütün gözler üstünde.",
   "ui.banner.ahead": "Artık senden bir seviye önde",
   "ui.banner.aheadMany": "Artık senden {n} seviye önde",

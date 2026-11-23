@@ -249,7 +249,7 @@ export function StartScreen({ beforeEnter }: StartScreenProps = {}) {
       </View>
       {/* Which build is running (long-press two seconds: touch diagnostics on the map). */}
       <BuildStamp style={[styles.stamp, { top: insets.top + 2, right: insets.right + spacing.s }]} />
-      <LanguageToggle />
+      <LanguageToggle visible={step === 0} />
       <HowToSheet visible={howTo} onClose={() => setHowTo(false)} />
       <RegionListSheet visible={list} regions={pack.regions} selected={home} onSelect={pickFromList} onClose={() => setList(false)} />
     </View>
