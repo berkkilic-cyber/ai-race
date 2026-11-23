@@ -123,6 +123,19 @@ export function RunMenuHost() {
   const running = useGameStore((s) => s.state?.status === 'running');
 
   useEffect(() => startAutosave(), []);
+  // Other pausers (tutorial captions, moment coach lines) give their speed back when they end;
+  // while the menu is open that would run the game under it. Hold the pause, and remember the
+  // speed they wanted for Resume.
+  useEffect(
+    () =>
+      useGameStore.subscribe((s, prev) => {
+        if (s.speed > 0 && s.speed !== prev.speed && useRunMenuStore.getState().open) {
+          useRunMenuStore.setState({ prevSpeed: s.speed });
+          s.setSpeed(0);
+        }
+      }),
+    [],
+  );
   // Leaving the screen: never leave the menu open (and the run paused) behind.
   useEffect(() => () => dismissRunMenu(), []);
 

@@ -30,6 +30,7 @@ export function RunLengthPicker({ options, selected, onSelect, wide }: RunLength
               style={({ pressed }) => [styles.option, !wide && styles.optionRow, on && styles.optionOn, pressed && styles.pressed]}
               accessibilityRole="radio"
               accessibilityState={{ selected: on, checked: on }}
+              aria-checked={on}
               accessibilityLabel={`${o.name}, ${o.minutes}. ${o.desc} ${o.score}`}
               testID={`runlength-${o.id}`}
             >
