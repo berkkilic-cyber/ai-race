@@ -64,6 +64,7 @@ export {
   totalRate,
   unitCost,
   upgradeDef,
+  withoutRaceBoost,
   type Multipliers,
 } from './rates';
 export { availableUpgrades, buyQuote, generatorRows, labPerks, nextLabPerk, nextUnlocks, type GeneratorRow, type UpcomingUpgrade } from './selectors';
@@ -108,3 +109,4 @@ export { MAX_AMOUNT, amount, finite, formatAmount, formatDuration } from './num'
 export { deserialize, migrateV1, migrateV2, sanitize, serialize, type LoadResult } from './save';
 export { validateGarage } from './validate';
 export { nextRandom, seedFrom } from './rng';
+export { emptyRaceLink, grantRaceReward, labRepTotal, markRaceNoteSeen, raceBoostLeftMs, raceRewardQuote, type RaceRewardQuote } from './race';
