@@ -3,6 +3,7 @@ import { create } from 'zustand';
 import type { NewsItem } from '@/engine';
 
 import { useGameStore, type GameStore } from '../store/game';
+import { useTabStore } from '../shell/tabActive';
 import { countUnread, sameNews } from './feed';
 
 const EMPTY: NewsItem[] = [];
@@ -17,7 +18,7 @@ function selectNews(s: GameStore): NewsItem[] {
 
 /** The news log; re-renders only when items arrive or drop out. */
 export function useNewsLog(): NewsItem[] {
-  return useGameStore(selectNews);
+  return useTabStore(selectNews);
 }
 
 interface SeenStore {

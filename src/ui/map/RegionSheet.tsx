@@ -17,9 +17,9 @@ import { Sheet } from '../components/Sheet';
 import { useTutorialTarget } from '../tutorial/targets';
 import { fmtCash, fmtPct, fmtUsers, toPips } from '../format';
 import { failureText, labName, readableLabColor, t } from '../i18n';
-import { useGameStore } from '../store/game';
 import { ReachNote } from './live/ReachNote';
 import { colors, spacing, type, voice } from '../theme';
+import { useTabStore } from '../shell/tabActive';
 
 export interface RegionSheetProps {
   regionId: string | null;
@@ -48,9 +48,9 @@ export function RegionSheet({ regionId, onClose }: RegionSheetProps) {
 }
 
 function OpenRegionSheet({ regionId, onClose }: { regionId: string; onClose: () => void }) {
-  const state = useGameStore((s) => s.state);
-  const pack = useGameStore((s) => s.pack);
-  const dispatch = useGameStore((s) => s.dispatch);
+  const state = useTabStore((s) => s.state);
+  const pack = useTabStore((s) => s.pack);
+  const dispatch = useTabStore((s) => s.dispatch);
   const buildRef = useTutorialTarget(`region.build:${regionId}`);
   const region = pack.regions.find((r) => r.id === regionId);
   if (!state || !region) return null;

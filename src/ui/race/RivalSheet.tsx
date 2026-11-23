@@ -8,10 +8,11 @@ import { Icon } from '../icons';
 import { useGameStore } from '../store/game';
 import { colors, radius, spacing, type, voice } from '../theme';
 import { rivalDetail, type RivalDetail } from './logic';
+import { useTabStore } from '../shell/tabActive';
 
 /** One rival: home, status, where it is strong, how it compares, and whether the player can buy it out now. */
 export function RivalSheet({ labId, onClose }: { labId: string | null; onClose: () => void }) {
-  const json = useGameStore((s) => (s.state && labId ? JSON.stringify(rivalDetail(s.state, s.pack, labId)) : ''));
+  const json = useTabStore((s) => (s.state && labId ? JSON.stringify(rivalDetail(s.state, s.pack, labId)) : ''));
   const detail = json ? (JSON.parse(json) as RivalDetail | null) : null;
   return (
     <Sheet visible={!!detail} onClose={onClose} title={detail?.name} maxHeight="90%" testID="rival-sheet">
@@ -21,7 +22,7 @@ export function RivalSheet({ labId, onClose }: { labId: string | null; onClose: 
 }
 
 function RivalBody({ detail }: { detail: RivalDetail }) {
-  const dispatch = useGameStore((s) => s.dispatch);
+  const dispatch = useTabStore((s) => s.dispatch);
   const buy = () => {
     const state = useGameStore.getState().state;
     if (state) dispatch({ type: 'acquireRival', labId: state.playerLabId, targetLabId: detail.labId });

@@ -4,10 +4,10 @@ import { G, Path, Rect, Text as SvgText } from 'react-native-svg';
 import type { MapGeometry } from '@/content/packs/ai-lab/geometry';
 
 import { t } from '../i18n';
-import { useGameStore } from '../store/game';
 import { colors, fonts } from '../theme';
 import { bannedKey } from './mapColors';
 import { allFinite, isDrawablePath } from './svgSafe';
+import { useTabStore } from '../shell/tabActive';
 
 export interface OverlayLayerProps {
   geometry: MapGeometry;
@@ -36,7 +36,7 @@ const BanStamp = memo(function BanStamp({ x, y, label }: { x: number; y: number;
  * every region where the player is banned.
  */
 export const OverlayLayer = memo(function OverlayLayer({ geometry, selected }: OverlayLayerProps) {
-  const banned = useGameStore((s) => (s.state ? bannedKey(s.state) : ''));
+  const banned = useTabStore((s) => (s.state ? bannedKey(s.state) : ''));
   const bannedIds = banned ? banned.split('|') : [];
   const label = t('ui.map.banned').toUpperCase();
   return (

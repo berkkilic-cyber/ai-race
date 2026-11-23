@@ -2,8 +2,8 @@ import { useShallow } from 'zustand/react/shallow';
 
 import type { TreeId } from '@/engine';
 
-import { useGameStore } from '../store/game';
 import { createBuyableCounter } from './status';
+import { useTabStore } from '../shell/tabActive';
 
 /** One shared counter: all subscribers see the same state, so its cache serves them all. */
 const countBuyable = createBuyableCounter();
@@ -14,10 +14,10 @@ const countBuyable = createBuyableCounter();
  * crosses a node price or the owned nodes / run state change (see createBuyableCounter).
  */
 export function useBuyableNodeCount(): number {
-  return useGameStore((s) => countBuyable(s.state, s.pack).total);
+  return useTabStore((s) => countBuyable(s.state, s.pack).total);
 }
 
 /** Buyable nodes per tree, in the same cached way. */
 export function useBuyableByTree(): Record<TreeId, number> {
-  return useGameStore(useShallow((s) => countBuyable(s.state, s.pack).byTree));
+  return useTabStore(useShallow((s) => countBuyable(s.state, s.pack).byTree));
 }

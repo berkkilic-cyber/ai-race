@@ -7,12 +7,12 @@ import type { GameState } from '@/engine';
 
 import { useRegionFlashes, type FlashTone } from '../hooks/useRegionFlashes';
 import { readableLabColor } from '../i18n';
-import { useGameStore } from '../store/game';
 import { colors, shape } from '../theme';
 import { drawableDots, type DotMapGeometry } from './dotGeometry';
 import { regionDotColors } from './mapColors';
 import { isDrawablePath } from './svgSafe';
 import { countRender } from './renderStats';
+import { useTabStore } from '../shell/tabActive';
 
 const AnimatedG = Animated.createAnimatedComponent(G);
 
@@ -103,7 +103,7 @@ export const DotLayer = memo(function DotLayer({ geometry, regionIds, selected }
     const key = Array.from({ length: buckets }, () => colors.dotRest).join(',');
     return Object.fromEntries(regionIds.map((id) => [id, key]));
   }, [regionIds, buckets]);
-  const colorKeys = useGameStore(useShallow((s) => (s.state ? regionDotColors(s.state, regionIds, buckets, colorOf(s.state)) : rest)));
+  const colorKeys = useTabStore(useShallow((s) => (s.state ? regionDotColors(s.state, regionIds, buckets, colorOf(s.state)) : rest)));
   const flashes = useRegionFlashes();
   const paths = useMemo(() => Object.fromEntries(regionIds.map((id) => [id, geometry.regions[id].dots.map(drawableDots)])), [geometry, regionIds]);
   return (

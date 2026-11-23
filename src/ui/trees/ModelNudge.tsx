@@ -1,11 +1,12 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { haveText, needText } from '../explain/model';
-import { isStuck, useModelStatus, useNudgeStore } from '../explain/useModelStatus';
+import { isStuck, useNudgeStore } from '../explain/useModelStatus';
 import { t } from '../i18n';
 import { Icon } from '../icons';
 import { useStripPanel } from '../shell/panels/store';
 import { colors, radius, shape, spacing, touch, type, voice } from '../theme';
+import { useTabModelStatus } from './useTabModelStatus';
 
 /**
  * Shown on the Trees screen while the player owns a better model than their compute can
@@ -13,7 +14,7 @@ import { colors, radius, shape, spacing, touch, type, voice } from '../theme';
  * dismissed until the player owns a different model tier.
  */
 export function ModelNudge() {
-  const m = useModelStatus();
+  const m = useTabModelStatus();
   const dismissedFor = useNudgeStore((s) => s.dismissedFor);
   const dismiss = useNudgeStore((s) => s.dismiss);
   const show = useStripPanel((s) => s.show);

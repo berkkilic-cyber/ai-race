@@ -16,6 +16,7 @@ import { allFinite, finiteOr, isDrawablePath, nonNegative, unitInterval } from '
 import { mapLiveConfig } from './config';
 import { MOVING, project, useProjection, type MapProjection } from './projection';
 import { FAINT_MS, FLIGHT_MS, arcControl, arcLength, bezier, routeFor, useRoutesStore, type Route } from './routes';
+import { useTabSelector } from '../../shell/tabActive';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
@@ -260,7 +261,7 @@ const ident = (k: string) => k;
  * spread into. Static on purpose: a pulse here would repaint the whole map canvas every frame.
  */
 export const ReachHints = memo(function ReachHints({ geometry }: { geometry: MapGeometry }) {
-  const key = useKeyedSelector(selectReach, ident);
+  const key = useKeyedSelector(useTabSelector(selectReach), ident);
   const ids = key ? key.split('|') : [];
   if (ids.length === 0) return null;
   return (

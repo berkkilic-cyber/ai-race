@@ -15,6 +15,7 @@ import { allFinite } from '../svgSafe';
 import { barrierIcon, mapLiveConfig } from './config';
 import { MAX_RACKS, OBJECT, RACK, objectItems, objectOffset, objectsKey, parseObjectsKey, placeSites, rackIcon, type SiteItem } from './objects';
 import { AnchorPlane, MOVING, project, useAnchorStyle, useProjection, type MapProjection } from './projection';
+import { useTabStore, useTabSelector } from '../../shell/tabActive';
 
 const ident = (s: string) => s;
 
@@ -43,11 +44,11 @@ interface RegionStuff {
  */
 export const ObjectsLayer = memo(function ObjectsLayer({ geometry, selected }: { geometry: MapGeometry; selected: string | null }) {
   const p = useProjection();
-  const sites = useKeyedSelector(selectSites, ident);
-  const objects = useKeyedSelector(selectObjects, ident);
+  const sites = useKeyedSelector(useTabSelector(selectSites), ident);
+  const objects = useKeyedSelector(useTabSelector(selectObjects), ident);
   const selectBlocked = useMemo(() => (s: GameStore) => blockedKey(s.state, s.pack, selected), [selected]);
-  const blocked = useKeyedSelector(selectBlocked, ident);
-  const packId = useGameStore((s) => s.pack.id);
+  const blocked = useKeyedSelector(useTabSelector(selectBlocked), ident);
+  const packId = useTabStore((s) => s.pack.id);
 
   const byRegion = useMemo(() => {
     const out = new Map<string, RegionStuff>();

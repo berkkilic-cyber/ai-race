@@ -14,6 +14,7 @@ import { NodeSheet } from './NodeSheet';
 import { TreeGraph } from './TreeGraph';
 import { TreePicker } from './TreePicker';
 import { SIDE_PANEL_WIDTH, useWide } from './useWide';
+import { useTabStore } from '../shell/tabActive';
 
 /** How long the sheet shows the owned state after a purchase before closing. */
 export const BOUGHT_CLOSE_MS = 900;
@@ -23,8 +24,8 @@ export const BOUGHT_CLOSE_MS = 900;
  * Landscape (wide): one short header row with the picker and Hype, the tree drawn left to right.
  */
 export function TreesScreen() {
-  const hasRun = useGameStore((s) => s.state !== null);
-  const dispatch = useGameStore((s) => s.dispatch);
+  const hasRun = useTabStore((s) => s.state !== null);
+  const dispatch = useTabStore((s) => s.dispatch);
   const wide = useWide();
   const focused = useIsFocused();
   const [tree, setTree] = useState<TreeId>('capability');
