@@ -6,16 +6,16 @@
     "scoreMultiplier": 0.6,
     "balance": {
       "pace": 3.4,
-      "eventIntervalMin": 240,
-      "eventIntervalMax": 370,
+      "eventIntervalMin": 220,
+      "eventIntervalMax": 340,
       "headlineIntervalMin": 50,
       "headlineIntervalMax": 100,
-      "regulationDecay": 0.013,
+      "regulationDecay": 0.014,
       "backlashDecay": 0.013,
       "momentBoostWeightFactor": 1.6,
       "rivalStartHype": 12,
       "rivalStartCash": 85,
-      "aiMeterGainFactor": 0.69
+      "aiMeterGainFactor": 0.71
     }
   },
   {
