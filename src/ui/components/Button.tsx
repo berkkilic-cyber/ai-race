@@ -3,6 +3,7 @@ import { Animated, Platform, Pressable, StyleSheet, Text, type StyleProp, type T
 
 import { pressFeedback } from '../feel/cues';
 import { colors, flatShadow, glow, radius, shape, spacing, touch, type, voice } from '../theme';
+import { cased } from '../locale/casing';
 
 /** primary: the accent, weighted; secondary: quiet outline; ghost: text on a hairline; danger: alarm; ink: the loud voice (tabloid black). */
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'ink';
@@ -91,7 +92,7 @@ export function Button({ label, onPress, variant = 'secondary', disabled, sublab
     >
       <Animated.View style={[styles.inner, { transform: [{ scale: squeeze }] }]}>
         <Text style={[styles.label, compact && styles.labelCompact, variant === 'ink' && styles.labelInk, { color: fg }]} numberOfLines={1}>
-          {label}
+          {cased(LABEL, label)}
         </Text>
         {sublabel ? (
           <Text style={[styles.sub, { color: fg }, !weighted && variant !== 'danger' && !selected && styles.subDim]} numberOfLines={2}>

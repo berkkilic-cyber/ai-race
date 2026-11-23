@@ -13,6 +13,7 @@ import { installGlobalErrorHandlers } from '@/ui/diagnostics/log';
 import { InsetsEmulator } from '@/ui/hooks/useInsets';
 import { useAppFonts } from '@/ui/fonts';
 import { colors, isDark } from '@/ui/theme';
+import { localeScreenLayout } from '@/ui/locale';
 
 installGlobalErrorHandlers();
 installDebugHandle();
@@ -29,7 +30,7 @@ export default function RootLayout() {
     <GestureHandlerRootView style={styles.root}>
       <StatusBar style={isDark ? 'light' : 'dark'} />
       <InsetsEmulator>
-        <ErrorBoundary>{ready ? <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }} /> : null}</ErrorBoundary>
+        <ErrorBoundary>{ready ? <Stack screenLayout={localeScreenLayout} screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }} /> : null}</ErrorBoundary>
         <AnalyticsRoot />
       </InsetsEmulator>
     </GestureHandlerRootView>

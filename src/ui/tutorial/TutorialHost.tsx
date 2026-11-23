@@ -14,6 +14,7 @@ import { BuildStamp } from '../diagnostics/BuildStamp';
 import { useInsets } from '../hooks/useInsets';
 import { useLayoutMode } from '../hooks/useLayoutMode';
 import { t } from '../i18n';
+import { lower } from '../locale/casing';
 import { requestMapFocus } from '../map/mapFocus';
 import { isDrawablePath } from '../map/svgSafe';
 import { Mascot, type MascotMood } from '../mascot';
@@ -286,7 +287,7 @@ function CoachMark({ view: v, rects, home, side, onNext, onSkip }: CoachMarkProp
     hype: t('term.hype'),
     cash: t('term.cash'),
     compute: t('term.compute'),
-    dataCentre: t('term.dataCentre').toLowerCase(),
+    dataCentre: lower(t('term.dataCentre')),
     capabilityTree: t('term.tree.capability'),
     regulation: t('term.regulation'),
     backlash: t('term.backlash'),

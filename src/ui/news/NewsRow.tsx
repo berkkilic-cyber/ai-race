@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { NewsItem } from '@/engine';
 
 import { t } from '../i18n';
+import { cased } from '../locale/casing';
 import { colors, radius, spacing, type } from '../theme';
 import { newsText } from './newsText';
 
@@ -50,7 +51,7 @@ export const NewsRow = memo(function NewsRow({ item, labColor, onOpenRegion }: N
 export const DayHeader = memo(function DayHeader({ tick }: { tick: number }) {
   return (
     <View style={styles.header}>
-      <Text style={styles.headerText}>{t('ui.news.dayHeader', { day: tick + 1 })}</Text>
+      <Text style={styles.headerText}>{cased(styles.headerText, t('ui.news.dayHeader', { day: tick + 1 }))}</Text>
       <View style={styles.rule} />
     </View>
   );

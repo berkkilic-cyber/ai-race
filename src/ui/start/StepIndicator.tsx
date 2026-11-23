@@ -1,6 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { t } from '../i18n';
+import { cased } from '../locale/casing';
 import { colors, radius, spacing, type, voice } from '../theme';
 
 export interface StepIndicatorProps {
@@ -18,7 +19,7 @@ export interface StepIndicatorProps {
 export function StepIndicator({ labels, step, onStep, compact }: StepIndicatorProps) {
   return (
     <View style={[styles.wrap, compact && styles.compact]} accessibilityRole="progressbar" accessibilityValue={{ min: 1, max: labels.length, now: step + 1 }}>
-      {compact ? null : <Text style={styles.count}>{t('ui.start.stepOf', { step: step + 1, total: labels.length })}</Text>}
+      {compact ? null : <Text style={styles.count}>{cased(styles.count, t('ui.start.stepOf', { step: step + 1, total: labels.length }))}</Text>}
       <View style={styles.row}>
         {labels.map((label, i) => {
           const state = i < step ? 'done' : i === step ? 'current' : 'todo';

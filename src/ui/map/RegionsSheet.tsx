@@ -4,6 +4,7 @@ import { Keyboard, Pressable, StyleSheet, Text, TextInput, View } from 'react-na
 import { Sheet } from '../components/Sheet';
 import { fmtPct } from '../format';
 import { t } from '../i18n';
+import { cased, lower } from '../locale/casing';
 import { useGameStore } from '../store/game';
 import { useTutorialTarget } from '../tutorial/targets';
 import { colors, radius, spacing, touch, type } from '../theme';
@@ -71,7 +72,7 @@ function Group({ title, rows, onPick }: { title: string; rows: RegionRow[]; onPi
   if (rows.length === 0) return null;
   return (
     <View style={styles.group}>
-      <Text style={styles.groupTitle}>{title}</Text>
+      <Text style={styles.groupTitle}>{cased(styles.groupTitle, title)}</Text>
       {rows.map((row) => (
         <Row key={row.id} row={row} onPick={onPick} />
       ))}
@@ -83,7 +84,7 @@ function Row({ row, onPick }: { row: RegionRow; onPick: (id: string) => void }) 
   const notes: string[] = [];
   if (row.home) notes.push(t('ui.regions.home'));
   if (row.share > 0) notes.push(t('ui.regions.share', { share: fmtPct(row.share) }));
-  if (row.sites > 0) notes.push(t('ui.regions.sites', { count: row.sites, dataCentres: t('term.dataCentre').toLowerCase() }));
+  if (row.sites > 0) notes.push(t('ui.regions.sites', { count: row.sites, dataCentres: lower(t('term.dataCentre')) }));
   if (row.banned) notes.push(t('ui.regions.banned'));
   if (notes.length === 0) notes.push(t('ui.regions.notYet'));
   return (

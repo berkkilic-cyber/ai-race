@@ -6,6 +6,7 @@ import { Button } from '../components/Button';
 import { Sheet } from '../components/Sheet';
 import { SoundSettingsRows } from '../feel/SoundSettingsRows';
 import { t } from '../i18n';
+import { LanguageRow } from '../locale';
 import { colors, shape, spacing, type, voice } from '../theme';
 import { useGarageStore } from './store';
 
@@ -19,6 +20,8 @@ export function SettingsSheet({ visible, onClose }: { visible: boolean; onClose:
   return (
     <Sheet visible={visible} onClose={close} title={t('ui.garage.settings.title')} safeArea testID="garage-settings-sheet">
       <SoundSettingsRows />
+
+      <LanguageRow />
       <View style={styles.rule} />
       <RemoveAdsPanel />
       <View style={styles.rule} />

@@ -14,12 +14,36 @@ import feelStrings from './strings/feel.en.json';
 import analyticsStrings from './strings/analytics.en.json';
 import { readableOn } from './color';
 import { colors, isDark, shape } from './theme';
+import { lowerFirst, upperFirst } from './locale/casing';
+import { BASE_LOCALE, getCurrentLocale, type Locale } from './locale/current';
+// Turkish: the same one-file-per-feature pattern (see UI_TR below).
+import uiStringsTr from './strings/tr.json';
+import difficultyStringsTr from './strings/difficulty.tr.json';
+import eventsStringsTr from './strings/events.tr.json';
+import momentsStringsTr from './strings/moments.tr.json';
+import raceStringsTr from './strings/race.tr.json';
+import startStringsTr from './strings/start.tr.json';
+import treesStringsTr from './strings/trees.tr.json';
+import tutorialStringsTr from './strings/tutorial.tr.json';
+import garageStringsTr from './strings/garage.tr.json';
+import localeStrings from './strings/locale.en.json';
+import localeStringsTr from './strings/locale.tr.json';
 
 export type Params = Record<string, string | number>;
 
 const LOCALE = 'en';
 /** Shared captions plus one file per feature, so feature tasks never edit the same file. */
 const UI: Record<string, string> = { ...uiStrings, ...treesStrings, ...eventsStrings, ...startStrings, ...tutorialStrings, ...momentsStrings, ...raceStrings, ...garageStrings, ...difficultyStrings, ...feelStrings, ...analyticsStrings };
+
+/**
+ * Strings per locale. A new feature file is ONE import and ONE spread per language: the
+ * English file (`<feature>.en.json`) in the UI line above, its Turkish file
+ * (`<feature>.tr.json`) in UI_TR once translated. A key missing in Turkish falls back to
+ * English (`npm run i18n:check` lists them).
+ */
+const UI_TR: Record<string, string> = { ...uiStringsTr, ...treesStringsTr, ...eventsStringsTr, ...startStringsTr, ...tutorialStringsTr, ...momentsStringsTr, ...raceStringsTr, ...garageStringsTr, ...difficultyStringsTr, ...localeStringsTr };
+const UI_EXTRA: Record<string, string> = { ...localeStrings };
+const UI_BY_LOCALE: Record<Locale, Record<string, string>> = { en: { ...UI, ...UI_EXTRA }, tr: UI_TR };
 
 /** Params whose values are lab ids, resolved to lab names. */
 const LAB_PARAMS = new Set(['lab', 'rival']);
@@ -61,11 +85,32 @@ export function humanizeKey(key: string): string {
     .replace(/[-_]+/g, ' ')
     .trim()
     .toLowerCase();
-  return words.charAt(0).toUpperCase() + words.slice(1);
+  return upperFirst(words, BASE_LOCALE);
 }
 
+const warnedFallback = new Set<string>();
+
+function baseLookup(key: string): string | undefined {
+  return context.pack.strings[LOCALE]?.[key] ?? UI_BY_LOCALE[BASE_LOCALE][key];
+}
+
+/** Active locale first (pack, then UI strings), then the base locale (English). */
 function lookup(key: string): string | undefined {
-  return context.pack.strings[LOCALE]?.[key] ?? UI[key];
+  const locale = getCurrentLocale();
+  if (locale === LOCALE) return baseLookup(key);
+  const own = context.pack.strings[locale]?.[key] ?? UI_BY_LOCALE[locale]?.[key];
+  if (own !== undefined) return own;
+  const base = baseLookup(key);
+  if (base !== undefined && !warnedFallback.has(key)) {
+    warnedFallback.add(key);
+    if (typeof __DEV__ !== 'undefined' && __DEV__) console.warn(`[i18n] no ${locale} text for ${key}, using ${LOCALE}`);
+  }
+  return base;
+}
+
+/** UI strings of a locale (without pack strings), for checks and tests. */
+export function uiStringsFor(locale: Locale): Readonly<Record<string, string>> {
+  return UI_BY_LOCALE[locale];
 }
 
 /** True when the key exists in the pack or the UI strings. */
@@ -135,7 +180,7 @@ export function barrierInline(id: string): string {
   if (inlineKey !== nameKey && hasString(inlineKey)) return t(inlineKey);
   if (!hasString(nameKey)) return id;
   const name = t(nameKey);
-  return name.charAt(0).toLowerCase() + name.slice(1);
+  return lowerFirst(name);
 }
 
 export function regionName(id: RegionId): string {

@@ -4,6 +4,7 @@ import { G, Path, Rect, Text as SvgText } from 'react-native-svg';
 import type { MapGeometry } from '@/content/packs/ai-lab/geometry';
 
 import { t } from '../i18n';
+import { upper } from '../locale/casing';
 import { useGameStore } from '../store/game';
 import { colors, fonts } from '../theme';
 import { bannedKey } from './mapColors';
@@ -38,7 +39,7 @@ const BanStamp = memo(function BanStamp({ x, y, label }: { x: number; y: number;
 export const OverlayLayer = memo(function OverlayLayer({ geometry, selected }: OverlayLayerProps) {
   const banned = useGameStore((s) => (s.state ? bannedKey(s.state) : ''));
   const bannedIds = banned ? banned.split('|') : [];
-  const label = t('ui.map.banned').toUpperCase();
+  const label = upper(t('ui.map.banned'));
   return (
     <G pointerEvents="none">
       {selected && geometry.regions[selected] && isDrawablePath(geometry.regions[selected].d) ? (

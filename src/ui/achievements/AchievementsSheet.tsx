@@ -6,6 +6,7 @@ import type { AchievementDef } from '@/engine';
 import { Button } from '../components/Button';
 import { Sheet } from '../components/Sheet';
 import { t } from '../i18n';
+import { upper } from '../locale/casing';
 import { useGameStore } from '../store/game';
 import { sortAchievements, type AchievementRowState } from './sort';
 import { colors, radius, spacing, type } from '../theme';
@@ -28,7 +29,7 @@ const AchievementRow = memo(function AchievementRow({ def, state }: { def: Achie
           <Text style={[styles.name, !earned && styles.dim]} numberOfLines={1}>
             {hidden ? t('ui.achievements.hiddenName') : t(def.nameKey)}
           </Text>
-          {def.secret && earned ? <Text style={styles.secretTag}>{t('ui.achievements.secret').toUpperCase()}</Text> : null}
+          {def.secret && earned ? <Text style={styles.secretTag}>{upper(t('ui.achievements.secret'))}</Text> : null}
         </View>
         <Text style={[styles.desc, !earned && styles.dim]}>{hidden ? t('ui.achievements.hiddenDesc') : t(def.descKey)}</Text>
       </View>

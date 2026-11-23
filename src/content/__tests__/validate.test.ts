@@ -108,10 +108,11 @@ describe('validatePack', () => {
       /headline .* is 120 chars/,
     );
     expectProblem(problemsOf((p) => { p.strings.en[p.headlines[0].textKey] = 'Hi {player}'; }), /\{player\}/);
-    expectProblem(
-      problemsOf((p) => { p.strings.fr = { ...p.strings.en }; delete p.strings.fr['region.usa.name']; }),
-      /strings\.fr: missing key "region\.usa\.name"/,
-    );
+    // Locales after the first may lack keys (the UI falls back to the first), but not add
+    // keys or change a key's placeholders.
+    expect(problemsOf((p) => { p.strings.fr = { ...p.strings.en }; delete p.strings.fr['region.usa.name']; }).some((x) => /strings\.fr: missing key/.test(x))).toBe(false);
+    expectProblem(problemsOf((p) => { p.strings.fr = { 'orphan.key': 'Bonjour' }; }), /strings\.fr: "orphan\.key" is not in en/);
+    expectProblem(problemsOf((p) => { p.strings.fr = { [p.headlines[0].textKey]: 'Rien {tier}' }; }), /strings\.fr: .* placeholders not in en: \{tier\}/);
   });
 
   it('checks moments: icons, kinds, effects, conditions, strings and name length', () => {

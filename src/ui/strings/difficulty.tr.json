@@ -1,0 +1,5 @@
+{
+  "ui.difficulty.title": "Zorluk",
+  "ui.difficulty.multiplier": "Skor ×{mult}",
+  "ui.difficulty.endLine": "{difficulty} · skor ×{mult}"
+}
