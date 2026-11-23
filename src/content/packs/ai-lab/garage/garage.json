@@ -2575,48 +2575,162 @@
     "id": "seed-round",
     "rep": 1,
     "textKey": "garage.perk.seed-round",
+    "nameKey": "garage.perk.seed-round.name",
+    "quipKey": "garage.perk.seed-round.quip",
     "effect": {
      "kind": "startCash",
-     "amount": 50
+     "amount": 1
     }
    },
    {
     "id": "press-list",
     "rep": 3,
     "textKey": "garage.perk.press-list",
+    "nameKey": "garage.perk.press-list.name",
+    "quipKey": "garage.perk.press-list.quip",
     "effect": {
      "kind": "startHype",
-     "amount": 20
+     "amount": 3
+    }
+   },
+   {
+    "id": "title-garage",
+    "rep": 6,
+    "textKey": "garage.perk.title-garage",
+    "nameKey": "garage.perk.title-garage.name",
+    "quipKey": "garage.perk.title-garage.quip",
+    "effect": {
+     "kind": "title",
+     "amount": 1,
+     "key": "garage.title.title-garage"
     }
    },
    {
     "id": "fan-club",
-    "rep": 6,
+    "rep": 9,
     "textKey": "garage.perk.fan-club",
+    "nameKey": "garage.perk.fan-club.name",
+    "quipKey": "garage.perk.fan-club.quip",
     "effect": {
      "kind": "hypeIncome",
-     "amount": 0.05
+     "amount": 0.005
     }
    },
    {
-    "id": "lucky-breaks",
-    "rep": 10,
-    "textKey": "garage.perk.lucky-breaks",
+    "id": "frame-tape",
+    "rep": 12,
+    "textKey": "garage.perk.frame-tape",
+    "nameKey": "garage.perk.frame-tape.name",
+    "quipKey": "garage.perk.frame-tape.quip",
     "effect": {
-     "kind": "momentRate",
-     "amount": 0.1
+     "kind": "frame",
+     "amount": 1,
+     "color": "#C9A66B"
     }
    },
    {
     "id": "old-friends",
-    "rep": 15,
+    "rep": 16,
     "textKey": "garage.perk.old-friends",
+    "nameKey": "garage.perk.old-friends.name",
+    "quipKey": "garage.perk.old-friends.quip",
     "effect": {
      "kind": "cashIncome",
-     "amount": 0.05
+     "amount": 0.005
+    }
+   },
+   {
+    "id": "lucky-breaks",
+    "rep": 20,
+    "textKey": "garage.perk.lucky-breaks",
+    "nameKey": "garage.perk.lucky-breaks.name",
+    "quipKey": "garage.perk.lucky-breaks.quip",
+    "effect": {
+     "kind": "startCash",
+     "amount": 1
+    }
+   },
+   {
+    "id": "title-thought",
+    "rep": 25,
+    "textKey": "garage.perk.title-thought",
+    "nameKey": "garage.perk.title-thought.name",
+    "quipKey": "garage.perk.title-thought.quip",
+    "effect": {
+     "kind": "title",
+     "amount": 1,
+     "key": "garage.title.title-thought"
+    }
+   },
+   {
+    "id": "frame-gold",
+    "rep": 31,
+    "textKey": "garage.perk.frame-gold",
+    "nameKey": "garage.perk.frame-gold.name",
+    "quipKey": "garage.perk.frame-gold.quip",
+    "effect": {
+     "kind": "frame",
+     "amount": 1,
+     "color": "#F2C94C"
+    }
+   },
+   {
+    "id": "insider-list",
+    "rep": 38,
+    "textKey": "garage.perk.insider-list",
+    "nameKey": "garage.perk.insider-list.name",
+    "quipKey": "garage.perk.insider-list.quip",
+    "effect": {
+     "kind": "startHype",
+     "amount": 2
+    }
+   },
+   {
+    "id": "title-visionary",
+    "rep": 46,
+    "textKey": "garage.perk.title-visionary",
+    "nameKey": "garage.perk.title-visionary.name",
+    "quipKey": "garage.perk.title-visionary.quip",
+    "effect": {
+     "kind": "title",
+     "amount": 1,
+     "key": "garage.title.title-visionary"
+    }
+   },
+   {
+    "id": "frame-holo",
+    "rep": 58,
+    "textKey": "garage.perk.frame-holo",
+    "nameKey": "garage.perk.frame-holo.name",
+    "quipKey": "garage.perk.frame-holo.quip",
+    "effect": {
+     "kind": "frame",
+     "amount": 1,
+     "color": "#B18CFF"
     }
    }
   ]
+ },
+ "raceReward": {
+  "baseRep": 1.6,
+  "lossFactor": 0.4,
+  "difficulty": {
+   "sandbox": 0.6,
+   "frontier": 1,
+   "arms-race": 1.4,
+   "hard-takeoff": 1.8
+  },
+  "runLength": {
+   "sprint": 0.45,
+   "full": 1
+  },
+  "scoreBonus": 0.5,
+  "scoreForBest": 3000,
+  "repeatFactor": 0.5,
+  "seedMemory": 50,
+  "boostMult": 1.5,
+  "boostMsPerRep": 1200000,
+  "boostCapMs": 7200000
  },
  "news": {
   "intervalMinMs": 25000,

@@ -26,7 +26,7 @@ export type AnalyticsEvent =
   | { name: 'tutorial_step'; params: { step: number; id: string } }
   | { name: 'tutorial_complete' }
   | { name: 'tutorial_skip'; params: { step: number } }
-  | { name: 'run_start'; params: { founder: string; difficulty: string; runLength?: string; homeRegion: string } }
+  | { name: 'run_start'; params: { founder: string; difficulty: string; runLength?: string; homeRegion: string; perks?: number } }
   | { name: 'run_end'; params: { ending: string; won: boolean; score: number; ticks: number; seconds: number } }
   | { name: 'run_quit'; params: { ticks: number; how: QuitHow } }
   | { name: 'node_buy'; params: { nodeId: string; kind: string } }
@@ -53,6 +53,8 @@ export type AnalyticsEvent =
   | { name: 'ad_started'; params: { placement: string } }
   | { name: 'ad_completed'; params: { placement: string } }
   | { name: 'remove_ads_tap'; params: { on: boolean } }
+  | { name: 'race_reward_granted'; params: { rep: number; boost: number } }
+  | { name: 'perks_toggle'; params: { on: boolean } }
   | { name: 'settings_change'; params: { key: string; value: string | number | boolean } }
   | { name: 'error'; params: { where: string; message: string } };
 
@@ -110,6 +112,8 @@ export const EVENT_NAMES: readonly EventName[] = [
   'ad_started',
   'ad_completed',
   'remove_ads_tap',
+  'race_reward_granted',
+  'perks_toggle',
   'settings_change',
   'error',
 ];

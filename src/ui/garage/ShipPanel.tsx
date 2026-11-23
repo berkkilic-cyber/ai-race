@@ -1,11 +1,12 @@
 import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { labPerks, nextLabPerk, prestigePreview, type LabPerkDef } from '@/idle';
+import { labPerks, labRepTotal, nextLabPerk, prestigePreview, type LabPerkDef } from '@/idle';
 
 import { Button } from '../components/Button';
 import { fmtCash, pctText } from '../format';
 import { Icon } from '../icons';
+import { LabRepBadge } from '../meta/LabRepBadge';
 import { t } from '../i18n';
 import { Text } from '../locale/Text';
 import { colors, radius, shape, spacing, tabular, type, voice } from '../theme';
@@ -91,7 +92,7 @@ export const ShipPanel = memo(function ShipPanel() {
             </Text>
           </View>
         ) : null}
-        <Text style={[styles.small, styles.dim]}>{t('ui.garage.labRep.soon')}</Text>
+        <LabRepBadge total={labRepTotal(state)} />
       </View>
     </View>
   );

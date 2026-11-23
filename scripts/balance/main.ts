@@ -11,6 +11,9 @@
  *                      [--runLength sprint|a,b|all]   (default: the pack's default run length;
  *                                                      with several, adds a table comparing them)
  *                      [--brief]                      (summary tables only, no per-policy detail)
+ *                      [--perks 60]                   (the player starts with the Lab Rep perks active at
+ *                                                      that Rep, as the start screen applies them)
+ *                      [--bonus '{"startCash":10}']   (a raw GameSetup.bonus for the player, for tuning)
  *
  * Seeds are base + run index, so a report is reproducible; tune on one --seed
  * and confirm on another.
@@ -19,7 +22,10 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { availableParallelism } from 'node:os';
 import { isMainThread, parentPort, Worker, workerData } from 'node:worker_threads';
 
-import type { BotPolicy, ContentPack } from '@/engine';
+import type { BotPolicy, ContentPack, GameSetup } from '@/engine';
+
+import { aiLabGarage } from '@/content/packs/ai-lab/garage';
+import { bonusForSetup } from '@/ui/meta/logic';
 
 import { coverageReport } from './coverage';
 import { FOUNDERS, HOME_REGIONS } from './jobs';
@@ -46,6 +52,10 @@ interface Options {
   runLengths?: string[];
   /** Only the summary tables. */
   brief: boolean;
+  /** Lab Rep whose race perks the player starts with. */
+  perks?: number;
+  /** A raw start bonus (overrides --perks). */
+  bonus?: GameSetup['bonus'];
 }
 
 function parseArgs(argv: string[]): Options {
@@ -70,6 +80,8 @@ function parseArgs(argv: string[]): Options {
       options.runLengths = value === 'all' ? (PACK.runLengths ?? []).map((r) => r.id) : value.split(',');
       for (const id of options.runLengths) if (!(PACK.runLengths ?? []).some((r) => r.id === id)) throw new Error(`Unknown run length ${id}`);
     } else if (arg === '--brief') options.brief = true;
+    else if (arg === '--perks') options.perks = Number(next());
+    else if (arg === '--bonus') options.bonus = JSON.parse(next()) as GameSetup['bonus'];
     else if (arg === '--moments') options.moments = JSON.parse(readFileSync(next(), 'utf8')) as ContentPack['moments'];
     else throw new Error(`Unknown argument ${arg}`);
   }
@@ -145,6 +157,8 @@ async function main(): Promise<void> {
       options.policies.flatMap((p) => skills.flatMap((skill) => jobsFor(p, options.runs, options.seed, options.coverage, skill, level, length))),
     ),
   );
+  const bonus = options.bonus ?? (options.perks !== undefined ? bonusForSetup({ perksOn: true }, options.perks, aiLabGarage).bonus : undefined);
+  if (bonus) for (const job of jobs) job.bonus = bonus;
   setBalanceOverrides(options.balance, options.moments);
   const records = await runInWorkers(jobs, options.workers, options.balance, options.moments);
   const seconds = (performance.now() - start) / 1000;
@@ -163,6 +177,7 @@ async function main(): Promise<void> {
   );
   if (Object.keys(options.balance).length > 0) out.push(`\nBalance overrides: \`${JSON.stringify(options.balance)}\``);
   if (options.moments) out.push(`\nMoments replaced (${options.moments.length} from --moments).`);
+  if (options.perks !== undefined || options.bonus) out.push(`\nLab Rep perks at Rep ${options.perks}: \`${JSON.stringify(bonus ?? null)}\``);
   out.push(`\nRun length: ${lengths.map((l) => l ?? `${PACK.defaultRunLength ?? 'none'} (pack default)`).join(', ')}.`);
   out.push(`\nDifficulty: ${levels.map((l) => l ?? `${PACK.defaultDifficulty ?? 'none'} (pack default)`).join(', ')}.`);
   out.push('');

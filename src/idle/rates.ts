@@ -112,10 +112,16 @@ export function hypeMultiplier(state: Pick<GarageState, 'hype'>, content: Garage
   return 1 + Math.max(0, state.hype) * content.prestige.hypePerPoint;
 }
 
-/** Multiplier from timed effects (ad boost, golden frenzy) at time `at`. */
+/** The state without the race's blueprints boost (for "calm" rates that leave timed effects out). */
+export function withoutRaceBoost(state: GarageState): GarageState {
+  return state.race && state.race.boostUntil > 0 ? { ...state, race: { ...state.race, boostFrom: 0, boostUntil: 0 } } : state;
+}
+
+/** Multiplier from timed effects (ad boost, golden frenzy, race blueprints) at time `at`. */
 export function timedMultiplier(state: GarageState, content: GarageContent, at: number): number {
   let m = 1;
   if (at < state.boostUntil) m *= offerDef(content, 'boost')?.boostMult ?? 1;
+  if (state.race && at >= state.race.boostFrom && at < state.race.boostUntil) m *= content.raceReward?.boostMult ?? 1;
   if (state.frenzy && at < state.frenzy.until) m *= state.frenzy.mult;
   return m;
 }
@@ -178,7 +184,7 @@ export function totalRate(state: GarageState, content: GarageContent, at: number
 
 /** Tokens per second without timed effects or incidents (what the economy is "worth"). */
 export function baseRate(state: GarageState, content: GarageContent): number {
-  const calm: GarageState = { ...state, boostUntil: 0, frenzy: null, incident: null };
+  const calm: GarageState = { ...withoutRaceBoost(state), boostUntil: 0, frenzy: null, incident: null };
   return totalRate(calm, content, state.now);
 }
 

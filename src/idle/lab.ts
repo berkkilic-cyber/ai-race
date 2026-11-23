@@ -6,7 +6,7 @@
 import { between, grant, pickWeighted, pushNews, random } from './core';
 import { factor, mechanicOn, modelEffects, staffEffects } from './labRates';
 import { amount } from './num';
-import { bulkCost, generatorDef, multipliers, tapValue, totalRate, trainingSpeed, unitCost } from './rates';
+import { bulkCost, generatorDef, multipliers, tapValue, totalRate, trainingSpeed, unitCost, withoutRaceBoost } from './rates';
 import type { GarageContent, GarageState, HappeningDef, ModelCandidate, ModelStat, Requirement, StaffSplit, TraitDef } from './types';
 import { STAFF_LANES } from './types';
 
@@ -89,7 +89,7 @@ export function happeningDef(content: GarageContent, id: string): HappeningDef |
 
 /** Tokens tapping a happening now would give (before automation's share). */
 export function happeningReward(state: GarageState, content: GarageContent, def: HappeningDef): number {
-  const rate = totalRate({ ...state, frenzy: null, boostUntil: 0 }, content, state.now);
+  const rate = totalRate({ ...withoutRaceBoost(state), frenzy: null, boostUntil: 0 }, content, state.now);
   const raw = Math.max(rate * def.rewardSeconds, tapValue(state, content, state.now, 1) * def.rewardMinTaps);
   return amount(raw * factor(modelEffects(state, content).happening) * multipliers(state, content).goldenMult);
 }
@@ -98,7 +98,7 @@ export function happeningReward(state: GarageState, content: GarageContent, def:
 export function happeningPenalty(state: GarageState, content: GarageContent, def: HappeningDef): number {
   const cfg = content.happenings;
   if (!cfg || !def.penaltySeconds) return 0;
-  const rate = totalRate({ ...state, frenzy: null, boostUntil: 0 }, content, state.now);
+  const rate = totalRate({ ...withoutRaceBoost(state), frenzy: null, boostUntil: 0 }, content, state.now);
   return amount(Math.min(rate * def.penaltySeconds * staffEffects(state, content).severity, state.tokens * cfg.penaltyCapShare));
 }
 

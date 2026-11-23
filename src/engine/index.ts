@@ -2,7 +2,7 @@
 export * from './types';
 export { defaultBalance, mergeBalance, type BalanceConfig } from './balance';
 export { resolveDifficulty, resolveRunLength } from './context';
-export { createGame, PLAYER_LAB_ID, DEFAULT_PLAYER_COLOR } from './game';
+export { createGame, PLAYER_LAB_ID, DEFAULT_PLAYER_COLOR, PERMANENT_UNTIL_TICK } from './game';
 export { step } from './step';
 export { applyAction, canApply } from './actions';
 export {

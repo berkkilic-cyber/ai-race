@@ -262,13 +262,92 @@ export interface AchievementDef {
   rule: AchievementRule;
 }
 
-/** A small start bonus for race runs, earned with Lab Rep (data only; see labPerks). */
+/** Perk kinds that change a race run (start resources or income). `momentRate` has no race equivalent yet. */
+export type LabPerkPowerKind = 'startHype' | 'startCash' | 'hypeIncome' | 'cashIncome' | 'momentRate';
+/** Perk kinds that only change looks: a title under the lab name, a frame around the founder card. */
+export type LabPerkCosmeticKind = 'title' | 'frame';
+
+/** A Lab Rep reward: a small start bonus for race runs, or a cosmetic unlock (see labPerks). */
 export interface LabPerkDef {
   id: string;
   rep: number;
+  /** What it does, in words (`{amount}` for the power kinds). */
   textKey: string;
-  /** What a race run would apply; the race engine does not read this yet. */
-  effect: { kind: 'startHype' | 'startCash' | 'hypeIncome' | 'cashIncome' | 'momentRate'; amount: number };
+  /** Its name ("Seed round"). */
+  nameKey?: string;
+  /** One funny line. */
+  quipKey?: string;
+  /**
+   * What a race run applies (the UI turns the power kinds into the run's start bonus). For
+   * cosmetic kinds `amount` is unused (1); `key` is a title's text key, `color` a frame's colour.
+   */
+  effect: { kind: LabPerkPowerKind | LabPerkCosmeticKind; amount: number; key?: string; color?: string };
+}
+
+/**
+ * What a finished race run grants the Garage (grantRaceReward): Lab Rep (whole points go to
+ * labRep, the rest waits in race.repProgress) and "blueprints", a temporary production boost.
+ *
+ * rep = baseRep × (won ? 1 : lossFactor) × difficulty[id] × runLength[id]
+ *       × (1 + scoreBonus × min(1, score / scoreForBest))
+ *       × repeatFactor ^ (earlier rewarded plays of the same seed), rounded to 0.1.
+ */
+export interface RaceRewardConfig {
+  baseRep: number;
+  lossFactor: number;
+  /** Factor per race difficulty id (missing: 1). */
+  difficulty: Record<string, number>;
+  /** Factor per race run-length id (missing: 1). */
+  runLength: Record<string, number>;
+  /** Extra share at the best score. */
+  scoreBonus: number;
+  /** A race score (before the race's own difficulty and length multipliers) that earns the whole scoreBonus. */
+  scoreForBest: number;
+  /** Each earlier rewarded play of the same seed multiplies the reward by this (0.5 = half). */
+  repeatFactor: number;
+  /** How many recent seeds are remembered. */
+  seedMemory: number;
+  /** Blueprints: production multiplier, boost time per Lab Rep granted, and the cap on boost time left. */
+  boostMult: number;
+  boostMsPerRep: number;
+  boostCapMs: number;
+}
+
+/** A finished race run, as the UI reports it to grantRaceReward. */
+export interface RaceRewardInput {
+  won: boolean;
+  difficulty?: string;
+  runLength?: string;
+  /** The run's score before the race's difficulty and run-length multipliers (they are counted above). */
+  score: number;
+  seed: number;
+}
+
+/** What the last race granted (for the end screen and the Garage's "from your last race" note). */
+export interface RaceRewardRecord {
+  rep: number;
+  boostMs: number;
+  won: boolean;
+  /** A replay of a seed already rewarded (reduced). */
+  repeat: boolean;
+  at: number;
+  /** The Garage has shown its note. */
+  seen: boolean;
+}
+
+/** The Garage's side of the link with the race. */
+export interface RaceLinkState {
+  /** Lab Rep from races not yet a whole point (0..1). */
+  repProgress: number;
+  /** All Lab Rep ever earned from races (stats). */
+  repFromRaces: number;
+  races: number;
+  /** Blueprints boost window (production × raceReward.boostMult while from <= t < until). */
+  boostFrom: number;
+  boostUntil: number;
+  last: RaceRewardRecord | null;
+  /** Recently rewarded seeds and how often. */
+  seeds: { seed: number; plays: number }[];
 }
 
 export interface LabRepConfig {
@@ -492,6 +571,8 @@ export interface GarageContent {
   offers: OfferDef[];
   achievements: AchievementDef[];
   labRep: LabRepConfig;
+  /** Rewards for finished race runs (none: races grant nothing). */
+  raceReward?: RaceRewardConfig;
   news: NewsConfig;
   /** Text for every key above (English). */
   strings: Record<string, string>;
@@ -665,6 +746,8 @@ export interface GarageState {
   nextAutoBuyAt: number;
   /** A just-tapped bonus whose reward the bonusMultiply offer may multiply (null otherwise). */
   bonusOffer: BonusOfferState | null;
+  /** Rewards from race runs (absent until the first one). */
+  race?: RaceLinkState;
 }
 
 export type GarageFailure = 'cantAfford' | 'locked' | 'owned' | 'unknownId' | 'notReady' | 'none' | 'cooldown' | 'dailyCap' | 'notApplicable' | 'full' | 'pending';

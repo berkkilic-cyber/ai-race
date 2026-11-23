@@ -29,6 +29,7 @@ import {
   tapValue,
   totalRate,
   upgradeDef,
+  withoutRaceBoost,
 } from './rates';
 import { seedFrom } from './rng';
 import type { ActionResult, GarageContent, GarageFailure, GarageState, GarageStats, OfferId, Requirement, ShipChoiceDef, TapOutcome, UpgradeDef } from './types';
@@ -205,6 +206,8 @@ function nextBreakpoint(s: GarageState, content: GarageContent, t: number): numb
     if (v !== undefined && v > t && v < next) next = v;
   };
   consider(s.boostUntil);
+  consider(s.race?.boostFrom);
+  consider(s.race?.boostUntil);
   consider(s.frenzy?.until);
   consider(s.incident?.until);
   consider(s.golden ? s.golden.expiresAt : s.nextGoldenAt);
@@ -241,7 +244,7 @@ export function offlineEarnings(state: GarageState, content: GarageContent, cred
   const start = state.now;
   const end = start + Math.max(0, creditedMs);
   const rate = offlineTerms(state, content).rate;
-  const cuts = [state.boostUntil, state.frenzy?.until ?? 0].filter((v) => v > start && v < end).sort((a, b) => a - b);
+  const cuts = [state.boostUntil, state.frenzy?.until ?? 0, state.race?.boostFrom ?? 0, state.race?.boostUntil ?? 0].filter((v) => v > start && v < end).sort((a, b) => a - b);
   let total = 0;
   let a = start;
   for (const b of [...cuts, end]) {
@@ -291,6 +294,7 @@ function awayCatchUp(s: GarageState, content: GarageContent, now: number): void 
 /** Shifts every stored time by `delta` (the clock moved backwards). */
 function rebase(s: GarageState, delta: number): void {
   s.boostUntil = s.boostUntil > 0 ? s.boostUntil + delta : 0;
+  if (s.race && s.race.boostUntil > 0) s.race = { ...s.race, boostFrom: s.race.boostFrom + delta, boostUntil: s.race.boostUntil + delta };
   if (s.frenzy) s.frenzy.until += delta;
   if (s.golden) {
     s.golden.spawnedAt += delta;
@@ -683,7 +687,7 @@ export function offerStatus(state: GarageState, content: GarageContent, id: Offe
 export function crateValue(state: GarageState, content: GarageContent): number {
   const def = offerDef(content, 'crate');
   if (!def) return 0;
-  return amount(Math.max(totalRate({ ...state, frenzy: null, boostUntil: 0, incident: null }, content, state.now) * (def.crateSeconds ?? 0), tapValue(state, content, state.now, 1) * (def.crateMinTaps ?? 0)));
+  return amount(Math.max(totalRate({ ...withoutRaceBoost(state), frenzy: null, boostUntil: 0, incident: null }, content, state.now) * (def.crateSeconds ?? 0), tapValue(state, content, state.now, 1) * (def.crateMinTaps ?? 0)));
 }
 
 /** Claims an offer's reward (the UI calls this after the ad, or straight away with ads removed). */

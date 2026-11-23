@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import type { FounderDef } from '@/engine';
@@ -27,12 +28,16 @@ export interface FounderStepProps {
   onRunLength?: (id: string) => void;
   /** What each founder really starts with at the chosen difficulty, by founder id. */
   starts?: Readonly<Record<string, { hype: number; cash: number }>>;
+  /** Shown beside the title (wide, instead of the hint) or above the cards: the Lab Rep perks chip. */
+  extra?: ReactNode;
+  /** Border colour of the selected card (a Lab Rep frame). */
+  frameColor?: string;
 }
 
 const TONE = { good: colors.good, bad: colors.bad, neutral: colors.text } as const;
 
 /** Step 2: the founders as selectable cards with their perks. */
-export function FounderStep({ founders, selected, onSelect, wide, difficulties = [], difficulty, onDifficulty, runLengths = [], runLength, onRunLength, starts }: FounderStepProps) {
+export function FounderStep({ founders, selected, onSelect, wide, difficulties = [], difficulty, onDifficulty, runLengths = [], runLength, onRunLength, starts, extra, frameColor }: FounderStepProps) {
   return (
     <View style={[styles.wrap, wide && styles.wrapWide]}>
       <View style={[styles.head, wide && styles.headWide]}>
@@ -42,6 +47,7 @@ export function FounderStep({ founders, selected, onSelect, wide, difficulties =
         <Text style={[styles.hint, wide && styles.hintWide]} numberOfLines={wide ? 2 : undefined}>
           {t('ui.start.founderHint')}
         </Text>
+        {!wide && extra ? <View style={styles.extra}>{extra}</View> : null}
         {wide && onRunLength ? (
           <View style={styles.lengthWide}>
             <RunLengthPicker options={runLengths} selected={runLength} onSelect={onRunLength} wide />
@@ -55,7 +61,7 @@ export function FounderStep({ founders, selected, onSelect, wide, difficulties =
             <Pressable
               key={f.id}
               onPress={() => onSelect(f.id)}
-              style={({ pressed }) => [styles.card, wide && styles.cardWide, on && styles.cardOn, pressed && styles.pressed]}
+              style={({ pressed }) => [styles.card, wide && styles.cardWide, on && styles.cardOn, on && frameColor ? { borderColor: frameColor, borderWidth: 3 } : null, pressed && styles.pressed]}
               accessibilityRole="radio"
               accessibilityState={{ selected: on }}
               accessibilityLabel={t(f.nameKey)}
@@ -79,7 +85,8 @@ export function FounderStep({ founders, selected, onSelect, wide, difficulties =
         })}
       </View>
       {!wide && onRunLength ? <RunLengthPicker options={runLengths} selected={runLength} onSelect={onRunLength} /> : null}
-      {onDifficulty ? <DifficultyPicker options={difficulties} selected={difficulty} onSelect={onDifficulty} wide={wide} /> : null}
+      {onDifficulty ? <DifficultyPicker options={difficulties} selected={difficulty} onSelect={onDifficulty} wide={wide} headerRight={wide ? extra : undefined} /> : null}
+      {wide && extra && !onDifficulty ? <View style={styles.extra}>{extra}</View> : null}
     </View>
   );
 }
@@ -112,4 +119,5 @@ const styles = StyleSheet.create({
   descWide: { fontSize: type.s - 1, lineHeight: 17 },
   perksWide: { gap: 2, marginTop: 2 },
   hintWide: { flex: 1, minWidth: 0 },
+  extra: { flexDirection: 'row', marginTop: spacing.xs },
 });

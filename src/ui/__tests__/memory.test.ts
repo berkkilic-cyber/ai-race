@@ -110,6 +110,6 @@ describe('memory stays bounded over a long session', () => {
     expect(readableColorCacheSize()).toBeLessThanOrEqual(2 * (pack.rivals.length + 1));
     // The store keeps one state and nothing else that grows: no history of previous states.
     const keys = Object.keys(store.getState()).sort();
-    expect(keys).toEqual(['dismissEventResult', 'dispatch', 'eventResult', 'newGame', 'pack', 'packId', 'reset', 'setSpeed', 'speed', 'state', 'tick'].sort());
+    expect(keys).toEqual(['dismissEventResult', 'dispatch', 'eventResult', 'newGame', 'pack', 'packId', 'reset', 'setSpeed', 'setup', 'speed', 'state', 'tick'].sort());
   });
 });

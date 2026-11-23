@@ -35,6 +35,35 @@ describe('ai-lab garage content', () => {
     expect(garage.generators[0].baseCost / garage.tap.base).toBeLessThanOrEqual(30);
   });
 
+  it('has a Lab Rep ladder of about twelve perks up to roughly Rep 60, power and cosmetic mixed, each named with a quip', () => {
+    const perks = garage.labRep.perks;
+    expect(perks.length).toBeGreaterThanOrEqual(10);
+    expect(perks.length).toBeLessThanOrEqual(14);
+    expect(perks[0].rep).toBe(1);
+    expect(perks[perks.length - 1].rep).toBeGreaterThanOrEqual(50);
+    expect(perks[perks.length - 1].rep).toBeLessThanOrEqual(70);
+    const cosmetic = perks.filter((p) => p.effect.kind === 'title' || p.effect.kind === 'frame');
+    expect(cosmetic.length).toBeGreaterThanOrEqual(4);
+    expect(perks.length - cosmetic.length).toBeGreaterThanOrEqual(4);
+    for (const p of perks) {
+      expect({ id: p.id, name: !!p.nameKey && p.nameKey in strings, quip: !!p.quipKey && p.quipKey in strings }).toEqual({ id: p.id, name: true, quip: true });
+    }
+    // Every power perk maps to a race start bonus (momentRate has no race equivalent, so none uses it).
+    expect(perks.some((p) => p.effect.kind === 'momentRate')).toBe(false);
+  });
+
+  it('race rewards: a loss pays less than a win, a sprint less than a full run, harder levels more', () => {
+    const r = garage.raceReward!;
+    expect(r.lossFactor).toBeLessThan(1);
+    expect(r.runLength.sprint).toBeLessThan(r.runLength.full);
+    const ids = (aiLabPack.difficulties ?? []).map((d) => d.id);
+    expect(Object.keys(r.difficulty).sort()).toEqual([...ids].sort());
+    const factors = ids.map((id) => r.difficulty[id]);
+    expect([...factors].sort((a, b) => a - b)).toEqual(factors);
+    expect(Object.keys(r.runLength).sort()).toEqual((aiLabPack.runLengths ?? []).map((l) => l.id).sort());
+    expect(r.repeatFactor).toBeLessThanOrEqual(0.5);
+  });
+
   it('every string is used and every key has a string', () => {
     const used = new Set<string>();
     JSON.stringify(data, (k, v) => {
@@ -60,7 +89,12 @@ describe('ai-lab garage content', () => {
       const ok = allowed.find(([re]) => re.test(key))?.[1] ?? [];
       for (const p of found) expect({ key, p, ok: ok.includes(p) }).toEqual({ key, p, ok: true });
     }
-    for (const p of garage.labRep.perks) expect(strings[p.textKey as keyof typeof strings]).toContain('{amount}');
+    for (const p of garage.labRep.perks) {
+      const text = strings[p.textKey as keyof typeof strings];
+      // Power perks show their amount; cosmetic ones (title, frame) have none.
+      if (p.effect.kind === 'title' || p.effect.kind === 'frame') expect(text).not.toContain('{amount}');
+      else expect(text).toContain('{amount}');
+    }
   });
 
   it('mentions no real companies, products or people', () => {

@@ -6,6 +6,7 @@ import { PLACEMENTS } from '../ads/types';
 import { onLoggedError } from '../diagnostics/log';
 import { garageMoments } from '../garage/moments';
 import { useGarageStore } from '../garage/store';
+import { useMetaStore } from '../meta/store';
 import { onGameAction, useGameStore } from '../store/game';
 import { STEPS } from '../tutorial/machine';
 import { useTutorialStore } from '../tutorial/store';
@@ -36,7 +37,9 @@ function isNewRun(next: GameState, before: GameState | null): boolean {
 function runStart(s: GameState): void {
   const me = s.labs[s.playerLabId];
   run = { startedAt: analyticsNow(), seed: s.seed };
-  track({ name: 'run_start', params: { founder: me?.founderId ?? 'unknown', difficulty: s.difficulty ?? 'none', runLength: s.runLength, homeRegion: me?.homeRegion ?? 'unknown' } });
+  const setup = useGameStore.getState().setup;
+  const perks = setup && setup.seed === s.seed ? (setup.perkIds?.length ?? 0) : 0;
+  track({ name: 'run_start', params: { founder: me?.founderId ?? 'unknown', difficulty: s.difficulty ?? 'none', runLength: s.runLength, homeRegion: me?.homeRegion ?? 'unknown', perks } });
 }
 
 /** Tracks run_quit for a run that is still going. */
@@ -250,6 +253,14 @@ export function subscribeAds(): () => void {
 }
 
 /** Logged errors (error boundary, uncaught errors, failed saves) as error events. */
+/** The link between the modes: the race reward granted to the Garage (rep, boost minutes) and the perks switch. */
+export function subscribeMeta(): () => void {
+  return useMetaStore.subscribe((st, prev) => {
+    if (st.reward && st.reward.seq !== prev.reward?.seq) track({ name: 'race_reward_granted', params: { rep: st.reward.rep, boost: Math.round(st.reward.boostMs / 60000) } });
+    if (st.toggles !== prev.toggles) track({ name: 'perks_toggle', params: { on: st.perksOn } });
+  });
+}
+
 export function subscribeErrors(): () => void {
   return onLoggedError((where, message) => {
     lastErrorAt = analyticsNow();

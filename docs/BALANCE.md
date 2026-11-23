@@ -1,5 +1,36 @@
 # Balance
 
+## Task 25: Lab Rep perks in the race (current numbers)
+
+Target: a player with every Lab Rep perk wins at most 5 percentage points more often than one with none, on every difficulty and both run lengths. Perks are tuned in `src/content/packs/ai-lab/garage/garage.json` (`labRep.perks`), not in the race balance. All perks together (Rep 60): `{"startCash":2,"startHype":5,"modifiers":[{"stat":"hypeIncome","op":"add","value":0.005},{"stat":"cashIncome","op":"add","value":0.005}]}`.
+
+Commands (same seeds for both, so the runs are paired): `npm run balance -- --runs 1000 --policies sensible --brief --difficulty all --runLength sprint,full --seed 11 --perks 0` and the same with `--perks 60` (8,000 runs each, 8 min on 2 workers). `--perks <rep>` gives the bot the start bonus the start screen would give at that Lab Rep; `--bonus '<json>'` plays a raw `GameSetup.bonus` for tuning.
+
+| Difficulty | Length | No perks | All perks | Gap pp |
+| --- | --- | --- | --- | --- |
+| sandbox | sprint | 61.9% | 63.7% | +1.8 |
+| frontier | sprint | 32.0% | 33.9% | +1.9 |
+| arms-race | sprint | 16.3% | 17.4% | +1.1 |
+| hard-takeoff | sprint | 7.2% | 7.7% | +0.5 |
+| sandbox | full | 69.0% | 68.2% | -0.8 |
+| frontier | full | 32.5% | 35.5% | +3.0 |
+| arms-race | full | 18.7% | 18.6% | -0.1 |
+| hard-takeoff | full | 9.2% | 9.6% | +0.4 |
+
+How the sizes were found (seed 11, Sandbox Sprint at 1,000 runs unless noted; baseline 61.9%):
+
+| Bonus | Win | Gap pp |
+| --- | --- | --- |
+| first draft: +$30M, +8 Hype, +3% Hype and Cash income (Frontier Sprint, 500 runs) | 47.6% vs 33.6% | +14.0 |
+| +$8M Cash | 66.7% | +4.8 |
+| +$4M Cash | 66.7% | +4.8 |
+| +$2M Cash | 61.0% | -0.9 |
+| +$1M Cash | 61.8% | -0.1 |
+| +3 Hype | 61.9% | 0.0 |
+| +0.5% Hype and Cash income | 62.8% | +0.9 |
+
+Start Cash is a cliff, not a slope: somewhere between +$2M and +$4M the Researcher's Sandbox start (70 × 1.15 = $80.5M) reaches an early purchase it otherwise waits for, and a third of the runs (one founder in three) jump. Hype and small income modifiers barely move the bot. So the two Cash perks are +$1M each, and the "power" of the ladder is mostly flavour; the cosmetic half (titles, frames) carries the long-term reward. **Watch out:** a change to founders' start Cash or early prices (task 27 is rebalancing them) can move the cliff; rerun the two commands above after it.
+
 ## Task 21: Sprint run length (current numbers)
 
 Why: a full run takes 20 to 25 minutes, long for a phone sitting, and the first session decides whether a player comes back. A **Sprint** plays the whole arc in about a third of the time and is preselected for a first-time player (no finished run stored). Presets live in `src/content/packs/ai-lab/runLengths.json` (`ContentPack.runLengths`, default `full`); the balance layers are engine defaults ← pack ← difficulty ← run length, then paced (`docs/ARCHITECTURE.md`, "Run length").

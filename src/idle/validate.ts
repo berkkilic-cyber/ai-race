@@ -160,6 +160,29 @@ export function validateGarage(c: GarageContent): string[] {
     pos(p.rep, `lab perk ${p.id} rep`);
     pos(p.effect.amount, `lab perk ${p.id} amount`);
     key(p.textKey, `lab perk ${p.id}`);
+    if (p.nameKey !== undefined) key(p.nameKey, `lab perk ${p.id} name`);
+    if (p.quipKey !== undefined) key(p.quipKey, `lab perk ${p.id} quip`);
+    if (p.effect.kind === 'title') {
+      if (!p.effect.key) err(`lab perk ${p.id}: a title needs effect.key`);
+      else key(p.effect.key, `lab perk ${p.id} title`);
+    }
+    if (p.effect.kind === 'frame' && !/^#[0-9a-fA-F]{6}$/.test(p.effect.color ?? '')) err(`lab perk ${p.id}: a frame needs effect.color (#rrggbb)`);
+  }
+  const perkReps = c.labRep.perks.map((p) => p.rep);
+  if (perkReps.some((r, i) => i > 0 && r <= perkReps[i - 1])) err('lab perks must be listed by rising rep');
+  if (c.raceReward) {
+    const r = c.raceReward;
+    pos(r.baseRep, 'raceReward.baseRep');
+    nonNeg(r.lossFactor, 'raceReward.lossFactor');
+    nonNeg(r.scoreBonus, 'raceReward.scoreBonus');
+    pos(r.scoreForBest, 'raceReward.scoreForBest');
+    if (!(r.repeatFactor >= 0 && r.repeatFactor <= 0.5)) err('raceReward.repeatFactor must be in 0..0.5 (a replayed seed grants at most half)');
+    pos(r.seedMemory, 'raceReward.seedMemory');
+    if (!(r.boostMult >= 1)) err('raceReward.boostMult must be at least 1');
+    nonNeg(r.boostMsPerRep, 'raceReward.boostMsPerRep');
+    pos(r.boostCapMs, 'raceReward.boostCapMs');
+    for (const [id, v] of [...Object.entries(r.difficulty), ...Object.entries(r.runLength)]) nonNeg(v, `raceReward factor ${id}`);
+    if (r.lossFactor > 1) err('raceReward: a loss must not pay more than a win');
   }
 
   if (c.news.headlines.length < 5) err('at least five headlines');

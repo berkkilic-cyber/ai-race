@@ -8,7 +8,7 @@ import { GARAGE_VERSION, createGarage, emptyStats } from './garage';
 import { evenStaff, labRequirementMet } from './lab';
 import { modelSlots, traitDef } from './labRates';
 import { amount, finite } from './num';
-import type { GarageContent, GarageNews, GarageState, ModelCandidate, OfferId, StaffSplit } from './types';
+import type { GarageContent, GarageNews, GarageState, ModelCandidate, OfferId, RaceLinkState, StaffSplit } from './types';
 import { OFFER_IDS, STAFF_LANES } from './types';
 
 export interface LoadResult {
@@ -175,6 +175,8 @@ export function sanitize(raw: Raw, content: GarageContent, fresh: GarageState): 
     nextAutoBuyAt: time(raw.nextAutoBuyAt, 0),
     bonusOffer: null,
   };
+  const race = sanitizeRace(raw.race, now);
+  if (race) state.race = race;
   // Stages are earned by progress that never resets: a save is at least where its progress puts it.
   const stages = content.stages ?? [];
   while (state.stage + 1 < stages.length && stages[state.stage + 1].requires.every((r) => labRequirementMet(state, r))) state.stage += 1;
@@ -183,6 +185,25 @@ export function sanitize(raw: Raw, content: GarageContent, fresh: GarageState): 
   if (uids.length) state.uidSeq = Math.max(state.uidSeq, ...uids.map((u) => u + 1));
   if (raw.migratedLab === true && content.training && stages.slice(0, state.stage + 1).some((st) => st.mechanic === 'training')) state.training = { charges: 1, nextChargeAt: now + content.training.cooldownMs, candidates: null };
   return state;
+}
+
+/** The race link of a save (undefined when it has none or it is unusable). */
+function sanitizeRace(value: unknown, now: number): RaceLinkState | undefined {
+  if (!isObj(value)) return undefined;
+  const r = value;
+  const l = isObj(r.last) ? r.last : null;
+  const seeds = Array.isArray(r.seeds)
+    ? r.seeds.filter((e): e is Raw => isObj(e) && typeof e.seed === 'number' && Number.isFinite(e.seed)).map((e) => ({ seed: e.seed as number, plays: Math.max(1, Math.floor(num(e.plays, 1))) })).slice(-200)
+    : [];
+  return {
+    repProgress: Math.min(0.999, num(r.repProgress)),
+    repFromRaces: num(r.repFromRaces),
+    races: Math.floor(num(r.races)),
+    boostFrom: Math.max(0, time(r.boostFrom, 0)),
+    boostUntil: Math.max(0, time(r.boostUntil, 0)),
+    last: l ? { rep: num(l.rep), boostMs: num(l.boostMs), won: l.won === true, repeat: l.repeat === true, at: time(l.at, now), seen: l.seen === true } : null,
+    seeds,
+  };
 }
 
 /** Reads a save written by any version. `now` is used for a fresh save when the text is unusable. */
