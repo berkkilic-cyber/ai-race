@@ -412,7 +412,7 @@ export function TapStage({ compact }: { compact?: boolean }) {
       </View>
       <ComboMeter display={combo} />
       <HappeningBubble width={box.w} height={box.h} avoid={avoid} />
-      <GoldenBubble width={box.w} height={box.h} />
+      <GoldenBubble width={box.w} height={box.h} avoid={avoid} />
       <BonusOffer width={box.w} height={box.h} avoid={avoid} />
     </View>
   );

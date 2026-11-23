@@ -13,7 +13,7 @@
  * launch result, every stage's room (garage, office, data centre, company town, latent
  * space) with its Lab tab (training candidates, kept models, staff, helpers), a lab
  * happening, the stage card, stats and achievements, settings, a late save, and (default
- * size only) a narrow portrait window.
+ * size, 844 wide, only) a narrow portrait window.
  * Checks (exits 1 if any fails): the mode choice opens /garage; one touch tap earns tokens;
  * two fingers at once count as two taps; a buy works; the golden moment collects; the
  * incident fixes by taps; the offline report doubles through the test ad; ship day ships
@@ -471,8 +471,8 @@ async function main() {
     await shot('settings');
     await tapId('sheet-close');
 
-    // 11. Narrow portrait window (usable, not polished).
-    if (!INSETS) {
+    // 11. Narrow portrait window (usable, not polished), with the default size's run.
+    if (VIEW.width === 844) {
       await page.setViewport({ width: 390, height: 780, deviceScaleFactor: 1, hasTouch: true });
       await sleep(400);
       await shot('narrow');

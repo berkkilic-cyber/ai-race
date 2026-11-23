@@ -9,6 +9,10 @@
  * the debug bot play in short chunks (real time between chunks, as at 1x, so the rate
  * limits behave as in play) with moments collected and events resolved. Garage: touch
  * taps on the tap stage (with the pitch rate of each), a buy, and an unaffordable buy.
+ * Garage lab: stage unlocked, training ready / revealed / kept / scrapped, staff moves,
+ * happenings (appear, good, averted, missed), a milestone, the ship-day steps and the
+ * choice, the bonus multiplier through the test ad, and 12 s of helpers in Latent Space;
+ * each step prints the sounds it made.
  * Checks (exits 1 on failure): the expected sounds appear, no page errors, and the bot
  * stretch never produces more sounds than ticks / 5.
  * Env: CHROME, PORT (default 8791), W, H (default 926x428), INSETS (default 0,47,21,47).
@@ -95,7 +99,7 @@ async function main() {
       await tapAt(b);
     };
     const log = () => page.evaluate(() => window.__feel.log());
-    const q = `debug=1&insets=${INSETS}`;
+    const q = `debug=1&adseconds=1&insets=${INSETS}`;
 
     // ── Race ──
     await page.goto(`http://127.0.0.1:${PORT}/?${q}&autostart=1&seed=7`, { waitUntil: 'networkidle0' });
@@ -231,6 +235,101 @@ async function main() {
     await sleep(300);
     console.log(`  settings sequence: ${(await log()).slice(s0).join(' ')}`);
     check((await log()).slice(-1)[0] === 'ui-back', 'closing the sheet plays the back sound');
+
+    // ── Garage lab (task 28): every new mechanic through the debug hooks and real taps ──
+    const lab = [];
+    /** Runs one step and records the sounds it made. */
+    const step = async (name, run, wait = 350) => {
+      const from = (await log()).length;
+      await run();
+      await sleep(wait);
+      const got = (await log()).slice(from);
+      lab.push([name, got]);
+      console.log(`  ${name.padEnd(26)} ${got.join(' ') || '(silent)'}`);
+      return got;
+    };
+    const g = (fn, ...args) => page.evaluate(fn, ...args);
+    const patch = (fn) => page.evaluate(`(() => { const st = window.__garage.store.getState(); st.replace((${fn})(st.state)); })()`);
+    console.log('\ngarage lab:');
+    await g(() => window.__garage.scene('fresh'));
+    await sleep(300);
+    const stage = await step('stage unlocked', () => g(() => window.__garage.grant(2e7)), 900);
+    check(stage.includes('garage-stage'), 'moving to the Office plays the stage sound');
+    await g(() => window.__garage.store.getState().dismissStage());
+    await tapSel('[data-testid="garage-tab-lab"]');
+    await sleep(300);
+    const ready = await step('training run ready', () => patch('(s) => ({ ...s, training: { ...s.training, charges: s.training.charges + 1 } })'));
+    check(ready.includes('training-ready'), 'a training run coming ready chimes');
+    const reveal = await step('candidates revealed', () => tapSel('[data-testid="garage-launch-training"]'));
+    check(reveal.includes('training-reveal'), 'launching a run reveals with its sound');
+    const keepSel = await g(() => {
+      const el = document.querySelector('[data-testid^="garage-keep-"]');
+      return el ? `[data-testid="${el.getAttribute('data-testid')}"]` : null;
+    });
+    const kept = await step('candidate kept', () => (keepSel ? tapSel(keepSel) : Promise.resolve()));
+    check(kept.includes('model-keep') && !kept.includes('ui-tap'), 'keeping a candidate plays the keep sound (and not the tap)');
+    await g(() => window.__garage.training());
+    await sleep(300);
+    const scrapped = await step('candidates scrapped', () => tapSel('[data-testid="garage-scrap"]'));
+    check(scrapped.includes('model-scrap'), 'scrapping plays the scrap sound');
+    await g(() => window.__garage.scene('datacentre'));
+    await sleep(300);
+    await tapSel('[data-testid="garage-tab-lab"]');
+    await sleep(200);
+    await g(() => document.querySelector('[data-testid="garage-lab-staff"]')?.scrollIntoView({ block: 'nearest' }));
+    await sleep(200);
+    const staff = await step('staff moved (x2)', async () => {
+      await tapSel('[data-testid="garage-staff-research-minus"]');
+      await sleep(120);
+      await tapSel('[data-testid="garage-staff-safety-minus"]');
+    });
+    check(staff.filter((n) => n === 'staff-move').length === 2, 'each staff move ticks');
+    const shown = await step('happening appears', () => g(() => window.__garage.happening('pizza')));
+    check(shown.includes('happening-pop'), 'a happening appearing makes a soft pop');
+    const good = await step('happening tapped (good)', () => tapSel('[data-testid="garage-happening"]'));
+    check(good.includes('moment-boost'), 'tapping a good happening plays the boost');
+    await g(() => window.__garage.happening('bug'));
+    await sleep(300);
+    const averted = await step('happening tapped (averted)', () => tapSel('[data-testid="garage-happening"]'));
+    check(averted.includes('moment-averted'), 'stopping a bad happening plays the averted sound');
+    const missed = await step('happening missed', () => patch('(s) => ({ ...s, happening: { uid: s.uidSeq, id: "bug", spawnedAt: s.now, expiresAt: s.now + 300, x: 0.5, y: 0.5 }, uidSeq: s.uidSeq + 1, nextHappeningAt: s.now + 600000 })'), 1200);
+    check(missed.includes('happening-miss'), 'a happening slipping away makes a soft miss');
+    await tapSel('[data-testid="garage-tab-build"]');
+    await sleep(200);
+    await patch('(s) => ({ ...s, tokens: 1e15, generators: { ...s.generators, intern: 99 } })');
+    await sleep(300);
+    const milestone = await step('milestone reached', () => tapSel('[data-testid="buy-intern"]'));
+    check(milestone.includes('milestone'), 'buying the 100th of a tier plays the milestone');
+    await g(() => window.__garage.scene('ship'));
+    await sleep(300);
+    const sdReveal = await step('ship day: benchmark', () => g(() => window.__garage.shipDay()), 600);
+    check(sdReveal.includes('shipday-reveal'), 'ship day opens with the benchmark reveal');
+    const sdPress = await step('ship day: headline', () => tapSel('[data-testid="garage-shipday-next"]'), 500);
+    check(sdPress.includes('shipday-press') && !sdPress.includes('ui-tap'), 'the headline lands with the press');
+    await tapSel('[data-testid="garage-shipday-next"]');
+    await sleep(400);
+    const sdChoice = await step('ship day: choice made', () => tapSel('[data-testid="garage-shipday-choice-hype"]'));
+    check(sdChoice.includes('event-confirm'), 'picking a launch plan stamps');
+    const shipped = await step('ship it', () => tapSel('[data-testid="garage-shipday-ship"]'), 600);
+    check(shipped.includes('garage-ship'), 'shipping plays the rocket');
+    await g(() => window.__garage.store.getState().dismissLaunch());
+    await g(() => window.__garage.scene('office'));
+    await sleep(300);
+    await g(() => window.__garage.bonusOffer('golden'));
+    await page.waitForSelector('[data-testid="ad-bonusMultiply"]', { timeout: 5000 });
+    await tapSel('[data-testid="ad-bonusMultiply"]');
+    await page.waitForSelector('[data-testid="mock-ad-claim"]', { timeout: 5000 });
+    await sleep(1300);
+    const multiplied = await step('bonus multiplied', () => tapSel('[data-testid="mock-ad-claim"]'), 500);
+    check(multiplied.includes('bonus-multiply'), 'claiming the multiplier plays its sound');
+    await g(() => window.__garage.scene('latent'));
+    await sleep(300);
+    const auto0 = await g(() => window.__garage.state().stats.autoBought);
+    const helpers = await step('helpers (12 s, auto-buy on)', () => patch('(s) => ({ ...s, nextAutoBuyAt: s.now + 1000, nextHappeningAt: s.now + 500 })'), 12000);
+    const bought = (await g(() => window.__garage.state().stats.autoBought)) - auto0;
+    console.log(`    auto-buys in that time: ${bought}`);
+    check(bought >= 2 && helpers.filter((n) => n === 'helper-tick').length === 1, `the helpers work quietly: one tick for ${bought} auto-buys`);
+    check(helpers.every((n) => ['helper-tick', 'happening-pop'].includes(n)), 'nothing else sounds while the helpers work');
 
     console.log(`\nWAV files fetched by the page: ${wavs.size} (${[...wavs].sort().join(', ')})`);
     check(wavs.size > 0, 'the browser loaded the sound files');
