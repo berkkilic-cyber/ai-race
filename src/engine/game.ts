@@ -5,10 +5,17 @@ import { founderStart } from './derived';
 import { scheduleNextHeadline } from './events';
 import { max, round } from './natives';
 import { seedToRng } from './rng';
-import type { ContentPack, GameSetup, GameState, LabState, RivalDef } from './types';
+import type { ContentPack, GameSetup, GameState, LabState, Modifier, RivalDef, StartBonus } from './types';
 
 /** Lab id of the human player. */
 export const PLAYER_LAB_ID = 'player';
+/**
+ * `untilTick` of a start-bonus modifier (GameSetup.bonus): it never runs out. LabState has no
+ * list of permanent extra modifiers, so they ride in `timedModifiers` with this end tick; a
+ * finite number (unlike Infinity) survives the JSON run save.
+ */
+export const PERMANENT_UNTIL_TICK = Number.MAX_SAFE_INTEGER;
+
 /** Map colour of the player's lab; the contract gives the player no colour of its own, so the UI may override it. */
 export const DEFAULT_PLAYER_COLOR = '#ffffff';
 
@@ -44,10 +51,32 @@ function createPlayer(context: EngineContext, setup: GameSetup): LabState {
     color: DEFAULT_PLAYER_COLOR,
     controller: 'human',
     founderId: founder.id,
-    ...founderStart(founder, context.balance),
+    ...withStartBonus(founderStart(founder, context.balance), setup.bonus),
     active: true,
     adoption: { [setup.homeRegion]: context.balance.startAdoption },
+    timedModifiers: bonusModifiers(setup.bonus),
   };
+}
+
+const finiteOr0 = (v: number | undefined): number => (typeof v === 'number' && Number.isFinite(v) ? v : 0);
+
+/**
+ * The founder's start (already × the difficulty's start factors) plus the bonus's flat
+ * amounts. The bonus is added after the factors on purpose: it is earned outside the run and
+ * shown to the player as a fixed amount ("+15 Cash"), so it must mean the same on every level.
+ * Never below zero; non-finite amounts count as 0.
+ */
+function withStartBonus(start: { hype: number; cash: number }, bonus: StartBonus | undefined): { hype: number; cash: number } {
+  if (!bonus) return start;
+  const hype = finiteOr0(bonus.startHype);
+  const cash = finiteOr0(bonus.startCash);
+  return { hype: hype === 0 ? start.hype : max(0, start.hype + hype), cash: cash === 0 ? start.cash : max(0, start.cash + cash) };
+}
+
+/** The bonus's modifiers as permanent entries after the founder's (non-finite values are dropped). */
+function bonusModifiers(bonus: StartBonus | undefined): LabState['timedModifiers'] {
+  const list: Modifier[] = bonus?.modifiers ?? [];
+  return list.filter((m) => Number.isFinite(m.value)).map((m) => ({ modifier: { ...m }, untilTick: PERMANENT_UNTIL_TICK }));
 }
 
 /**
