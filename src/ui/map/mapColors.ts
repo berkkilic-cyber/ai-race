@@ -123,10 +123,27 @@ export function bucketOwners(shares: readonly { id: LabId; share: number }[], bu
   return out;
 }
 
+/** Runs of one colour then the rest colour, joined: the common case of a region with one lab (or none). */
+const runCache = new Map<string, string>();
+function colorRun(color: string, count: number, rest: string, buckets: number): string {
+  const key = `${color}|${count}|${rest}|${buckets}`;
+  let out = runCache.get(key);
+  if (out === undefined) {
+    const parts: string[] = [];
+    for (let i = 0; i < buckets; i++) parts.push(i < count ? color : rest);
+    out = parts.join(',');
+    if (runCache.size > 512) runCache.clear();
+    runCache.set(key, out);
+  }
+  return out;
+}
+
 /**
  * Dot colours per region as one comma-joined string of `buckets` colours, so a
  * shallow-compared selector only hands new props to regions whose colours changed.
  * Unlit dots rest in dotRest, or drop to dotBanned (with the player's own) where the player is banned.
+ * Runs on every tick: regions with at most one lab lit (most of them) take a fast path
+ * with the same result as bucketOwners, from cached strings.
  */
 export function regionDotColors(
   state: GameState,
@@ -137,13 +154,34 @@ export function regionDotColors(
   const player = state.labs[state.playerLabId];
   const out: Record<RegionId, string> = {};
   for (const regionId of regionIds) {
+    let lit = 0;
+    let only: LabId | null = null;
+    let onlyShare = 0;
+    for (const id of state.labOrder) {
+      const share = state.labs[id].adoption[regionId] ?? 0;
+      if (share >= DOT_LIT_MIN) {
+        lit++;
+        only = id;
+        onlyShare = share;
+      }
+    }
+    const banned = regionId in player.bans && isBanned(state, player.id, regionId);
+    const rest = banned ? colors.dotBanned : colors.dotRest;
+    if (lit === 0 || only === null) {
+      out[regionId] = colorRun(rest, 0, rest, buckets);
+      continue;
+    }
+    if (lit === 1) {
+      // bucketOwners with one lab: max(1, round(share x buckets)) buckets from the centre (never more than exist).
+      const count = Math.min(buckets, Math.max(1, Math.round(Math.min(1, onlyShare) * buckets)));
+      out[regionId] = banned && only === player.id ? colorRun(rest, 0, rest, buckets) : colorRun(colorOf(only), count, rest, buckets);
+      continue;
+    }
     const shares: { id: LabId; share: number }[] = [];
     for (const id of state.labOrder) {
       const share = state.labs[id].adoption[regionId] ?? 0;
       if (share > 0) shares.push({ id, share });
     }
-    const banned = isBanned(state, player.id, regionId);
-    const rest = banned ? colors.dotBanned : colors.dotRest;
     out[regionId] = bucketOwners(shares, buckets)
       .map((id) => (id === null || (banned && id === player.id) ? rest : colorOf(id)))
       .join(',');

@@ -85,6 +85,38 @@ describe('dot matrix colours', () => {
     expect(regionDotColors(banned, ids, 12, colorOf)['india'].split(',')).toEqual(Array(12).fill(colors.dotBanned));
   });
 
+  it('regionDotColors gives the same strings as bucketOwners for any mix of shares and bans', () => {
+    const s = game();
+    const labIds = s.labOrder;
+    const colorOf = (id: string) => `#${(labIds.indexOf(id) + 1).toString(16).padStart(6, '0')}`;
+    // The general rule, written out: every region through bucketOwners.
+    const reference = (state: GameState, buckets: number) => {
+      const out: Record<string, string> = {};
+      for (const regionId of ids) {
+        const shares = labIds.map((id) => ({ id, share: state.labs[id].adoption[regionId] ?? 0 })).filter((x) => x.share > 0);
+        const banned = (state.labs.player.bans[regionId] ?? 0) === -1;
+        const rest = banned ? colors.dotBanned : colors.dotRest;
+        out[regionId] = bucketOwners(shares, buckets)
+          .map((id) => (id === null || (banned && id === 'player') ? rest : colorOf(id)))
+          .join(',');
+      }
+      return out;
+    };
+    let seed = 7;
+    const rand = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+    const picks = [0, 0, 0.0001, 0.0005, 0.004, 0.04, 0.0833, 0.25, 0.49, 0.5, 0.51, 0.9, 1];
+    for (let round = 0; round < 60; round++) {
+      const labs = { ...s.labs };
+      for (const id of labIds) {
+        const adoption: Record<string, number> = {};
+        for (const regionId of ids) if (rand() < 0.4) adoption[regionId] = rand() < 0.5 ? picks[Math.floor(rand() * picks.length)] : rand();
+        labs[id] = { ...labs[id], adoption, bans: id === 'player' ? Object.fromEntries(ids.filter(() => rand() < 0.15).map((r) => [r, -1])) : {} };
+      }
+      const state: GameState = { ...s, labs };
+      for (const buckets of [1, 4, 12]) expect(regionDotColors(state, ids, buckets, colorOf)).toEqual(reference(state, buckets));
+    }
+  });
+
   it('newPresences lists labs that gained a foothold since the previous state', () => {
     const s = game();
     const next: GameState = { ...s, labs: { ...s.labs, player: { ...s.labs.player, adoption: { ...s.labs.player.adoption, usa: 0.01 } } } };
