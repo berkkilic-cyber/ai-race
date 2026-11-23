@@ -129,3 +129,19 @@ describe('casing goes through the helper', () => {
     expect(hits).toEqual([]);
   });
 });
+
+describe('Turkish text stays parody', () => {
+  it('names no real companies, products or people', () => {
+    const banned = [
+      'OpenAI', 'Anthropic', 'Claude', 'ChatGPT', 'GPT', 'Gemini', 'Bard', 'Google', 'DeepMind', 'Microsoft',
+      'Copilot', 'Meta', 'Llama', 'Nvidia', 'NVIDIA', 'Mistral', 'xAI', 'Grok', 'DeepSeek', 'Qwen', 'Baidu',
+      'Amazon', 'Apple', 'Siri', 'Alexa', 'Tesla', 'Altman', 'Musk', 'Zuckerberg', 'Hassabis', 'Amodei',
+      'HAL', 'Skynet', 'Terminator', 'Clippy', 'Deep Blue', 'Kasparov', 'Turing',
+      // Names a Turkish translator might reach for.
+      'WhatsApp', 'Excel', 'Instagram', 'YouTube', 'Netflix', 'iddaa', 'Turkcell', 'Trendyol', 'Getir', 'TOGG', 'Baykar', 'Aselsan',
+    ];
+    const text = pairs.map((p) => Object.values(readJson(p.tr)).join('\n')).join('\n');
+    const hits = banned.filter((word) => new RegExp(`(^|[^\\p{L}])${word}($|[^\\p{L}])`, 'u').test(text));
+    expect(hits).toEqual([]);
+  });
+});
