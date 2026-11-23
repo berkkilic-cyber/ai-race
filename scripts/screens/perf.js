@@ -464,14 +464,15 @@ async function main() {
       const g = window.__game;
       g.store.getState().setSpeed(0);
       g.advance(days, { bot: true });
-      // Events resolve themselves with the first choice so the loop keeps running.
+      // Events resolve themselves with the first available choice so the loop keeps running.
       g.store.subscribe((s) => {
         if (s.state && s.state.pendingEvent && s.state.pendingEvent.labId === s.state.playerLabId) {
           const ev = s.pack.events.find((e) => e.id === s.state.pendingEvent.eventId);
           setTimeout(() => {
             const st = g.store.getState();
             if (!st.state || !st.state.pendingEvent) return;
-            st.dispatch({ type: 'resolveEvent', labId: st.state.playerLabId, choiceId: ev.choices[0].id });
+            // The first choice the player can take (a choice it cannot afford fails).
+            for (const c of ev.choices) if (st.dispatch({ type: 'resolveEvent', labId: st.state.playerLabId, choiceId: c.id }).ok) break;
             g.store.getState().dismissEventResult();
           }, 0);
         }
