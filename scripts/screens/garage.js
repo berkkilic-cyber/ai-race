@@ -23,6 +23,12 @@
  * Screenshots go to docs/screenshots/garage/<theme>-<W>x<H>-NN-name.png.
  * Serves dist/ in-process; the server and browser are closed before exiting.
  * Env: CHROME, PORT (default 8781), W, H, INSETS, THEME (names the files only).
+ *
+ * PERF=1: instead, a throttled performance check (the method of scripts/screens/perf.js,
+ * CPU throttle THROTTLE, default 6x): the data-centre room with blinking racks, a lab
+ * happening and a golden moment on screen, then rapid touch tapping on the model for
+ * SECONDS (default 5) at TAPS per second (default 10). Prints frame times (average, p95,
+ * worst), long tasks, React commits per second and the components that rendered most.
  */
 const fs = require('node:fs');
 const http = require('node:http');
@@ -67,7 +73,123 @@ function check(ok, what) {
   if (!ok) failures++;
 }
 
+/** Installed before the app loads: counts React commits (and what rendered), long tasks and frame times. */
+function instrument() {
+  window.__perf = { commits: 0, longTasks: [], frames: [], recording: false, renders: {} };
+  const perf = window.__perf;
+  window.__REACT_DEVTOOLS_GLOBAL_HOOK__ = {
+    supportsFiber: true,
+    renderers: new Map(),
+    inject() {
+      return 1;
+    },
+    onScheduleFiberRoot() {},
+    onCommitFiberRoot(_id, root) {
+      if (!perf.recording) return;
+      perf.commits++;
+      const stack = [root.current];
+      while (stack.length) {
+        const f = stack.pop();
+        if (f.child && (!f.alternate || f.child !== f.alternate.child)) stack.push(f.child);
+        if (f.sibling) stack.push(f.sibling);
+        if ((f.flags & 1) === 1 && typeof f.type !== 'string' && f.type) {
+          const t = f.type.render || f.type.type || f.type;
+          const name = (t && (t.displayName || t.name)) || 'anon';
+          perf.renders[name] = (perf.renders[name] || 0) + 1;
+        }
+      }
+    },
+    onCommitFiberUnmount() {},
+    onPostCommitFiberRoot() {},
+    checkDCE() {},
+  };
+  try {
+    new PerformanceObserver((list) => {
+      if (!perf.recording) return;
+      for (const e of list.getEntries()) perf.longTasks.push(e.duration);
+    }).observe({ type: 'longtask', buffered: false });
+  } catch {
+    // no long-task support
+  }
+  let last = 0;
+  const loop = (t) => {
+    if (perf.recording && last) perf.frames.push(t - last);
+    last = t;
+    requestAnimationFrame(loop);
+  };
+  requestAnimationFrame(loop);
+}
+
+async function perfCheck() {
+  const THROTTLE = Number(process.env.THROTTLE || 6);
+  const SECONDS = Number(process.env.SECONDS || 5);
+  const TAPS = Number(process.env.TAPS || 10);
+  const server = await serve();
+  const browser = await puppeteer.launch({ executablePath: CHROME, headless: true, args: ['--no-sandbox', '--disable-gpu', `--window-size=${VIEW.width},${VIEW.height}`] });
+  try {
+    const page = await browser.newPage();
+    await page.evaluateOnNewDocument(instrument);
+    await page.setViewport({ ...VIEW, deviceScaleFactor: 1, hasTouch: true });
+    const q = `debug=1${INSETS ? `&insets=${INSETS}` : ''}`;
+    await page.goto(`http://127.0.0.1:${PORT}/garage?${q}`, { waitUntil: 'networkidle0' });
+    await page.waitForFunction(() => window.__garage && window.__garage.state(), { timeout: 15000 });
+    await page.evaluate((scene) => window.__garage.scene(scene), process.env.SCENE || 'datacentre');
+    await sleep(500);
+    await page.evaluate(() => {
+      if (window.__garage.happening) window.__garage.happening('overheat');
+      window.__garage.golden('angel');
+    });
+    const target = await page.evaluate(() => {
+      const r = document.querySelector('[data-testid="garage-tap"]').getBoundingClientRect();
+      return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
+    });
+    const cdp = await page.createCDPSession();
+    await cdp.send('Emulation.setCPUThrottlingRate', { rate: THROTTLE });
+    await sleep(1500);
+    await page.evaluate(() => Object.assign(window.__perf, { commits: 0, longTasks: [], frames: [], recording: true, renders: {} }));
+    const t0 = Date.now();
+    let taps = 0;
+    while (Date.now() - t0 < SECONDS * 1000) {
+      const p = { x: target.x + ((taps % 5) - 2) * 12, y: target.y + ((taps % 3) - 1) * 10, id: taps % 7 };
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ ...p, radiusX: 2, radiusY: 2, force: 1 }] });
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+      taps++;
+      const next = t0 + (taps * 1000) / TAPS;
+      if (next > Date.now()) await sleep(next - Date.now());
+    }
+    const secs = (Date.now() - t0) / 1000;
+    const raw = await page.evaluate(() => {
+      window.__perf.recording = false;
+      return { ...window.__perf, happening: !!document.querySelector('[data-testid="garage-happening"]'), golden: !!document.querySelector('[data-testid="garage-golden"]'), taps: window.__garage.state().stats.taps };
+    });
+    const frames = raw.frames.slice().sort((a, b) => a - b);
+    const avg = frames.reduce((a, f) => a + f, 0) / Math.max(1, frames.length);
+    const out = {
+      throttle: THROTTLE,
+      seconds: +secs.toFixed(1),
+      tapsSent: taps,
+      frames: frames.length,
+      avgFrameMs: +avg.toFixed(1),
+      p95FrameMs: +(frames[Math.floor(frames.length * 0.95)] ?? 0).toFixed(1),
+      worstFrameMs: +(frames[frames.length - 1] ?? 0).toFixed(1),
+      longTasks: raw.longTasks.length,
+      longTaskMs: Math.round(raw.longTasks.reduce((a, d) => a + d, 0)),
+      commits: raw.commits,
+      commitsPerSecond: +(raw.commits / secs).toFixed(1),
+      happeningOnScreen: raw.happening,
+      goldenOnScreen: raw.golden,
+    };
+    console.log(JSON.stringify(out));
+    const top = Object.entries(raw.renders).sort((a, b) => b[1] - a[1]).slice(0, 12);
+    console.log('renders:', top.map(([k, v]) => `${k} ${v}`).join(', '));
+  } finally {
+    await browser.close();
+    server.close();
+  }
+}
+
 async function main() {
+  if (process.env.PERF) return perfCheck();
   if (!fs.existsSync(path.join(DIST, 'index.html'))) throw new Error('dist/ missing: run npx expo export --platform web first');
   fs.mkdirSync(OUT, { recursive: true });
   const server = await serve();

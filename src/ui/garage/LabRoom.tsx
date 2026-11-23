@@ -78,14 +78,15 @@ function geometry(w: number, h: number, scene: string): Geometry {
     w,
     h,
     floor,
-    // Racks stand along the right of the back wall in up to two rows.
+    // Racks stand on the right: a front row on the floor, then a smaller back row behind it.
     rack: (i) => {
       const perRow = 4;
-      const row = Math.floor(i / perRow);
+      const back = i >= perRow;
       const col = i % perRow;
-      const x = w * 0.66 + col * (rw + 4) + row * (rw * 0.5);
-      const y = floor - rh + row * (h * 0.12);
-      return { x, y, rw, rh: rh - row * 4 };
+      const scale = back ? 0.8 : 1;
+      const x = w * (back ? 0.69 : 0.66) + col * (rw * scale + 4);
+      const bottom = back ? floor - h * 0.02 : floor + h * 0.07;
+      return { x, y: bottom - rh * scale, rw: rw * scale, rh: rh * scale };
     },
     // Desks along the left of the floor, staggered.
     desk: (i) => ({ x: w * 0.06 + (i % 3) * w * 0.11, y: floor + h * 0.06 + Math.floor(i / 3) * h * 0.14 + (i % 2) * h * 0.03 }),
@@ -195,10 +196,11 @@ const RoomDrawing = memo(function RoomDrawing({ scene, buckets, w, h }: { scene:
     deskPath.push(rectPath(d.x, d.y, dw, 4), `M${(d.x + 3).toFixed(1)} ${(d.y + 4).toFixed(1)}v10M${(d.x + dw - 3).toFixed(1)} ${(d.y + 4).toFixed(1)}v10`, rectPath(d.x + dw * 0.45, d.y - 9, dw * 0.35, 8));
     heads.push({ x: d.x + dw * 0.2, y: d.y - 9 });
   }
-  const racks: string[] = [];
+  const racksFront: string[] = [];
+  const racksBack: string[] = [];
   for (let i = 0; i < buckets.racks; i++) {
     const r = g.rack(i);
-    racks.push(rectPath(r.x, r.y, r.rw, r.rh));
+    (i >= 4 ? racksBack : racksFront).push(rectPath(r.x, r.y, r.rw, r.rh));
   }
   const rackLines: string[] = [];
   for (let i = 0; i < buckets.racks; i++) {
@@ -212,7 +214,8 @@ const RoomDrawing = memo(function RoomDrawing({ scene, buckets, w, h }: { scene:
       <Rect x={0} y={g.floor} width={w} height={h - g.floor} fill={colors.bg} />
       <Line x1={0} y1={g.floor} x2={w} y2={g.floor} stroke={colors.outline} strokeWidth={1} />
       <Backdrop scene={scene} g={g} />
-      {racks.length ? <Path d={racks.join('')} fill={colors.chrome} stroke={colors.outline} strokeWidth={1} /> : null}
+      {racksBack.length ? <Path d={racksBack.join('')} fill={colors.raised} stroke={colors.border} strokeWidth={1} /> : null}
+      {racksFront.length ? <Path d={racksFront.join('')} fill={colors.chrome} stroke={colors.outline} strokeWidth={1} /> : null}
       {rackLines.length ? <Path d={rackLines.join('')} stroke={colors.border} strokeWidth={1} /> : null}
       {deskPath.length ? <Path d={deskPath.join('')} fill={colors.raised} stroke={colors.outline} strokeWidth={1} /> : null}
       {heads.map((p, i) => (

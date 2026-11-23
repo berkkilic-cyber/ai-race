@@ -136,6 +136,11 @@ const ComboMeter = memo(function ComboMeter() {
   );
 });
 
+/** A hex colour with an alpha (other formats pass through). */
+function withAlpha(hex: string, a: number): string {
+  return /^#[0-9a-f]{6}$/i.test(hex) ? `${hex}${Math.round(a * 255).toString(16).padStart(2, '0')}` : hex;
+}
+
 const ROUND = shape.panel === 'sticker' || shape.panel === 'plain';
 
 /**
@@ -342,7 +347,7 @@ export function TapStage({ compact }: { compact?: boolean }) {
 const styles = StyleSheet.create({
   stage: { flex: 1, paddingHorizontal: spacing.s, paddingTop: spacing.xs, paddingBottom: spacing.xs, overflow: 'hidden' },
   hud: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: spacing.s },
-  hudLeft: { flexShrink: 1, minWidth: 0 },
+  hudLeft: { flexShrink: 1, minWidth: 0, backgroundColor: withAlpha(colors.bg, 0.82), paddingHorizontal: spacing.xs, paddingBottom: 3, borderRadius: radius.s },
   counter: { alignItems: 'flex-start' },
   tokensRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, maxWidth: '100%' },
   tokens: { ...voice.calmNumber, ...tabular, color: colors.text, fontSize: 30, lineHeight: 34, letterSpacing: -0.5 },
