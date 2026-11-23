@@ -14,7 +14,7 @@ import { colors, flatShadow, layer, radius, spacing, tabular, type, voice } from
 import { useAdPlacement } from './adOffer';
 import { successHaptic } from './haptics';
 import { useGarageStore } from './store';
-import { fmtMult, generationLabel, gt } from './text';
+import { fmtFixed, fmtMult, generationLabel, gt, pctText } from './text';
 
 /**
  * Ship day: shipping a model as a short sequence on tabloid paper. 1) the benchmark reveal
@@ -67,7 +67,7 @@ export function ShipDay() {
                     <View style={styles.lbTrack}>
                       <View style={[styles.lbFill, r.you && styles.lbFillYou, { width: `${Math.round((r.score / best) * 100)}%` }]} />
                     </View>
-                    <Text style={[styles.lbScore, r.you && styles.lbYou]}>{r.score.toFixed(1)}</Text>
+                    <Text style={[styles.lbScore, r.you && styles.lbYou]}>{fmtFixed(r.score, 1)}</Text>
                   </Animated.View>
                 ))}
                 <Text style={styles.sub}>{reveal.rank === 1 ? t('ui.garage.shipday.top') : t('ui.garage.shipday.rank', { rank: reveal.rank })}</Text>
@@ -139,7 +139,7 @@ function LaunchBonus({ pct, hype, onRewarded }: { pct: number; hype: number; onR
   return (
     <AdButton
       placement="prestigeBonus"
-      label={t('ui.ads.placement.prestigeBonus', { pct: `${pct}%` })}
+      label={t('ui.ads.placement.prestigeBonus', { pct: pctText(pct) })}
       reward={t('ui.ads.reward.prestigeBonus', { hype })}
       status={offerStatus(state, content, 'prestigeBonus')}
       onRewarded={onRewarded}

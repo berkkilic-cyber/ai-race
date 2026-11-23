@@ -7,7 +7,7 @@
  */
 import { checkConditions, getMeters, getWorldShare, type Condition, type ContentPack, type GameState, type LabState, type RegionScope, type TreeId } from '@/engine';
 
-import { fmtCash, fmtCompact, fmtPct } from '../format';
+import { fmtCash, fmtCompact, fmtPct, pctText } from '../format';
 import { hasString, t } from '../i18n';
 import { scopeLabel } from './describe';
 
@@ -60,7 +60,7 @@ export function conditionValues(state: GameState, pack: ContentPack, labId: stri
   };
 }
 
-const pct = (v: number) => `${Math.floor(v)}%`;
+const pct = (v: number) => pctText(Math.floor(v));
 
 function nodeName(pack: ContentPack, id: string): { name: string; tree: string } {
   const node = pack.nodes.find((n) => n.id === id);

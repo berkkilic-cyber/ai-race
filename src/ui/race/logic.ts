@@ -13,7 +13,7 @@ import {
   type StandingRow,
 } from '@/engine';
 
-import { fmtCash, fmtCompact, fmtPct, fmtUsers } from '../format';
+import { fmtCash, fmtCompact, fmtPct, fmtUsers, pctText } from '../format';
 import { labName, readableLabColor, regionName, t } from '../i18n';
 import { trendOf, type ShareSample, type Trend } from './trend';
 
@@ -93,7 +93,7 @@ export function raceView(state: GameState, pack: ContentPack, samples: readonly 
       shareText: fmtPct(row.worldShare),
       usersText: fmtUsers(row.users),
       agi: row.agi,
-      agiText: `${Math.floor(row.agi * 100)}%`,
+      agiText: pctText(Math.floor(row.agi * 100)),
       tierText: t('ui.race.tier', { tier: row.tier }),
       ownedText: row.ownedTier > row.tier ? t('ui.race.owns', { tier: row.ownedTier }) : null,
       dcText: `${row.dataCentres} · ${fmtCompact(row.compute)}`,
@@ -109,14 +109,14 @@ export function raceView(state: GameState, pack: ContentPack, samples: readonly 
   const me = standings.find((r) => r.labId === playerId);
   // The best rival on the AGI track: the active rival furthest along.
   const best = standings.filter((r) => r.labId !== playerId && r.status === 'active').sort((a, b) => b.agi - a.agi)[0];
-  const you = `${Math.floor(progress.agi * 100)}%`;
+  const you = pctText(Math.floor(progress.agi * 100));
   const wins: WinBar[] = [
     {
       id: 'agi',
       title: t('ui.race.win.agi'),
       value: progress.agi,
       ...(best ? { rival: best.agi, rivalColor: readableLabColor(state.labs[best.labId]) } : {}),
-      caption: best ? t('ui.race.win.agiCaption', { you, them: `${Math.floor(best.agi * 100)}%` }) : t('ui.race.win.agiCaptionNone', { you }),
+      caption: best ? t('ui.race.win.agiCaption', { you, them: pctText(Math.floor(best.agi * 100)) }) : t('ui.race.win.agiCaptionNone', { you }),
     },
     {
       id: 'dependence',
@@ -163,7 +163,7 @@ export function rivalDetail(state: GameState, pack: ContentPack, labId: string):
     .slice(0, TOP_REGIONS)
     .map(([regionId, a]) => `${regionName(regionId)} ${fmtPct(a)}`);
   const compare: { key: string; them: number; you: number; them_: string; you_: string }[] = [
-    { key: 'agi', them: row.agi, you: me.agi, them_: `${Math.floor(row.agi * 100)}%`, you_: `${Math.floor(me.agi * 100)}%` },
+    { key: 'agi', them: row.agi, you: me.agi, them_: pctText(Math.floor(row.agi * 100)), you_: pctText(Math.floor(me.agi * 100)) },
     { key: 'share', them: row.worldShare, you: me.worldShare, them_: fmtPct(row.worldShare), you_: fmtPct(me.worldShare) },
     { key: 'model', them: row.tier, you: me.tier, them_: String(row.tier), you_: String(me.tier) },
     { key: 'compute', them: row.compute, you: me.compute, them_: fmtCompact(row.compute), you_: fmtCompact(me.compute) },

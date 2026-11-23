@@ -1,5 +1,6 @@
-import { formatAmount, formatDuration, generatorDef, upgradeDef, type GarageContent, type Requirement, type UpgradeEffect } from '@/idle';
+import { generatorDef, upgradeDef, type GarageContent, type Requirement, type UpgradeEffect } from '@/idle';
 
+import { fmtAmount, fmtDuration, fmtNum, pctText } from '../format';
 import { hasString, t, type Params } from '../i18n';
 import { garageContent } from './content';
 
@@ -29,15 +30,15 @@ export function hasGarageString(key: string): boolean {
 }
 
 /** Token amounts: "12.3K". */
-export const fmt = (n: number) => formatAmount(n);
-export const fmtTime = (ms: number) => formatDuration(ms);
+export const fmt = (n: number) => fmtAmount(n);
+export const fmtTime = (ms: number) => fmtDuration(ms);
 
 function mult(m: number): string {
-  return String(Math.round(m * 100) / 100);
+  return fmtNum(Math.round(m * 100) / 100, 2);
 }
 
 function pct(share: number): string {
-  return `${Math.round(share * 1000) / 10}%`;
+  return pctText(Math.round(share * 1000) / 10);
 }
 
 /** One effect in words: "Rented GPU ×2", "Taps +2% of production". */
@@ -95,3 +96,4 @@ export function generationLabel(n: number, content: GarageContent = garageConten
 }
 
 export { mult as fmtMult, pct as fmtPct };
+export { fmtFixed, pctText } from '../format';

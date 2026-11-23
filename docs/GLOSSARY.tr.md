@@ -146,4 +146,4 @@ Formatted by hand in `src/ui/format.ts` (no `Intl`, no `toLocaleString`): it is 
 | Bigger (idle) | Qa, Qi, Sx ... | Qa, Qi, Sx ... | Turkish has no short forms past trilyon; the idle-game letters stay |
 | Cash (dollars) | $850M, $1.2B | 850 Mn $, 1,2 Mr $ | Dollar sign after the amount, as Turkish news write "1,2 milyar $" and as CLDR places it in short amounts; small amounts too ("0,5 Mn $") |
 | Hours, minutes, seconds | 3h 12m, 4m 05s | 3 sa 12 dk, 4 dk 05 sn | |
-| Days (durations) | 2d 4h | 2 g 4 sa | |
+| Days (durations) | 2d 4h | 2 gün 4 sa | |

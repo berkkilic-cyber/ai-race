@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { pctText } from '../format';
 import { Icon } from '../icons';
 import { t } from '../i18n';
 import { type GameStore } from '../store/game';
@@ -64,7 +65,7 @@ function WinCard({ win }: { win: WinBar }) {
         <Text style={styles.cardTitle} numberOfLines={1}>
           {win.title}
         </Text>
-        <Text style={styles.cardValue}>{`${Math.floor(win.value * 100)}%`}</Text>
+        <Text style={styles.cardValue}>{pctText(Math.floor(win.value * 100))}</Text>
       </View>
       <Bar value={win.value} color={colors.player} marker={win.rival} markerColor={win.rivalColor} height={8} />
       <Text style={styles.caption} numberOfLines={2}>

@@ -2,7 +2,7 @@ import { memo, useEffect } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 
-import { formatDuration, type GoldenState } from '@/idle';
+import { type GoldenState } from '@/idle';
 
 import { Icon } from '../icons';
 import { t } from '../i18n';
@@ -12,7 +12,7 @@ import { garageNow } from './clock';
 import { successHaptic } from './haptics';
 import { useGarage } from './hooks';
 import { useGarageStore, type GarageStore } from './store';
-import { fmt, fmtMult, gt } from './text';
+import { fmt, fmtMult, fmtTime, gt } from './text';
 
 const SIZE = 64;
 const selGolden = (s: GarageStore) => s.state?.golden ?? null;
@@ -52,8 +52,8 @@ export const GoldenBubble = memo(function GoldenBubble({ width, height }: { widt
       reward.kind === 'burst'
         ? `+${fmt(r.gained ?? 0)}`
         : reward.kind === 'frenzy'
-          ? `${t('ui.garage.golden.frenzy', { mult: fmtMult(reward.mult) })} · ${formatDuration(reward.seconds * 1000)}`
-          : `${t('ui.garage.golden.tapFrenzy', { mult: fmtMult(reward.mult) })} · ${formatDuration(reward.seconds * 1000)}`;
+          ? `${t('ui.garage.golden.frenzy', { mult: fmtMult(reward.mult) })} · ${fmtTime(reward.seconds * 1000)}`
+          : `${t('ui.garage.golden.tapFrenzy', { mult: fmtMult(reward.mult) })} · ${fmtTime(reward.seconds * 1000)}`;
     useGarageStore.getState().setFlash(text);
   };
   return (

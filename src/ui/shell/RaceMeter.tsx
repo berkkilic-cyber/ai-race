@@ -3,6 +3,7 @@ import Animated, { FadeIn, useAnimatedStyle } from 'react-native-reanimated';
 
 import { getLeadRival, getMeters } from '@/engine';
 
+import { pctText } from '../format';
 import { useKeyedSelector } from '../hooks/useKeyedSelector';
 import { labName, readableLabColor, t } from '../i18n';
 import { useAmbientClock, wave } from '../motion/ambient';
@@ -53,8 +54,8 @@ export function RaceMeter({ tag, testID }: { tag: string | null; testID?: string
   const clock = useAmbientClock(pulsing);
   const markStyle = useAnimatedStyle(() => ({ opacity: clock ? 1 - 0.6 * wave(clock.get(), 0.9) : 1 }));
   const a11y = rivalLab
-    ? t('ui.strip.raceA11y', { you: `${Math.floor(you)}%`, rival: labName(rivalLab), them: `${Math.floor(rival)}%` })
-    : t('ui.strip.raceA11yNone', { you: `${Math.floor(you)}%` });
+    ? t('ui.strip.raceA11y', { you: pctText(Math.floor(you)), rival: labName(rivalLab), them: pctText(Math.floor(rival)) })
+    : t('ui.strip.raceA11yNone', { you: pctText(Math.floor(you)) });
 
   return (
     <View style={[styles.wrap, tag ? styles.wrapTagged : null]} testID={testID} accessibilityRole="progressbar" accessibilityLabel={tag ? `${a11y}. ${tag}` : a11y}>

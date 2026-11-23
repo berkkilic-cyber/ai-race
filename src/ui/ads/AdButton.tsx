@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 
-import { formatDuration, type OfferStatus } from '@/idle';
+import { type OfferStatus } from '@/idle';
 
 import { useAdOfferShown } from '../analytics/hooks';
+import { fmtDuration } from '../format';
 import { t } from '../i18n';
 import { colors, flatShadow, radius, shape, spacing, tabular, touch, type, voice } from '../theme';
 import { adReady, requestRewardedAd } from './ads';
@@ -73,7 +74,7 @@ export function AdButton({ placement, label, reward, status, onRewarded, showCoo
           {label}
         </Text>
         <Text style={[styles.sub, { color: fg }]} numberOfLines={1}>
-          {waiting && !status.available ? t('ui.ads.ready', { time: formatDuration((status.readyAt ?? 0) - (now ?? status.readyAt ?? 0)) }) : reward}
+          {waiting && !status.available ? t('ui.ads.ready', { time: fmtDuration((status.readyAt ?? 0) - (now ?? status.readyAt ?? 0)) }) : reward}
         </Text>
       </View>
     </Pressable>
