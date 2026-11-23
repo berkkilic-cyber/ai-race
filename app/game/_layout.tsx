@@ -14,6 +14,7 @@ import { AmbientProvider } from '@/ui/motion/ambient';
 import { ComposureStage, useTremble } from '@/ui/shell/ComposureStage';
 import { GameHeader } from '@/ui/shell/GameHeader';
 import { useShellStyles } from '@/ui/shell/shellStyles';
+import { RunMenuButton, RunMenuHost } from '@/ui/shell/RunMenu';
 import { renderFrozenTab } from '@/ui/shell/tabSlot';
 import { TabButton } from '@/ui/shell/TabButton';
 import { Ticker } from '@/ui/shell/Ticker';
@@ -86,6 +87,7 @@ function GameShell() {
               <TabTrigger name="race" href="/game/race" asChild>
                 <TabButton label={t('ui.race.tab')} targetId="tab.race" icon="race" />
               </TabTrigger>
+              <RunMenuButton placement="rail" />
             </View>
           </TabList>
         </Tabs>
@@ -93,6 +95,7 @@ function GameShell() {
       <ToastHost />
       <TutorialHost />
       <EventModal />
+      <RunMenuHost />
     </View>
   );
 }
