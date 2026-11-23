@@ -37,7 +37,7 @@ const puppeteer = require('puppeteer-core');
 const { scanText, textScanSummary } = require('./textScan');
 
 const ROOT = path.join(__dirname, '..', '..');
-const DIST = path.join(ROOT, 'dist');
+const DIST = process.env.DIST ? path.resolve(process.env.DIST) : path.join(ROOT, 'dist');
 const OUT = path.join(ROOT, 'docs', 'screenshots', 'garage');
 const PORT = Number(process.env.PORT || 8781);
 const CHROME = process.env.CHROME || '/usr/bin/google-chrome';

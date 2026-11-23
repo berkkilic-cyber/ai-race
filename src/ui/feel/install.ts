@@ -6,7 +6,7 @@ import { useGarageStore } from '../garage/store';
 import { useGameStore } from '../store/game';
 import { feedback, playCues } from './cues';
 import { getSoundLog, preloadSounds } from './engine';
-import { deriveGarageCues } from './garageSounds';
+import { createGarageMemo, deriveGarageCues, deriveShipDayCues } from './garageSounds';
 import { createRaceMemo, deriveRaceCues } from './raceSounds';
 import { useFeelSettings } from './settings';
 
@@ -31,14 +31,16 @@ export function installFeel(): void {
   installed = true;
 
   const memo = createRaceMemo();
+  const garageMemo = createGarageMemo();
   unsubscribers.push(
     useGameStore.subscribe((s, prev) => {
       if (s.state === prev.state) return;
       playCues(deriveRaceCues(prev.state, s.state, s.pack, memo));
     }),
     useGarageStore.subscribe((s, prev) => {
+      if (s.shipDay !== prev.shipDay) playCues(deriveShipDayCues(prev.shipDay, s.shipDay));
       if (s.state === prev.state) return;
-      playCues(deriveGarageCues(prev.state, s.state));
+      playCues(deriveGarageCues(prev.state, s.state, s.content, garageMemo));
     }),
   );
 
