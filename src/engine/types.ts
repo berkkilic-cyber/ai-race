@@ -555,6 +555,19 @@ export interface GameSetup {
   difficulty?: string;
   /** Run-length id from ContentPack.runLengths; unknown or missing = the pack default, then none. */
   runLength?: string;
+  /**
+   * Extra start bonuses for the human lab, earned outside the run (an account-level meta
+   * game, for example). Added on top of the founder's: start resources are summed, the
+   * modifiers are appended to the founder's. Absent or empty = no effect.
+   */
+  bonus?: StartBonus;
+}
+
+/** See GameSetup.bonus. */
+export interface StartBonus {
+  startHype?: number;
+  startCash?: number;
+  modifiers?: Modifier[];
 }
 
 // ───────────────────────────── Actions ─────────────────────────────
