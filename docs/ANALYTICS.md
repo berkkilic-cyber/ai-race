@@ -15,7 +15,7 @@ Providers installed by the app: **buffer** (the rolling log in storage), **memor
 ## Rules the layer keeps
 
 - **Zero work per game tick.** Only discrete actions produce events. The race store subscription compares a few references per tick and returns; actions arrive through `onGameAction` (called by the store's `dispatch`). A test runs 1,000 ticks and checks that no event is tracked and nothing is written.
-- **Batched writes.** The buffer and the retention state are written at most once every 5 s after a change (`BUFFER_FLUSH_MS`), and at once when the app goes to the background. Garage taps are summed and sent as one `garage_tap_batch` at most every 30 s, and when leaving the Garage or going to the background.
+- **Batched writes.** The buffer and the retention state are written at most once every 5 s after a change (`BUFFER_FLUSH_MS`), and at once when the app goes to the background. Garage taps are summed and sent as one `garage_tap_batch` at most every 30 s, and when leaving the Garage or going to the background. The same flush sends the settled staff split and the helpers' batched happenings. The auto-buy helper's purchases (every 4 s in Latent Space) are not player purchases and send no `garage_generator_buy`. The pure reader `src/ui/garage/moments.ts` turns two Garage states into the discrete lab changes; the sound mapping uses the same reader.
 - **Never throws into the game.** Every provider and listener call is wrapped; errors are swallowed and counted (`analyticsErrors()`, shown in the debug view). The React mount sits in its own error boundary that renders nothing on failure.
 - **No personal data.** No device identifiers, no advertising ids, no player-typed text (the lab name is never logged: a test plays a run with a marker name and checks it is absent). The install id is random (`crypto.getRandomValues`, else `Math.random`). Params are content ids, numbers and fixed enums; strings are cut to 160 characters. Error messages are logged as they are (cut), so code must not put player text into error messages.
 
@@ -49,7 +49,14 @@ Every event is stored as `{ name, params, t, s }`: `t` is epoch ms, `s` the sess
 | `garage_generator_buy` | `tier` (1-based), `count` | Generators bought in one purchase. |
 | `garage_upgrade_buy` | `id` | |
 | `garage_prestige` | `index` (the new generation number) | Shipping a model. |
-| `ad_offer_shown` | `placement` | A rewarded-ad button becomes visible with its offer available (ads not removed). |
+| `garage_stage_unlock` | `stage` (stage id: `office`, `datacentre`, `town`, `latent`) | The lab moves to a new stage. |
+| `garage_training_start` | | A training run is launched (its candidates are revealed). |
+| `garage_training_pick` | `rarity` (rarity id), `strength` (main strength: `production`, `tap`, `offlineCap`, `offlineRate`, `shipHype`, `happening`, `incident`, `trainingSpeed`), `action`: `keep` \| `swap` \| `scrap` | The player keeps a candidate in a free slot, swaps it for a kept model, or scraps all three (then the rarest candidate is reported). |
+| `garage_staff_change` | `research`, `product`, `safety` (headcount per lane) | Debounced: once the player has stopped moving staff for 2.5 s (`STAFF_SETTLE_MS`), or on leaving; one event however many taps. |
+| `garage_happening` | `id` (happening id), `outcome`: `tapped` \| `missed` \| `auto`, `count?` | One event per tapped or missed happening. Helpers' collections (`auto`, the Company Town on) are counted per id and sent as one event per id with `count`, at most every 5 minutes (`AUTO_HAPPENING_BATCH_MS`) and on leaving. |
+| `garage_milestone` | `tier` (1-based), `count` (the milestone reached: 25, 50, 100, 200, 300 …) | Owning a milestone count of a tier (one event per tier per purchase, the highest reached). |
+| `garage_ship_choice` | `choice` (`hype`, `safe`, `open`) | Right after `garage_prestige`, when the ship went through ship day's launch choice. |
+| `ad_offer_shown` | `placement` (`offlineDouble`, `boost`, `frenzyExtend`, `incidentFix`, `crate`, `prestigeBonus`, `bonusMultiply`) | A rewarded-ad button becomes visible with its offer available (ads not removed). |
 | `ad_started` | `placement` | An ad opens. |
 | `ad_completed` | `placement` | An ad is watched to the reward. |
 | `remove_ads_tap` | `on` | The remove-ads switch changes (the future purchase). |

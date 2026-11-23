@@ -11,6 +11,12 @@ export type GameMode = 'race' | 'garage';
 /** How a run was left before its ending: a new run over it, dropped back to the menu, or the error screen. */
 export type QuitHow = 'restart' | 'menu' | 'error';
 
+/** What the player did with a training run's candidates. */
+export type GaragePickAction = 'keep' | 'swap' | 'scrap';
+
+/** How a lab happening went: tapped by the player, missed, or collected by a helper (batched, with a count). */
+export type GarageHappeningOutcome = 'tapped' | 'missed' | 'auto';
+
 export type AnalyticsEvent =
   | { name: 'app_open' }
   | { name: 'session_start' }
@@ -36,6 +42,13 @@ export type AnalyticsEvent =
   | { name: 'garage_generator_buy'; params: { tier: number; count: number } }
   | { name: 'garage_upgrade_buy'; params: { id: string } }
   | { name: 'garage_prestige'; params: { index: number } }
+  | { name: 'garage_stage_unlock'; params: { stage: string } }
+  | { name: 'garage_training_start' }
+  | { name: 'garage_training_pick'; params: { rarity: string; strength: string; action: GaragePickAction } }
+  | { name: 'garage_staff_change'; params: { research: number; product: number; safety: number } }
+  | { name: 'garage_happening'; params: { id: string; outcome: GarageHappeningOutcome; count?: number } }
+  | { name: 'garage_milestone'; params: { tier: number; count: number } }
+  | { name: 'garage_ship_choice'; params: { choice: string } }
   | { name: 'ad_offer_shown'; params: { placement: string } }
   | { name: 'ad_started'; params: { placement: string } }
   | { name: 'ad_completed'; params: { placement: string } }
@@ -86,6 +99,13 @@ export const EVENT_NAMES: readonly EventName[] = [
   'garage_generator_buy',
   'garage_upgrade_buy',
   'garage_prestige',
+  'garage_stage_unlock',
+  'garage_training_start',
+  'garage_training_pick',
+  'garage_staff_change',
+  'garage_happening',
+  'garage_milestone',
+  'garage_ship_choice',
   'ad_offer_shown',
   'ad_started',
   'ad_completed',
