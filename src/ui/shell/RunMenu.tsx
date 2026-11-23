@@ -126,8 +126,10 @@ export function RunMenuHost() {
   // Leaving the screen: never leave the menu open (and the run paused) behind.
   useEffect(() => () => dismissRunMenu(), []);
 
-  // Back gesture / navigation back while a run is on: open the menu instead.
-  usePreventRemove(running, () => openRunMenu());
+  // Back gesture / navigation back while a run is on: open the menu instead. Native only: on
+  // web the hook also adds a "leave site?" prompt to every reload and link (the run is saved on
+  // pagehide there instead).
+  usePreventRemove(running && Platform.OS !== 'web', () => openRunMenu());
   // Android back with nothing to go back to (the race replaced the start screen) would close the app.
   useEffect(() => {
     if (Platform.OS !== 'android') return;
