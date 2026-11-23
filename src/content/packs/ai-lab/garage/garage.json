@@ -2579,7 +2579,7 @@
     "quipKey": "garage.perk.seed-round.quip",
     "effect": {
      "kind": "startCash",
-     "amount": 15
+     "amount": 1
     }
    },
    {
@@ -2590,7 +2590,7 @@
     "quipKey": "garage.perk.press-list.quip",
     "effect": {
      "kind": "startHype",
-     "amount": 4
+     "amount": 3
     }
    },
    {
@@ -2613,7 +2613,7 @@
     "quipKey": "garage.perk.fan-club.quip",
     "effect": {
      "kind": "hypeIncome",
-     "amount": 0.03
+     "amount": 0.005
     }
    },
    {
@@ -2636,7 +2636,7 @@
     "quipKey": "garage.perk.old-friends.quip",
     "effect": {
      "kind": "cashIncome",
-     "amount": 0.03
+     "amount": 0.005
     }
    },
    {
@@ -2647,7 +2647,7 @@
     "quipKey": "garage.perk.lucky-breaks.quip",
     "effect": {
      "kind": "startCash",
-     "amount": 15
+     "amount": 1
     }
    },
    {
@@ -2682,7 +2682,7 @@
     "quipKey": "garage.perk.insider-list.quip",
     "effect": {
      "kind": "startHype",
-     "amount": 4
+     "amount": 2
     }
    },
    {
