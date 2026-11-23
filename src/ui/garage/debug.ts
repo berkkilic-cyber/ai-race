@@ -34,6 +34,8 @@ export interface GarageDebug {
   happening(id?: string): void;
   /** Opens ship day (the save must be able to ship; use scene('ship')). */
   shipDay(): void;
+  /** The bonus multiplier offer, as if a bonus had just been tapped (`source` golden or happening). */
+  bonusOffer(source?: 'golden' | 'happening'): void;
   state(): GarageState | null;
 }
 
@@ -219,6 +221,8 @@ export function installGarageDebug(): void {
         return { ...s, happening: { uid: s.uidSeq + 1, id: def.id, spawnedAt: s.now, expiresAt: s.now + 60_000, x: 0.5, y: 0.5 }, nextHappeningAt: s.now + 120_000, uidSeq: s.uidSeq + 1 };
       }),
     shipDay: () => useGarageStore.getState().openShipDay(),
+    bonusOffer: (source = 'golden') =>
+      patch((s) => ({ ...s, bonusOffer: { reward: 5000, until: s.now + 60_000, source, id: source === 'golden' ? 'angel' : 'pizza', x: 0.62, y: 0.45 } })),
     state: () => useGarageStore.getState().state,
   };
   (window as unknown as { __garage: GarageDebug }).__garage = api;

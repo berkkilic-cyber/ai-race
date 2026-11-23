@@ -27,26 +27,43 @@ export function secondsToNextBuy(s: GarageStore): number {
 export function currentPlacement(s: GarageStore, now: number): PlacementId | null {
   const st = s.state;
   if (!st) return null;
-  const ids: PlacementId[] = ['offlineDouble', 'boost', 'frenzyExtend', 'incidentFix', 'crate', 'prestigeBonus', 'bonusMultiply'];
+  const offlineReport = !!st.offline && !s.launch;
+  const shipDay = s.shipDay?.step === 'choose';
+  const incident = !!st.incident && st.incident.until > now;
+  const frenzy = !!st.frenzy && st.frenzy.until > now;
+  const bonus = !!st.bonusOffer && st.bonusOffer.until > now;
+  // Only ask the engine about offers whose context holds (this runs after every tap).
+  const relevant: PlacementId[] = offlineReport ? ['offlineDouble'] : shipDay ? ['prestigeBonus'] : ['crate', 'boost'];
+  if (!offlineReport && !shipDay) {
+    if (incident) relevant.push('incidentFix');
+    if (frenzy) relevant.push('frenzyExtend');
+    if (bonus) relevant.push('bonusMultiply');
+  }
   const available: Partial<Record<PlacementId, boolean>> = {};
-  for (const id of ids) available[id] = offerStatus(st, s.content, id, now).available && adReady(id);
-  return pickPlacement({
-    available,
-    offlineReport: !!st.offline && !s.launch,
-    shipDay: s.shipDay?.step === 'choose',
-    incident: !!st.incident && st.incident.until > now,
-    frenzy: !!st.frenzy && st.frenzy.until > now,
-    secondsToNextBuy: secondsToNextBuy(s),
-    settled: totalRate(st, s.content, now) > 0,
-    bonus: !!st.bonusOffer && st.bonusOffer.until > now,
-  });
+  for (const id of relevant) available[id] = offerStatus(st, s.content, id, now).available && adReady(id);
+  const settled = totalRate(st, s.content, now) > 0;
+  const boostMatters = !!available.boost && !available.crate && !incident && !frenzy && !bonus;
+  return pickPlacement({ available, offlineReport, shipDay, incident, frenzy, bonus, settled, secondsToNextBuy: boostMatters ? secondsToNextBuy(s) : 0 });
+}
+
+let placementMemo: { state: unknown; shipDay: unknown; launch: unknown; now: number; ads: string; value: PlacementId | null } | null = null;
+
+/** `currentPlacement`, computed once per store change and clock second however many components ask. */
+function cachedPlacement(s: GarageStore, now: number): PlacementId | null {
+  const a = useAdStore.getState();
+  const ads = `${a.adsRemoved}|${a.mock !== null}`;
+  const m = placementMemo;
+  if (m && m.state === s.state && m.shipDay === s.shipDay && m.launch === s.launch && m.now === now && m.ads === ads) return m.value;
+  const value = currentPlacement(s, now);
+  placementMemo = { state: s.state, shipDay: s.shipDay, launch: s.launch, now, ads, value };
+  return value;
 }
 
 /** The placement on screen now; re-evaluated every second and when the context changes. */
 export function useAdPlacement(): PlacementId | null {
   const now = useNowEvery(1000);
   useAdStore((a) => `${a.adsRemoved}|${a.mock !== null}`);
-  return useGarage((s) => currentPlacement(s, now), (p) => p ?? '');
+  return useGarage((s) => cachedPlacement(s, now), (p) => p ?? '');
 }
 
 /**

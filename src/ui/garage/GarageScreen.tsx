@@ -7,9 +7,8 @@ import { useInsets } from '../hooks/useInsets';
 import { useLayoutMode } from '../hooks/useLayoutMode';
 import { t } from '../i18n';
 import { AmbientProvider } from '../motion/ambient';
-import { colors, shape, spacing, voice } from '../theme';
+import { colors, shape, voice } from '../theme';
 import { installGarageDebug } from './debug';
-import { OfferSlot } from './adOffer';
 import { GarageHeader } from './GarageHeader';
 import { GarageTicker } from './GarageTicker';
 import { useGarageLoop } from './hooks';
@@ -26,7 +25,7 @@ import { TapStage } from './TapStage';
 /**
  * Garage: the idle clicker. Landscape: the lab (a room you can see, with the model as the
  * tap target) on the left, the Build / Upgrades / Lab / Ship panel on the right, the
- * ticker along the bottom. Narrow: stacked, with the one ad offer in its own row.
+ * ticker along the bottom. Narrow: stacked.
  * Everything that covers the screen is an in-tree overlay.
  */
 export function GarageScreen() {
@@ -64,9 +63,6 @@ export function GarageScreen() {
             </View>
           ) : (
             <View style={styles.narrowBody}>
-              <View style={styles.narrowOffers}>
-                <OfferSlot />
-              </View>
               <View style={styles.narrowStage}>
                 <TapStage compact />
               </View>
@@ -98,7 +94,6 @@ const styles = StyleSheet.create({
   stageCol: { flex: 1, minWidth: 0 },
   panelCol: { flex: 1.15, minWidth: 0, borderLeftWidth: shape.hairline, borderColor: colors.border, backgroundColor: colors.bg },
   narrowBody: { flex: 1 },
-  narrowOffers: { flexDirection: 'row', justifyContent: 'center', paddingVertical: spacing.xs },
   narrowStage: { height: '42%' },
   narrowPanel: { flex: 1, borderTopWidth: shape.hairline, borderColor: colors.border },
 });

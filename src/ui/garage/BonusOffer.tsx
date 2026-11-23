@@ -26,6 +26,11 @@ const key = (b: BonusOfferState | null) => (b ? `${b.until}` : '');
  */
 export const BonusOffer = memo(function BonusOffer({ width, height }: { width: number; height: number }) {
   const bonus = useGarage(sel, key);
+  return bonus ? <BonusOfferBody width={width} height={height} /> : null;
+});
+
+const BonusOfferBody = memo(function BonusOfferBody({ width, height }: { width: number; height: number }) {
+  const bonus = useGarage(sel, key);
   const placement = useAdPlacement();
   const reduced = useReducedMotion();
   const life = useSharedValue(1);

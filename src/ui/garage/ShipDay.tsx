@@ -28,7 +28,6 @@ export function ShipDay() {
   const content = useGarageStore((s) => s.content);
   const insets = useInsets();
   const reduced = useReducedMotion();
-  const placement = useAdPlacement();
   const [choice, setChoice] = useState<string | null>(null);
   if (!shipDay || !state) return null;
   const preview = prestigePreview(state, content);
@@ -121,15 +120,7 @@ export function ShipDay() {
                 </View>
                 <View style={styles.shipRow}>
                   <Button label={t('ui.garage.ship.button')} sublabel={picked ? t('ui.garage.ship.gain', { hype: picked.gain }) : undefined} variant="ink" onPress={() => ship(false)} testID="garage-shipday-ship" />
-                  {placement === 'prestigeBonus' && picked ? (
-                    <AdButton
-                      placement="prestigeBonus"
-                      label={t('ui.ads.placement.prestigeBonus', { pct: `${bonusPct}%` })}
-                      reward={t('ui.ads.reward.prestigeBonus', { hype: picked.bonusGain })}
-                      status={offerStatus(state, content, 'prestigeBonus')}
-                      onRewarded={() => ship(true)}
-                    />
-                  ) : null}
+                  {picked ? <LaunchBonus pct={bonusPct} hype={picked.bonusGain} onRewarded={() => ship(true)} /> : null}
                 </View>
               </View>
             ) : null}
@@ -137,6 +128,22 @@ export function ShipDay() {
         </Animated.View>
       </View>
     </Overlay>
+  );
+}
+
+/** The launch bonus ad, when the placement policy picks it. */
+function LaunchBonus({ pct, hype, onRewarded }: { pct: number; hype: number; onRewarded: () => void }) {
+  const placement = useAdPlacement();
+  const { state, content } = useGarageStore.getState();
+  if (placement !== 'prestigeBonus' || !state) return null;
+  return (
+    <AdButton
+      placement="prestigeBonus"
+      label={t('ui.ads.placement.prestigeBonus', { pct: `${pct}%` })}
+      reward={t('ui.ads.reward.prestigeBonus', { hype })}
+      status={offerStatus(state, content, 'prestigeBonus')}
+      onRewarded={onRewarded}
+    />
   );
 }
 

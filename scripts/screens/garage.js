@@ -385,6 +385,16 @@ async function main() {
     await tapId('garage-happening');
     await sleep(150);
     check((await g(() => window.__garage.state().stats.happeningsCaught)) === caught0 + 1, 'tapping a happening collects it');
+    await g(() => window.__garage.bonusOffer('happening'));
+    await page.waitForSelector('[data-testid="garage-bonus-offer"]', { timeout: 5000 });
+    await shot('bonus-offer');
+    const t0b = await g(() => window.__garage.state().tokens);
+    await tapId('ad-bonusMultiply');
+    await page.waitForSelector('[data-testid="mock-ad"]', { timeout: 5000 });
+    await sleep(2300);
+    await tapId('mock-ad-claim');
+    await sleep(300);
+    check((await g(() => window.__garage.state().tokens)) >= t0b + 9999 && !(await has('garage-bonus-offer')), 'the bonus multiplier pays through the test ad and goes');
 
     await g(() => window.__garage.scene('datacentre'));
     await tapId('garage-tab-build');

@@ -20,7 +20,6 @@ const same = (v: string) => v;
 /** "While you were away": what the garage made, Collect, and the opt-in ad that doubles it. */
 export function OfflinePanel({ hidden }: { hidden?: boolean }) {
   const key = useGarage(sel, same);
-  const placement = useAdPlacement();
   const { state, content } = useGarageStore.getState();
   const report = state?.offline;
   if (!key || !report || !state || hidden) return null;
@@ -40,22 +39,30 @@ export function OfflinePanel({ hidden }: { hidden?: boolean }) {
         <Text style={styles.note}>{t('ui.garage.offline.note', { pct: fmtPct(offlineRate(state, content)), cap: fmtTime(offlineCapMs(state, content)) })}</Text>
         <View style={styles.buttons}>
           <Button label={t('ui.garage.offline.collect')} variant={report.doubled ? 'primary' : 'secondary'} onPress={close} style={styles.collect} testID="garage-offline-collect" />
-          {placement === 'offlineDouble' ? (
-            <AdButton
-              placement="offlineDouble"
-              variant="primary"
-              label={t('ui.ads.placement.offlineDouble')}
-              reward={t('ui.ads.reward.offlineDouble', { amount: fmt(report.tokens) })}
-              status={offerStatus(state, content, 'offlineDouble')}
-              onRewarded={() => {
-                useGarageStore.getState().claim('offlineDouble');
-                successHaptic();
-              }}
-            />
-          ) : null}
+          <DoubleOffer amount={fmt(report.tokens)} />
         </View>
       </View>
     </ModalCard>
+  );
+}
+
+/** The offline double ad, when the placement policy picks it. */
+function DoubleOffer({ amount }: { amount: string }) {
+  const placement = useAdPlacement();
+  const { state, content } = useGarageStore.getState();
+  if (placement !== 'offlineDouble' || !state) return null;
+  return (
+    <AdButton
+      placement="offlineDouble"
+      variant="primary"
+      label={t('ui.ads.placement.offlineDouble')}
+      reward={t('ui.ads.reward.offlineDouble', { amount })}
+      status={offerStatus(state, content, 'offlineDouble')}
+      onRewarded={() => {
+        useGarageStore.getState().claim('offlineDouble');
+        successHaptic();
+      }}
+    />
   );
 }
 
