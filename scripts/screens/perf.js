@@ -78,7 +78,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 /** Installed before the app loads: a DevTools hook that counts React commits, a long-task observer and a frame recorder. */
 function instrument() {
-  window.__perf = { commits: 0, longTasks: [], frames: [], recording: false };
+  window.__perf = { commits: 0, longTasks: [], frames: [], recording: false, tickToCommit: [], stepMs: [], tickStart: 0 };
   const perf = window.__perf;
   window.__REACT_DEVTOOLS_GLOBAL_HOOK__ = {
     supportsFiber: true,
@@ -90,8 +90,15 @@ function instrument() {
     onCommitFiberRoot(_id, root) {
       perf.totalCommits = (perf.totalCommits || 0) + 1;
       if (!perf.recording) return;
+      const sinceTick = perf.tickStart ? performance.now() - perf.tickStart : -1;
+      if (perf.tickStart) {
+        perf.tickToCommit.push(sinceTick);
+        perf.tickStart = 0;
+      }
       perf.commits++;
       if (!perf.renders) return;
+      const commitRoots = {};
+      let commitRenders = 0;
       // Which components rendered in this commit (PerformedWork flag), by name, and which of
       // them are roots (rendered while the nearest component above did not).
       const stack = [[root.current, false]];
@@ -106,8 +113,18 @@ function instrument() {
           const t = f.type.render || f.type.type || f.type;
           const name = (t && (t.displayName || t.name)) || 'anon';
           perf.renders[name] = (perf.renders[name] || 0) + 1;
-          if (!parentRendered) perf.roots[name] = (perf.roots[name] || 0) + 1;
+          commitRenders++;
+          if (!parentRendered) {
+            perf.roots[name] = (perf.roots[name] || 0) + 1;
+            commitRoots[name] = (commitRoots[name] || 0) + 1;
+          }
         }
+      }
+      // The heaviest commits: how long since the tick that caused them, what woke up, how much rendered.
+      perf.slowCommits.push({ ms: +sinceTick.toFixed(1), renders: commitRenders, roots: Object.keys(commitRoots).join(' ') });
+      if (perf.slowCommits.length > 40) {
+        perf.slowCommits.sort((a, b) => b.renders - a.renders);
+        perf.slowCommits.length = 20;
       }
     },
     onCommitFiberUnmount() {},
@@ -131,6 +148,11 @@ function instrument() {
   requestAnimationFrame(loop);
 }
 
+const q = (arr, p) => {
+  const a = arr.slice().sort((x, y) => x - y);
+  return a.length ? +a[Math.min(a.length - 1, Math.floor(a.length * p))].toFixed(1) : 0;
+};
+
 function summarise(name, raw, extra = {}) {
   const frames = raw.frames.slice().sort((a, b) => a - b);
   const avg = frames.reduce((s, f) => s + f, 0) / Math.max(1, frames.length);
@@ -147,6 +169,8 @@ function summarise(name, raw, extra = {}) {
     longestTaskMs: Math.round(raw.longTasks.reduce((m, d) => Math.max(m, d), 0)),
     over100: raw.longTasks.filter((d) => d > 100).length,
     commits: raw.commits,
+    ...(raw.stepMs && raw.stepMs.length ? { tickMsMed: q(raw.stepMs, 0.5), tickMsP95: q(raw.stepMs, 0.95), tickMsMax: q(raw.stepMs, 1) } : {}),
+    ...(raw.tickToCommit && raw.tickToCommit.length ? { toCommitMsMed: q(raw.tickToCommit, 0.5), toCommitMsP95: q(raw.tickToCommit, 0.95), toCommitMsMax: q(raw.tickToCommit, 1) } : {}),
     ...extra,
   };
   return out;
@@ -166,6 +190,29 @@ function printProfile(profile) {
   const total = [...self.values()].reduce((a, b) => a + b, 0);
   const top = [...self.entries()].sort((a, b) => b[1] - a[1]).slice(0, Number(process.env.PROFILE_TOP || 30));
   for (const [k, v] of top) console.log(`${((v / total) * 100).toFixed(1).padStart(5)}%  ${(v / 1000).toFixed(0).padStart(6)}ms  ${k}`);
+  // PROFILE_FOCUS=name: inclusive time of the functions called (at any depth) under `name`.
+  if (process.env.PROFILE_FOCUS) {
+    const parentOf = new Map();
+    for (const n of profile.nodes) for (const c of n.children || []) parentOf.set(c, n.id);
+    const under = new Map();
+    let focusTotal = 0;
+    for (let i = 0; i < profile.samples.length; i++) {
+      const chain = [];
+      for (let id = profile.samples[i]; id !== undefined; id = parentOf.get(id)) chain.push(byId.get(id).callFrame);
+      const at = chain.findIndex((f) => f.functionName === process.env.PROFILE_FOCUS);
+      if (at < 0) continue;
+      focusTotal += dt[i] || 0;
+      const seen = new Set();
+      for (const f of chain.slice(0, at)) {
+        const key = `${f.functionName || '(anon)'} ${f.url.split('/').pop().slice(0, 12)}:${f.lineNumber}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        under.set(key, (under.get(key) || 0) + (dt[i] || 0));
+      }
+    }
+    console.log(`--- under ${process.env.PROFILE_FOCUS}: ${(focusTotal / 1000).toFixed(0)}ms`);
+    for (const [k, v] of [...under.entries()].sort((a, b) => b[1] - a[1]).slice(0, 50)) console.log(`${(v / 1000).toFixed(0).padStart(6)}ms ${((v / focusTotal) * 100).toFixed(0).padStart(3)}%  ${k}`);
+  }
   // Inclusive time per function name (PROFILE=2), for the big entry points.
   if (process.env.PROFILE === '2') {
     const parent = new Map();
@@ -186,35 +233,74 @@ function printProfile(profile) {
 }
 
 
-/** Main-thread self time by trace event name (TRACE=1): what "(program)" in a CPU profile is made of. */
-function printTrace(events) {
+/** The renderer main thread's ids in a trace. */
+function mainThreads(events) {
   const main = new Set();
   for (const e of events) if (e.ph === 'M' && e.name === 'thread_name' && e.args && e.args.name === 'CrRendererMain') main.add(`${e.pid}:${e.tid}`);
+  return main;
+}
+
+/**
+ * Main-thread CPU time (thread time, `tdur`) of the top-level tasks in a trace. Thread time
+ * does not grow when other processes compete for the CPU, nor with Chrome's CPU throttle
+ * (which suspends the thread), so it compares runs fairly on a busy machine: it is the
+ * unthrottled CPU cost on this machine.
+ */
+function traceCpu(events) {
+  const main = mainThreads(events);
+  let cpu = 0;
+  let wall = 0;
+  let first = Infinity;
+  let last = 0;
+  const tasks = [];
+  for (const e of events) {
+    if (!main.has(`${e.pid}:${e.tid}`) || e.ph !== 'X' || e.name !== 'ThreadControllerImpl::RunTask') continue;
+    const d = (e.tdur || 0) / 1000;
+    cpu += d;
+    wall += (e.dur || 0) / 1000;
+    tasks.push(d);
+    first = Math.min(first, e.ts);
+    last = Math.max(last, e.ts + (e.dur || 0));
+  }
+  tasks.sort((a, b) => b - a);
+  return { cpuMs: cpu, wallMs: wall, spanMs: (last - first) / 1000, topTaskCpuMs: tasks.slice(0, 3).map((x) => +x.toFixed(1)) };
+}
+
+/** Main-thread self CPU time by trace event name (TRACE=1): what "(program)" in a CPU profile is made of. */
+function printTrace(events) {
+  const main = mainThreads(events);
   const spans = [];
   for (const e of events) {
     if (!main.has(`${e.pid}:${e.tid}`)) continue;
-    if (e.ph === 'X' && e.dur) spans.push({ name: e.name, ts: e.ts, end: e.ts + e.dur });
+    if (e.ph === 'X' && e.dur && e.tdur !== undefined) spans.push({ name: e.name, ts: e.ts, end: e.ts + e.dur, cpu: e.tdur });
   }
   spans.sort((a, b) => a.ts - b.ts || b.end - a.end);
   const self = new Map();
   const stack = [];
-  let first = Infinity;
-  let last = 0;
   for (const sp of spans) {
-    first = Math.min(first, sp.ts);
-    last = Math.max(last, sp.end);
     while (stack.length && stack[stack.length - 1].end <= sp.ts) stack.pop();
     const parent = stack[stack.length - 1];
-    if (parent) self.set(parent.name, (self.get(parent.name) || 0) - Math.min(sp.end, parent.end) + sp.ts);
-    self.set(sp.name, (self.get(sp.name) || 0) + sp.end - sp.ts);
+    if (parent) self.set(parent.name, (self.get(parent.name) || 0) - sp.cpu);
+    self.set(sp.name, (self.get(sp.name) || 0) + sp.cpu);
     stack.push(sp);
   }
-  const wall = Math.max(1, last - first);
   const busy = [...self.values()].reduce((a, b) => a + Math.max(0, b), 0);
-  console.log(`--- main thread self time by trace event (wall ${(wall / 1000).toFixed(0)} ms, busy ${((busy / wall) * 100).toFixed(0)}%)`);
+  console.log(`--- main thread self CPU time by trace event (total ${(busy / 1000).toFixed(0)} ms)`);
   for (const [k, v] of [...self.entries()].sort((a, b) => b[1] - a[1]).slice(0, Number(process.env.TRACE_TOP || 20))) {
-    console.log(`${((v / busy) * 100).toFixed(1).padStart(5)}% of busy  ${(v / 1000).toFixed(0).padStart(6)}ms  ${k}`);
+    console.log(`${((v / busy) * 100).toFixed(1).padStart(5)}%  ${(v / 1000).toFixed(0).padStart(6)}ms  ${k}`);
   }
+}
+
+/** Starts a trace: light (top-level tasks only, for CPU time) unless TRACE=1. */
+function startTrace(page) {
+  const full = ['devtools.timeline', 'disabled-by-default-devtools.timeline', 'v8.execute', 'blink', 'cc', 'toplevel', '__metadata'];
+  return page.tracing.start({ categories: process.env.TRACE ? full : ['toplevel', '__metadata'] });
+}
+
+async function stopTrace(page) {
+  const events = JSON.parse(new (require('node:util').TextDecoder)().decode(await page.tracing.stop())).traceEvents;
+  if (process.env.TRACE) printTrace(events);
+  return traceCpu(events);
 }
 
 /** Cold loads: start screen and autostart to the map, with what they load. */
@@ -391,6 +477,23 @@ async function main() {
         }
       });
     }, DAYS);
+    // Time each tick: the store's tick() (engine step and store listeners) and the time from
+    // its start to the React commit it causes.
+    await page.evaluate(() => {
+      const store = window.__game.store;
+      const orig = store.getState().tick;
+      store.setState({
+        tick() {
+          const perf = window.__perf;
+          const t0 = performance.now();
+          orig();
+          if (perf.recording) {
+            perf.stepMs.push(performance.now() - t0);
+            perf.tickStart = t0;
+          }
+        },
+      });
+    });
     await sleep(1500);
     if (process.env.RENDERS) await page.evaluate(() => (window.__perfRenders = true));
     const cdp = await page.createCDPSession();
@@ -412,19 +515,21 @@ async function main() {
         : Promise.resolve();
     const start = () =>
       page.evaluate(() => {
-        Object.assign(window.__perf, { commits: 0, longTasks: [], frames: [], recording: true, renders: window.__perfRenders ? {} : null, roots: {} });
+        Object.assign(window.__perf, { commits: 0, longTasks: [], frames: [], recording: true, renders: window.__perfRenders ? {} : null, roots: {}, tickToCommit: [], stepMs: [], tickStart: 0, slowCommits: [] });
       });
     const stop = () =>
       page.evaluate(() => {
         window.__perf.recording = false;
-        const { commits, longTasks, frames, renders, roots } = window.__perf;
-        return { commits, longTasks: longTasks.slice(), frames: frames.slice(), renders, roots };
+        const { commits, longTasks, frames, renders, roots, tickToCommit, stepMs, slowCommits } = window.__perf;
+        return { commits, longTasks: longTasks.slice(), frames: frames.slice(), renders, roots, tickToCommit: tickToCommit.slice(), stepMs: stepMs.slice(), slowCommits };
       });
 
     if (process.env.PREVISIT) {
       // Visit the other tabs first, so their (now hidden) screens are mounted during the run.
       const tabs = await page.$$('[role="tab"]');
-      for (const i of [1, 2, 0]) {
+      // PREVISIT=1: Trees and News; or a list of tab indices, e.g. PREVISIT=1,2,3 (3 = Race).
+      const visit = process.env.PREVISIT === '1' ? [1, 2] : process.env.PREVISIT.split(',').map(Number);
+      for (const i of [...visit, 0]) {
         await tabs[i].click();
         await sleep(800);
       }
@@ -437,9 +542,7 @@ async function main() {
         await cdp.send('Profiler.setSamplingInterval', { interval: 500 });
         await cdp.send('Profiler.start');
       }
-      if (process.env.TRACE) {
-        await page.tracing.start({ categories: ['devtools.timeline', 'disabled-by-default-devtools.timeline', 'v8.execute', 'blink', 'cc', 'toplevel', '__metadata'] });
-      }
+      await startTrace(page);
       await live();
       await start();
       const began = Date.now();
@@ -452,17 +555,19 @@ async function main() {
       await page.evaluate(() => window.__game.store.getState().setSpeed(0));
       const raw = await stop();
       if (process.env.PROFILE) printProfile((await cdp.send('Profiler.stop')).profile);
-      if (process.env.TRACE) printTrace(JSON.parse(new (require('node:util').TextDecoder)().decode(await page.tracing.stop())).traceEvents);
+      const cpu = await stopTrace(page);
       if (raw.renders) {
         const top = Object.entries(raw.renders).sort((a, b) => b[1] - a[1]).slice(0, 40);
         console.log('--- component renders per tick');
         for (const [k, v] of top) console.log(`${(v / TICKS).toFixed(2).padStart(7)}  ${k}`);
         console.log('--- render roots per tick (rendered while the component above did not)');
         for (const [k, v] of Object.entries(raw.roots).sort((a, b) => b[1] - a[1]).slice(0, 25)) console.log(`${(v / TICKS).toFixed(2).padStart(7)}  ${k}`);
+        console.log('--- largest commits (components rendered; ms since the tick, -1 = not caused by a tick)');
+        for (const c of raw.slowCommits.sort((a, b) => b.renders - a.renders).slice(0, 12)) console.log(`${String(c.renders).padStart(5)}  ${String(c.ms).padStart(6)}ms  ${c.roots}`);
       }
       const t1 = await page.evaluate(() => window.__game.store.getState().state.tick);
       const ticks = t1 - t0;
-      results.push(summarise('run', raw, { ticks, seconds: +secs.toFixed(1), ticksPerSecond: +(ticks / secs).toFixed(2), targetTps: 6, commitsPerTick: +(raw.commits / Math.max(1, ticks)).toFixed(2) }));
+      results.push(summarise('run', raw, { ticks, seconds: +secs.toFixed(1), ticksPerSecond: +(ticks / secs).toFixed(2), targetTps: 6, commitsPerTick: +(raw.commits / Math.max(1, ticks)).toFixed(2), cpuMsPerTick: +(cpu.cpuMs / Math.max(1, ticks)).toFixed(2), cpuShare: +(cpu.cpuMs / (secs * 1000)).toFixed(2), topTaskCpuMs: cpu.topTaskCpuMs.join('/') }));
     }
 
     if (SCENARIOS.has('pan')) {
@@ -473,7 +578,9 @@ async function main() {
       });
       await page.evaluate(() => window.__game.store.getState().setSpeed(3));
       await live();
+      await startTrace(page);
       await start();
+      const panBegan = Date.now();
       const cx = box.x + box.w / 2;
       const cy = box.y + box.h / 2;
       await page.mouse.move(cx, cy);
@@ -495,8 +602,10 @@ async function main() {
         await sleep(60);
       }
       const raw = await stop();
+      const panSecs = (Date.now() - panBegan) / 1000;
+      const cpu = await stopTrace(page);
       await page.evaluate(() => window.__game.store.getState().setSpeed(0));
-      results.push(summarise('pan', raw));
+      results.push(summarise('pan', raw, { seconds: +panSecs.toFixed(1), cpuShare: +(cpu.cpuMs / (panSecs * 1000)).toFixed(2), topTaskCpuMs: cpu.topTaskCpuMs.join('/') }));
     }
 
     if (SCENARIOS.has('trees')) {
