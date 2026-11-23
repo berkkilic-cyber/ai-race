@@ -22,7 +22,7 @@ Components stay shared: they read these tokens (and draw decoration through `src
 
 Screenshots: docs/screenshots/themes/neon-*.png (map at rest, midgame, critical, region panel, event card and result, trees, start, end), `compare-neon-vs-blueprint.png` (the same midgame map in both), and the `neon-*` sets in docs/screenshots/maplive and docs/screenshots/clarity.
 
-**`blueprint` is now an alternative** (with `hazard` and `candy`), kept because it is still the most distinctive of the set. It was chosen on distinctiveness first and phone legibility second. A saturated cobalt drawing with white linework and one signal-yellow lab is unlike any strategy or tycoon game we could name (those lean dark navy, parchment or black-and-yellow), and one screenshot without a logo is recognisable: the drafting grid, the crop-marked panels and the title block carry the identity even when the map is quiet. On a phone the yellow player territory is the only warm colour on the map, so it reads at a glance; white and pale-cyan text on cobalt is above 7:1 (labels above 4.5:1). `hazard` is the runner-up (the most legible, but black and safety yellow is a familiar industrial trope); `candy` is the most surprising but its pale map is the weakest at a glance.
+**`blueprint` is now an alternative** (with `hazard` and `candy`), kept because it is still the most distinctive of the set. It was chosen on distinctiveness first and phone legibility second. A saturated cobalt drawing with white linework and one signal-yellow lab is unlike any strategy or tycoon game we could name (those lean dark navy, parchment or black-and-yellow), and one screenshot without a logo is recognisable: the drafting grid, the crop-marked panels and the title block carry the identity even when the map is quiet. On a phone the yellow player territory is the only warm colour on the map, so it reads at a glance; white and pale-cyan text on cobalt is above 7:1 (labels above 4.5:1). `hazard` is the runner-up (the most legible, but black and safety yellow is a familiar industrial trope); `candy` is the most surprising but its pale map is the weakest at a glance. Before blueprint or candy is offered in Turkish, their fonts need Turkish glyphs (see Type, "Turkish glyphs").
 
 **`paper` is retired from the default** (and `night` with it): warm cream, a burnt-orange accent, a display serif and a rounded orange mascot read as the house style of an AI assistant product, not as a game. Both still build with `EXPO_PUBLIC_THEME=paper` / `night` for comparison.
 
@@ -61,6 +61,15 @@ Every face is an open-licence (SIL OFL 1.1) Google font, bundled through its `@e
 | news | Saira Extra Condensed Bold / ExtraBold | Sofia Sans Extra Condensed Bold / ExtraBold | Big Shoulders Bold / Black | Anton | Barlow Condensed Bold / ExtraBold |
 
 The loud voice is always uppercase, condensed and heavy; numbers that change use tabular figures.
+
+**Turkish glyphs (ğ Ğ ı İ ş Ş, plus ç ö ü).** The game ships in Turkish too (docs/GLOSSARY.tr.md), and the faces must carry those letters before a theme is offered to players:
+
+- `neon` (default): fine, every face draws the Turkish letters.
+- `blueprint`: **B612 and B612 Mono lack Turkish glyphs** (heading, number, label). In Turkish the missing letters fall back to the system face mid-word. Swap or extend these faces before blueprint is offered in Turkish.
+- `candy`: **Fredoka lacks Turkish glyphs** (heading, number, label, body). Same fallback; swap or extend before candy is offered in Turkish.
+- `hazard`: not reported missing by the first Turkish pass; check on a device before offering it.
+
+Capitals: text under a case-changing preset is cased in JS with the Turkish rules by the locale Text (`src/ui/locale/Text.tsx`), so a face only needs the dotted capital İ and the dotless ı, not locale-aware casing.
 
 ## Composure
 

@@ -12,7 +12,7 @@ Every Turkish string follows this table. If a term changes, change it here first
 - **The player is "sen".** Informal, second person singular, everywhere: buttons are imperatives ("Kur", "Satın al", "Yayınla").
 - **Parody names are never translated.** MVIDIA, NopenAI, Zlaude, Germini, ChatJPT, DeepSleek, Llamarama, LeaderBored, the rival labs and the brands keep their exact spelling. Suffixes go after an apostrophe: MVIDIA'nın.
 - **Placeholders** ({lab}, {region}, {model} ...) are kept exactly. Turkish puts case suffixes on nouns, and we cannot know what a variable's last vowel will be. So we write around them: "{lab} lab'ı" or "{region} bölgesinde" instead of "{region}'da", or we put the variable where it needs no suffix (as the subject, or before a colon or dash).
-- **Casing:** text shown in capitals is upper-cased in code with the Turkish rules (i → İ, ı → I), through `src/ui/locale/casing.ts`. Never write capitals into the strings to get that effect.
+- **Casing:** text shown in capitals is upper-cased in code with the Turkish rules (i → İ, ı → I), through `src/ui/locale/casing.ts`. Never write capitals into the strings to get that effect. Any Text whose style changes the case (the theme's voice presets, `textTransform`) is the locale Text (`src/ui/locale/Text.tsx`), which does this in JS and switches the style's transform off; a test fails if a file renders React Native's Text under such a style.
 
 ## Core terms
 

@@ -51,6 +51,8 @@ export function applyTransform(text: string, transform: Transform, locale: Local
 /**
  * Text for a style that sets textTransform: cased here so Turkish i/İ is right on every
  * platform. Keep the style's textTransform (casing twice is harmless): `{cased(styles.x, label)}`.
+ * Rendered text normally needs nothing: the locale Text (./Text.tsx) does this for every Text
+ * under a case-changing style. Use `cased` for strings that leave a Text (labels passed on).
  */
 export function cased(style: TextStyle | undefined | null | false, text: string): string {
   return style ? applyTransform(text, style.textTransform) : text;
