@@ -26,6 +26,8 @@ import startStringsTr from './strings/start.tr.json';
 import treesStringsTr from './strings/trees.tr.json';
 import tutorialStringsTr from './strings/tutorial.tr.json';
 import garageStringsTr from './strings/garage.tr.json';
+import feelStringsTr from './strings/feel.tr.json';
+import analyticsStringsTr from './strings/analytics.tr.json';
 import localeStrings from './strings/locale.en.json';
 import localeStringsTr from './strings/locale.tr.json';
 
@@ -41,7 +43,7 @@ const UI: Record<string, string> = { ...uiStrings, ...treesStrings, ...eventsStr
  * (`<feature>.tr.json`) in UI_TR once translated. A key missing in Turkish falls back to
  * English (`npm run i18n:check` lists them).
  */
-const UI_TR: Record<string, string> = { ...uiStringsTr, ...treesStringsTr, ...eventsStringsTr, ...startStringsTr, ...tutorialStringsTr, ...momentsStringsTr, ...raceStringsTr, ...garageStringsTr, ...difficultyStringsTr, ...localeStringsTr };
+const UI_TR: Record<string, string> = { ...uiStringsTr, ...treesStringsTr, ...eventsStringsTr, ...startStringsTr, ...tutorialStringsTr, ...momentsStringsTr, ...raceStringsTr, ...garageStringsTr, ...difficultyStringsTr, ...localeStringsTr, ...feelStringsTr, ...analyticsStringsTr };
 const UI_EXTRA: Record<string, string> = { ...localeStrings };
 const UI_BY_LOCALE: Record<Locale, Record<string, string>> = { en: { ...UI, ...UI_EXTRA }, tr: UI_TR };
 
