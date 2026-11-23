@@ -41,10 +41,25 @@ export function errorMessage(error: unknown): string {
   }
 }
 
+const errorListeners = new Set<(source: string, message: string) => void>();
+
+/** Called for every logged error with where it came from and its message (analytics). Returns an unsubscribe. */
+export function onLoggedError(listener: (source: string, message: string) => void): () => void {
+  errorListeners.add(listener);
+  return () => errorListeners.delete(listener);
+}
+
 /** Logs an error with the tag, where it came from, and its stack when there is one. */
 export function logError(source: string, error: unknown, extra?: string): void {
   const stack = error instanceof Error && error.stack ? `\n${error.stack}` : '';
   console.error(`${ERROR_TAG} ${source}: ${errorMessage(error)}${extra ? `\n${extra}` : ''}${stack}`);
+  for (const l of errorListeners) {
+    try {
+      l(source, errorMessage(error));
+    } catch {
+      // a listener never turns one error into two
+    }
+  }
 }
 
 interface ErrorUtilsLike {

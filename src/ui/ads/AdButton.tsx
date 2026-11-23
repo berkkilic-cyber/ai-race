@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } fro
 
 import { formatDuration, type OfferStatus } from '@/idle';
 
+import { useAdOfferShown } from '../analytics/hooks';
 import { t } from '../i18n';
 import { colors, flatShadow, radius, shape, spacing, tabular, touch, type, voice } from '../theme';
 import { adReady, requestRewardedAd } from './ads';
@@ -39,8 +40,9 @@ export function AdButton({ placement, label, reward, status, onRewarded, showCoo
   useAdStore((s) => s.mock !== null);
   const [busy, setBusy] = useState(false);
   const waiting = !status.available && (status.reason === 'cooldown' || status.reason === 'dailyCap') && status.readyAt !== undefined;
-  if (!status.available && !(showCooldown && waiting)) return null;
-  if (!adsRemoved && !adReady(placement) && !busy) return null;
+  const visible = (status.available || (!!showCooldown && waiting)) && (adsRemoved || adReady(placement) || busy);
+  useAdOfferShown(placement, visible && status.available && !adsRemoved);
+  if (!visible) return null;
   const disabled = !status.available || busy;
   const press = () => {
     if (disabled) return;
