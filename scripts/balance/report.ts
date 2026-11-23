@@ -311,3 +311,113 @@ export function runLengthTables(records: RunRecord[], lengths: string[], default
   out.push(table(['Ending', short, long, 'Ratio'], endingRows));
   return out.join('\n');
 }
+
+/** A node as the route report needs it (id, tree, row). */
+export interface RouteNode {
+  id: string;
+  tree: string;
+  row: number;
+}
+
+const ROUTE_POLICIES = ['sensible', 'capability', 'reach', 'shadow', 'random', 'idle'];
+const SINGLE_ROUTES = ['capability', 'reach', 'shadow'];
+
+/**
+ * Routes and founders, one block per run length and difficulty: every policy's win rate overall
+ * and per founder, its endings, run length, how many nodes of each tree it owned at the end, how
+ * often each tree's top nodes (the two highest rows) were bought and how often an event risk
+ * fired; then the task 27 target checks (single routes within 12 pp, mixed ≥ best single − 5,
+ * founders within 8 pp for sensible, no ending variant above 45%).
+ */
+export function routeReport(records: RunRecord[], nodes: RouteNode[], defaultLevel: string, defaultLength: string): string {
+  const out: string[] = [];
+  const trees = [...new Set(nodes.map((n) => n.tree))];
+  const treeOf = new Map(nodes.map((n) => [n.id, n.tree]));
+  const maxRow = new Map(trees.map((t) => [t, Math.max(...nodes.filter((n) => n.tree === t).map((n) => n.row))]));
+  const topNodes = nodes.filter((n) => n.row >= (maxRow.get(n.tree) ?? 0) - 1);
+  const founders = [...new Set(records.map((r) => r.job.founderId))].sort();
+  const lengths = [...new Set(records.map((r) => r.job.runLength ?? defaultLength))];
+  const levels = [...new Set(records.map((r) => r.job.difficulty ?? defaultLevel))];
+  const winRate = (runs: RunRecord[]) => (runs.length === 0 ? 0 : runs.filter((r) => r.kind === 'win').length / runs.length);
+  const owns = (r: RunRecord, id: string) => r.nodeTicks.some((n) => n.id === id);
+  for (const length of lengths) {
+    for (const level of levels) {
+      const at = records.filter((r) => (r.job.runLength ?? defaultLength) === length && (r.job.difficulty ?? defaultLevel) === level && r.job.momentSkill === undefined);
+      const policies = ROUTE_POLICIES.filter((p) => at.some((r) => r.job.policy === p));
+      if (policies.length === 0) continue;
+      const of = (p: string) => at.filter((r) => r.job.policy === p);
+      out.push(`#### Routes: ${length} / ${level}\n`);
+      out.push(
+        table(
+          ['Policy', 'n', 'Win', ...founders, 'agi', 'dep', 'mono', 'banned', 'revolt', 'rivalAgi', 'Ticks p50', ...trees.map((t) => `${t} nodes p50`), 'Risks fired / run', 'Rivals bought / run'],
+          policies.map((p) => {
+            const runs = of(p);
+            const t = countBy(runs, (r) => r.trigger ?? 'none');
+            return [
+              p,
+              String(runs.length),
+              pct(runs.filter((r) => r.kind === 'win').length, runs.length),
+              ...founders.map((f) => pct(runs.filter((r) => r.job.founderId === f && r.kind === 'win').length, runs.filter((r) => r.job.founderId === f).length)),
+              ...['agi', 'dependence', 'monopoly', 'banned', 'revolt', 'rivalAgi'].map((x) => pct(t.get(x) ?? 0, runs.length)),
+              fmt(median(runs.map((r) => r.ticks))),
+              ...trees.map((tree) => fmt(median(runs.map((r) => r.nodeTicks.filter((n) => treeOf.get(n.id) === tree).length)))),
+              (runs.reduce((s, r) => s + r.risksFired, 0) / Math.max(1, runs.length)).toFixed(2),
+              (runs.reduce((s, r) => s + r.rivals.filter((x) => x.eliminated === 'acquired' && x.byPlayer).length, 0) / Math.max(1, runs.length)).toFixed(2),
+            ];
+          }),
+        ),
+      );
+      out.push('');
+      out.push('Top nodes bought (share of runs; median tick when bought):\n');
+      out.push(
+        table(
+          ['Node', ...policies],
+          topNodes.map((n) => [
+            n.id,
+            ...policies.map((p) => {
+              const runs = of(p);
+              const ticks = runs.flatMap((r) => r.nodeTicks.filter((x) => x.id === n.id).map((x) => x.tick));
+              return `${pct(runs.filter((r) => owns(r, n.id)).length, runs.length)} @${fmt(median(ticks))}`;
+            }),
+          ]),
+        ),
+      );
+      out.push('');
+      const sensible = of('sensible');
+      const singles = SINGLE_ROUTES.filter((p) => of(p).length > 0).map((p) => ({ p, rate: winRate(of(p)) }));
+      const lines: string[] = [];
+      if (singles.length > 1) {
+        const best = singles.reduce((a, b) => (b.rate > a.rate ? b : a));
+        const worst = singles.reduce((a, b) => (b.rate < a.rate ? b : a));
+        const spread = (best.rate - worst.rate) * 100;
+        lines.push(`single routes: ${singles.map((s) => `${s.p} ${(s.rate * 100).toFixed(1)}%`).join(', ')}; spread ${spread.toFixed(1)} pp ${spread <= 12 ? 'OK' : 'MISS (> 12)'}`);
+        if (sensible.length > 0) {
+          const margin = (winRate(sensible) - best.rate) * 100;
+          lines.push(`mixed (sensible) ${(winRate(sensible) * 100).toFixed(1)}% vs best single ${best.p}: ${margin >= 0 ? '+' : ''}${margin.toFixed(1)} pp ${margin >= -5 ? 'OK' : 'MISS (< -5)'}`);
+        }
+      }
+      if (sensible.length > 0) {
+        const rates = founders.map((f) => winRate(sensible.filter((r) => r.job.founderId === f)));
+        const spread = (Math.max(...rates) - Math.min(...rates)) * 100;
+        lines.push(`founders (sensible): ${founders.map((f, i) => `${f} ${(rates[i] * 100).toFixed(1)}%`).join(', ')}; spread ${spread.toFixed(1)} pp ${spread <= 8 ? 'OK' : 'MISS (> 8)'}`);
+        const allFounders = at.filter((r) => r.job.policy !== 'idle' && r.job.policy !== 'random');
+        const frates = founders.map((f) => winRate(allFounders.filter((r) => r.job.founderId === f)));
+        lines.push(`founders (four planning bots pooled): ${founders.map((f, i) => `${f} ${(frates[i] * 100).toFixed(1)}%`).join(', ')}`);
+      }
+      for (const [label, pool] of [
+        ['sensible', sensible],
+        ['four planning bots', at.filter((r) => r.job.policy !== 'idle' && r.job.policy !== 'random')],
+      ] as const) {
+        if (pool.length === 0) continue;
+        const endings = [...countBy(pool, (r) => r.endingId ?? 'none').entries()].sort((a, b) => b[1] - a[1]);
+        const top = endings[0];
+        lines.push(
+          `endings (${label}, ${endings.length} variants): ${endings.map(([id, c]) => `${id} ${pct(c, pool.length)}`).join(', ')}; largest ${pct(top[1], pool.length)} ${top[1] / pool.length <= 0.45 ? 'OK' : 'MISS (> 45%)'}`,
+        );
+      }
+      out.push(lines.map((l) => `- ${l}`).join('\n'));
+      out.push('');
+    }
+  }
+  return out.join('\n');
+}

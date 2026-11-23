@@ -80,6 +80,10 @@ export interface RunRecord {
   momentsMissed: number;
   /** Event cards the player resolved. */
   eventsResolved: number;
+  /** Event choices whose risk fired against the player. */
+  risksFired: number;
+  /** Nodes the player bought, in order, with the tick of purchase. */
+  nodeTicks: { id: string; tick: number }[];
   /** News items without a kind (should stay empty). */
   kindlessNews: number;
   /** Model launches announced: player, rivals. */
@@ -140,6 +144,9 @@ export function simulate(job: Job): RunRecord {
   };
 
   let kindlessNews = 0;
+  let risksFired = 0;
+  let lastEvents = 0;
+  const nodeTicks: { id: string; tick: number }[] = [];
   const launches = { player: 0, rivals: 0 };
   let peakRegulation = 0;
   let peakBacklash = 0;
@@ -184,6 +191,13 @@ export function simulate(job: Job): RunRecord {
       }
     }
     let bought = false;
+    if (player.stats.eventsResolved !== lastEvents) {
+      lastEvents = player.stats.eventsResolved;
+      if (state.lastEventResult?.riskFired) risksFired++;
+    }
+    if (player.ownedNodes.length > nodeTicks.length) {
+      for (const id of player.ownedNodes) if (!nodeTicks.some((n) => n.id === id)) nodeTicks.push({ id, tick });
+    }
     if (player.stats.nodesBought !== lastNodes) {
       lastNodes = player.stats.nodesBought;
       firstNodeTick ??= tick;
@@ -289,6 +303,8 @@ export function simulate(job: Job): RunRecord {
     momentsCollected: player.stats.momentsCollected,
     momentsMissed: player.stats.momentsMissed,
     eventsResolved: player.stats.eventsResolved,
+    risksFired,
+    nodeTicks,
     kindlessNews,
     launches,
     seenEvents: job.coverage ? state.seenEvents.slice() : [],
@@ -330,6 +346,8 @@ function emptyRecord(job: Job, error: string): RunRecord {
     momentsCollected: 0,
     momentsMissed: 0,
     eventsResolved: 0,
+    risksFired: 0,
+    nodeTicks: [],
     kindlessNews: 0,
     launches: { player: 0, rivals: 0 },
     seenEvents: [],

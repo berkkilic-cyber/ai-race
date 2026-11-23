@@ -11,6 +11,8 @@
  *                      [--runLength sprint|a,b|all]   (default: the pack's default run length;
  *                                                      with several, adds a table comparing them)
  *                      [--brief]                      (summary tables only, no per-policy detail)
+ *                      [--routes]                     (routes and founders: per-founder win rates, top
+ *                                                      nodes bought, risks fired, target checks)
  *
  * Seeds are base + run index, so a report is reproducible; tune on one --seed
  * and confirm on another.
@@ -23,7 +25,7 @@ import type { BotPolicy, ContentPack } from '@/engine';
 
 import { coverageReport } from './coverage';
 import { FOUNDERS, HOME_REGIONS } from './jobs';
-import { difficultyTable, policyReport, runLengthTables, summaryTable } from './report';
+import { difficultyTable, policyReport, routeReport, runLengthTables, summaryTable } from './report';
 import { PACK, setBalanceOverrides, simulate, type Job, type RunRecord } from './simulate';
 
 const ALL_POLICIES: BotPolicy[] = ['sensible', 'capability', 'reach', 'shadow', 'random', 'idle'];
@@ -46,10 +48,12 @@ interface Options {
   runLengths?: string[];
   /** Only the summary tables. */
   brief: boolean;
+  /** Add the routes and founders report. */
+  routes: boolean;
 }
 
 function parseArgs(argv: string[]): Options {
-  const options: Options = { runs: 1000, policies: ALL_POLICIES, seed: 1, coverage: false, workers: availableParallelism(), balance: {}, brief: false };
+  const options: Options = { runs: 1000, policies: ALL_POLICIES, seed: 1, coverage: false, workers: availableParallelism(), balance: {}, brief: false, routes: false };
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     const next = () => argv[++i];
@@ -70,6 +74,7 @@ function parseArgs(argv: string[]): Options {
       options.runLengths = value === 'all' ? (PACK.runLengths ?? []).map((r) => r.id) : value.split(',');
       for (const id of options.runLengths) if (!(PACK.runLengths ?? []).some((r) => r.id === id)) throw new Error(`Unknown run length ${id}`);
     } else if (arg === '--brief') options.brief = true;
+    else if (arg === '--routes') options.routes = true;
     else if (arg === '--moments') options.moments = JSON.parse(readFileSync(next(), 'utf8')) as ContentPack['moments'];
     else throw new Error(`Unknown argument ${arg}`);
   }
@@ -178,6 +183,10 @@ async function main(): Promise<void> {
   }
   if (multiLength) {
     out.push(runLengthTables(records, lengths as string[], PACK.defaultDifficulty ?? 'none'));
+    out.push('');
+  }
+  if (options.routes) {
+    out.push(routeReport(records, PACK.nodes, PACK.defaultDifficulty ?? 'none', PACK.defaultRunLength ?? 'none'));
     out.push('');
   }
   if (!options.brief) {
