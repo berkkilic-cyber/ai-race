@@ -116,7 +116,9 @@ async function runSize(browser, base, [W, H]) {
   await page.goto(`${base}/?autostart=1&seed=5&runLength=sprint&${q}`, { waitUntil: 'networkidle0' });
   await page.waitForFunction(() => location.pathname === '/game' && !!window.__game, { timeout: 10000 });
   await game(() => window.__game.store.getState().setSpeed(1));
-  await game(() => window.__game.advance(200, { bot: true }));
+  // 206, not 200: with seed 5 an event card arrives on tick 201, and a card (which is modal)
+  // popping up between this pause and the tap below would cover the menu button.
+  await game(() => window.__game.advance(206, { bot: true }));
   await sleep(600);
   const playing = await snapshot();
   check(playing.runLength === 'sprint' && playing.tick >= 200, `${tag}: Sprint run at tick ${playing.tick}`);
