@@ -158,6 +158,7 @@ export function roomTint(scene: string) {
     playerText: c('A', colors.playerText),
     text: c('h', colors.text),
     dim: c('M', colors.dim),
+    second: c('s', colors.playerText),
   };
 }
 
@@ -252,7 +253,7 @@ function Backdrop({ scene, g }: { scene: string; g: Geometry }) {
           <Path d={sky} fill={T.raised} />
           <Circle cx={tx} cy={y0 + fh * 0.28} r={Math.max(3, fh * 0.1)} fill="none" stroke={T.playerText} strokeWidth={1} />
           <Path d={`M${n1(tx - 3)} ${n1(y0 + fh * 0.36)}L${n1(tx - 5)} ${n1(y1 - fh * 0.15)}M${n1(tx + 3)} ${n1(y0 + fh * 0.36)}L${n1(tx + 5)} ${n1(y1 - fh * 0.15)}`} stroke={T.playerText} strokeWidth={1} />
-          <Rect x={x0 + fw * 0.1} y={y0 + fh * 0.12} width={fw * 0.36} height={fh * 0.2} fill={T.player} opacity={0.75} />
+          <Rect x={x0 + fw * 0.1} y={y0 + fh * 0.12} width={fw * 0.36} height={fh * 0.2} fill={T.second} opacity={0.85} />
           <Path d={`M${n1(x0 + fw * 0.5)} ${n1(y0)}v${n1(fh)}`} stroke={line} strokeWidth={1} />
           <Path d={`M${n1(w * 0.3)} ${n1(floor)}l${n1(w * 0.02)} -18l${n1(w * 0.02)} 18`} stroke={line} strokeWidth={1} fill="none" />
         </G>
@@ -275,7 +276,7 @@ function Backdrop({ scene, g }: { scene: string; g: Geometry }) {
         <G>
           <Path d={grid} stroke={T.playerText} strokeWidth={0.75} opacity={0.35} />
           <Path d={links} stroke={T.playerText} strokeWidth={0.75} opacity={0.5} />
-          <Path d={nodes} fill={T.player} opacity={0.75} />
+          <Path d={nodes} fill={T.second} opacity={0.85} />
         </G>
       );
     }
@@ -364,14 +365,15 @@ const Leds = memo(function Leds({ w, h, racks, scene, ceiling }: { w: number; h:
 });
 
 /** The later purchases on a shelf at the top right of the back wall. */
-const Shelf = memo(function Shelf({ icons, w, h }: { icons: string[]; w: number; h: number }) {
+const Shelf = memo(function Shelf({ icons, w, h, scene }: { icons: string[]; w: number; h: number; scene: string }) {
+  const T = roomTint(scene);
   if (icons.length === 0) return null;
   const size = Math.max(16, Math.min(24, h * 0.07));
   return (
     <View style={[styles.shelf, { bottom: h * 0.05, right: w * 0.03 }]} pointerEvents="none">
       {icons.map((name) => (
         <View key={name} style={styles.shelfItem}>
-          <Icon name={name} size={size} color={colors.text} accent={colors.player} />
+          <Icon name={name} size={size} color={T.text} accent={T.player} />
         </View>
       ))}
     </View>
@@ -385,7 +387,7 @@ export const LabRoom = memo(function LabRoom({ scene, buckets, w, h, ceiling = 0
     <View style={StyleSheet.absoluteFill} pointerEvents="none" testID={`garage-room-${scene}`}>
       <RoomDrawing scene={scene} buckets={buckets} w={w} h={h} ceiling={ceiling} />
       <Leds w={w} h={h} racks={buckets.racks} scene={scene} ceiling={ceiling} />
-      <Shelf icons={buckets.shelf} w={w} h={h} />
+      <Shelf icons={buckets.shelf} w={w} h={h} scene={scene} />
     </View>
   );
 });

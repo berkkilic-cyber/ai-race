@@ -5,6 +5,7 @@
  * transparency: the art is flat colour, so indexed files are small, and the same input
  * always gives the same bytes (fixed compression level, no time or text chunks).
  */
+/* global Buffer */
 const zlib = require('node:zlib');
 
 const SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
