@@ -68,13 +68,14 @@ const garage = {
       const phones = [0, 2, 4, 6, 8, 10, 10][level];
       c.draw(G.pegboard(frame, phones), 1, 0);
     }),
-    gpu: tier({ x: 142, y: 112, w: 52, h: 46 }, 2, 4, (c, level, frame) => {
+    gpu: tier({ x: 142, y: 110, w: 52, h: 50 }, 2, 4, (c, level, frame) => {
       const spots = [
         [26, 0],
         [1, 2],
         [27, 24],
         [0, 26],
       ];
+      // (rigs are 24 x 22, the slot 52 x 50)
       const n = Math.min(4, level);
       for (let i = 0; i < n; i++) c.draw(G.gpuRig((frame + i) % 2), spots[i][0], spots[i][1]);
     }),

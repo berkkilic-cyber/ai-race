@@ -26,29 +26,33 @@ const gpuCard = sprite('gpu-card', [
   [
     'kkkkkkk',
     'kbaaabk',
-    'knmmmnk',
-    'kmmMmmk',
-    'kmMkMmk',
-    'kmmMmmk',
-    'knmmmnk',
-    'kmmMmmk',
-    'kmMkMmk',
-    'kmmMmmk',
+    'knMMMnk',
+    'kMkmkMk',
+    'kMmkmMk',
+    'kMkmkMk',
+    'knMMMnk',
     'knnnnnk',
+    'knMMMnk',
+    'kMkmkMk',
+    'kMmkmMk',
+    'kMkmkMk',
+    'knMMMnk',
     'kkkkkkk',
   ],
   [
     'kkkkkkk',
     'kbaaabk',
-    'knmmmnk',
-    'kmMmMmk',
-    'kmmkmmk',
-    'kmMmMmk',
-    'knmmmnk',
-    'kmMmMmk',
-    'kmmkmmk',
-    'kmMmMmk',
+    'knMMMnk',
+    'kMmkmMk',
+    'kMkkkMk',
+    'kMmkmMk',
+    'knMMMnk',
     'knnnnnk',
+    'knMMMnk',
+    'kMmkmMk',
+    'kMkkkMk',
+    'kMmkmMk',
+    'knMMMnk',
     'kkkkkkk',
   ],
 ]);
@@ -163,24 +167,19 @@ function internDesk(frame, look = {}) {
 
 /** A rented GPU rig: an open frame with three cards and a PSU; frames = fans (24 x 19). */
 function gpuRig(frame) {
-  return paint(24, 20, (c) => {
-    c.rect(1, 18, 23, 2, 'n');
-    // Frame: two posts, a top rail, a shelf.
-    c.rect(0, 2, 24, 1, 'k');
-    c.rect(0, 3, 24, 1, 'M');
-    c.rect(0, 4, 24, 1, 'k');
-    for (const x of [0, 23]) c.rect(x, 2, 1, 17, 'k');
-    for (const x of [1, 22]) c.rect(x, 5, 1, 12, 'm');
-    // Cards hang from the rail.
-    for (let i = 0; i < 3; i++) c.stamp(gpuCard, 2 + i * 7, 4, { frame: (frame + i) % 2 });
-    // Shelf with the PSU and a riser board.
-    block(c, 0, 15, 24, 1, 1, { top: 'm', front: 'n' });
-    c.rect(2, 13, 5, 2, 'n');
-    c.rect(16, 14, 6, 1, 'b');
-    // Cables.
-    c.set(1, 0, 'k');
-    c.set(1, 1, 'k');
-    c.set(22, 1, 's');
+  return paint(24, 22, (c) => {
+    c.rect(1, 20, 23, 2, 'n');
+    // Frame: two posts, a top rail.
+    c.rect(0, 0, 24, 3, 'k');
+    c.hline(1, 1, 22, 'M');
+    for (const x of [0, 23]) c.rect(x, 0, 1, 20, 'k');
+    for (const x of [1, 22]) c.rect(x, 3, 1, 14, 'm');
+    // Cards hang from the rail, fans to the viewer.
+    for (let i = 0; i < 3; i++) c.stamp(gpuCard, 2 + i * 7, 2, { frame: (frame + i) % 2 });
+    // Shelf with the riser board, and a cable off the top.
+    block(c, 0, 16, 24, 1, 1, { top: 'M', front: 'n' });
+    c.rect(3, 17, 6, 1, 'b');
+    c.set(22, 0, 's');
   });
 }
 

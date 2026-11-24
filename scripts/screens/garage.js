@@ -12,8 +12,10 @@
  * test ad, the doubled offline panel, the ship panel and the three ship-day steps and the
  * launch result, every stage's room (garage, office, data centre, company town, latent
  * space) with its Lab tab (training candidates, kept models, staff, helpers), a lab
- * happening, the stage card, stats and achievements, settings, a late save, and (default
- * size, 844 wide, only) a narrow portrait window.
+ * happening, the stage card, the pixel rooms of the garage and the office (empty, early,
+ * full, and with a happening and a bonus offer; the clock is held meanwhile so a full
+ * garage does not earn the office), stats and achievements, settings, a late save, and
+ * (default size, 844 wide, only) a narrow portrait window.
  * Checks (exits 1 if any fails): the mode choice opens /garage; one touch tap earns tokens;
  * two fingers at once count as two taps; a buy works; the golden moment collects; the
  * incident fixes by taps; the offline report doubles through the test ad; ship day ships
@@ -458,7 +460,40 @@ async function main() {
     await shot('lab-helpers');
     await tapId('garage-tab-build');
 
-    // 10. Stats and achievements, settings.
+    // 10. The pixel rooms (garage and office): empty, early, full, and with a happening and a bonus offer.
+    const pixelRoom = async (sceneName, label) => {
+      await g((sc) => window.__garage.scene(sc), sceneName);
+      // A full lab earns the next stage within a second: hold the clock while these are taken.
+      await g(() => window.__garage.freeze(true));
+      const none = { intern: 0, gpu: 0, closet: 0, scraper: 0, hall: 0, chips: 0, power: 0, robotics: 0, orbital: 0, universe: 0 };
+      await g((c) => window.__garage.owned(c), none);
+      await shot(`${label}-empty`);
+      check(await has(`garage-room-${sceneName === 'fresh' ? 'garage' : 'office'}`), `${label}: the pixel room is drawn`);
+      await g((c) => window.__garage.owned(c), { ...none, intern: 6, gpu: 2, closet: 1 });
+      await shot(`${label}-early`);
+      await g((c) => window.__garage.owned(c), { intern: 120, gpu: 110, closet: 100, scraper: 100, hall: 100, chips: 4, power: 2, robotics: 1, orbital: 1, universe: 1 });
+      await shot(`${label}-full`);
+      await g(() => window.__garage.happening('pizza'));
+      await g(() => window.__garage.bonusOffer('golden'));
+      await page.waitForSelector('[data-testid="garage-happening"]', { timeout: 5000 });
+      await page.waitForSelector('[data-testid="garage-bonus-offer"]', { timeout: 5000 });
+      await shot(`${label}-happening-offer`);
+      await g(() => {
+        const s = window.__garage.store.getState();
+        s.replace({ ...s.state, happening: null, bonusOffer: null });
+      });
+      await g(() => window.__garage.freeze(false));
+    };
+    await pixelRoom('fresh', 'pixel-garage');
+    await pixelRoom('office', 'pixel-office');
+    // The next stage's accent on the goal bar and the stage's on its name.
+    const accents = await page.evaluate(() => ({
+      name: getComputedStyle(document.querySelector('[data-testid="garage-stage-name"]')).color,
+      fill: document.querySelector('[data-testid="garage-next-stage-fill"]') ? getComputedStyle(document.querySelector('[data-testid="garage-next-stage-fill"]')).backgroundColor : null,
+    }));
+    check(accents.name !== accents.fill && !!accents.fill, `stage accents: name ${accents.name}, next-stage bar ${accents.fill}`);
+
+    // 11. Stats and achievements, settings.
     await g(() => window.__garage.scene('late'));
     await sleep(200);
     await shot('late-save');
@@ -471,7 +506,7 @@ async function main() {
     await shot('settings');
     await tapId('sheet-close');
 
-    // 11. Narrow portrait window (usable, not polished), with the default size's run.
+    // 12. Narrow portrait window (usable, not polished), with the default size's run.
     if (VIEW.width === 844) {
       await page.setViewport({ width: 390, height: 780, deviceScaleFactor: 1, hasTouch: true });
       await sleep(400);

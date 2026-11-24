@@ -4,7 +4,7 @@ import { advance, createGarage, evenStaff, launchTraining, nextStage, type Garag
 
 import { requestRewardedAd } from '../ads';
 import { t } from '../i18n';
-import { skewClock, garageNow } from './clock';
+import { freezeClock, skewClock, garageNow } from './clock';
 import { useGarageStore } from './store';
 
 /**
@@ -28,6 +28,8 @@ export interface GarageDebug {
   stage(n: number): void;
   /** Grants tokens (this generation and all time). */
   grant(n: number): void;
+  /** Stops the Garage's clock (true) or lets it run again (false): a screenshot of a busy lab stays put. */
+  freeze(on: boolean): void;
   /** Sets how many of each generator the lab owns (others unchanged), to see the room fill up. */
   owned(counts: Record<string, number>): void;
   /** A training run with its three candidates, ready to pick. */
@@ -208,6 +210,7 @@ export function installGarageDebug(): void {
     },
     stage: (n) => patch((s) => ({ ...s, stage: Math.max(0, Math.min((useGarageStore.getState().content.stages?.length ?? 1) - 1, n)) })),
     grant: (n) => patch((s) => ({ ...s, tokens: s.tokens + n, genLifetime: s.genLifetime + n, stats: { ...s.stats, tokensAllTime: s.stats.tokensAllTime + n } })),
+    freeze: (on) => freezeClock(on),
     owned: (counts) =>
       patch((s) => {
         const generators = { ...s.generators };
