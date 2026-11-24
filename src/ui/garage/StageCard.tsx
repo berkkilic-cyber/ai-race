@@ -6,6 +6,7 @@ import { t } from '../i18n';
 import { Text } from '../locale/Text';
 import { colors, spacing, type, voice } from '../theme';
 import { useGarageStore } from './store';
+import { stageAccent } from './stageColors';
 import { gt } from './text';
 
 /** "The lab moved": the new place, a line about it and what it switches on. */
@@ -15,12 +16,14 @@ export function StageCard({ hidden }: { hidden?: boolean }) {
   const def = index !== null ? content.stages?.[index] : undefined;
   if (!def || hidden) return null;
   const close = () => useGarageStore.getState().dismissStage();
+  const accent = stageAccent(def.scene) ?? colors.playerText;
   return (
     <ModalCard visible title={t('ui.garage.stage.moved', { name: gt(def.nameKey) })} tone="good" onRequestClose={close} testID="garage-stage-card">
       <View style={styles.body}>
+        <View style={[styles.swatch, { backgroundColor: accent }]} testID="garage-stage-card-accent" />
         <Text style={styles.desc}>{gt(def.descKey)}</Text>
         <Text style={styles.label}>{t('ui.garage.stage.new')}</Text>
-        <Text style={styles.unlock}>{gt(def.unlockKey)}</Text>
+        <Text style={[styles.unlock, { color: accent }]}>{gt(def.unlockKey)}</Text>
         <Button label={t('ui.garage.stage.continue')} variant="primary" onPress={close} style={styles.button} testID="garage-stage-continue" />
       </View>
     </ModalCard>
@@ -29,6 +32,7 @@ export function StageCard({ hidden }: { hidden?: boolean }) {
 
 const styles = StyleSheet.create({
   body: { gap: spacing.xs },
+  swatch: { height: 3, width: 48, marginBottom: spacing.xs },
   desc: { ...voice.body, color: colors.text, fontSize: type.s },
   label: { ...voice.calmLabel, color: colors.dim, marginTop: spacing.xs },
   unlock: { ...voice.bodyStrong, color: colors.playerText, fontSize: type.s },

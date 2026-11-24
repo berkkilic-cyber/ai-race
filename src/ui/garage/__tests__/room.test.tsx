@@ -4,10 +4,14 @@
  * bubbles' layout helpers keep clear of the tap target.
  */
 import type { ReactElement, ReactNode } from 'react';
-import { Fragment, isValidElement } from 'react';
+import { act, Fragment, isValidElement } from 'react';
+import { createRoot, type TestInstance } from 'test-renderer';
 
 import { isDrawablePath } from '../../map/svgSafe';
-import { clearSpan, overlaps, RoomDrawing, spotPosition } from '../LabRoom';
+import { clearSpan, overlaps, roomTint, RoomDrawing, spotPosition } from '../LabRoom';
+import { PixelRoom } from '../PixelRoom';
+import { hasPixelArt, pixelLevels } from '../pixelLevels';
+import { stageAccent, stageColour } from '../stageColors';
 
 jest.mock('react-native-svg', () => {
   const React = jest.requireActual<typeof import('react')>('react');
@@ -82,6 +86,42 @@ describe('lab room', () => {
   it('an empty room still draws its walls; a zero size draws nothing', () => {
     expect(all(toJson(<RoomDrawing scene="garage" buckets={{ desks: 0, racks: 0, shelf: [] }} w={349} h={290} ceiling={90} />)).length).toBeGreaterThan(4);
     expect(toJson(<RoomDrawing scene="garage" buckets={FULL} w={0} h={290} ceiling={90} />)).toEqual([]);
+  });
+
+  it('the drawn stages take their palette: each looks like its own place', () => {
+    const tints = SCENES.map((scene) => roomTint(scene));
+    expect(new Set(tints.map((t) => t.surface)).size).toBe(SCENES.length);
+    expect(new Set(tints.map((t) => t.player)).size).toBe(SCENES.length);
+    expect(roomTint('datacentre').player).toBe(stageColour('datacentre', 'a'));
+    expect(roomTint('town').second).toBe(stageColour('town', 's'));
+    // An unknown scene falls back to the theme.
+    expect(roomTint('nowhere').surface).toMatch(/^#/);
+    expect(stageAccent('nowhere')).toBeNull();
+    // Accents are distinct per stage and none is the alarm red.
+    const accents = SCENES.map((s) => stageAccent(s));
+    expect(new Set(accents).size).toBe(SCENES.length);
+    for (const a of accents) expect(a).not.toMatch(/^#FF(2D|3B|6B|00)/i);
+  });
+
+  it('the pixel room draws the garage and the office from a handful of images, and nothing at a bad size', () => {
+    expect(SCENES.filter(hasPixelArt)).toEqual(['garage', 'office']);
+    const images = (node: TestInstance): number => (node.type === 'Image' ? 1 : 0) + node.children.reduce<number>((a, c) => a + (typeof c === 'string' ? 0 : images(c)), 0);
+    const full = pixelLevels({ intern: 200, gpu: 200, closet: 200, scraper: 200, hall: 200, chips: 1, power: 1, robotics: 1, orbital: 1, universe: 1 });
+    for (const scene of ['garage', 'office']) {
+      const root = createRoot();
+      act(() => root.render(<PixelRoom scene={scene} levels={pixelLevels({})} w={349} h={290} />));
+      const empty = images(root.container);
+      act(() => root.render(<PixelRoom scene={scene} levels={full} w={349} h={290} />));
+      const most = images(root.container);
+      expect(empty).toBeGreaterThanOrEqual(2);
+      expect(most).toBeGreaterThan(empty);
+      expect(most).toBeLessThanOrEqual(12);
+      for (const bad of [Number.NaN, 0, -5, Infinity]) {
+        act(() => root.render(<PixelRoom scene={scene} levels={full} w={bad} h={290} />));
+        expect(images(root.container)).toBe(0);
+      }
+      act(() => root.unmount());
+    }
   });
 
   it('bubbles keep to their side of the tap target', () => {

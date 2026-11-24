@@ -9,6 +9,7 @@ import { t } from '../i18n';
 import { Text } from '../locale/Text';
 import { colors, radius, shape, spacing, tabular, touch, type, voice } from '../theme';
 import { useGarage } from './hooks';
+import { stageAccent } from './stageColors';
 import { useGarageStore, type GarageStore } from './store';
 import { fmt, fmtMult, generationLabel, gt } from './text';
 
@@ -20,13 +21,13 @@ function Title() {
   const key = useGarage(selTitle, same);
   const { state, content } = useGarageStore.getState();
   if (!state || !key) return <View style={styles.title} />;
+  const stage = currentStage(state, content);
   return (
     <View style={styles.title}>
       <Text style={styles.kicker} numberOfLines={1}>
-        {(() => {
-          const stage = currentStage(state, content);
-          return stage ? gt(stage.nameKey) : t('ui.garage.title');
-        })()}
+        <Text style={[styles.kicker, { color: stageAccent(stage?.scene) ?? colors.dim }]} testID="garage-stage-name">
+          {stage ? gt(stage.nameKey) : t('ui.garage.title')}
+        </Text>
         {state.hype > 0 ? ` · ${t('ui.garage.hypeMult', { hype: fmt(state.hype), mult: fmtMult(hypeMultiplier(state, content)) })}` : ''}
       </Text>
       <Text style={styles.model} numberOfLines={1} testID="garage-model">

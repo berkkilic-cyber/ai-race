@@ -7,6 +7,7 @@ import { Icon } from '../icons';
 import { allFinite, finiteOr } from '../map/svgSafe';
 import { useAmbientClock, wave } from '../motion/ambient';
 import { colors } from '../theme';
+import { stageColour } from './stageColors';
 
 /**
  * The lab as a room: back wall, floor, the stage's furniture, desks with interns, racks
@@ -137,9 +138,34 @@ const n1 = (v: number) => (Number.isFinite(v) ? v.toFixed(1) : '0');
  * Everything sits on the visible wall (between the ceiling band and the floor) at the left,
  * where the model and the racks do not cover it, or on the floor.
  */
+/**
+ * The room's colours: the stage's palette (src/ui/garage/art/palettes.json) where it has
+ * one, so every stage looks like its own place, else the theme's.
+ */
+export function roomTint(scene: string) {
+  const c = (role: string, fallback: string) => stageColour(scene, role) ?? fallback;
+  return {
+    chrome: c('n', colors.chrome),
+    surface: c('w', colors.surface),
+    bg: c('f', colors.bg),
+    raised: c('m', colors.raised),
+    outline: c('M', colors.outline),
+    border: c('m', colors.border),
+    amber: c('a', colors.amber),
+    info: c('a', colors.info),
+    good: c('G', colors.good),
+    player: c('a', colors.player),
+    playerText: c('A', colors.playerText),
+    text: c('h', colors.text),
+    dim: c('M', colors.dim),
+    second: c('s', colors.playerText),
+  };
+}
+
 function Backdrop({ scene, g }: { scene: string; g: Geometry }) {
+  const T = roomTint(scene);
   const { w, h, floor, top } = g;
-  const line = colors.border;
+  const line = T.border;
   const wall = floor - top;
   switch (scene) {
     case 'garage': {
@@ -155,13 +181,13 @@ function Backdrop({ scene, g }: { scene: string; g: Geometry }) {
       const bs = Math.max(12, w * 0.06);
       return (
         <G>
-          <Rect x={dx} y={dy} width={dw} height={dh} fill={colors.raised} stroke={line} strokeWidth={1} />
-          <Path d={`${slats}M${n1(dx + dw / 2 - 6)} ${n1(floor - dh / 6 + 3)}h12`} stroke={colors.outline} strokeWidth={1} />
+          <Rect x={dx} y={dy} width={dw} height={dh} fill={T.raised} stroke={line} strokeWidth={1} />
+          <Path d={`${slats}M${n1(dx + dw / 2 - 6)} ${n1(floor - dh / 6 + 3)}h12`} stroke={T.outline} strokeWidth={1} />
           <Line x1={bx} y1={0} x2={bx} y2={by} stroke={line} strokeWidth={1} />
-          <Circle cx={bx} cy={by + 4} r={14} fill={colors.amber} opacity={0.12} />
-          <Circle cx={bx} cy={by + 4} r={4.5} fill={colors.amber} opacity={0.9} />
-          <Path d={`${box(w * 0.82, floor + h * 0.05, bs * 1.2)}${box(w * 0.82 + bs * 1.25, floor + h * 0.05, bs)}${box(w * 0.82 + bs * 0.3, floor + h * 0.05 - bs * 0.96, bs)}`} fill={colors.chrome} stroke={line} strokeWidth={1} />
-          <Path d={`M${n1(w * 0.55)} ${n1(floor + (h - floor) * 0.62)}a${n1(w * 0.07)} ${n1((h - floor) * 0.06)} 0 1 0 0.1 0z`} fill={colors.raised} opacity={0.7} />
+          <Circle cx={bx} cy={by + 4} r={14} fill={T.amber} opacity={0.12} />
+          <Circle cx={bx} cy={by + 4} r={4.5} fill={T.amber} opacity={0.9} />
+          <Path d={`${box(w * 0.82, floor + h * 0.05, bs * 1.2)}${box(w * 0.82 + bs * 1.25, floor + h * 0.05, bs)}${box(w * 0.82 + bs * 0.3, floor + h * 0.05 - bs * 0.96, bs)}`} fill={T.chrome} stroke={line} strokeWidth={1} />
+          <Path d={`M${n1(w * 0.55)} ${n1(floor + (h - floor) * 0.62)}a${n1(w * 0.07)} ${n1((h - floor) * 0.06)} 0 1 0 0.1 0z`} fill={T.raised} opacity={0.7} />
         </G>
       );
     }
@@ -172,8 +198,8 @@ function Backdrop({ scene, g }: { scene: string; g: Geometry }) {
       const ww = w * 0.1;
       const win = (x: number) => (
         <G key={x}>
-          <Rect x={x} y={wy} width={ww} height={wh} fill={colors.chrome} stroke={line} strokeWidth={1} />
-          <Path d={`M${n1(x)} ${n1(wy + wh)}v${n1(-wh * 0.3)}h${n1(ww * 0.3)}v${n1(-wh * 0.2)}h${n1(ww * 0.3)}v${n1(wh * 0.12)}h${n1(ww * 0.4)}V${n1(wy + wh)}z`} fill={colors.raised} />
+          <Rect x={x} y={wy} width={ww} height={wh} fill={T.chrome} stroke={line} strokeWidth={1} />
+          <Path d={`M${n1(x)} ${n1(wy + wh)}v${n1(-wh * 0.3)}h${n1(ww * 0.3)}v${n1(-wh * 0.2)}h${n1(ww * 0.3)}v${n1(wh * 0.12)}h${n1(ww * 0.4)}V${n1(wy + wh)}z`} fill={T.raised} />
           <Path d={`M${n1(x + ww / 2)} ${n1(wy)}v${n1(wh)}`} stroke={line} strokeWidth={1} />
         </G>
       );
@@ -187,8 +213,8 @@ function Backdrop({ scene, g }: { scene: string; g: Geometry }) {
           {win(w * 0.16)}
           {bh > 14 ? (
             <G>
-              <Rect x={bx} y={by} width={bw} height={bh} fill={colors.text} opacity={0.88} />
-              <Path d={`M${n1(bx + 4)} ${n1(by + bh * 0.55)}q${n1(bw * 0.12)} ${n1(-bh * 0.5)} ${n1(bw * 0.25)} 0t${n1(bw * 0.25)} 0M${n1(bx + bw * 0.62)} ${n1(by + bh * 0.35)}h${n1(bw * 0.3)}M${n1(bx + bw * 0.62)} ${n1(by + bh * 0.65)}h${n1(bw * 0.22)}`} stroke={colors.info} strokeWidth={1.5} fill="none" />
+              <Rect x={bx} y={by} width={bw} height={bh} fill={T.text} opacity={0.88} />
+              <Path d={`M${n1(bx + 4)} ${n1(by + bh * 0.55)}q${n1(bw * 0.12)} ${n1(-bh * 0.5)} ${n1(bw * 0.25)} 0t${n1(bw * 0.25)} 0M${n1(bx + bw * 0.62)} ${n1(by + bh * 0.35)}h${n1(bw * 0.3)}M${n1(bx + bw * 0.62)} ${n1(by + bh * 0.65)}h${n1(bw * 0.22)}`} stroke={T.info} strokeWidth={1.5} fill="none" />
             </G>
           ) : null}
         </G>
@@ -204,10 +230,10 @@ function Backdrop({ scene, g }: { scene: string; g: Geometry }) {
       return (
         <G>
           <Path d={tiles} stroke={line} strokeWidth={1} opacity={0.7} />
-          <Rect x={0} y={floor - 3} width={w} height={3} fill={colors.info} opacity={0.35} />
+          <Rect x={0} y={floor - 3} width={w} height={3} fill={T.info} opacity={0.35} />
           <Path d={`M0 ${n1(top + 5)}H${n1(w)}M0 ${n1(top + 9)}H${n1(w)}`} stroke={line} strokeWidth={1} />
-          <Rect x={px} y={py} width={pw} height={ph} fill={colors.chrome} stroke={colors.info} strokeWidth={1} />
-          <Path d={`M${n1(px + 5)} ${n1(py + ph * 0.7)}l${n1(pw * 0.2)} ${n1(-ph * 0.3)}l${n1(pw * 0.2)} ${n1(ph * 0.15)}l${n1(pw * 0.2)} ${n1(-ph * 0.35)}l${n1(pw * 0.25)} ${n1(ph * 0.1)}`} stroke={colors.good} strokeWidth={1.5} fill="none" />
+          <Rect x={px} y={py} width={pw} height={ph} fill={T.chrome} stroke={T.info} strokeWidth={1} />
+          <Path d={`M${n1(px + 5)} ${n1(py + ph * 0.7)}l${n1(pw * 0.2)} ${n1(-ph * 0.3)}l${n1(pw * 0.2)} ${n1(ph * 0.15)}l${n1(pw * 0.2)} ${n1(-ph * 0.35)}l${n1(pw * 0.25)} ${n1(ph * 0.1)}`} stroke={T.good} strokeWidth={1.5} fill="none" />
         </G>
       );
     }
@@ -223,11 +249,11 @@ function Backdrop({ scene, g }: { scene: string; g: Geometry }) {
       const tx = x0 + fw * 0.8;
       return (
         <G>
-          <Rect x={x0} y={y0} width={fw} height={fh} fill={colors.chrome} stroke={line} strokeWidth={1} />
-          <Path d={sky} fill={colors.raised} />
-          <Circle cx={tx} cy={y0 + fh * 0.28} r={Math.max(3, fh * 0.1)} fill="none" stroke={colors.playerText} strokeWidth={1} />
-          <Path d={`M${n1(tx - 3)} ${n1(y0 + fh * 0.36)}L${n1(tx - 5)} ${n1(y1 - fh * 0.15)}M${n1(tx + 3)} ${n1(y0 + fh * 0.36)}L${n1(tx + 5)} ${n1(y1 - fh * 0.15)}`} stroke={colors.playerText} strokeWidth={1} />
-          <Rect x={x0 + fw * 0.1} y={y0 + fh * 0.12} width={fw * 0.36} height={fh * 0.2} fill={colors.player} opacity={0.75} />
+          <Rect x={x0} y={y0} width={fw} height={fh} fill={T.chrome} stroke={line} strokeWidth={1} />
+          <Path d={sky} fill={T.raised} />
+          <Circle cx={tx} cy={y0 + fh * 0.28} r={Math.max(3, fh * 0.1)} fill="none" stroke={T.playerText} strokeWidth={1} />
+          <Path d={`M${n1(tx - 3)} ${n1(y0 + fh * 0.36)}L${n1(tx - 5)} ${n1(y1 - fh * 0.15)}M${n1(tx + 3)} ${n1(y0 + fh * 0.36)}L${n1(tx + 5)} ${n1(y1 - fh * 0.15)}`} stroke={T.playerText} strokeWidth={1} />
+          <Rect x={x0 + fw * 0.1} y={y0 + fh * 0.12} width={fw * 0.36} height={fh * 0.2} fill={T.second} opacity={0.85} />
           <Path d={`M${n1(x0 + fw * 0.5)} ${n1(y0)}v${n1(fh)}`} stroke={line} strokeWidth={1} />
           <Path d={`M${n1(w * 0.3)} ${n1(floor)}l${n1(w * 0.02)} -18l${n1(w * 0.02)} 18`} stroke={line} strokeWidth={1} fill="none" />
         </G>
@@ -248,9 +274,9 @@ function Backdrop({ scene, g }: { scene: string; g: Geometry }) {
       const nodes = pts.map(([x, y]) => `M${n1(x - 3)} ${n1(y)}a3 3 0 1 0 6 0a3 3 0 1 0 -6 0`).join('');
       return (
         <G>
-          <Path d={grid} stroke={colors.playerText} strokeWidth={0.75} opacity={0.35} />
-          <Path d={links} stroke={colors.playerText} strokeWidth={0.75} opacity={0.5} />
-          <Path d={nodes} fill={colors.player} opacity={0.75} />
+          <Path d={grid} stroke={T.playerText} strokeWidth={0.75} opacity={0.35} />
+          <Path d={links} stroke={T.playerText} strokeWidth={0.75} opacity={0.5} />
+          <Path d={nodes} fill={T.second} opacity={0.85} />
         </G>
       );
     }
@@ -262,6 +288,7 @@ function Backdrop({ scene, g }: { scene: string; g: Geometry }) {
 /** The static drawing: walls, floor, backdrop, desks with interns, rack bodies. */
 export const RoomDrawing = memo(function RoomDrawing({ scene, buckets, w, h, ceiling }: { scene: string; buckets: RoomBuckets; w: number; h: number; ceiling: number }) {
   const g = geometry(w, h, scene, ceiling);
+  const T = roomTint(scene);
   const deskPath: string[] = [];
   const heads: { x: number; y: number }[] = [];
   for (let i = 0; i < buckets.desks; i++) {
@@ -284,17 +311,17 @@ export const RoomDrawing = memo(function RoomDrawing({ scene, buckets, w, h, cei
   if (!allFinite(w, h) || w <= 0 || h <= 0) return null;
   return (
     <Svg width={w} height={h} style={StyleSheet.absoluteFill} pointerEvents="none">
-      <Rect x={0} y={0} width={w} height={g.top} fill={colors.chrome} />
-      <Rect x={0} y={g.top} width={w} height={g.floor - g.top} fill={colors.surface} />
-      <Rect x={0} y={g.floor} width={w} height={h - g.floor} fill={colors.bg} />
-      <Path d={`M0 ${n1(g.top)}H${n1(w)}M0 ${n1(g.floor)}H${n1(w)}`} stroke={colors.outline} strokeWidth={1} />
+      <Rect x={0} y={0} width={w} height={g.top} fill={T.chrome} />
+      <Rect x={0} y={g.top} width={w} height={g.floor - g.top} fill={T.surface} />
+      <Rect x={0} y={g.floor} width={w} height={h - g.floor} fill={T.bg} />
+      <Path d={`M0 ${n1(g.top)}H${n1(w)}M0 ${n1(g.floor)}H${n1(w)}`} stroke={T.outline} strokeWidth={1} />
       <Backdrop scene={scene} g={g} />
-      {racksBack.length ? <Path d={racksBack.join('')} fill={colors.raised} stroke={colors.border} strokeWidth={1} /> : null}
-      {racksFront.length ? <Path d={racksFront.join('')} fill={colors.chrome} stroke={colors.outline} strokeWidth={1} /> : null}
-      {rackLines.length ? <Path d={rackLines.join('')} stroke={colors.border} strokeWidth={1} /> : null}
-      {deskPath.length ? <Path d={deskPath.join('')} fill={colors.raised} stroke={colors.outline} strokeWidth={1} /> : null}
+      {racksBack.length ? <Path d={racksBack.join('')} fill={T.raised} stroke={T.border} strokeWidth={1} /> : null}
+      {racksFront.length ? <Path d={racksFront.join('')} fill={T.chrome} stroke={T.outline} strokeWidth={1} /> : null}
+      {rackLines.length ? <Path d={rackLines.join('')} stroke={T.border} strokeWidth={1} /> : null}
+      {deskPath.length ? <Path d={deskPath.join('')} fill={T.raised} stroke={T.outline} strokeWidth={1} /> : null}
       {heads.map((p, i) => (
-        <Circle key={i} cx={p.x} cy={p.y} r={4.5} fill={colors.dim} />
+        <Circle key={i} cx={p.x} cy={p.y} r={4.5} fill={T.dim} />
       ))}
     </Svg>
   );
@@ -317,6 +344,7 @@ function ledPaths(g: Geometry, racks: number): [string, string] {
 
 const Leds = memo(function Leds({ w, h, racks, scene, ceiling }: { w: number; h: number; racks: number; scene: string; ceiling: number }) {
   const reduced = useReducedMotion();
+  const T = roomTint(scene);
   const clock = useAmbientClock(!reduced && racks > 0);
   const [a, b] = ledPaths(geometry(w, h, scene, ceiling), racks);
   const styleA = useAnimatedStyle(() => ({ opacity: clock ? 0.35 + 0.65 * Math.max(0, wave(clock.get(), 1.3)) : 1 }));
@@ -326,25 +354,26 @@ const Leds = memo(function Leds({ w, h, racks, scene, ceiling }: { w: number; h:
     <>
       <Animated.View style={[StyleSheet.absoluteFill, styleA]} pointerEvents="none">
         <Svg width={w} height={h}>
-          <Path d={a} fill={colors.player} />
+          <Path d={a} fill={T.player} />
         </Svg>
       </Animated.View>
       <Animated.View style={[StyleSheet.absoluteFill, styleB]} pointerEvents="none">
-        <Svg width={w} height={h}>{b ? <Path d={b} fill={colors.info} /> : null}</Svg>
+        <Svg width={w} height={h}>{b ? <Path d={b} fill={T.info} /> : null}</Svg>
       </Animated.View>
     </>
   );
 });
 
 /** The later purchases on a shelf at the top right of the back wall. */
-const Shelf = memo(function Shelf({ icons, w, h }: { icons: string[]; w: number; h: number }) {
+const Shelf = memo(function Shelf({ icons, w, h, scene }: { icons: string[]; w: number; h: number; scene: string }) {
+  const T = roomTint(scene);
   if (icons.length === 0) return null;
   const size = Math.max(16, Math.min(24, h * 0.07));
   return (
     <View style={[styles.shelf, { bottom: h * 0.05, right: w * 0.03 }]} pointerEvents="none">
       {icons.map((name) => (
         <View key={name} style={styles.shelfItem}>
-          <Icon name={name} size={size} color={colors.text} accent={colors.player} />
+          <Icon name={name} size={size} color={T.text} accent={T.player} />
         </View>
       ))}
     </View>
@@ -358,7 +387,7 @@ export const LabRoom = memo(function LabRoom({ scene, buckets, w, h, ceiling = 0
     <View style={StyleSheet.absoluteFill} pointerEvents="none" testID={`garage-room-${scene}`}>
       <RoomDrawing scene={scene} buckets={buckets} w={w} h={h} ceiling={ceiling} />
       <Leds w={w} h={h} racks={buckets.racks} scene={scene} ceiling={ceiling} />
-      <Shelf icons={buckets.shelf} w={w} h={h} />
+      <Shelf icons={buckets.shelf} w={w} h={h} scene={scene} />
     </View>
   );
 });
