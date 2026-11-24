@@ -28,6 +28,8 @@ export interface GarageDebug {
   stage(n: number): void;
   /** Grants tokens (this generation and all time). */
   grant(n: number): void;
+  /** Sets how many of each generator the lab owns (others unchanged), to see the room fill up. */
+  owned(counts: Record<string, number>): void;
   /** A training run with its three candidates, ready to pick. */
   training(): void;
   /** A lab happening now ('pizza', 'overheat' …). */
@@ -206,6 +208,12 @@ export function installGarageDebug(): void {
     },
     stage: (n) => patch((s) => ({ ...s, stage: Math.max(0, Math.min((useGarageStore.getState().content.stages?.length ?? 1) - 1, n)) })),
     grant: (n) => patch((s) => ({ ...s, tokens: s.tokens + n, genLifetime: s.genLifetime + n, stats: { ...s.stats, tokensAllTime: s.stats.tokensAllTime + n } })),
+    owned: (counts) =>
+      patch((s) => {
+        const generators = { ...s.generators };
+        for (const [id, n] of Object.entries(counts)) if (Number.isFinite(n) && n >= 0) generators[id] = Math.floor(n);
+        return { ...s, generators };
+      }),
     training: () =>
       patch((s) => {
         const { content } = useGarageStore.getState();

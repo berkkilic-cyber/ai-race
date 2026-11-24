@@ -5,6 +5,7 @@ import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, w
 import { comboAt, comboMultiplier, currentStage, nextStage, totalRate, unitCost } from '@/idle';
 
 import { Icon } from '../icons';
+import { finiteOr } from '../map/svgSafe';
 import { t } from '../i18n';
 import { cased } from '../locale';
 import { Text } from '../locale/Text';
@@ -20,6 +21,8 @@ import { GoldenBubble } from './GoldenBubble';
 import { HappeningBubble } from './HappeningBubble';
 import { LiveText } from './LiveText';
 import { bucketKey, LabRoom, roomBuckets, type RoomBuckets, type StageRect as Rect } from './LabRoom';
+import { hasPixelArt, PixelRoom, pixelKey, pixelLevels, type PixelLevels } from './PixelRoom';
+import { stageAccent } from './stageColors';
 import { StatusRow } from './StatusRow';
 import { useGarageStore, type GarageStore } from './store';
 import { fmt, fmtMult, gt, requirementText } from './text';
@@ -309,11 +312,24 @@ const selBuckets = (s: GarageStore): RoomBuckets => {
 const selScene = (s: GarageStore) => (s.state ? (currentStage(s.state, s.content)?.scene ?? 'garage') : 'garage');
 const same = (v: string) => v;
 
-/** The room itself, re-rendered only when the stage or a bucket changes. */
-const Room = memo(function Room({ w, h, ceiling }: { w: number; h: number; ceiling: number }) {
+const selPixel = (s: GarageStore): PixelLevels => pixelLevels(s.state?.generators ?? {});
+
+/** The drawn (SVG) room of the stages without pixel art, tinted with the stage's palette. */
+const SvgRoom = memo(function SvgRoom({ scene, w, h, ceiling }: { scene: string; w: number; h: number; ceiling: number }) {
   const buckets = useGarage(selBuckets, bucketKey);
-  const scene = useGarage(selScene, same);
   return <LabRoom scene={scene} buckets={buckets} w={w} h={h} ceiling={ceiling} />;
+});
+
+/** The pixel-art room, re-rendered only when a count bucket changes. */
+const ArtRoom = memo(function ArtRoom({ scene, w, h }: { scene: string; w: number; h: number }) {
+  const levels = useGarage(selPixel, pixelKey);
+  return <PixelRoom scene={scene} levels={levels} w={w} h={h} />;
+});
+
+/** The room itself, re-rendered only when the stage, a bucket or the size changes. */
+const Room = memo(function Room({ w, h, ceiling }: { w: number; h: number; ceiling: number }) {
+  const scene = useGarage(selScene, same);
+  return hasPixelArt(scene) ? <ArtRoom scene={scene} w={w} h={h} /> : <SvgRoom scene={scene} w={w} h={h} ceiling={ceiling} />;
 });
 
 const selNextStage = (s: GarageStore) => {
@@ -341,7 +357,7 @@ export const NextStageGoal = memo(function NextStageGoal() {
         {goal}
       </Text>
       <View style={styles.goalTrack}>
-        <View style={[styles.goalFill, { width: `${Math.round(next.progress * 100)}%` }]} />
+        <View style={[styles.goalFill, { width: `${Math.round(Math.max(0, Math.min(1, finiteOr(next.progress, 0))) * 100)}%`, backgroundColor: stageAccent(next.def.scene) ?? colors.player }]} testID="garage-next-stage-fill" />
       </View>
     </View>
   );
