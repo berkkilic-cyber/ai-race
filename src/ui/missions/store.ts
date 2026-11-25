@@ -15,23 +15,7 @@ import { garageContent } from '../garage/content';
 import { SAVE_KEY as GARAGE_SAVE_KEY, useGarageStore } from '../garage/store';
 import { onGameAction, useGameStore } from '../store/game';
 import { readValue, writeValue } from '../tutorial/storage';
-import {
-  EMPTY_SAVE,
-  canClaim,
-  canOpenCrate,
-  newDay,
-  newlyDone,
-  readSave,
-  streakOnClaim,
-  streakView,
-  utcDay,
-  withGarage,
-  withRace,
-  writeSave,
-  type MissionDay,
-  type MissionsSave,
-  type RaceCounter,
-} from './logic';
+import { EMPTY_SAVE, canClaim, canOpenCrate, newDay, newlyDone, readSave, streakOnClaim, streakView, utcDay, withGarage, withRace, writeSave, type MissionDay, type MissionsSave, type RaceCounter } from './logic';
 
 export const MISSIONS_KEY = 'missions.v1';
 
@@ -50,6 +34,9 @@ export interface MissionsStore {
   lastUsedDayOff: boolean;
   /** Bumps on every claim (analytics, feel). */
   claimSeq: number;
+  /** The missions sheet is open (buttons open it; the host at the screen's root draws it). */
+  sheetOpen: boolean;
+  openSheet(open: boolean): void;
   load(): Promise<void>;
   /** Starts a new day's missions if the UTC day changed (reads the Garage save for the player's progress). */
   ensureDay(): Promise<void>;
@@ -104,6 +91,11 @@ export const useMissionsStore = create<MissionsStore>()((set, get) => {
     toasts: [],
     lastUsedDayOff: false,
     claimSeq: 0,
+    sheetOpen: false,
+
+    openSheet(open) {
+      set({ sheetOpen: open });
+    },
 
     async load() {
       if (get().loaded) return;
@@ -271,5 +263,5 @@ export function resetMissionsForTests(): void {
   unsubscribe = [];
   if (writeTimer) clearTimeout(writeTimer);
   writeTimer = null;
-  useMissionsStore.setState({ loaded: false, save: EMPTY_SAVE, toasts: [], lastUsedDayOff: false, claimSeq: 0 });
+  useMissionsStore.setState({ loaded: false, save: EMPTY_SAVE, toasts: [], lastUsedDayOff: false, claimSeq: 0, sheetOpen: false });
 }

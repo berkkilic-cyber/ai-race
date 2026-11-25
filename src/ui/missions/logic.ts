@@ -189,7 +189,7 @@ export function missionProgress(def: MissionDef, day: MissionDay): MissionProgre
     if (progress > best.progress || (progress === best.progress && best.value === 0 && value > 0)) best = { progress, value: Math.min(value, g.goal), goal: g.goal };
   }
   const done = day.done.includes(def.id) || best.progress >= 1;
-  return { def, ...best, progress: done ? 1 : best.progress, done, claimed: day.claimed.includes(def.id) };
+  return { def, ...best, value: done ? best.goal : best.value, progress: done ? 1 : best.progress, done, claimed: day.claimed.includes(def.id) };
 }
 
 /** The day's missions with their progress (unknown ids skipped). */

@@ -1,6 +1,6 @@
 import { Platform } from 'react-native';
 
-import { advance, createGarage, evenStaff, launchTraining, nextStage, type GarageState, type OfferId } from '@/idle';
+import { HOUR_MS, advance, buyParadigmNode, createGarage, evenStaff, launchTraining, nextStage, offlineCapMs, paradigmShift, type GarageState, type OfferId } from '@/idle';
 
 import { requestRewardedAd } from '../ads';
 import { t } from '../i18n';
@@ -40,6 +40,12 @@ export interface GarageDebug {
   shipDay(): void;
   /** The bonus multiplier offer, as if a bonus had just been tapped (`source` golden or happening). */
   bonusOffer(source?: 'golden' | 'happening'): void;
+  /** Moves the Garage clock (and the missions' clock) to a date (ISO text or ms). */
+  setDate(when: string | number): void;
+  /** A return after `hours` away (default: the storage's capacity plus one hour, so it caps). */
+  fillStorage(hours?: number): void;
+  /** Paradigm samples: 'ready' (Model 12 shipped, a shift available), 'shifted' (two shifts in, some tree bought). */
+  paradigm(kind: 'ready' | 'shifted'): void;
   state(): GarageState | null;
 }
 
@@ -234,6 +240,37 @@ export function installGarageDebug(): void {
     shipDay: () => useGarageStore.getState().openShipDay(),
     bonusOffer: (source = 'golden') =>
       patch((s) => ({ ...s, bonusOffer: { reward: 5000, until: s.now + 60_000, source, id: source === 'golden' ? 'angel' : 'pizza', x: 0.62, y: 0.45 } })),
+    setDate(when) {
+      const target = typeof when === 'number' ? when : Date.parse(when);
+      if (!Number.isFinite(target)) return;
+      useGarageStore.getState().save(true);
+      skewClock(target - garageNow());
+      useGarageStore.getState().tick();
+    },
+    fillStorage(hours) {
+      const st = useGarageStore.getState();
+      if (!st.state) return;
+      const ms = hours !== undefined ? hours * HOUR_MS : offlineCapMs(st.state, st.content) + HOUR_MS;
+      st.save(true);
+      skewClock(ms);
+      st.tick();
+    },
+    paradigm(kind) {
+      const { content } = useGarageStore.getState();
+      const ready = (): GarageState => {
+        const s = sample('latent');
+        const gen = content.paradigm?.minGeneration ?? 11;
+        return { ...s, generation: gen, hype: 2.4e6, labRep: 14, tokens: 2.1e24, genLifetime: 3e24, stats: { ...s.stats, modelsShipped: gen, tokensAllTime: 4e24 } };
+      };
+      if (kind === 'ready') {
+        useGarageStore.getState().replace(ready());
+        return;
+      }
+      let st = paradigmShift(ready(), content, garageNow()).state;
+      st = paradigmShift({ ...st, generation: (content.paradigm?.minGeneration ?? 11) + 2, hype: 9e6 }, content, garageNow()).state;
+      for (const id of ['compound', 'cloud-drive', 'intern-pipeline', 'campus', 'second-crate', 'low-bar']) st = buyParadigmNode(st, content, id, garageNow()).state;
+      useGarageStore.getState().replace({ ...st, generation: 2, hype: 120, tokens: 3e9, genLifetime: 8e9, generators: { intern: 60, gpu: 40, closet: 30, scraper: 20, hall: 10, chips: 6 } });
+    },
     state: () => useGarageStore.getState().state,
   };
   (window as unknown as { __garage: GarageDebug }).__garage = api;

@@ -16,12 +16,15 @@ import { t } from '../i18n';
 import { Text } from '../locale/Text';
 import { colors, radius, shape, spacing, tabular, type, voice } from '../theme';
 import { readValue } from '../tutorial/storage';
-import { DAY_MS, canOpenCrate, dayProgress, msToNextDay, streakView, type MissionProgress } from './logic';
+import { DAY_MS, EMPTY_SAVE, canOpenCrate, dayProgress, msToNextDay, streakView, type MissionProgress } from './logic';
 import { missionsConfig, missionsNow, useMissionsStore } from './store';
+
+/** What a closed sheet reads (nothing it shows). */
+const CLOSED = EMPTY_SAVE;
 
 /** The open Garage's state, else the save, read once when the sheet opens (reward previews). */
 function useGarageSnapshot(visible: boolean): GarageState | null {
-  const open = useGarageStore((s) => s.state);
+  const open = useGarageStore((s) => (visible ? s.state : null));
   const [saved, setSaved] = useState<GarageState | null>(null);
   const seq = useMissionsStore((s) => s.claimSeq);
   useEffect(() => {
@@ -48,7 +51,9 @@ function Countdown() {
   }, []);
   return (
     <Text style={styles.countdown} testID="missions-countdown">
-      {t('ui.missions.countdown', { time: fmtDuration(Math.ceil(msToNextDay(now) / 60_000) * 60_000) })}
+      {t('ui.missions.countdown', {
+        time: fmtDuration(Math.ceil(msToNextDay(now) / 60_000) * 60_000),
+      })}
     </Text>
   );
 }
@@ -73,7 +78,12 @@ function MissionRow({ p, garage, onClaim, busy }: { p: MissionProgress; garage: 
         <View style={[styles.fill, p.done && styles.fillDone, { width: `${Math.round(p.progress * 100)}%` }]} />
       </View>
       <View style={styles.missionFoot}>
-        <Text style={styles.small}>{t('ui.missions.progress', { value: fmtNum(Math.floor(p.value), 0), goal: fmtNum(p.goal, 0) })}</Text>
+        <Text style={styles.small}>
+          {t('ui.missions.progress', {
+            value: fmtNum(Math.floor(p.value), 0),
+            goal: fmtNum(p.goal, 0),
+          })}
+        </Text>
         {p.claimed ? (
           <Text style={styles.claimed}>{t('ui.missions.claimed')}</Text>
         ) : p.done ? (
@@ -88,7 +98,8 @@ function MissionRow({ p, garage, onClaim, busy }: { p: MissionProgress; garage: 
 
 /** The day's three missions, the streak with its day off, the daily crate and the countdown. */
 export function MissionsSheet({ visible, onClose }: { visible: boolean; onClose: () => void }) {
-  const save = useMissionsStore((s) => s.save);
+  // Subscribed only while open: progress changes with every tap during play.
+  const save = useMissionsStore((s) => (visible ? s.save : CLOSED));
   const garage = useGarageSnapshot(visible);
   const [busy, setBusy] = useState(false);
   useEffect(() => {
@@ -100,7 +111,12 @@ export function MissionsSheet({ visible, onClose }: { visible: boolean; onClose:
   const list = dayProgress(cfg, today);
   const sv = streakView(save.streak, today?.day ?? 0);
   const crateReady = canOpenCrate(today);
-  const crate = garage ? dailyRewardQuote(garage, garageContent(), 'crate', { streak: sv.current, crateMult: paradigmEffects(garage, garageContent()).crateMult }) : null;
+  const crate = garage
+    ? dailyRewardQuote(garage, garageContent(), 'crate', {
+        streak: sv.current,
+        crateMult: paradigmEffects(garage, garageContent()).crateMult,
+      })
+    : null;
   const claim = (id: string) => {
     setBusy(true);
     void useMissionsStore
@@ -147,11 +163,7 @@ export function MissionsSheet({ visible, onClose }: { visible: boolean; onClose:
                   {crate.streakMult > 1 ? ` · ${t('ui.missions.crate.streak', { mult: fmtNum(crate.streakMult, 1) })}` : ''}
                 </Text>
               ) : null}
-              {crateReady ? (
-                <Button label={t('ui.missions.crate.open')} variant="primary" disabled={busy} onPress={openCrate} testID="missions-crate-open" />
-              ) : (
-                <Text style={styles.small}>{t('ui.missions.crate.locked')}</Text>
-              )}
+              {crateReady ? <Button label={t('ui.missions.crate.open')} variant="primary" disabled={busy} onPress={openCrate} testID="missions-crate-open" /> : <Text style={styles.small}>{t('ui.missions.crate.locked')}</Text>}
             </>
           )}
         </View>
@@ -171,13 +183,31 @@ export function MissionsSheet({ visible, onClose }: { visible: boolean; onClose:
               {t('ui.missions.streak.covering')}
             </Text>
           ) : null}
-          <Text style={styles.small}>{sv.dayOffReady ? t('ui.missions.streak.dayOffReady') : t('ui.missions.streak.dayOffIn', { time: fmtDuration(sv.dayOffInDays * DAY_MS) })}</Text>
-          <Text style={styles.small}>{t('ui.missions.streak.bonus', { pct: bonusPct, max: fmtPct(cfg.crate.streakBonus * cfg.crate.streakCap), days: cfg.crate.streakCap })}</Text>
+          <Text style={styles.small}>
+            {sv.dayOffReady
+              ? t('ui.missions.streak.dayOffReady')
+              : t('ui.missions.streak.dayOffIn', {
+                  time: fmtDuration(sv.dayOffInDays * DAY_MS),
+                })}
+          </Text>
+          <Text style={styles.small}>
+            {t('ui.missions.streak.bonus', {
+              pct: bonusPct,
+              max: fmtPct(cfg.crate.streakBonus * cfg.crate.streakCap),
+              days: cfg.crate.streakCap,
+            })}
+          </Text>
           {save.streak.best > 0 ? <Text style={styles.small}>{t('ui.missions.streak.best', { count: save.streak.best })}</Text> : null}
         </View>
       </View>
     </Sheet>
   );
+}
+
+/** The missions sheet at the screen's root, opened by any missions button. */
+export function MissionsSheetHost() {
+  const open = useMissionsStore((s) => s.sheetOpen);
+  return <MissionsSheet visible={open} onClose={() => useMissionsStore.getState().openSheet(false)} />;
 }
 
 const panel = {
@@ -195,17 +225,44 @@ const styles = StyleSheet.create({
   mission: panel,
   missionClaimed: { opacity: 0.75 },
   missionHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.s },
-  missionTitle: { ...voice.bodyStrong, color: colors.text, fontSize: type.s, flexShrink: 1 },
-  missionFoot: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.s, flexWrap: 'wrap' },
-  track: { height: 8, borderRadius: radius.pill, backgroundColor: colors.raised, overflow: 'hidden' },
+  missionTitle: {
+    ...voice.bodyStrong,
+    color: colors.text,
+    fontSize: type.s,
+    flexShrink: 1,
+  },
+  missionFoot: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.s,
+    flexWrap: 'wrap',
+  },
+  track: {
+    height: 8,
+    borderRadius: radius.pill,
+    backgroundColor: colors.raised,
+    overflow: 'hidden',
+  },
   fill: { height: '100%', backgroundColor: colors.player },
   fillDone: { backgroundColor: colors.good },
-  small: { ...voice.body, ...tabular, color: colors.dim, fontSize: type.xs + 1, lineHeight: 16 },
+  small: {
+    ...voice.body,
+    ...tabular,
+    color: colors.dim,
+    fontSize: type.xs + 1,
+    lineHeight: 16,
+  },
   claimed: { ...voice.bodyStrong, color: colors.goodText, fontSize: type.s },
   card: panel,
   cardReady: { borderColor: colors.player },
   cardTitle: { ...voice.calmHeading, color: colors.text, fontSize: type.m },
   label: { ...voice.calmLabel, color: colors.dim },
-  streak: { ...voice.calmNumber, ...tabular, color: colors.text, fontSize: type.l },
+  streak: {
+    ...voice.calmNumber,
+    ...tabular,
+    color: colors.text,
+    fontSize: type.l,
+  },
   good: { color: colors.goodText },
 });

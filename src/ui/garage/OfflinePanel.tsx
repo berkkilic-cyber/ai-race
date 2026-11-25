@@ -69,7 +69,7 @@ function StorageReport() {
   const { state, content } = useGarageStore.getState();
   const report = state?.offline;
   if (!state || !report) return null;
-  const { st, capHours, maxHours } = storageHours(state, content);
+  const { st } = storageHours(state, content);
   const capMs = report.capMs && report.capMs > 0 ? report.capMs : st.capMs;
   const capped = report.capped === true;
   const fill = capped ? 1 : Math.min(1, report.creditedMs / Math.max(1, capMs));
@@ -77,9 +77,9 @@ function StorageReport() {
   return (
     <View style={styles.storage} testID={capped ? 'garage-offline-capped' : 'garage-offline-storage'}>
       <Text style={styles.label}>{t('ui.garage.storage.title')}</Text>
-      <StorageBar capHours={capMs / HOUR_MS} maxHours={Math.max(maxHours, capHours)} fill={fill} height={12} testID="garage-offline-bar" />
+      <StorageBar capHours={capMs / HOUR_MS} maxHours={capMs / HOUR_MS} fill={fill} height={12} testID="garage-offline-bar" />
       <Text style={[styles.storageLine, capped && styles.cappedLine]}>
-        {capped ? t('ui.garage.offline.capped', { cap: fmtTime(capMs) }) : t('ui.garage.offline.notCapped', { pct: fmtPct(fill), left: fmtTime(Math.max(0, capMs - report.creditedMs)) })}
+        {capped ? t('ui.garage.offline.capped', { cap: fmtTime(capMs) }) : t('ui.garage.offline.notCapped', { pct: fmtPct(fill), left: fmtTime(Math.max(0, Math.round((capMs - report.creditedMs) / 60_000) * 60_000)) })}
       </Text>
       {capped && raise ? <Text style={styles.note}>{raise}</Text> : null}
       <Text style={styles.note}>{t('ui.garage.offline.note', { pct: fmtPct(offlineRate(state, content)) })}</Text>
