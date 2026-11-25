@@ -155,7 +155,7 @@ export function DailyCard({ pack, onPlay, onContinue, onHistory }: DailyCardProp
         {done ? (
           <>
             {done.ending !== null ? <Button label={notice === 'copied' ? t('ui.daily.copied') : t('ui.daily.share')} variant="primary" compact onPress={shareDone} style={styles.main} testID="daily-share" /> : null}
-            <Button label={t('ui.daily.practice')} sublabel={t('ui.daily.practiceHint')} variant="secondary" compact onPress={() => onPlay(false)} style={styles.main} testID="daily-practice" />
+            <Button label={t('ui.daily.practice')} sublabel={t('ui.daily.practiceHint')} variant="secondary" compact onPress={() => onPlay(false)} style={[styles.main, styles.practice]} testID="daily-practice" />
           </>
         ) : status.kind === 'inProgress' ? (
           <Button label={t('ui.daily.continue')} variant="primary" compact onPress={onContinue} style={styles.main} testID="daily-continue" />
@@ -184,5 +184,6 @@ const styles = StyleSheet.create({
   next: { ...voice.calmNumber, color: colors.dim, fontSize: type.xs, ...tabular, flexShrink: 0 },
   actions: { flexDirection: 'row', gap: spacing.s, marginTop: 2 },
   main: { flex: 1, minHeight: 44 },
+  practice: { flex: 1.3 },
   side: { minHeight: 44, paddingHorizontal: spacing.m },
 });
