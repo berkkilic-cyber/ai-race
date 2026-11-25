@@ -6,6 +6,7 @@ import { StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { AnalyticsRoot } from '@/ui/analytics/AnalyticsRoot';
+import { DemoRoot } from '@/ui/demo/DemoRoot';
 import { installDebugHandle } from '@/ui/debug';
 import { installFeel, useFeelRoutes } from '@/ui/feel';
 import { ErrorBoundary } from '@/ui/diagnostics/ErrorBoundary';
@@ -32,6 +33,7 @@ export default function RootLayout() {
       <InsetsEmulator>
         <ErrorBoundary>{ready ? <Stack screenLayout={localeScreenLayout} screenOptions={{ headerShown: false, gestureEnabled: false, contentStyle: { backgroundColor: colors.bg } }} /> : null}</ErrorBoundary>
         <AnalyticsRoot />
+        <DemoRoot />
       </InsetsEmulator>
     </GestureHandlerRootView>
   );

@@ -27,6 +27,7 @@ import { useCountUp } from './useCountUp';
 import { EndReward } from '../meta/EndReward';
 import { LabTitle } from '../meta/LabTitle';
 import { useMetaStore, withPerks } from '../meta/store';
+import { DemoCta } from '../demo/DemoCta';
 
 const TONE = { good: colors.good, bad: colors.bad, neutral: colors.info } as const;
 
@@ -74,7 +75,12 @@ export function EndScreen() {
     return s && s.status === 'ended' && s.ending ? s : null;
   });
   if (!state) return Platform.OS === 'web' ? <WebHome /> : <Redirect href="/" />;
-  return <EndView state={state} />;
+  return (
+    <>
+      <EndView state={state} />
+      <DemoCta where="end" corner="topRight" />
+    </>
+  );
 }
 
 /**

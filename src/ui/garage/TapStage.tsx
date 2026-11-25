@@ -27,6 +27,8 @@ import { stageAccent } from './stageColors';
 import { StatusRow } from './StatusRow';
 import { useGarageStore, type GarageStore } from './store';
 import { fmt, fmtMult, gt, requirementText } from './text';
+import { DemoNextStage } from '../demo/DemoNextStage';
+import { isStageLockedInDemo } from '../demo/config';
 
 /** Pop-out numbers kept mounted and reused round-robin (no mounting per tap). */
 const POPS = 12;
@@ -367,6 +369,7 @@ export const NextStageGoal = memo(function NextStageGoal() {
   if (!key || !state) return null;
   const next = nextStage(state, content);
   if (!next) return null;
+  if (isStageLockedInDemo(next.index)) return <DemoNextStage name={gt(next.def.nameKey)} />;
   const name = t('ui.garage.stage.nextName', { name: gt(next.def.nameKey) });
   const goal = requirementText(next.requirement);
   return (

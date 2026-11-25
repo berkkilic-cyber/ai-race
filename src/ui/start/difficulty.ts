@@ -9,6 +9,8 @@ import { fmtNum } from '../format';
 import { t } from '../i18n';
 import { readValue, writeValue } from '../tutorial/storage';
 import { TUTORIAL_DONE_KEY } from '../tutorial/store';
+import { demoClamp } from '../demo/config';
+import { demoOption } from '../demo/options';
 
 /** Storage key of the last difficulty chosen on the start screen. */
 export const DIFFICULTY_KEY = 'ai-race.difficulty.v1';
@@ -40,7 +42,7 @@ export function difficultyParam(pack: ContentPack, param: string | string[] | un
 /** Reads the stored choice and the tutorial flag and returns the level to preselect. */
 export async function loadDifficultyChoice(pack: ContentPack): Promise<string | undefined> {
   const [stored, done] = await Promise.all([readValue(DIFFICULTY_KEY).catch(() => null), readValue(TUTORIAL_DONE_KEY).catch(() => null)]);
-  return initialDifficulty(pack, stored, done === '1');
+  return demoClamp('difficulty', pack, initialDifficulty(pack, stored, done === '1'));
 }
 
 /** Remembers the level for the next start screen. */
@@ -64,7 +66,7 @@ export interface DifficultyOption {
 
 /** The pack's levels as the picker shows them, easiest first. */
 export function difficultyOptions(pack: ContentPack): DifficultyOption[] {
-  return getDifficulties(pack).map((d: DifficultyDef) => ({
+  return getDifficulties(pack).map((d: DifficultyDef) => demoOption('difficulty', pack, {
     id: d.id,
     name: t(d.nameKey),
     desc: t(d.descKey),

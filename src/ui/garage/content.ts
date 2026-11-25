@@ -2,6 +2,7 @@ import { aiLabGarage, aiLabGarageStrings } from '@/content/packs/ai-lab/garage';
 import type { GarageContent } from '@/idle';
 
 import { getCurrentLocale } from '../locale/current';
+import { demoGarage } from '../demo/garage';
 
 const byLocale = new Map<string, GarageContent>();
 
@@ -12,11 +13,11 @@ const byLocale = new Map<string, GarageContent>();
 export function garageContent(): GarageContent {
   const locale = getCurrentLocale();
   const own = aiLabGarageStrings[locale];
-  if (!own || own === aiLabGarage.strings) return aiLabGarage;
+  if (!own || own === aiLabGarage.strings) return demoGarage(aiLabGarage);
   let content = byLocale.get(locale);
   if (!content) {
     content = { ...aiLabGarage, strings: { ...aiLabGarage.strings, ...own } };
     byLocale.set(locale, content);
   }
-  return content;
+  return demoGarage(content);
 }

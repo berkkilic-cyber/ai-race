@@ -78,7 +78,11 @@
     "balance:garage": "esbuild scripts/balance/garage.ts --bundle --platform=node --format=esm --alias:@=./src --log-level=warning --outfile=node_modules/.cache/balance/garage.mjs && node node_modules/.cache/balance/garage.mjs",
     "sfx": "node scripts/sfx/generate.js",
     "i18n:check": "node scripts/i18n/check.js",
-    "pixel": "node scripts/pixel/build.js"
+    "pixel": "node scripts/pixel/build.js",
+    "demo": "node scripts/demo/build.js",
+    "demo:check": "node scripts/demo/check.js",
+    "marketing:shots": "node scripts/marketing/shots.js",
+    "marketing:clips": "node scripts/marketing/clips.js"
   },
   "private": true
 }

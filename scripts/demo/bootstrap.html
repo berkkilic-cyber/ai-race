@@ -1,0 +1,11 @@
+<script>
+/* Browser demo (scripts/demo/build.js): the game may be served from any folder (itch.io picks one). Relative URLs resolve against that folder through <base>, and the router sees "/". */
+(function () {
+  var p = location.pathname, d = p.replace(/[^\/]*$/, '');
+  var b = document.createElement('base');
+  b.href = d;
+  document.head.insertBefore(b, document.head.firstChild);
+  window.__DEMO_BASE__ = d;
+  if (p !== '/') { try { history.replaceState(history.state, '', '/' + location.search + location.hash); } catch (e) {} }
+})();
+</script>

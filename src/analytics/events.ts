@@ -17,6 +17,9 @@ export type GaragePickAction = 'keep' | 'swap' | 'scrap';
 /** How a lab happening went: tapped by the player, missed, or collected by a helper (batched, with a count). */
 export type GarageHappeningOutcome = 'tapped' | 'missed' | 'auto';
 
+/** Where the browser demo's "Join the waitlist" button was tapped. */
+export type DemoCtaWhere = 'start' | 'end' | 'gate';
+
 export type AnalyticsEvent =
   | { name: 'app_open' }
   | { name: 'session_start' }
@@ -56,6 +59,8 @@ export type AnalyticsEvent =
   | { name: 'race_reward_granted'; params: { rep: number; boost: number } }
   | { name: 'perks_toggle'; params: { on: boolean } }
   | { name: 'settings_change'; params: { key: string; value: string | number | boolean } }
+  | { name: 'demo_cta_tap'; params: { where: DemoCtaWhere } }
+  | { name: 'demo_gate_seen'; params: { feature: string } }
   | { name: 'error'; params: { where: string; message: string } };
 
 export type EventName = AnalyticsEvent['name'];
@@ -115,6 +120,8 @@ export const EVENT_NAMES: readonly EventName[] = [
   'race_reward_granted',
   'perks_toggle',
   'settings_change',
+  'demo_cta_tap',
+  'demo_gate_seen',
   'error',
 ];
 

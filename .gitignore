@@ -37,3 +37,6 @@ yarn-error.*
 .DS_Store
 *.tsbuildinfo
 coverage/
+
+# browser demo build (npm run demo)
+/dist-demo/

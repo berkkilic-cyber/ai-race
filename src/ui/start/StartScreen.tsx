@@ -33,6 +33,8 @@ import { RegionListSheet } from './RegionListSheet';
 import { RegionStep } from './RegionStep';
 import { StepIndicator } from './StepIndicator';
 import { useWide } from './useWide';
+import { DemoCta } from '../demo/DemoCta';
+import { demoBlocks } from '../demo/options';
 
 /** Runs `go` once `ready` settles (at once without it). */
 function enterWhenReady(ready: Promise<unknown> | undefined, go: () => void): Promise<void> {
@@ -111,9 +113,10 @@ export function StartScreen({ beforeEnter }: StartScreenProps = {}) {
     };
   }, [pack]);
   const pickRunLength = useCallback((id: string) => {
+    if (demoBlocks('runLength', pack, id)) return;
     setRunLength(id);
     saveRunLengthChoice(id);
-  }, []);
+  }, [pack]);
   const continueRun = () => {
     if (!save) return;
     restoreRun(save);
@@ -121,9 +124,10 @@ export function StartScreen({ beforeEnter }: StartScreenProps = {}) {
   };
 
   const pickDifficulty = useCallback((id: string) => {
+    if (demoBlocks('difficulty', pack, id)) return;
     setDifficulty(id);
     saveDifficultyChoice(id);
-  }, []);
+  }, [pack]);
 
   useEffect(() => {
     if (params.autostart !== '1') return;
@@ -320,6 +324,7 @@ export function StartScreen({ beforeEnter }: StartScreenProps = {}) {
       {/* Which build is running (long-press two seconds: touch diagnostics on the map). */}
       <BuildStamp style={[styles.stamp, { top: insets.top + 2, right: insets.right + spacing.s }]} />
       <LanguageToggle visible={step === 0} />
+      <DemoCta where="start" corner="bottomLeft" visible={step === 0} />
       <HowToSheet visible={howTo} onClose={() => setHowTo(false)} />
       <PerksSheet
         visible={perksSheet}
