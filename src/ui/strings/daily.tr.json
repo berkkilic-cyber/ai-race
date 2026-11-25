@@ -21,7 +21,7 @@
   "ui.daily.continue": "Günlüğe devam et",
   "ui.daily.inProgress": "Günlüğün kayıtlı. Kaldığın yerden devam et.",
   "ui.daily.practice": "Antrenman",
-  "ui.daily.practiceHint": "Tekrar, puan sayılmaz",
+  "ui.daily.practiceHint": "Puan sayılmaz",
   "ui.daily.result": "{ending} · {days}. gün",
   "ui.daily.abandoned": "Erken bırakıldı. Oynanmış sayılır.",
   "ui.daily.score": "Skor {score}",
