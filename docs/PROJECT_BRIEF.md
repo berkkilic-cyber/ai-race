@@ -2,7 +2,7 @@
 
 Paste this into a Claude Project's instructions, or point a new session at this file. It tells a
 fresh session what the game is, how the code is organised, what the rules are, and how several
-sessions work on it at once without colliding. As of 25 Nov 2026.
+sessions work on it at once without colliding. As of 26 Nov 2026.
 
 ## What it is
 
@@ -96,14 +96,13 @@ Several sessions may work at once. To stay out of each other's way:
 - **Rebase or merge `task/10-style` into your branch before handing over**, and rerun the checks.
 - Commit messages are small and clear. Never commit secrets, `node_modules` or build output.
 
-### In progress in the orchestrator session (25 Nov)
+### Orchestrator session status (26 Nov)
 
-| Branch | Lane |
-| --- | --- |
-| `task/30-art-rooms` | Pixel art for the last three Garage rooms; `scripts/pixel`, `assets/garage`, room components |
-| `task/31-daily-share` | Daily challenge, share text, end-of-run front page; `src/ui/daily`, `src/ui/frontpage`, `src/ui/share` |
-| `task/32-habits-storage` | Away storage, daily missions, streak, second prestige layer; `src/idle`, Garage content, `src/ui/missions` |
-| `task/33-demo-launch-kit` | Browser demo build (`npm run demo`, `src/ui/demo`) and `docs/marketing` |
+Nothing is in progress. Tasks 30 to 33 are merged: pixel art for all five Garage rooms; the
+daily challenge, share text and end-of-run front page (`src/ui/daily`, `src/ui/frontpage`,
+`src/ui/share`); away storage, daily missions, streak and the Paradigm Shift layer
+(`src/ui/missions`, `src/idle`); the browser demo (`npm run demo`, `src/ui/demo`) and the launch
+kit (`docs/marketing`). See also `docs/DAILY.md`.
 
 ### The Steam session
 
@@ -126,7 +125,7 @@ Goal: a paid, ad-free desktop version on Steam built from the same code.
 
 ## State of the game (25 Nov 2026)
 
-- Build on `task/10-style`: `4f11503`. About 1,330 tests pass; browser checks pass in English and
+- Build on `task/10-style`: see `git log`. About 1,440 tests pass; browser checks pass in English and
   Turkish. Berk has played it in the iOS simulator; nothing since the sound, Garage rework and
   art has been confirmed on a physical phone.
 - Not built yet: real ad and purchase SDKs, an analytics service (events stay on the device),
