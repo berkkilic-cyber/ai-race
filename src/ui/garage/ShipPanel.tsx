@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import { labPerks, labRepTotal, nextLabPerk, prestigePreview, type LabPerkDef } from '@/idle';
 
 import { Button } from '../components/Button';
-import { fmtCash, pctText } from '../format';
+import { fmtCash, fmtHours, pctText } from '../format';
 import { Icon } from '../icons';
 import { LabRepBadge } from '../meta/LabRepBadge';
 import { t } from '../i18n';
@@ -26,7 +26,7 @@ const same = (v: string) => v;
 /** A perk's line with its amount formatted for its kind. */
 export function perkText(p: LabPerkDef): string {
   const a = p.effect.amount;
-  const amount = p.effect.kind === 'startCash' ? fmtCash(a) : p.effect.kind === 'startHype' ? String(a) : pctText(Math.round(a * 100));
+  const amount = p.effect.kind === 'startCash' ? fmtCash(a) : p.effect.kind === 'startHype' ? String(a) : p.effect.kind === 'awayHours' ? fmtHours(a) : pctText(Math.round(a * 100));
   return gt(p.textKey, { amount });
 }
 

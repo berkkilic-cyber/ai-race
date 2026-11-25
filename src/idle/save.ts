@@ -116,7 +116,7 @@ export function sanitize(raw: Raw, content: GarageContent, fresh: GarageState): 
       : null;
   const frenzy = isObj(raw.frenzy) && Number.isFinite(raw.frenzy.until) ? { mult: num(raw.frenzy.mult, 1) || 1, tapMult: num(raw.frenzy.tapMult, 1) || 1, until: time(raw.frenzy.until, 0) } : null;
   const news = Array.isArray(raw.news) ? (raw.news.filter((n) => isObj(n) && typeof n.key === 'string') as unknown as GarageNews[]).slice(-content.news.keep) : [];
-  const offline = isObj(raw.offline) ? { awayMs: num(raw.offline.awayMs), creditedMs: num(raw.offline.creditedMs), tokens: num(raw.offline.tokens), doubled: raw.offline.doubled === true } : null;
+  const offline = isObj(raw.offline) ? { awayMs: num(raw.offline.awayMs), creditedMs: num(raw.offline.creditedMs), tokens: num(raw.offline.tokens), doubled: raw.offline.doubled === true, ...(raw.offline.capped === true ? { capped: true } : {}), ...(typeof raw.offline.capMs === 'number' && raw.offline.capMs > 0 ? { capMs: num(raw.offline.capMs) } : {}) } : null;
   const choiceIds = new Set((content.shipDay?.choices ?? []).map((c) => c.id));
   const lastShip = isObj(raw.lastShip)
     ? { generation: num(raw.lastShip.generation), hypeGained: num(raw.lastShip.hypeGained), at: time(raw.lastShip.at, now), ...(typeof raw.lastShip.choice === 'string' && choiceIds.has(raw.lastShip.choice) ? { choice: raw.lastShip.choice } : {}) }
@@ -174,6 +174,7 @@ export function sanitize(raw: Raw, content: GarageContent, fresh: GarageState): 
     autoBuy: raw.autoBuy === true,
     nextAutoBuyAt: time(raw.nextAutoBuyAt, 0),
     bonusOffer: null,
+    ...(raw.paidStorage === true ? { paidStorage: true } : {}),
   };
   const race = sanitizeRace(raw.race, now);
   if (race) state.race = race;

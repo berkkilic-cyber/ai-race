@@ -1762,11 +1762,31 @@
    "nameKey": "garage.up.offline-1.name",
    "descKey": "garage.up.offline-1.desc",
    "icon": "document",
-   "cost": 500000.0,
+   "cost": 150000,
    "effects": [
     {
      "kind": "offlineCap",
-     "hours": 2
+     "hours": 1
+    }
+   ],
+   "requires": [
+    {
+     "type": "lifetime",
+     "tokens": 60000
+    }
+   ],
+   "keep": true
+  },
+  {
+   "id": "offline-4",
+   "nameKey": "garage.up.offline-4.name",
+   "descKey": "garage.up.offline-4.desc",
+   "icon": "document",
+   "cost": 400000000,
+   "effects": [
+    {
+     "kind": "offlineCap",
+     "hours": 1
     }
    ],
    "requires": [
@@ -1776,7 +1796,7 @@
     },
     {
      "type": "lifetime",
-     "tokens": 200000.0
+     "tokens": 150000000
     }
    ],
    "keep": true
@@ -1810,21 +1830,21 @@
    "nameKey": "garage.up.offline-3.name",
    "descKey": "garage.up.offline-3.desc",
    "icon": "document",
-   "cost": 5000000000000.0,
+   "cost": 200000000000,
    "effects": [
     {
      "kind": "offlineCap",
-     "hours": 4
+     "hours": 2
     }
    ],
    "requires": [
     {
      "type": "generation",
-     "min": 6
+     "min": 3
     },
     {
      "type": "lifetime",
-     "tokens": 1000000000000.0
+     "tokens": 80000000000
     }
    ],
    "keep": true
@@ -1959,7 +1979,7 @@
    "perks": [
     {
      "kind": "offlineCap",
-     "hours": 2
+     "hours": 1
     }
    ]
   },
@@ -2205,8 +2225,9 @@
  "offline": {
   "thresholdMs": 60000,
   "rate": 0.5,
-  "capHours": 4,
-  "reportMinMs": 120000
+  "capHours": 2,
+  "reportMinMs": 120000,
+  "paidCapHours": 12
  },
  "offers": [
   {
@@ -2617,15 +2638,14 @@
     }
    },
    {
-    "id": "frame-tape",
+    "id": "storage-unit",
     "rep": 12,
-    "textKey": "garage.perk.frame-tape",
-    "nameKey": "garage.perk.frame-tape.name",
-    "quipKey": "garage.perk.frame-tape.quip",
+    "textKey": "garage.perk.storage-unit",
+    "nameKey": "garage.perk.storage-unit.name",
+    "quipKey": "garage.perk.storage-unit.quip",
     "effect": {
-     "kind": "frame",
-     "amount": 1,
-     "color": "#C9A66B"
+     "kind": "awayHours",
+     "amount": 1
     }
    },
    {

@@ -1,7 +1,7 @@
 /** Words for Lab Rep perks and rewards (all through the strings files). */
 import type { GarageContent, LabPerkDef } from '@/idle';
 
-import { fmtCash, fmtPct } from '../format';
+import { fmtCash, fmtHours, fmtPct } from '../format';
 import { garageContent } from '../garage/content';
 import { gt } from '../garage/text';
 import { t } from '../i18n';
@@ -29,6 +29,8 @@ export function perkEffectShort(p: LabPerkDef): string {
       return t('ui.meta.sum.income', { pct: pct(a), what: t('term.hype') });
     case 'cashIncome':
       return t('ui.meta.sum.income', { pct: pct(a), what: t('term.cash') });
+    case 'awayHours':
+      return t('ui.garage.storage.perkShort', { hours: fmtHours(a) });
     default:
       return t('ui.meta.sheet.looks');
   }

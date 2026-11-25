@@ -108,5 +108,6 @@ export {
 export { MAX_AMOUNT, amount, finite, formatAmount, formatDuration } from './num';
 export { deserialize, migrateV1, migrateV2, sanitize, serialize, type LoadResult } from './save';
 export { validateGarage } from './validate';
+export { awayStorage, nextStorage, perkAwayHours, storageFill, storageReachHours, type AwayStorage, type StorageNext, type StorageSource, type StorageSourceKind } from './storage';
 export { nextRandom, seedFrom } from './rng';
 export { emptyRaceLink, grantRaceReward, labRepTotal, markRaceNoteSeen, raceBoostLeftMs, raceRewardQuote, type RaceRewardQuote } from './race';

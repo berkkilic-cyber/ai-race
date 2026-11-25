@@ -423,4 +423,27 @@ if (!LEGACY) {
     console.log(`| ${r.profile.name} | ${when(r, 1)} | ${when(r, 2)} | ${when(r, 3)} | ${when(r, 4)} | ${r.log.trainingRuns} / ${span} | ${r.log.modelsKept} | ${r.log.happenings} |`);
   }
 }
+// ---------------------------------------------------------------------------------------
+// Check-in frequency: the same 10 minutes of play (and 2 minutes of tapping) a day, split into
+// 1, 2, 3 or 6 check-ins. Away storage caps each gap, so checking in more often earns more.
+if (!process.argv.includes('--no-checkins')) {
+  const casualP = PROFILES[0];
+  const plans: [string, [number, number][]][] = [
+    ['once a day (20:00)', [[20 * HOUR, 10 * MIN]]],
+    ['twice (08:00, 20:00)', [[8 * HOUR, 5 * MIN], [20 * HOUR, 5 * MIN]]],
+    ['three times (08, 13, 21)', [[8 * HOUR, 3 * MIN + 20 * SEC], [13 * HOUR, 3 * MIN + 20 * SEC], [21 * HOUR, 3 * MIN + 20 * SEC]]],
+    ['six times (every 3 h from 08)', [8, 11, 14, 17, 20, 23].map((h) => [h * HOUR, 100 * SEC] as [number, number])],
+  ];
+  const span = Math.min(DAYS, 14);
+  console.log(`\n## Check-in frequency (casual, no ads, 10 min of play a day, ${span} days)\n`);
+  console.log('| Check-ins | model day 3 | model day 7 | model day 14 | tokens day 3 | tokens day 7 | vs once a day (day 7 tokens) |\n| --- | --- | --- | --- | --- | --- | --- |');
+  let base = 0;
+  for (const [label, sessions] of plans) {
+    const prof: Profile = { ...casualP, name: label, sessions, tapSeconds: 120 / sessions.length };
+    const r = run(prof, span, ACTIVE_HOURS);
+    const row = (d: number) => r.dayRows[Math.min(r.dayRows.length, d) - 1];
+    if (!base) base = row(7).tokens;
+    console.log(`| ${label} | ${row(3).generation + 1} | ${row(7).generation + 1} | ${row(14).generation + 1} | ${formatAmount(row(3).tokens)} | ${formatAmount(row(7).tokens)} | ${(row(7).tokens / base).toFixed(1)}x |`);
+  }
+}
 console.log(`\n(simulated in ${((Date.now() - t0) / 1000).toFixed(1)} s)`);

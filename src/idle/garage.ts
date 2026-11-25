@@ -270,7 +270,9 @@ function awayCatchUp(s: GarageState, content: GarageContent, now: number): void 
   s.incident = null;
   s.happening = null;
   s.bonusOffer = null;
-  const credited = Math.min(away, offlineCapMs(s, content));
+  const capMs = offlineCapMs(s, content);
+  const credited = Math.min(away, capMs);
+  const capped = away > capMs;
   const tokens = grant(s, offlineEarnings(s, content, credited));
   s.now = now;
   if (s.frenzy && now >= s.frenzy.until) s.frenzy = null;
@@ -286,8 +288,8 @@ function awayCatchUp(s: GarageState, content: GarageContent, now: number): void 
   if (away >= content.offline.reportMinMs) {
     const prev = s.offline;
     s.offline = prev
-      ? { awayMs: prev.awayMs + away, creditedMs: prev.creditedMs + credited, tokens: amount(prev.tokens + tokens), doubled: false }
-      : { awayMs: away, creditedMs: credited, tokens, doubled: false };
+      ? { awayMs: prev.awayMs + away, creditedMs: prev.creditedMs + credited, tokens: amount(prev.tokens + tokens), doubled: false, capped: capped || prev.capped === true, capMs }
+      : { awayMs: away, creditedMs: credited, tokens, doubled: false, capped, capMs };
   }
 }
 

@@ -168,9 +168,15 @@ export interface OfflineConfig {
   thresholdMs: number;
   /** Share of production earned while away (0..1). */
   rate: number;
+  /** Away storage before any extension (hours). */
   capHours: number;
   /** A "While you were away" report appears after at least this long away. */
   reportMinMs: number;
+  /**
+   * Reserved for a future paid extension of away storage: with `GarageState.paidStorage` set,
+   * the cap is at least this many hours. No purchase exists yet (see docs/GARAGE.md).
+   */
+  paidCapHours?: number;
 }
 
 export type OfferId = 'offlineDouble' | 'boost' | 'frenzyExtend' | 'incidentFix' | 'crate' | 'prestigeBonus' | 'bonusMultiply';
@@ -266,6 +272,8 @@ export interface AchievementDef {
 export type LabPerkPowerKind = 'startHype' | 'startCash' | 'hypeIncome' | 'cashIncome' | 'momentRate';
 /** Perk kinds that only change looks: a title under the lab name, a frame around the founder card. */
 export type LabPerkCosmeticKind = 'title' | 'frame';
+/** Perk kinds that change the Garage, not race runs: `awayHours` adds hours of away storage. */
+export type LabPerkGarageKind = 'awayHours';
 
 /** A Lab Rep reward: a small start bonus for race runs, or a cosmetic unlock (see labPerks). */
 export interface LabPerkDef {
@@ -281,7 +289,7 @@ export interface LabPerkDef {
    * What a race run applies (the UI turns the power kinds into the run's start bonus). For
    * cosmetic kinds `amount` is unused (1); `key` is a title's text key, `color` a frame's colour.
    */
-  effect: { kind: LabPerkPowerKind | LabPerkCosmeticKind; amount: number; key?: string; color?: string };
+  effect: { kind: LabPerkPowerKind | LabPerkCosmeticKind | LabPerkGarageKind; amount: number; key?: string; color?: string };
 }
 
 /**
@@ -658,6 +666,10 @@ export interface OfflineReport {
   creditedMs: number;
   tokens: number;
   doubled: boolean;
+  /** Away storage filled up: the lab stopped earning after `capMs` (older saves: absent). */
+  capped?: boolean;
+  /** The away storage capacity when the player came back (ms). */
+  capMs?: number;
 }
 
 export interface GarageStats {
@@ -748,6 +760,8 @@ export interface GarageState {
   bonusOffer: BonusOfferState | null;
   /** Rewards from race runs (absent until the first one). */
   race?: RaceLinkState;
+  /** Reserved: the future paid away-storage extension was bought (cap at least offline.paidCapHours). */
+  paidStorage?: boolean;
 }
 
 export type GarageFailure = 'cantAfford' | 'locked' | 'owned' | 'unknownId' | 'notReady' | 'none' | 'cooldown' | 'dailyCap' | 'notApplicable' | 'full' | 'pending';

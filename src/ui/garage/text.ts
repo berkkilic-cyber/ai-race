@@ -1,6 +1,6 @@
 import { generatorDef, upgradeDef, type GarageContent, type Requirement, type UpgradeEffect } from '@/idle';
 
-import { fmtAmount, fmtDuration, fmtNum, pctText } from '../format';
+import { fmtAmount, fmtDuration, fmtHours, fmtNum, pctText } from '../format';
 import { hasString, t, type Params } from '../i18n';
 import { garageContent } from './content';
 
@@ -55,7 +55,7 @@ export function effectText(e: UpgradeEffect, content: GarageContent = garageCont
     case 'globalMult':
       return t('ui.garage.effect.globalMult', { mult: mult(e.mult) });
     case 'offlineCap':
-      return t('ui.garage.effect.offlineCap', { hours: e.hours });
+      return t('ui.garage.effect.offlineCap', { hours: fmtHours(e.hours) });
     case 'offlineRate':
       return t('ui.garage.effect.offlineRate', { pct: pct(e.add) });
     case 'comboStacks':

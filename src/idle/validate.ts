@@ -119,6 +119,7 @@ export function validateGarage(c: GarageContent): string[] {
   if (!(o.rate > 0 && o.rate <= 1)) err('offline.rate must be in (0, 1]');
   pos(o.capHours, 'offline.capHours');
   pos(o.thresholdMs, 'offline.thresholdMs');
+  if (o.paidCapHours !== undefined && !(o.paidCapHours >= o.capHours)) err('offline.paidCapHours must be at least capHours');
 
   for (const id of OFFER_IDS) {
     const def = c.offers.find((x) => x.id === id);
