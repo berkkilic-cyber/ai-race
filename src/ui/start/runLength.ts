@@ -9,6 +9,8 @@ import { hasString, t } from '../i18n';
 import { hasCompletedRun } from '../store/runSave';
 import { readValue, writeValue } from '../tutorial/storage';
 import { multiplierText } from './difficulty';
+import { demoClamp } from '../demo/config';
+import { demoOption } from '../demo/options';
 
 /** Storage key of the last run length chosen on the start screen. */
 export const RUN_LENGTH_KEY = 'ai-race.runLength.v1';
@@ -40,7 +42,7 @@ export function runLengthParam(pack: ContentPack, param: string | string[] | und
 /** Reads the stored choice and whether a run was ever finished, and returns the preset to preselect. */
 export async function loadRunLengthChoice(pack: ContentPack): Promise<string | undefined> {
   const [stored, completed] = await Promise.all([readValue(RUN_LENGTH_KEY).catch(() => null), hasCompletedRun().catch(() => false)]);
-  return initialRunLength(pack, stored, completed);
+  return demoClamp('runLength', pack, initialRunLength(pack, stored, completed));
 }
 
 /** Remembers the run length for the next start screen. */
@@ -63,13 +65,13 @@ export interface RunLengthOption {
 export function runLengthOptions(pack: ContentPack): RunLengthOption[] {
   return getRunLengths(pack).map((r) => {
     const minutesKey = `runLength.${r.id}.minutes`;
-    return {
+    return demoOption('runLength', pack, {
       id: r.id,
       name: t(r.nameKey),
       desc: t(r.descKey),
       minutes: hasString(minutesKey) ? t(minutesKey) : '',
       score: t('ui.sprint.length.score', { mult: multiplierText(r.scoreMultiplier) }),
-    };
+    });
   });
 }
 

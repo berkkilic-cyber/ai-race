@@ -1,0 +1,17 @@
+{
+  "ui.demo.badge": "Ücretsiz demo",
+  "ui.demo.cta": "Bekleme listesine katıl",
+  "ui.demo.ctaSub": "Tam sürüm çıkınca tek bir e-posta",
+  "ui.demo.locked.short": "Tam sürüm",
+  "ui.demo.locked.difficulty": "Tam sürümde. Demoda ilk iki seviye var.",
+  "ui.demo.locked.runLength": "Tam sürümde. Demoda Sprint var.",
+  "ui.demo.gate.title": "Tam sürümde",
+  "ui.demo.gate.body.difficulty": "Daha zor iki seviye tam sürümde seni bekliyor; aynı makaleleri okuyan rakiplerle birlikte. Demoda ilk ikisi var.",
+  "ui.demo.gate.body.runLength": "Uzun oyun tam sürümde: daha çok olay kartı, plan için daha çok alan, pişman olmak için daha çok zaman. Demoda Sprint var: aynı hikâye, hızlı tempoda.",
+  "ui.demo.gate.body.garageStage": "Sıradaki aşama, {stage}, tam sürümde. Demoda lab'ın yerinde kalıyor; ev sahibi memnun.",
+  "ui.demo.gate.foot": "Oyun çıkınca tek bir e-posta. Sinerji bülteni yok.",
+  "ui.demo.gate.close": "Demoya devam et",
+  "ui.demo.stage.locked": "Tam sürümde · bekleme listesi için dokun",
+  "ui.demo.rotate.title": "Telefonunu yan çevir",
+  "ui.demo.rotate.body": "Dünya haritası geniş. Oyun da öyle."
+}

@@ -1,0 +1,17 @@
+{
+  "ui.demo.badge": "Free demo",
+  "ui.demo.cta": "Join the waitlist",
+  "ui.demo.ctaSub": "One email when the full game is out",
+  "ui.demo.locked.short": "Full game",
+  "ui.demo.locked.difficulty": "In the full game. The demo has the first two levels.",
+  "ui.demo.locked.runLength": "In the full game. The demo has the Sprint.",
+  "ui.demo.gate.title": "In the full game",
+  "ui.demo.gate.body.difficulty": "The two harder levels wait in the full game, along with rivals who read the same papers you do. The demo has the first two.",
+  "ui.demo.gate.body.runLength": "The long run is in the full game: more event cards, more room for a plan, more time to regret it. The demo has the Sprint, the same story at speed.",
+  "ui.demo.gate.body.garageStage": "The next stage, {stage}, is in the full game. In the demo your lab stays put, which the landlord appreciates.",
+  "ui.demo.gate.foot": "One email when the game is out. No newsletter about synergy.",
+  "ui.demo.gate.close": "Keep playing the demo",
+  "ui.demo.stage.locked": "In the full game · tap for the waitlist",
+  "ui.demo.rotate.title": "Turn your phone sideways",
+  "ui.demo.rotate.body": "The world map is wide. So is the game."
+}
