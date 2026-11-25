@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>__TITLE__</title>
+<link rel="icon" href="game/favicon.ico">
+<style>
+  html, body { margin: 0; height: 100%; background: __BG__; overflow: hidden; overscroll-behavior: none; -webkit-user-select: none; user-select: none; }
+  #frame { position: absolute; left: 0; top: 0; border: 0; display: block; background: __BG__; transform-origin: 0 0; }
+</style>
+</head>
+<body>
+<!--
+  The browser demo's letterbox (scripts/demo/build.js copies this to the zip root as index.html).
+  The game is landscape and phone-shaped, and its layout reads the window size, so it runs in a
+  frame sized here: the largest box of an aspect between 16:9 and 2.17:1 that fits, centred on
+  the dark ground. Past a logical height of 432 px the frame is scaled up (at most 2x) instead
+  of growing, so on a big screen it looks like a big phone, not a sparse page. Touch devices
+  get the whole window (the game shows its own "turn your phone" hint when held upright).
+-->
+<iframe id="frame" title="__TITLE__" allow="autoplay; fullscreen" allowfullscreen></iframe>
+<script>
+(function () {
+  var MIN_AR = 16 / 9, MAX_AR = 2.17, LOGICAL_H = 432, MAX_SCALE = 2;
+  var frame = document.getElementById('frame');
+  frame.src = 'game/index.html' + location.search;
+  var coarse = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+  function fit() {
+    var W = window.innerWidth, H = window.innerHeight;
+    var w = W, h = H, s = 1;
+    if (!coarse) {
+      var ar = Math.min(MAX_AR, Math.max(MIN_AR, W / H));
+      var bw = Math.min(W, H * ar), bh = bw / ar;
+      s = Math.min(MAX_SCALE, Math.max(1, bh / LOGICAL_H));
+      w = Math.round(bw / s); h = Math.round(bh / s);
+    }
+    frame.style.width = w + 'px';
+    frame.style.height = h + 'px';
+    var left = Math.round((W - w * s) / 2), top = Math.round((H - h * s) / 2);
+    frame.style.transform = 'translate(' + left + 'px,' + top + 'px) scale(' + s + ')';
+  }
+  fit();
+  window.addEventListener('resize', fit);
+  // Keyboard shortcuts live in the game: keep the focus in its frame.
+  frame.addEventListener('load', function () { try { frame.contentWindow.focus(); } catch (e) {} });
+  document.addEventListener('mousedown', function () { try { frame.contentWindow.focus(); } catch (e) {} });
+})();
+</script>
+</body>
+</html>
