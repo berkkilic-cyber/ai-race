@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useSyncExternalStore } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import type { ContentPack } from '@/engine';
@@ -34,21 +34,35 @@ export function resultLine(r: DailyResult, abandoned = 'ui.daily.abandoned'): st
   return t('ui.daily.result', { ending: t(`share.ending.${r.trigger}`), days: fmtInt(r.days) });
 }
 
+/** Wakes the clock snapshot: once a second, and when the debug clock moves. */
+function subscribeClock(onChange: () => void): () => void {
+  const id = setInterval(onChange, 1000);
+  const off = useDailyStore.subscribe((st, prev) => {
+    if (st.clock !== prev.clock) onChange();
+  });
+  return () => {
+    clearInterval(id);
+    off();
+  };
+}
+
+/** Now, rounded so the card re-renders once a second in the last hour before the next daily, else every 30 s. */
+function clockSnapshot(): number {
+  const now = dailyNow();
+  const step = msUntilNextDaily(now) < 3_600_000 ? 1000 : 30_000;
+  return Math.floor(now / step) * step;
+}
+
+const serverClock = () => 0;
+const subscribeNever = () => () => undefined;
+
 /**
- * The daily clock for a component: re-read by a timer once a second in the last hour before
- * the next daily, else every 30 s (never per frame), and at once when the debug clock moves.
- * The date key and the countdown derive from it, so the card flips at 00:00 UTC on its own.
+ * The daily clock for a component (never per frame). The date key and the countdown derive
+ * from it, so the card flips at 00:00 UTC on its own. 0 while hydrating the statically
+ * rendered web page.
  */
 function useDailyNow(): number {
-  const clock = useDailyStore((s) => s.clock);
-  const [now, setNow] = useState(dailyNow);
-  const left = msUntilNextDaily(now);
-  useEffect(() => setNow(dailyNow()), [clock]);
-  useEffect(() => {
-    const id = setTimeout(() => setNow(dailyNow()), left < 3_600_000 ? 1000 : 30_000);
-    return () => clearTimeout(id);
-  }, [now, left]);
-  return now;
+  return useSyncExternalStore(subscribeClock, clockSnapshot, serverClock);
 }
 
 export interface DailyCardProps {
@@ -71,9 +85,8 @@ export function DailyCard({ pack, onPlay, onContinue, onHistory }: DailyCardProp
   const { share, notice } = useShare();
   // Client only: the web build renders the start page ahead of time, and the date and the
   // countdown would not match the hydrating client.
-  const [mounted, setMounted] = useState(false);
+  const mounted = useSyncExternalStore(subscribeNever, () => true, () => false);
   useEffect(() => {
-    setMounted(true);
     void useDailyStore.getState().load();
   }, []);
 
