@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { MockAdHost, useAdStore } from '../ads';
+import { MissionToastHost } from '../missions';
 import { Ground } from '../components/Deco';
 import { GarageRaceNote } from '../meta/GarageRaceNote';
 import { useInsets } from '../hooks/useInsets';
@@ -81,6 +82,7 @@ export function GarageScreen() {
         <GarageRaceNote />
         <ShipDay />
         <LaunchCard />
+        <MissionToastHost />
         <MockAdHost />
       </AmbientProvider>
     </View>

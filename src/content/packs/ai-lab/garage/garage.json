@@ -539,6 +539,244 @@
   "buyIntervalMs": 4000,
   "buyBudgetShare": 0.25
  },
+ "missions": {
+  "reward": {
+   "minutes": 10,
+   "minTaps": 40,
+   "shipShareCap": 0.15,
+   "rep": 0.2
+  },
+  "crate": {
+   "minutes": 30,
+   "minTaps": 150,
+   "shipShareCap": 0.3,
+   "rep": 0.5,
+   "trainingRuns": 1,
+   "streakBonus": 0.1,
+   "streakCap": 7
+  },
+  "dayOffEveryDays": 7,
+  "defs": [
+   {
+    "id": "tap-300",
+    "slot": "garage",
+    "titleKey": "garage.mission.tap-300",
+    "goals": [
+     {
+      "counter": "taps",
+      "goal": 300
+     }
+    ]
+   },
+   {
+    "id": "buy-20",
+    "slot": "garage",
+    "titleKey": "garage.mission.buy-20",
+    "goals": [
+     {
+      "counter": "bought",
+      "goal": 20
+     }
+    ]
+   },
+   {
+    "id": "happenings-5",
+    "slot": "garage",
+    "titleKey": "garage.mission.happenings-5",
+    "goals": [
+     {
+      "counter": "happenings",
+      "goal": 5
+     }
+    ]
+   },
+   {
+    "id": "golden-3",
+    "slot": "garage",
+    "titleKey": "garage.mission.golden-3",
+    "goals": [
+     {
+      "counter": "golden",
+      "goal": 3
+     }
+    ]
+   },
+   {
+    "id": "upgrades-4",
+    "slot": "garage",
+    "titleKey": "garage.mission.upgrades-4",
+    "goals": [
+     {
+      "counter": "upgrades",
+      "goal": 4
+     }
+    ]
+   },
+   {
+    "id": "training-2",
+    "slot": "garage",
+    "titleKey": "garage.mission.training-2",
+    "goals": [
+     {
+      "counter": "training",
+      "goal": 2
+     }
+    ],
+    "minStage": 1
+   },
+   {
+    "id": "incidents-3",
+    "slot": "garage",
+    "titleKey": "garage.mission.incidents-3",
+    "goals": [
+     {
+      "counter": "incidents",
+      "goal": 3
+     }
+    ],
+    "minGeneration": 2
+   },
+   {
+    "id": "sprint-1",
+    "slot": "race",
+    "titleKey": "garage.mission.sprint-1",
+    "goals": [
+     {
+      "counter": "sprintFinish",
+      "goal": 1
+     }
+    ]
+   },
+   {
+    "id": "regions-5",
+    "slot": "race",
+    "titleKey": "garage.mission.regions-5",
+    "goals": [
+     {
+      "counter": "regions",
+      "goal": 5
+     }
+    ]
+   },
+   {
+    "id": "win-1",
+    "slot": "race",
+    "titleKey": "garage.mission.win-1",
+    "goals": [
+     {
+      "counter": "raceWin",
+      "goal": 1
+     }
+    ],
+    "weight": 0.7
+   },
+   {
+    "id": "tier-3",
+    "slot": "race",
+    "titleKey": "garage.mission.tier-3",
+    "goals": [
+     {
+      "counter": "raceTier",
+      "goal": 3
+     }
+    ]
+   },
+   {
+    "id": "moments-4",
+    "slot": "race",
+    "titleKey": "garage.mission.moments-4",
+    "goals": [
+     {
+      "counter": "moments",
+      "goal": 4
+     }
+    ]
+   },
+   {
+    "id": "ship-or-win",
+    "slot": "stretch",
+    "titleKey": "garage.mission.ship-or-win",
+    "goals": [
+     {
+      "counter": "ships",
+      "goal": 1
+     },
+     {
+      "counter": "raceWin",
+      "goal": 1
+     }
+    ]
+   },
+   {
+    "id": "tap-1000",
+    "slot": "stretch",
+    "titleKey": "garage.mission.tap-1000",
+    "goals": [
+     {
+      "counter": "taps",
+      "goal": 1000
+     }
+    ]
+   },
+   {
+    "id": "races-2",
+    "slot": "stretch",
+    "titleKey": "garage.mission.races-2",
+    "goals": [
+     {
+      "counter": "raceFinish",
+      "goal": 2
+     }
+    ]
+   },
+   {
+    "id": "happen-or-regions",
+    "slot": "stretch",
+    "titleKey": "garage.mission.happen-or-regions",
+    "goals": [
+     {
+      "counter": "happenings",
+      "goal": 10
+     },
+     {
+      "counter": "regions",
+      "goal": 8
+     }
+    ]
+   },
+   {
+    "id": "buy-or-moments",
+    "slot": "stretch",
+    "titleKey": "garage.mission.buy-or-moments",
+    "goals": [
+     {
+      "counter": "bought",
+      "goal": 60
+     },
+     {
+      "counter": "moments",
+      "goal": 8
+     }
+    ]
+   },
+   {
+    "id": "train-or-sprint",
+    "slot": "stretch",
+    "titleKey": "garage.mission.train-or-sprint",
+    "goals": [
+     {
+      "counter": "training",
+      "goal": 4
+     },
+     {
+      "counter": "sprintFinish",
+      "goal": 1
+     }
+    ],
+    "minStage": 1
+   }
+  ]
+ },
  "generators": [
   {
    "id": "intern",

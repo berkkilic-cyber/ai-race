@@ -83,6 +83,7 @@ describe('ai-lab garage content', () => {
       [/^garage\.trait\./, ['value']],
       [/^garage\.stage\.[a-z]+\.unlock$/, []],
       [/^garage\.shipday\.reaction\./, ['rival']],
+      [/^garage\.mission\./, ['a', 'b']],
     ];
     for (const [key, text] of Object.entries(strings)) {
       const found = [...text.matchAll(/\{(\w+)\}/g)].map((m) => m[1]);

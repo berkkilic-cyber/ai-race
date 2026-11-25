@@ -23,6 +23,7 @@ import {
   baseRate,
   buy,
   buyUpgrade,
+  claimDailyReward,
   claimOffer,
   collectGolden,
   collectHappening,
@@ -97,18 +98,29 @@ interface Profile {
   modelTaste: Partial<Record<ModelStat, number>>;
   staff: StaffSplit;
   shipChoice: string;
+  /** Daily missions claimed per day (at the last check-in); 3 also opens the daily crate. */
+  missions: number;
 }
 
 const ACTIVE_TASTE: Partial<Record<ModelStat, number>> = { production: 3, tap: 1, offlineRate: 0.3, offlineCap: 0.02, shipHype: 2.5, happening: 0.4, incident: -0.6, trainingSpeed: 0.6 };
 const CASUAL_TASTE: Partial<Record<ModelStat, number>> = { production: 2.5, tap: 0.3, offlineRate: 5, offlineCap: 0.25, shipHype: 2.5, happening: 0.2, incident: -0.2, trainingSpeed: 0.8 };
 
+/**
+ * Daily missions a casual bot claims each day: the Garage one and the stretch (2) by default;
+ * `--missions 0` leaves them out, `--missions 3` plays a race a day too and opens the crate.
+ */
+const MISSIONS = (() => {
+  const i = process.argv.indexOf('--missions');
+  return i > 0 ? Number(process.argv[i + 1]) : 2;
+})();
+
 const CASUAL_SESSIONS: [number, number][] = [[8 * HOUR, 3 * MIN], [13 * HOUR, 3 * MIN], [21 * HOUR, 4 * MIN]];
 
 const PROFILES: Profile[] = [
-  { name: 'casual', sessions: CASUAL_SESSIONS, tapsPerSec: 3, tapSeconds: 40, goldenSkill: 0.6, ads: false, boostsPerSession: 0, happeningSkill: 0.6, modelTaste: CASUAL_TASTE, staff: { research: 4, product: 5, safety: 3 }, shipChoice: 'safe' },
-  { name: 'casual + ads', sessions: CASUAL_SESSIONS, tapsPerSec: 3, tapSeconds: 40, goldenSkill: 0.6, ads: true, boostsPerSession: 2, happeningSkill: 0.6, modelTaste: CASUAL_TASTE, staff: { research: 4, product: 5, safety: 3 }, shipChoice: 'safe' },
-  { name: 'active', sessions: null, tapsPerSec: 6, tapSeconds: Infinity, goldenSkill: 0.9, ads: false, boostsPerSession: 0, happeningSkill: 0.85, modelTaste: ACTIVE_TASTE, staff: { research: 3, product: 6, safety: 3 }, shipChoice: 'hype' },
-  { name: 'active + ads', sessions: null, tapsPerSec: 6, tapSeconds: Infinity, goldenSkill: 0.9, ads: true, boostsPerSession: 1, happeningSkill: 0.85, modelTaste: ACTIVE_TASTE, staff: { research: 3, product: 6, safety: 3 }, shipChoice: 'hype' },
+  { name: 'casual', sessions: CASUAL_SESSIONS, tapsPerSec: 3, tapSeconds: 40, goldenSkill: 0.6, ads: false, boostsPerSession: 0, happeningSkill: 0.6, modelTaste: CASUAL_TASTE, staff: { research: 4, product: 5, safety: 3 }, shipChoice: 'safe', missions: MISSIONS },
+  { name: 'casual + ads', sessions: CASUAL_SESSIONS, tapsPerSec: 3, tapSeconds: 40, goldenSkill: 0.6, ads: true, boostsPerSession: 2, happeningSkill: 0.6, modelTaste: CASUAL_TASTE, staff: { research: 4, product: 5, safety: 3 }, shipChoice: 'safe', missions: MISSIONS },
+  { name: 'active', sessions: null, tapsPerSec: 6, tapSeconds: Infinity, goldenSkill: 0.9, ads: false, boostsPerSession: 0, happeningSkill: 0.85, modelTaste: ACTIVE_TASTE, staff: { research: 3, product: 6, safety: 3 }, shipChoice: 'hype', missions: 0 },
+  { name: 'active + ads', sessions: null, tapsPerSec: 6, tapSeconds: Infinity, goldenSkill: 0.9, ads: true, boostsPerSession: 1, happeningSkill: 0.85, modelTaste: ACTIVE_TASTE, staff: { research: 3, product: 6, safety: 3 }, shipChoice: 'hype', missions: 0 },
 ];
 
 /** Bot randomness, separate from the game's PRNG. */
@@ -328,6 +340,11 @@ function run(p: Profile, days: number, activeHours: number): RunResult {
         const tapping = s.now - begin < p.tapSeconds * SEC;
         s = playSecond(s, p, tapping, log, START);
         note();
+      }
+      if (offset === p.sessions[p.sessions.length - 1][0] && p.missions > 0 && content.missions) {
+        for (let m = 0; m < Math.min(3, p.missions); m++) s = claimDailyReward(s, content, 'mission', s.now).state;
+        if (p.missions >= 3) s = claimDailyReward(s, content, 'crate', s.now, { streak: d + 1 }).state;
+        s = shop(s, p, false, log, START);
       }
     }
     s = advance(s, content, START + (d + 1) * DAY);

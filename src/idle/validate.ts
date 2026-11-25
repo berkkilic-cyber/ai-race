@@ -2,7 +2,7 @@
  * Checks a garage content pack: unique ids, references that resolve, numbers in range,
  * and a string for every text key. Returns a list of problems (empty = valid).
  */
-import { MODEL_STATS, OFFER_IDS, STAFF_LANES, type GarageContent, type Requirement, type TraitDef, type UpgradeEffect } from './types';
+import { MISSION_SLOTS, MODEL_STATS, OFFER_IDS, STAFF_LANES, type GarageContent, type Requirement, type TraitDef, type UpgradeEffect } from './types';
 
 export function validateGarage(c: GarageContent): string[] {
   const problems: string[] = [];
@@ -190,6 +190,34 @@ export function validateGarage(c: GarageContent): string[] {
   for (const h of c.news.headlines) key(h.key, 'headline');
   key(c.news.achievementKey, 'news');
   pos(c.news.keep, 'news.keep');
+  if (c.missions) {
+    const m = c.missions;
+    for (const [name, r] of [['reward', m.reward], ['crate', m.crate]] as const) {
+      pos(r.minutes, `missions.${name}.minutes`);
+      nonNeg(r.minTaps, `missions.${name}.minTaps`);
+      pos(r.shipShareCap, `missions.${name}.shipShareCap`);
+      nonNeg(r.rep, `missions.${name}.rep`);
+    }
+    nonNeg(m.crate.trainingRuns, 'missions.crate.trainingRuns');
+    nonNeg(m.crate.streakBonus, 'missions.crate.streakBonus');
+    if (!(Number.isInteger(m.crate.streakCap) && m.crate.streakCap >= 1)) err('missions.crate.streakCap must be a positive integer');
+    if (!(Number.isInteger(m.dayOffEveryDays) && m.dayOffEveryDays >= 2)) err('missions.dayOffEveryDays must be an integer of at least 2');
+    unique(m.defs.map((d) => d.id), 'missions');
+    const stages = c.stages?.length ?? 1;
+    for (const d of m.defs) {
+      if (!MISSION_SLOTS.includes(d.slot)) err(`mission ${d.id}: unknown slot ${String(d.slot)}`);
+      key(d.titleKey, `mission ${d.id}`);
+      if (d.goals.length < 1 || d.goals.length > 2) err(`mission ${d.id}: one or two goals`);
+      for (const g of d.goals) {
+        if (!(typeof g.counter === 'string' && g.counter.length > 0)) err(`mission ${d.id}: a goal needs a counter`);
+        if (!(Number.isInteger(g.goal) && g.goal >= 1)) err(`mission ${d.id}: goals are positive integers`);
+      }
+      if (d.minStage !== undefined && !(d.minStage >= 0 && d.minStage < stages)) err(`mission ${d.id}: minStage out of range`);
+      if (d.weight !== undefined) pos(d.weight, `mission ${d.id} weight`);
+    }
+    // A brand-new lab must have a mission for every slot.
+    for (const slot of MISSION_SLOTS) if (!m.defs.some((d) => d.slot === slot && !d.minStage && !d.minGeneration)) err(`missions: no ${slot} mission for a new lab`);
+  }
   validateLab(c, { err, pos, nonNeg, key, unique, requirement });
   return problems;
 }

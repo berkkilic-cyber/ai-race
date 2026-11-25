@@ -56,6 +56,12 @@ export type AnalyticsEvent =
   | { name: 'race_reward_granted'; params: { rep: number; boost: number } }
   | { name: 'perks_toggle'; params: { on: boolean } }
   | { name: 'settings_change'; params: { key: string; value: string | number | boolean } }
+  | { name: 'away_return'; params: { hoursAway: number; capped: boolean; capacityHours: number } }
+  | { name: 'mission_complete'; params: { id: string } }
+  | { name: 'mission_claim'; params: { id: string } }
+  | { name: 'daily_crate_claim'; params: { streak: number } }
+  | { name: 'streak_day'; params: { streak: number; usedDayOff: boolean } }
+  | { name: 'paradigm_shift'; params: { count: number } }
   | { name: 'error'; params: { where: string; message: string } };
 
 export type EventName = AnalyticsEvent['name'];
@@ -115,6 +121,12 @@ export const EVENT_NAMES: readonly EventName[] = [
   'race_reward_granted',
   'perks_toggle',
   'settings_change',
+  'away_return',
+  'mission_complete',
+  'mission_claim',
+  'daily_crate_claim',
+  'streak_day',
+  'paradigm_shift',
   'error',
 ];
 

@@ -14,6 +14,7 @@ import feelStrings from './strings/feel.en.json';
 import analyticsStrings from './strings/analytics.en.json';
 import sprintStrings from './strings/sprint.en.json';
 import metaStrings from './strings/meta.en.json';
+import missionsStrings from './strings/missions.en.json';
 import { readableOn } from './color';
 import { colors, isDark, shape } from './theme';
 import { lowerFirst, upperFirst } from './locale/casing';
@@ -32,6 +33,7 @@ import feelStringsTr from './strings/feel.tr.json';
 import analyticsStringsTr from './strings/analytics.tr.json';
 import sprintStringsTr from './strings/sprint.tr.json';
 import metaStringsTr from './strings/meta.tr.json';
+import missionsStringsTr from './strings/missions.tr.json';
 import localeStrings from './strings/locale.en.json';
 import localeStringsTr from './strings/locale.tr.json';
 
@@ -39,7 +41,7 @@ export type Params = Record<string, string | number>;
 
 const LOCALE = 'en';
 /** Shared captions plus one file per feature, so feature tasks never edit the same file. */
-const UI: Record<string, string> = { ...uiStrings, ...treesStrings, ...eventsStrings, ...startStrings, ...tutorialStrings, ...momentsStrings, ...raceStrings, ...garageStrings, ...difficultyStrings, ...feelStrings, ...analyticsStrings, ...sprintStrings, ...metaStrings };
+const UI: Record<string, string> = { ...uiStrings, ...treesStrings, ...eventsStrings, ...startStrings, ...tutorialStrings, ...momentsStrings, ...raceStrings, ...garageStrings, ...difficultyStrings, ...feelStrings, ...analyticsStrings, ...sprintStrings, ...metaStrings, ...missionsStrings };
 
 /**
  * Strings per locale. A new feature file is ONE import and ONE spread per language: the
@@ -47,7 +49,7 @@ const UI: Record<string, string> = { ...uiStrings, ...treesStrings, ...eventsStr
  * (`<feature>.tr.json`) in UI_TR once translated. A key missing in Turkish falls back to
  * English (`npm run i18n:check` lists them).
  */
-const UI_TR: Record<string, string> = { ...uiStringsTr, ...treesStringsTr, ...eventsStringsTr, ...startStringsTr, ...tutorialStringsTr, ...momentsStringsTr, ...raceStringsTr, ...garageStringsTr, ...difficultyStringsTr, ...localeStringsTr, ...feelStringsTr, ...analyticsStringsTr, ...sprintStringsTr, ...metaStringsTr };
+const UI_TR: Record<string, string> = { ...uiStringsTr, ...treesStringsTr, ...eventsStringsTr, ...startStringsTr, ...tutorialStringsTr, ...momentsStringsTr, ...raceStringsTr, ...garageStringsTr, ...difficultyStringsTr, ...localeStringsTr, ...feelStringsTr, ...analyticsStringsTr, ...sprintStringsTr, ...metaStringsTr, ...missionsStringsTr };
 const UI_EXTRA: Record<string, string> = { ...localeStrings };
 const UI_BY_LOCALE: Record<Locale, Record<string, string>> = { en: { ...UI, ...UI_EXTRA }, tr: UI_TR };
 

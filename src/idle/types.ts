@@ -556,8 +556,63 @@ export interface AutomationConfig {
   buyBudgetShare: number;
 }
 
+// ---------------------------------------------------------------------------------------
+// Daily missions (the UI picks and tracks them; the engine grants the rewards).
+
+/** One goal of a mission: a counter (named by the UI's mission tracker) reaching `goal`. */
+export interface MissionGoal {
+  counter: string;
+  goal: number;
+}
+
+/** Which of the day's three places a mission fills: one Garage, one race, one either-or or stretch. */
+export type MissionSlot = 'garage' | 'race' | 'stretch';
+
+export const MISSION_SLOTS: readonly MissionSlot[] = ['garage', 'race', 'stretch'];
+
+export interface MissionDef {
+  id: string;
+  slot: MissionSlot;
+  /** What to do; `{a}` / `{b}` = the goals. */
+  titleKey: string;
+  /** Done when ANY goal is reached (one goal for most; two for an either-or). */
+  goals: MissionGoal[];
+  /** Offered only from this Garage stage on (index into stages). */
+  minStage?: number;
+  /** Offered only from this model generation on. */
+  minGeneration?: number;
+  weight?: number;
+}
+
+/** A reward in minutes of production (at least `minTaps` taps' worth), at most `shipShareCap` of the next ship's tokens. */
+export interface DailyRewardConfig {
+  minutes: number;
+  minTaps: number;
+  shipShareCap: number;
+  /** Lab Rep progress (fractions wait like race rewards do). */
+  rep: number;
+}
+
+export interface DailyCrateConfig extends DailyRewardConfig {
+  /** Training runs added (when training is on; may pass the queue cap). */
+  trainingRuns: number;
+  /** Each streak day adds this share to the crate, up to `streakCap` days. */
+  streakBonus: number;
+  streakCap: number;
+}
+
+export interface MissionsConfig {
+  reward: DailyRewardConfig;
+  crate: DailyCrateConfig;
+  /** A missed day is covered by a day off, which recharges this many days after it is used. */
+  dayOffEveryDays: number;
+  defs: MissionDef[];
+}
+
 export interface GarageContent {
   id: string;
+  /** Daily missions (none: no missions). */
+  missions?: MissionsConfig;
   stages?: StageDef[];
   milestones?: MilestoneConfig;
   training?: TrainingConfig;

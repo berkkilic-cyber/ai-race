@@ -25,6 +25,7 @@ import { colors, shape, spacing, type } from '../theme';
 import { FounderStep } from './FounderStep';
 import { BuildStamp } from '../diagnostics/BuildStamp';
 import { LanguageToggle } from '../locale';
+import { MissionsStartButton } from '../missions';
 import { HowToSheet } from './HowToSheet';
 import { difficultyOptions, difficultyParam, loadDifficultyChoice, saveDifficultyChoice } from './difficulty';
 import { defaultHomeRegion, missingText, randomLabName, validateLabName } from './logic';
@@ -320,6 +321,7 @@ export function StartScreen({ beforeEnter }: StartScreenProps = {}) {
       {/* Which build is running (long-press two seconds: touch diagnostics on the map). */}
       <BuildStamp style={[styles.stamp, { top: insets.top + 2, right: insets.right + spacing.s }]} />
       <LanguageToggle visible={step === 0} />
+      <MissionsStartButton hidden={step !== 0} />
       <HowToSheet visible={howTo} onClose={() => setHowTo(false)} />
       <PerksSheet
         visible={perksSheet}

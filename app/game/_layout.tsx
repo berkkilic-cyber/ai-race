@@ -22,6 +22,7 @@ import { TickerDock } from '@/ui/shell/TickerDock';
 import { colors } from '@/ui/theme';
 import { TreesTabBadge } from '@/ui/trees';
 import { TutorialHost } from '@/ui/tutorial';
+import { MissionToastHost } from '@/ui/missions';
 
 // Web splits routes into chunks: load the other tabs' code and the end screen now, quietly,
 // so switching tabs or finishing the run never makes the router require a chunk that is not
@@ -93,6 +94,7 @@ function GameShell() {
         </Tabs>
       </Animated.View>
       <ToastHost />
+      <MissionToastHost />
       <TutorialHost />
       <EventModal />
       <RunMenuHost />
