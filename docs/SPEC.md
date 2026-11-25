@@ -49,6 +49,10 @@ English only, placeholder art, no ads or purchases. Out of scope on purpose: IPO
 | 7 | Start and end screens | Lab setup, ending with score and summary, play again |
 | 8 | Balance pass | 1,000 bot runs: sensible strategy wins 30 to 60%, median run 20 to 30 minutes |
 
+## Daily challenge and sharing
+
+One challenge per UTC day, the same for everyone with no server: the date decides the seed, founder, home region, a Sprint at the default level and one twist (a start bonus or a smaller rival field). One scored attempt per day (practice after), a streak with the best kept, the last 30 results on the device. After any run a five-line share text (Wordle-style, no spoilers) and a satirical newspaper front page of the run, made to be screenshotted. Details: `docs/DAILY.md`.
+
 ## Later, decided by results
 
-Art, sound and Turkish text; ads and purchases; soft launch in Türkiye; daily challenge, then friend lobbies; Rogue mode; Steam page; more themes on the same engine.
+Art, sound and Turkish text; ads and purchases; soft launch in Türkiye; a daily leaderboard (docs/DAILY.md), then friend lobbies; Rogue mode; Steam page; more themes on the same engine.
