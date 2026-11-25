@@ -11,6 +11,8 @@ import { getCapabilityLevel, getWorldShare, type ContentPack, type GameState, ty
 
 /** Ticks between AGI-race samples. */
 export const SAMPLE_EVERY = 5;
+/** A rival launch makes a story from this model tier up. */
+export const MIN_RIVAL_TIER = 2;
 /** Story format; a stored story of another format is dropped. */
 export const STORY_VERSION = 1;
 
@@ -108,7 +110,8 @@ function onNews(story: RunStory, item: NewsItem, state: GameState, pack: Content
       if (!story.firstLaunch) story.firstLaunch = { tick: item.tick, model, tier };
     } else if (item.labId) {
       const gap = tier - getCapabilityLevel(state, pack, me);
-      if (gap > 0 && (!story.rivalLaunch || gap > story.rivalLaunch.gap)) story.rivalLaunch = { tick: item.tick, rival: item.labId, model, tier, gap };
+      // Only a real lead makes news: a tier 2 model or better, ahead of the player's.
+      if (gap > 0 && tier >= MIN_RIVAL_TIER && (!story.rivalLaunch || gap > story.rivalLaunch.gap)) story.rivalLaunch = { tick: item.tick, rival: item.labId, model, tier, gap };
     }
   } else if (item.kind === 'acquisition' && item.params?.rival === me && typeof item.params.lab === 'string') {
     story.acquisitions++;

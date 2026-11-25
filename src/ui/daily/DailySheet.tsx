@@ -23,8 +23,8 @@ function Stat({ label, value, testID }: { label: string; value: string; testID?:
 /** The Daily sheet: streak, best streak, and the last 30 dailies (date, ending, score). Local only. */
 export function DailySheet({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const record = useDailyStore((s) => s.record);
-  useDailyStore((s) => s.clock);
-  const streak = streakOf(record, todayKey());
+  const clock = useDailyStore((s) => s.clock);
+  const streak = streakOf(record, todayKey(clock));
   const rows = historyNewestFirst(record);
   return (
     <Sheet visible={visible} onClose={onClose} title={t('ui.daily.sheet.title')} safeArea testID="daily-sheet">

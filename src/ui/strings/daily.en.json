@@ -60,5 +60,6 @@
   "ui.front.footer": "{title} · {link}",
   "ui.front.share": "Share",
   "ui.front.close": "Close",
-  "ui.front.hint": "Screenshot to share"
+  "ui.front.hint": "Screenshot to share",
+  "ui.front.regionEdition": "{region} edition"
 }

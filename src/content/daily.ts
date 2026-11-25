@@ -16,6 +16,7 @@
  *   front.story.<type>.<n>.head / .body      side stories drawn from the run
  *   front.weather.title, front.weather.<meter>.<low|mid|high>   the "weather" box
  *   front.caption.<n>                        the caption under the map "photo"
+ *   front.markets.title                      the box of final world shares
  * `<n>` counts from 1 with no gaps; `validateDaily` requires at least MIN_VARIANTS of each.
  */
 import { z } from 'zod';
@@ -140,7 +141,7 @@ export function validateDaily(content: unknown, pack: ContentPack): string[] {
   }
 
   const [baseLocale, base] = Object.entries(pack.strings)[0] ?? ['', {}];
-  const keys: { key: string; family: string; max?: number }[] = [{ key: 'pack.title', family: 'none' }, { key: 'front.motto', family: 'none' }, { key: 'front.price', family: 'none' }, { key: 'front.weather.title', family: 'none' }];
+  const keys: { key: string; family: string; max?: number }[] = [{ key: 'pack.title', family: 'none' }, { key: 'front.motto', family: 'none' }, { key: 'front.price', family: 'none' }, { key: 'front.weather.title', family: 'none' }, { key: 'front.markets.title', family: 'none' }];
   for (const tw of daily.twists) {
     keys.push({ key: tw.nameKey, family: 'twist', max: FRONT_LIMITS.twistName }, { key: tw.descKey, family: 'twist', max: FRONT_LIMITS.twistDesc });
   }

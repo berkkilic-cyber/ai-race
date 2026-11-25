@@ -10,14 +10,16 @@ import { STORY_TYPES, variantCount, WEATHER_METERS, type StoryType } from '@/con
 
 import { hashString, seededRandom } from '../daily/logic';
 import { fmtInt, fmtPct } from '../format';
-import { t, type Params } from '../i18n';
+import { labName, t, type Params } from '../i18n';
 import { SHARE_LINK_SHORT } from '../share/link';
 import type { RunStory } from './story';
 
 /** A meter peak at or above this makes a crisis story. */
 export const CRISIS_AT = 50;
-/** Side stories on the page. */
+/** Side stories chosen for the page (the screen prints two on short papers). */
 export const MAX_STORIES = 3;
+/** Labs in the market-share box. */
+export const MARKET_ROWS = 4;
 
 export interface FrontStory {
   type: StoryType;
@@ -32,6 +34,14 @@ export interface WeatherLine {
   forecast: string;
 }
 
+export interface MarketLine {
+  name: string;
+  value: string;
+  player: boolean;
+  /** Bought out or shut down. */
+  out: boolean;
+}
+
 export interface FrontPage {
   paper: string;
   motto: string;
@@ -40,6 +50,8 @@ export interface FrontPage {
   edition: string;
   /** "Day 212". */
   day: string;
+  /** "UK & Ireland edition": the player's home region. */
+  regionEdition: string;
   headline: string;
   sub: string;
   /** 0 (short headline, biggest type) to 2 (long, smallest). */
@@ -49,6 +61,9 @@ export interface FrontPage {
   caption: string;
   weatherTitle: string;
   weather: WeatherLine[];
+  marketsTitle: string;
+  /** World share at the end, biggest first (the player always listed). */
+  markets: MarketLine[];
   footer: string;
   /** Which template variants were used (tests, and keeping pages apart). */
   picks: Record<string, number>;
@@ -61,7 +76,7 @@ function pickVariant(pack: ContentPack, prefix: string, seed: number, salt: stri
   return (hashString(`${seed}:${salt}`) % n) + 1;
 }
 
-const pct = (v: number) => fmtPct(Math.max(0, Math.min(100, Number.isFinite(v) ? v : 0)) / 100);
+const pct = (v: number) => fmtPct(Math.round(Math.max(0, Math.min(100, Number.isFinite(v) ? v : 0))) / 100);
 
 function level(v: number): 'low' | 'mid' | 'high' {
   return v >= 70 ? 'high' : v >= 35 ? 'mid' : 'low';
@@ -186,6 +201,12 @@ export function buildFrontPage(state: GameState, pack: ContentPack, story: RunSt
     const v = meters[meter];
     return { meter, label: t(`term.${meter}`), value: pct(v), forecast: t(`front.weather.${meter}.${level(v)}`) };
   });
+  const shares = state.labOrder
+    .map((id) => ({ id, share: getWorldShare(state, pack, id) }))
+    .sort((a, b) => b.share - a.share || (a.id === state.playerLabId ? -1 : 1));
+  const top = shares.slice(0, MARKET_ROWS);
+  if (!top.some((r) => r.id === state.playerLabId)) top[top.length - 1] = shares.find((r) => r.id === state.playerLabId)!;
+  const markets: MarketLine[] = top.map(({ id, share }) => ({ name: labName(state.labs[id]), value: fmtPct(Math.round(share * 100) / 100), player: id === state.playerLabId, out: !!state.labs[id].eliminated }));
   const length = headline.length;
   return {
     paper,
@@ -193,6 +214,7 @@ export function buildFrontPage(state: GameState, pack: ContentPack, story: RunSt
     price: t('front.price'),
     edition: opts.dailyNumber !== undefined ? t('ui.front.editionDaily', { number: opts.dailyNumber }) : t('ui.front.editionLate'),
     day: t('ui.front.day', { day: fmtInt(e.tick + 1) }),
+    regionEdition: t('ui.front.regionEdition', { region: state.labs[state.playerLabId].homeRegion }),
     headline,
     sub,
     headlineScale: length <= 44 ? 0 : length <= 64 ? 1 : 2,
@@ -200,6 +222,8 @@ export function buildFrontPage(state: GameState, pack: ContentPack, story: RunSt
     caption: t(`front.caption.${pick('front.caption', 'caption')}`, { lab: state.playerLabId, amount: fmtInt(e.tick + 1) }),
     weatherTitle: t('front.weather.title'),
     weather,
+    marketsTitle: t('front.markets.title'),
+    markets,
     footer: t('ui.front.footer', { title: t('pack.title'), link: SHARE_LINK_SHORT }),
     picks,
   };
@@ -207,5 +231,5 @@ export function buildFrontPage(state: GameState, pack: ContentPack, story: RunSt
 
 /** Every text on the page, for checks (no leftover placeholders, no empty lines). */
 export function frontPageTexts(page: FrontPage): string[] {
-  return [page.paper, page.motto, page.price, page.edition, page.day, page.headline, page.sub, ...page.stories.flatMap((s) => [s.head, s.body]), page.caption, page.weatherTitle, ...page.weather.flatMap((w) => [w.label, w.value, w.forecast]), page.footer];
+  return [page.paper, page.motto, page.price, page.edition, page.day, page.regionEdition, page.headline, page.sub, ...page.stories.flatMap((s) => [s.head, s.body]), page.caption, page.weatherTitle, ...page.weather.flatMap((w) => [w.label, w.value, w.forecast]), page.marketsTitle, ...page.markets.flatMap((m) => [m.name, m.value]), page.footer];
 }

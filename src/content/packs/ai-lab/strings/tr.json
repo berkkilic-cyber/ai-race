@@ -906,7 +906,7 @@
   "front.story.launch.3.head": "{lab} sahnede: {model}",
   "front.story.launch.3.body": "Sunum doksan dakika, demo dört dakika sürdü. İkisi de \"tarihi an\" olarak anıldı.",
   "front.story.rivalLaunch.1.head": "{rival} öne geçti",
-  "front.story.rivalLaunch.1.body": "{lab} daha blog yazısını yazarken {rival}, seviye {tier} bir model çıkardı: {model}.",
+  "front.story.rivalLaunch.1.body": "{lab} daha önceki modelinin blog yazısını yazarken {rival} yeni modelini çıkardı: {model}.",
   "front.story.rivalLaunch.2.head": "Rakip lansmanı acıttı",
   "front.story.rivalLaunch.2.body": "{rival} imzalı {model}, {lab} lab'ını bütün grafiklerde geçti. Grafiklerin birkaçını {rival} kendisi çizmişti.",
   "front.story.rivalLaunch.3.head": "Grafik suçu ihbarı",
@@ -959,5 +959,6 @@
   "front.weather.rival.high": "ensemizde",
   "front.caption.1": "{lab} lab'ının bıraktığı dünya, {amount}. gün.",
   "front.caption.2": "{amount}. günde pazar; ressamı bir yapay zekâ modeli.",
-  "front.caption.3": "Şekil 1: {lab} lab'ının dokunduğu her şey. Şekil 2 avukatlarca karartıldı."
+  "front.caption.3": "Şekil 1: {lab} lab'ının dokunduğu her şey. Şekil 2 avukatlarca karartıldı.",
+  "front.markets.title": "Pazar payı"
 }

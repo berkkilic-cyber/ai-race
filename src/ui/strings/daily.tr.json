@@ -60,5 +60,6 @@
   "ui.front.footer": "{title} · {link}",
   "ui.front.share": "Paylaş",
   "ui.front.close": "Kapat",
-  "ui.front.hint": "Paylaşmak için ekran görüntüsü al"
+  "ui.front.hint": "Paylaşmak için ekran görüntüsü al",
+  "ui.front.regionEdition": "{region} baskısı"
 }

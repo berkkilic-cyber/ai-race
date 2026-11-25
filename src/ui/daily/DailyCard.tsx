@@ -12,8 +12,8 @@ import { buildShareText } from '../share/text';
 import { useShare } from '../share/useShare';
 import { cellsFromCode } from '../frontpage/story';
 import { colors, spacing, tabular, type, voice } from '../theme';
-import { dailyStatus, keyToMs, msUntilNextDaily, streakOf, type DailyDef, type DailyResult } from './logic';
-import { dailyNow, todayKey, todaysDaily, useDailyStore } from './store';
+import { dailyStatus, dateKeyOf, keyToMs, msUntilNextDaily, streakOf, type DailyDef, type DailyResult } from './logic';
+import { dailyNow, todaysDaily, useDailyStore } from './store';
 
 /** "25 Nov" / "25 Kasım" for a date key. */
 export function dailyDateText(key: string): string {
@@ -34,15 +34,21 @@ export function resultLine(r: DailyResult, abandoned = 'ui.daily.abandoned'): st
   return t('ui.daily.result', { ending: t(`share.ending.${r.trigger}`), days: fmtInt(r.days) });
 }
 
-/** Countdown to the next daily: a timer per second in the last hour, else every 30 s (never per frame). */
-function useCountdown(): number {
+/**
+ * The daily clock for a component: re-read by a timer once a second in the last hour before
+ * the next daily, else every 30 s (never per frame), and at once when the debug clock moves.
+ * The date key and the countdown derive from it, so the card flips at 00:00 UTC on its own.
+ */
+function useDailyNow(): number {
+  const clock = useDailyStore((s) => s.clock);
   const [now, setNow] = useState(dailyNow);
   const left = msUntilNextDaily(now);
+  useEffect(() => setNow(dailyNow()), [clock]);
   useEffect(() => {
     const id = setTimeout(() => setNow(dailyNow()), left < 3_600_000 ? 1000 : 30_000);
     return () => clearTimeout(id);
   }, [now, left]);
-  return left;
+  return now;
 }
 
 export interface DailyCardProps {
@@ -61,16 +67,20 @@ export interface DailyCardProps {
 export function DailyCard({ pack, onPlay, onContinue, onHistory }: DailyCardProps) {
   const record = useDailyStore((s) => s.record);
   const loaded = useDailyStore((s) => s.loaded);
-  useDailyStore((s) => s.clock);
-  const left = useCountdown();
+  const now = useDailyNow();
   const { share, notice } = useShare();
+  // Client only: the web build renders the start page ahead of time, and the date and the
+  // countdown would not match the hydrating client.
+  const [mounted, setMounted] = useState(false);
   useEffect(() => {
+    setMounted(true);
     void useDailyStore.getState().load();
   }, []);
 
-  const key = todayKey();
+  const key = dateKeyOf(now);
+  const left = msUntilNextDaily(now);
   const def = todaysDaily(pack, key);
-  if (!def) return null;
+  if (!def || !mounted) return null;
   const twist = twistTexts(def);
   const status = dailyStatus(record, key);
   const streak = streakOf(record, key);
@@ -82,7 +92,8 @@ export function DailyCard({ pack, onPlay, onContinue, onHistory }: DailyCardProp
   const done = status.kind === 'done' ? status.result : null;
   const shareDone = () => {
     if (!done || !done.trigger) return;
-    share(buildShareText({ daily: { number: done.number, streak: streak.current }, trigger: done.trigger, days: done.days, race: cellsFromCode(done.race).length ? cellsFromCode(done.race) : ['none', 'none', 'none', 'none', 'none'], score: done.score }), 'daily', 'start');
+    const race = cellsFromCode(done.race);
+    share(buildShareText({ daily: { number: done.number, streak: streak.current }, trigger: done.trigger, days: done.days, race: race.length ? race : ['none', 'none', 'none', 'none', 'none'], score: done.score }), 'daily', 'start');
   };
 
   return (
@@ -95,10 +106,14 @@ export function DailyCard({ pack, onPlay, onContinue, onHistory }: DailyCardProp
           {`${t('ui.daily.number', { number: def.number })} · ${dailyDateText(key)}`}
         </Text>
       </View>
-      <Text style={styles.twist} numberOfLines={1} testID="daily-twist">
-        <Text style={styles.twistName}>{twist.name}</Text>
-        {`  ${twist.desc}`}
-      </Text>
+      <View testID="daily-twist">
+        <Text style={styles.twistName} numberOfLines={1}>
+          {twist.name}
+        </Text>
+        <Text style={styles.twist} numberOfLines={2}>
+          {twist.desc}
+        </Text>
+      </View>
       {done ? (
         <View style={styles.result} testID="daily-result">
           <Text style={styles.resultLine} numberOfLines={1}>

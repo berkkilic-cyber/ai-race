@@ -24,7 +24,8 @@ import type { RunStory } from './story';
  * like a newspaper, made to be screenshotted in landscape. The paper holds only the page;
  * Close, Share and the "Screenshot to share" hint sit outside it, so a screenshot of the
  * paper is clean. Type: the platform serif for the masthead and the stories (no font file
- * is added), the theme's heavy condensed news face for the headline.
+ * is added), the theme's heavy condensed news face for the headlines. Headlines keep their
+ * written case: upper-casing would put Turkish dotted capitals into English lab names.
  */
 export interface FrontPageProps {
   visible: boolean;
@@ -105,21 +106,26 @@ export function FrontPage({ visible, state, pack, geometry, story, dailyNumber, 
 /** The paper itself: everything a screenshot should show and nothing else. */
 function Paper({ page, state, geometry, s }: { page: FrontPageData; state: GameState; geometry: MapGeometry; s: number }) {
   const z = (n: number) => Math.round(n * s * 10) / 10;
-  const headSize = z([38, 32, 27][page.headlineScale]);
-  // The lead story heads the side column, the second sits beside the photo, a third goes under the lead.
-  const [first, second, third] = page.stories;
+  const headSize = z([46, 40, 34][page.headlineScale]);
+  // Short papers (844 x 390 and smaller) get shorter stories and a shorter market box.
+  const short = s < 0.9;
+  // The lead story has the middle column, the second the right one above the market box.
+  const [first, second] = page.stories;
+  const marketRows = page.markets.slice(0, short ? 3 : 4);
+  const me = page.markets.find((m) => m.player);
+  if (me && !marketRows.includes(me)) marketRows[marketRows.length - 1] = me;
   const fills = useMemo(() => regionFills(state, Object.keys(geometry.regions)), [state, geometry]);
   const [, , vw, vh] = geometry.viewBox;
-  const body: TextStyle = { fontFamily: SERIF, fontSize: z(10.5), lineHeight: z(14), color: INK };
-  const head: TextStyle = { fontFamily: fonts.news, fontSize: z(15), lineHeight: z(16), color: INK, textTransform: 'uppercase', letterSpacing: 0.2 };
+  const body: TextStyle = { fontFamily: SERIF, fontSize: z(11.5), lineHeight: z(15), color: INK };
+  const head: TextStyle = { fontFamily: fonts.newsHeavy, fontWeight: fonts.newsHeavy ? undefined : '800', fontSize: z(18), lineHeight: z(19), color: INK };
 
-  const storyEl = (st: (typeof page.stories)[number] | undefined, lines: number, testID: string) =>
+  const storyEl = (st: (typeof page.stories)[number] | undefined, lines: number, testID: string, lead = false) =>
     st ? (
       <View style={styles.story} testID={testID}>
-        <Text style={head} numberOfLines={2}>
+        <Text style={lead ? [head, { fontSize: z(23), lineHeight: z(23) }] : head} numberOfLines={lead ? 3 : 2}>
           {st.head}
         </Text>
-        <Text style={body} numberOfLines={lines}>
+        <Text style={lead ? [body, { fontSize: z(12.5), lineHeight: z(16.5) }] : body} numberOfLines={lines}>
           {st.body}
         </Text>
       </View>
@@ -152,45 +158,29 @@ function Paper({ page, state, geometry, s }: { page: FrontPageData; state: GameS
           {page.day}
         </Text>
         <Text style={[styles.dateText, { fontSize: z(9) }]} numberOfLines={1}>
-          {page.footer}
+          {page.regionEdition}
         </Text>
       </View>
       <View style={styles.ruleThin} />
 
+      <Text style={[styles.headline, { fontSize: headSize, lineHeight: Math.round(headSize * 0.98) }]} numberOfLines={3} testID="frontpage-headline">
+        {page.headline}
+      </Text>
+      <Text style={[styles.sub, { fontSize: z(13.5), lineHeight: z(17) }]} numberOfLines={2}>
+        {page.sub}
+      </Text>
+      <View style={styles.ruleHair} />
+      {/* Three columns: the photo and the weather, the lead story, then the other two. */}
       <View style={styles.columns}>
-        <View style={styles.main}>
-          <Text style={[styles.headline, { fontSize: headSize, lineHeight: Math.round(headSize * 0.98) }]} numberOfLines={3} testID="frontpage-headline">
-            {page.headline}
-          </Text>
-          <Text style={[styles.sub, { fontSize: z(12.5), lineHeight: z(16) }]} numberOfLines={2}>
-            {page.sub}
-          </Text>
-          <View style={styles.ruleHair} />
-          <View style={styles.lower}>
-            <View style={styles.photoCol}>
-              <View style={[styles.photo, { aspectRatio: finite(vw / vh, 2) }]}>
-                <Svg width="100%" height="100%" viewBox={`0 0 ${vw} ${vh}`} preserveAspectRatio="xMidYMid meet">
-                  <MapShapes geometry={geometry} fills={fills} />
-                </Svg>
-              </View>
-              <Text style={[styles.caption, { fontSize: z(8.5), lineHeight: z(11) }]} numberOfLines={2}>
-                {page.caption}
-              </Text>
-            </View>
-            <View style={styles.vrule} />
-            <View style={styles.lowerStory}>{storyEl(second, 7, 'frontpage-story-2')}</View>
+        <View style={styles.photoCol}>
+          <View style={styles.photo}>
+            <Svg width="100%" height="100%" viewBox={`0 0 ${vw} ${vh}`} preserveAspectRatio="xMidYMid meet">
+              <MapShapes geometry={geometry} fills={fills} />
+            </Svg>
           </View>
-        </View>
-        <View style={styles.vrule} />
-        <View style={styles.side}>
-          {storyEl(first, 7, 'frontpage-story-1')}
-          {third ? (
-            <>
-              <View style={styles.ruleHair} />
-              {storyEl(third, 6, 'frontpage-story-3')}
-            </>
-          ) : null}
-          <View style={styles.flex} />
+          <Text style={[styles.caption, { fontSize: z(8.5), lineHeight: z(11) }]} numberOfLines={2}>
+            {page.caption}
+          </Text>
           <View style={styles.weather} testID="frontpage-weather">
             <Text style={[styles.weatherTitle, { fontSize: z(9) }]}>{page.weatherTitle}</Text>
             {page.weather.map((w) => (
@@ -205,13 +195,35 @@ function Paper({ page, state, geometry, s }: { page: FrontPageData; state: GameS
             ))}
           </View>
         </View>
+        <View style={styles.vrule} />
+        <View style={styles.col}>{storyEl(first, short ? 7 : 9, 'frontpage-story-1', true)}</View>
+        <View style={styles.vrule} />
+        <View style={styles.col}>
+          {storyEl(second, short ? 4 : 6, 'frontpage-story-2')}
+          <View style={styles.flex} />
+          <View style={styles.weather} testID="frontpage-markets">
+            <Text style={[styles.weatherTitle, { fontSize: z(9) }]}>{page.marketsTitle}</Text>
+            {marketRows.map((m, i) => (
+              <View key={i} style={styles.weatherRow}>
+                <Text style={[styles.marketName, m.player && styles.marketMe, m.out && styles.marketOut, { fontSize: z(9.5) }]} numberOfLines={1}>
+                  {m.name}
+                </Text>
+                <Text style={[styles.weatherLabel, { fontSize: z(9.5) }]}>{m.value}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
       </View>
+      <View style={styles.ruleFoot} />
+      <Text style={[styles.footer, { fontSize: z(8.5) }]} numberOfLines={1} testID="frontpage-footer">
+        {page.footer}
+      </Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, flexDirection: 'row', gap: spacing.m, backgroundColor: colors.scrim },
+  backdrop: { flex: 1, flexDirection: 'row', gap: spacing.m, backgroundColor: colors.bg },
   backdropNarrow: { flexDirection: 'column' },
   paperBox: { flex: 1 },
   narrowScroll: { flexGrow: 1 },
@@ -225,25 +237,27 @@ const styles = StyleSheet.create({
   dateRow: { flexDirection: 'row', justifyContent: 'space-between', gap: spacing.s, paddingVertical: 2 },
   dateText: { fontFamily: SERIF, color: INK, textTransform: 'uppercase', letterSpacing: 0.8, flexShrink: 1 },
   ruleThin: { height: 1, backgroundColor: RULE, marginBottom: 6 },
+  ruleFoot: { height: 1, backgroundColor: RULE, marginTop: 5 },
+  footer: { fontFamily: SERIF, color: colors.newsDim, textAlign: 'center', letterSpacing: 0.6, marginTop: 2 },
   ruleHair: { height: StyleSheet.hairlineWidth, backgroundColor: RULE, marginVertical: 5 },
-  columns: { flex: 1, flexDirection: 'row', gap: 9 },
-  main: { flex: 1.75 },
-  side: { flex: 1 },
+  columns: { flex: 1, flexDirection: 'row', gap: 9, minHeight: 0, overflow: 'hidden' },
+  col: { flex: 1 },
   flex: { flex: 1, minHeight: 4 },
   vrule: { width: StyleSheet.hairlineWidth, backgroundColor: RULE },
-  headline: { fontFamily: fonts.newsHeavy, fontWeight: fonts.newsHeavy ? undefined : '900', color: INK, textTransform: 'uppercase', letterSpacing: -0.2 },
-  sub: { fontFamily: SERIF, fontStyle: 'italic', color: INK, marginTop: 4 },
-  lower: { flex: 1, flexDirection: 'row', gap: 9, minHeight: 0 },
-  photoCol: { flex: 1.1, gap: 3 },
-  photo: { width: '100%', backgroundColor: colors.newsInk, overflow: 'hidden' },
+  headline: { fontFamily: fonts.newsHeavy, fontWeight: fonts.newsHeavy ? undefined : '900', color: INK, letterSpacing: -0.3 },
+  sub: { fontFamily: SERIF, fontStyle: 'italic', color: INK, marginTop: 3 },
+  photoCol: { flex: 1.15, gap: 3 },
+  photo: { flex: 1, minHeight: 40, width: '100%', backgroundColor: colors.newsInk, overflow: 'hidden' },
   caption: { fontFamily: SERIF, fontStyle: 'italic', color: colors.newsDim },
-  lowerStory: { flex: 1 },
   story: { gap: 3 },
-  weather: { borderWidth: 1, borderColor: RULE, padding: 5, gap: 2 },
+  weather: { borderWidth: 1, borderColor: RULE, padding: 5, gap: 2, marginTop: 3 },
   weatherTitle: { fontFamily: SERIF, fontWeight: '700', color: INK, textTransform: 'uppercase', letterSpacing: 0.8, borderBottomWidth: StyleSheet.hairlineWidth, borderColor: RULE, paddingBottom: 2, marginBottom: 1 },
   weatherRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 6 },
   weatherLabel: { fontFamily: SERIF, fontWeight: '700', color: INK, flexShrink: 1 },
   weatherCast: { fontFamily: SERIF, fontStyle: 'italic', color: INK, flexShrink: 1, textAlign: 'right' },
+  marketName: { fontFamily: SERIF, color: INK, flexShrink: 1 },
+  marketMe: { fontWeight: '700' },
+  marketOut: { textDecorationLine: 'line-through', color: colors.newsDim },
   rail: { width: RAIL, justifyContent: 'space-between', gap: spacing.m },
   railNarrow: { width: '100%', flexDirection: 'row', alignItems: 'center' },
   railMid: { gap: spacing.s },

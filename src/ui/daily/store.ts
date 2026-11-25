@@ -51,8 +51,11 @@ export function dailyNow(): number {
   return todayOverride ? keyToMs(todayOverride) + 12 * 3600_000 : Date.now();
 }
 
-/** Today's UTC date key. */
-export function todayKey(): string {
+/**
+ * Today's UTC date key. Components pass the store's `clock` so the React Compiler, which
+ * treats render as pure, recomputes it when the debug clock moves.
+ */
+export function todayKey(_clock?: number): string {
   return dateKeyOf(dailyNow());
 }
 

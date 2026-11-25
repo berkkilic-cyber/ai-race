@@ -906,7 +906,7 @@
   "front.story.launch.3.head": "{lab} unveils {model}",
   "front.story.launch.3.body": "The keynote ran ninety minutes; the demo ran four. Both were described as \"a moment\".",
   "front.story.rivalLaunch.1.head": "{rival} pulls ahead",
-  "front.story.rivalLaunch.1.body": "{rival} shipped {model}, a tier {tier} model, while {lab} was still writing the blog post.",
+  "front.story.rivalLaunch.1.body": "{rival} shipped {model} while {lab} was still writing the blog post about its last one.",
   "front.story.rivalLaunch.2.head": "Rival launch stings",
   "front.story.rivalLaunch.2.body": "{model} from {rival} beat {lab} on every chart, including several {rival} drew itself.",
   "front.story.rivalLaunch.3.head": "Chart crimes reported",
@@ -959,5 +959,6 @@
   "front.weather.rival.high": "breathing down necks",
   "front.caption.1": "The world as {lab} left it, day {amount}.",
   "front.caption.2": "The market on day {amount}, as painted by an artist who was a model.",
-  "front.caption.3": "Fig. 1: everything {lab} touched. Fig. 2 was redacted by lawyers."
+  "front.caption.3": "Fig. 1: everything {lab} touched. Fig. 2 was redacted by lawyers.",
+  "front.markets.title": "Market share"
 }

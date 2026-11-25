@@ -43,6 +43,8 @@ export interface EndShareRowProps {
   onFrontPage: () => void;
 }
 
+/* The row sits first in the end screen's right column (wide) or under the score (narrow). */
+
 /** End screen: the daily line (for daily runs), "Read the front page" and "Share result". */
 export function EndShareRow({ state, onFrontPage }: EndShareRowProps) {
   const { text, tag } = useEndShareText(state);
@@ -77,7 +79,7 @@ export function EndFrontPage({ visible, state, onClose }: { visible: boolean; st
 }
 
 const styles = StyleSheet.create({
-  wrap: { gap: spacing.xs, paddingHorizontal: spacing.l, paddingBottom: spacing.s },
+  wrap: { gap: spacing.xs },
   daily: { ...voice.calmLabel, color: colors.playerText },
   row: { flexDirection: 'row', gap: spacing.s },
   btn: { flex: 1, minHeight: 44 },
