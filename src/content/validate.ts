@@ -38,7 +38,7 @@ const unit = z.number().min(0).max(1);
 const meterAmount = z.number().min(-100).max(100);
 const duration = z.number().int().positive();
 
-const STATS = [
+export const STATS = [
   'spreadRate',
   'seedChance',
   'cashIncome',
@@ -56,14 +56,14 @@ const STATS = [
   'banDuration',
 ] as const;
 const TREES = ['capability', 'reach', 'shadow'] as const;
-const TRIGGERS = ['agi', 'dependence', 'monopoly', 'banned', 'revolt', 'rivalAgi'] as const;
+export const TRIGGERS = ['agi', 'dependence', 'monopoly', 'banned', 'revolt', 'rivalAgi'] as const;
 const tree = z.enum(TREES);
 const tone = z.enum(['good', 'bad', 'neutral']);
 const resource = z.enum(['hype', 'cash']);
 const meter = z.enum(['regulation', 'backlash']);
 const target = z.enum(['self', 'rivals', 'leadRival', 'randomRival']).optional();
 
-const modifierSchema = z
+export const modifierSchema = z
   .strictObject({
     stat: z.enum(STATS),
     op: z.enum(['add', 'mul']),
@@ -422,11 +422,19 @@ export const STAT_PHRASE_KEYS: readonly string[] = STATS.flatMap((stat) => [`sta
 export const REQUIRED_KEYS: readonly string[] = [...Object.values(ENGINE_NEWS_KEYS), ...REQUIRED_TERM_KEYS, ...STAT_PHRASE_KEYS];
 
 /**
+ * Daily challenge and front page text (src/content/daily.ts): read by the UI from the pack's
+ * daily content, checked key by key by `validateDaily`. These keys may also use
+ * DAILY_PLACEHOLDERS ({event}, {choice}: an event card's title and the choice the player made).
+ */
+export const DAILY_KEY_PREFIXES: readonly string[] = ['daily.', 'front.', 'share.', 'pack.'];
+export const DAILY_PLACEHOLDERS: readonly string[] = ['event', 'choice'];
+
+/**
  * Prefixes of keys read by the engine or the UI rather than by pack data; never reported as unused.
  * `brand.<id>.name` / `brand.<id>.kind` define a pack's background parody brands once, so text and
  * tests can use the same names (validatePack checks each name has a kind and vice versa).
  */
-const EXTERNAL_KEY_PREFIXES = ['term.', 'engine.news.', 'brand.'];
+const EXTERNAL_KEY_PREFIXES = ['term.', 'engine.news.', 'brand.', ...DAILY_KEY_PREFIXES];
 
 /** Maximum length per kind of string key (by suffix / prefix). */
 const LENGTH_LIMITS: { test: (k: string) => boolean; max: number; what: string }[] = [
@@ -819,7 +827,8 @@ function checkIntegrity(pack: ContentPack): string[] {
       if (!used.has(k) && !EXTERNAL_KEY_PREFIXES.some((prefix) => k.startsWith(prefix))) err(`strings.${locale}: unused key "${k}"`);
       if (text.trim() === '') err(`strings.${locale}: "${k}" is empty`);
       for (const m of text.matchAll(/\{([^}]*)\}/g)) {
-        if (!ALLOWED_PLACEHOLDERS.includes(m[1])) err(`strings.${locale}: "${k}" uses unknown placeholder {${m[1]}}`);
+        const dailyKey = DAILY_KEY_PREFIXES.some((prefix) => k.startsWith(prefix));
+        if (!ALLOWED_PLACEHOLDERS.includes(m[1]) && !(dailyKey && DAILY_PLACEHOLDERS.includes(m[1]))) err(`strings.${locale}: "${k}" uses unknown placeholder {${m[1]}}`);
       }
       const limit = LENGTH_LIMITS.find((l) => l.test(k));
       if (limit && text.length > limit.max) {

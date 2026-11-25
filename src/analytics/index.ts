@@ -20,7 +20,7 @@ export {
   setUserProps,
   track,
 } from './core';
-export { cleanParams, EVENT_NAMES, MAX_PARAM_LENGTH, type AnalyticsEvent, type DemoCtaWhere, type EventName, type EventParams, type GameMode, type ParamValue, type QuitHow, type TrackedEvent } from './events';
+export { cleanParams, EVENT_NAMES, MAX_PARAM_LENGTH, type AnalyticsEvent, type DemoCtaWhere, type EventName, type EventParams, type GameMode, type ParamValue, type QuitHow, type ShareKind, type TrackedEvent } from './events';
 export { BUFFER_CAP, BUFFER_FLUSH_MS, BUFFER_KEY, createBufferProvider, type BufferOptions, type BufferProvider, type Timers } from './providers/buffer';
 export { ANALYTICS_TAG, createConsoleProvider } from './providers/console';
 export { createMemoryProvider, type MemoryProvider } from './providers/memory';

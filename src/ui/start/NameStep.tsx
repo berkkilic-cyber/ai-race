@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Keyboard, StyleSheet, TextInput, View, type ViewStyle } from 'react-native';
 
 import { Button } from '../components/Button';
@@ -23,17 +23,19 @@ export interface NameStepProps {
    * field fits in the little height the keyboard leaves.
    */
   compact?: boolean;
+  /** The daily challenge card (src/ui/daily), shown under the title in place of the tagline. */
+  daily?: ReactNode;
 }
 
 /** Step 1: title, tagline, lab name with a random-name button, How to play. */
-export function NameStep({ name, onName, onDice, onHowTo, onSubmit, wide, compact }: NameStepProps) {
+export function NameStep({ name, onName, onDice, onHowTo, onSubmit, wide, compact, daily }: NameStepProps) {
   const [touched, setTouched] = useState(false);
   const problem = missingText({ name, founderId: 'x', homeRegion: 'x' });
   return (
     <View style={[styles.wrap, wide && styles.wrapWide]}>
       {compact ? null : (
         <View style={[styles.hero, wide && styles.pane]}>
-          <Mascot mood={name.trim() ? 'pleased' : 'calm'} size={64} />
+          {daily && wide ? null : <Mascot mood={name.trim() ? 'pleased' : 'calm'} size={64} />}
           <View style={styles.titleBox}>
             {shape.panel === 'clip' ? <Stripes height={8} stripe={9} /> : null}
             <Text style={styles.title} accessibilityRole="header">
@@ -42,7 +44,7 @@ export function NameStep({ name, onName, onDice, onHowTo, onSubmit, wide, compac
             {shape.panel === 'clip' ? <Stripes height={8} stripe={9} flip /> : null}
             {shape.panel === 'ticks' ? <PanelDeco /> : null}
           </View>
-          <Text style={styles.tagline}>{t('ui.start.tagline')}</Text>
+          {daily ?? <Text style={styles.tagline}>{t('ui.start.tagline')}</Text>}
         </View>
       )}
 

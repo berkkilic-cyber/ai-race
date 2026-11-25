@@ -133,6 +133,21 @@ The level cards fit about nine capitals, so the names are short game words rathe
 | Milestone | Eşik | "{count} adette ×{mult}" |
 | Model names (VibeOracle 3.5 ...) | Unchanged | English puns built from prefix + suffix: never translated |
 
+## Daily challenge and front page
+
+| English | Türkçe | Note |
+| --- | --- | --- |
+| Daily challenge | Günlük meydan okuma | "Günlük" alone on buttons and in the share text ("AI Race Günlük #25") |
+| Streak | Seri | "Seri 3", "En iyi seri" |
+| Practise again | Yeniden antrenman | Practice run: antrenman, "puan sayılmaz" |
+| Twist (of the day) | (the twist's name only) | No label word; the name says it |
+| Share | Paylaş | "Kopyalandı" for copied |
+| Front page | Gazete | "Gazeteyi oku"; edition = baskı ("Günlük baskı", "Kanada baskısı") |
+| Market weather | Piyasa hava durumu | |
+| Market share (box) | Pazar payı | |
+
+Front-page templates are written for Turkish, not translated line by line; placeholders stay suffix-free ("{lab} lab'ını", "{region} bölgesinde", "{amount}. günde"). Newspaper names are parodies of the genre, never real papers.
+
 ## Numbers
 
 Formatted by hand in `src/ui/format.ts` (no `Intl`, no `toLocaleString`): it is on hot paths.

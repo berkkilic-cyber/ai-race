@@ -61,7 +61,7 @@ describe('analytics session', () => {
     const a = setup();
     await a.session.start();
     a.at(T0 + 60_000);
-    track({ name: 'run_start', params: { founder: 'f', difficulty: 'd', homeRegion: 'r' } });
+    track({ name: 'run_start', params: { founder: 'f', difficulty: 'd', homeRegion: 'r', daily: false } });
     await a.session.flush();
     a.session.dispose();
 

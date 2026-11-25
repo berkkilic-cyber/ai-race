@@ -33,8 +33,8 @@ Every event is stored as `{ name, params, t, s }`: `t` is epoch ms, `s` the sess
 | `tutorial_step` | `step` (1-based), `id` (step id) | Each tutorial step shown. |
 | `tutorial_complete` | | The tutorial ends from its last step. |
 | `tutorial_skip` | `step` | The tutorial ends before its last step. |
-| `run_start` | `founder`, `difficulty` (`none` if the pack has no levels), `runLength?`, `homeRegion`, `perks` (number of Lab Rep race perks in the start bonus; 0 when off) | A new run (also Play again). |
-| `run_end` | `ending` (ending id), `won`, `score`, `ticks`, `seconds` (wall time since `run_start`) | The run reaches an ending. |
+| `run_start` | `founder`, `difficulty` (`none` if the pack has no levels), `runLength?`, `homeRegion`, `perks` (number of Lab Rep race perks in the start bonus; 0 when off), `daily` (true for the day's scored daily attempt; practice runs are false) | A new run (also Play again). |
+| `run_end` | `ending` (ending id), `won`, `score`, `ticks`, `seconds` (wall time since `run_start`), `daily` (as in `run_start`) | The run reaches an ending. |
 | `run_quit` | `ticks`, `how`: `restart` \| `menu` \| `error` | A run is left before its ending: a new run over it, back to the start screen, or dropped by the error screen. |
 | `node_buy` | `nodeId`, `kind` (tree id) | The player buys a node. |
 | `region_launch` | `regionId` | The player pays to launch in a region. |
@@ -62,6 +62,10 @@ Every event is stored as `{ name, params, t, s }`: `t` is epoch ms, `s` the sess
 | `remove_ads_tap` | `on` | The remove-ads switch changes (the future purchase). |
 | `race_reward_granted` | `rep` (Lab Rep, one decimal), `boost` (blueprints minutes) | A finished race granted the Garage its reward (end screen). |
 | `perks_toggle` | `on` | The player flips "Play this run with perks" in the perks sheet. |
+| `daily_start` | `day` (daily number) | The day's scored daily attempt starts (not practice). docs/DAILY.md. |
+| `daily_end` | `day`, `ending` (ending id), `score`, `streak` (consecutive days after this one) | The scored daily reaches its ending (abandoned attempts send none). |
+| `share_tap` | `kind`: `daily` \| `run` \| `frontpage`, `where`: `start` \| `end` \| `frontpage` | A share button is tapped (the start screen's daily card, the end screen, the front page). |
+| `frontpage_open` | | The end screen's front page opens. |
 | `settings_change` | `key`, `value` | A setting changes (today: Garage haptics). |
 | `demo_cta_tap` | `where`: `start` \| `end` \| `gate` | Browser demo only (`EXPO_PUBLIC_DEMO=1`): the "Join the waitlist" button on the start screen, the end screen or the "In the full game" card. |
 | `demo_gate_seen` | `feature`: `difficulty` \| `runLength` \| `garageStage` | Browser demo only: an "In the full game" note is shown (the card each time it opens; the Garage's next-stage note once per launch). |

@@ -19,6 +19,8 @@ export type GarageHappeningOutcome = 'tapped' | 'missed' | 'auto';
 
 /** Where the browser demo's "Join the waitlist" button was tapped. */
 export type DemoCtaWhere = 'start' | 'end' | 'gate';
+/** What a share button shared: the daily result, a normal run's result, or from the front page. */
+export type ShareKind = 'daily' | 'run' | 'frontpage';
 
 export type AnalyticsEvent =
   | { name: 'app_open' }
@@ -29,8 +31,8 @@ export type AnalyticsEvent =
   | { name: 'tutorial_step'; params: { step: number; id: string } }
   | { name: 'tutorial_complete' }
   | { name: 'tutorial_skip'; params: { step: number } }
-  | { name: 'run_start'; params: { founder: string; difficulty: string; runLength?: string; homeRegion: string; perks?: number } }
-  | { name: 'run_end'; params: { ending: string; won: boolean; score: number; ticks: number; seconds: number } }
+  | { name: 'run_start'; params: { founder: string; difficulty: string; runLength?: string; homeRegion: string; perks?: number; daily: boolean } }
+  | { name: 'run_end'; params: { ending: string; won: boolean; score: number; ticks: number; seconds: number; daily: boolean } }
   | { name: 'run_quit'; params: { ticks: number; how: QuitHow } }
   | { name: 'node_buy'; params: { nodeId: string; kind: string } }
   | { name: 'region_launch'; params: { regionId: string } }
@@ -58,6 +60,10 @@ export type AnalyticsEvent =
   | { name: 'remove_ads_tap'; params: { on: boolean } }
   | { name: 'race_reward_granted'; params: { rep: number; boost: number } }
   | { name: 'perks_toggle'; params: { on: boolean } }
+  | { name: 'daily_start'; params: { day: number } }
+  | { name: 'daily_end'; params: { day: number; ending: string; score: number; streak: number } }
+  | { name: 'share_tap'; params: { kind: ShareKind; where: string } }
+  | { name: 'frontpage_open' }
   | { name: 'settings_change'; params: { key: string; value: string | number | boolean } }
   | { name: 'demo_cta_tap'; params: { where: DemoCtaWhere } }
   | { name: 'demo_gate_seen'; params: { feature: string } }
@@ -119,6 +125,10 @@ export const EVENT_NAMES: readonly EventName[] = [
   'remove_ads_tap',
   'race_reward_granted',
   'perks_toggle',
+  'daily_start',
+  'daily_end',
+  'share_tap',
+  'frontpage_open',
   'settings_change',
   'demo_cta_tap',
   'demo_gate_seen',

@@ -23,6 +23,7 @@ import { labName, t } from '../i18n';
 import { LanguageRow } from '../locale';
 import { Text } from '../locale/Text';
 import { useGameStore, type Speed } from '../store/game';
+import { abandonScoredDaily, asPractice, isScoredDailyRun } from '../daily/store';
 import { clearRunSave, restartSetup, saveCurrentRun, startAutosave } from '../store/runSave';
 import { useTutorialStore } from '../tutorial/store';
 import { colors, flatShadow, layer, layout, radius, shape, spacing, touch, type, voice } from '../theme';
@@ -180,9 +181,12 @@ function RunMenuOverlay({ visible }: { visible: boolean }) {
     if (!state) return;
     dismissRunMenu();
     void clearRunSave();
-    useGameStore.getState().newGame(restartSetup(state));
+    // Today's scored daily: restarting uses up the attempt; the new run is practice.
+    if (isScoredDailyRun()) abandonScoredDaily();
+    useGameStore.getState().newGame(asPractice(restartSetup(state)));
   };
   const abandon = () => {
+    if (isScoredDailyRun()) abandonScoredDaily();
     dismissRunMenu();
     void clearRunSave();
     useGameStore.getState().reset();
@@ -200,6 +204,7 @@ function RunMenuOverlay({ visible }: { visible: boolean }) {
           {t(`ui.sprint.menu.${k}.title`)}
         </Text>
         <Text style={styles.body}>{t(`ui.sprint.menu.${k}.body`)}</Text>
+        {isScoredDailyRun() ? <Text style={[styles.body, styles.dailyWarn]} testID="run-menu-daily-warning">{t(confirm === 'restart' ? 'ui.daily.warn.restart' : 'ui.daily.warn.quit')}</Text> : null}
         <View style={styles.confirmRow}>
           <Button label={t('ui.sprint.menu.cancel')} variant="ghost" onPress={() => useRunMenuStore.setState({ confirm: null })} style={styles.confirmBtn} testID="run-menu-cancel" />
           <Button
@@ -277,6 +282,7 @@ const styles = StyleSheet.create({
   gridWide: { flexDirection: 'row' },
   option: { minHeight: 48 },
   optionWide: { flex: 1, minHeight: 64 },
+  dailyWarn: { color: colors.bad },
   confirmRow: { flexDirection: 'row', gap: spacing.s, marginTop: spacing.s },
   confirmBtn: { flex: 1, minHeight: 48 },
   settings: { gap: spacing.s, borderTopWidth: shape.hairline, borderColor: colors.border, paddingTop: spacing.s },

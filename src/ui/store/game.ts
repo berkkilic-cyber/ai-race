@@ -11,6 +11,7 @@ import {
   type GameState,
 } from '@/engine';
 
+import type { DailyTag } from '../daily/logic';
 import { logLifecycle } from '../diagnostics/log';
 import { noteTick, perfNow } from '../diagnostics/perfStats';
 import { setI18nContext } from '../i18n';
@@ -27,6 +28,8 @@ export const SPEEDS: readonly Speed[] = [0, 1, 2, 3];
 export interface RunPerks {
   perksOn?: boolean;
   perkIds?: string[];
+  /** Set on daily challenge runs (src/ui/daily): which day, and whether this is the scored attempt. */
+  daily?: DailyTag;
 }
 
 /** What the start screen passes in; the seed defaults to a random one. */
@@ -74,10 +77,10 @@ export const useGameStore = create<GameStore>()((set, get) => ({
   eventResult: null,
 
   newGame(setup) {
-    const { packId = DEFAULT_PACK_ID, seed = randomSeed(), perksOn, perkIds, ...rest } = setup;
+    const { packId = DEFAULT_PACK_ID, seed = randomSeed(), perksOn, perkIds, daily, ...rest } = setup;
     const { pack } = getPackEntry(packId);
     const state = createGame(pack, { ...rest, seed });
-    const runSetup: RunSetup = { ...rest, seed, packId, ...(perksOn !== undefined ? { perksOn } : {}), ...(perkIds ? { perkIds } : {}) };
+    const runSetup: RunSetup = { ...rest, seed, packId, ...(perksOn !== undefined ? { perksOn } : {}), ...(perkIds ? { perkIds } : {}), ...(daily ? { daily } : {}) };
     set({ packId, pack, state, setup: runSetup, speed: 1, eventResult: null });
     logLifecycle('run started', { seed, founder: rest.founderId, home: rest.homeRegion, difficulty: state.difficulty ?? '-' });
   },
