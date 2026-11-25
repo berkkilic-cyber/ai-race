@@ -1,0 +1,20 @@
+{
+  "epoch": "2026-11-01",
+  "runLength": "sprint",
+  "homeRegions": ["canada", "mexico", "uk-ireland", "france", "iberia", "italy", "nordics", "eastern-europe", "turkiye", "middle-east", "india", "japan", "korea", "taiwan", "southeast-asia", "australia", "nigeria", "east-africa", "andes"],
+  "twists": [
+    { "id": "cheap-money", "nameKey": "daily.twist.cheap-money.name", "descKey": "daily.twist.cheap-money.desc", "bonus": { "modifiers": [{ "stat": "cashIncome", "op": "mul", "value": 1.3 }, { "stat": "hypeIncome", "op": "mul", "value": 0.8 }] } },
+    { "id": "hype-cycle", "nameKey": "daily.twist.hype-cycle.name", "descKey": "daily.twist.hype-cycle.desc", "bonus": { "modifiers": [{ "stat": "hypeIncome", "op": "mul", "value": 1.3 }, { "stat": "cashIncome", "op": "mul", "value": 0.8 }] } },
+    { "id": "watchdog", "nameKey": "daily.twist.watchdog.name", "descKey": "daily.twist.watchdog.desc", "bonus": { "startCash": 30, "modifiers": [{ "stat": "regulationGain", "op": "mul", "value": 1.3 }] } },
+    { "id": "outrage", "nameKey": "daily.twist.outrage.name", "descKey": "daily.twist.outrage.desc", "bonus": { "modifiers": [{ "stat": "backlashGain", "op": "mul", "value": 1.3 }, { "stat": "spreadRate", "op": "mul", "value": 1.15 }] } },
+    { "id": "duel", "nameKey": "daily.twist.duel.name", "descKey": "daily.twist.duel.desc", "rivals": 1 },
+    { "id": "small-field", "nameKey": "daily.twist.small-field.name", "descKey": "daily.twist.small-field.desc", "rivals": 2 },
+    { "id": "gpu-glut", "nameKey": "daily.twist.gpu-glut.name", "descKey": "daily.twist.gpu-glut.desc", "bonus": { "modifiers": [{ "stat": "dataCentreCost", "op": "mul", "value": 0.75 }, { "stat": "dataCentreUpkeep", "op": "mul", "value": 0.75 }] } },
+    { "id": "chip-shortage", "nameKey": "daily.twist.chip-shortage.name", "descKey": "daily.twist.chip-shortage.desc", "bonus": { "modifiers": [{ "stat": "dataCentreCost", "op": "mul", "value": 1.3 }, { "stat": "agiRate", "op": "mul", "value": 1.1 }] } },
+    { "id": "bootstrapped", "nameKey": "daily.twist.bootstrapped.name", "descKey": "daily.twist.bootstrapped.desc", "bonus": { "startCash": -40, "modifiers": [{ "stat": "spreadRate", "op": "mul", "value": 1.2 }] } },
+    { "id": "fire-sale", "nameKey": "daily.twist.fire-sale.name", "descKey": "daily.twist.fire-sale.desc", "bonus": { "modifiers": [{ "stat": "acquireCost", "op": "mul", "value": 0.65 }] } },
+    { "id": "moonshot", "nameKey": "daily.twist.moonshot.name", "descKey": "daily.twist.moonshot.desc", "bonus": { "modifiers": [{ "stat": "agiRate", "op": "mul", "value": 1.15 }, { "stat": "backlashGain", "op": "mul", "value": 1.2 }] } },
+    { "id": "word-of-mouth", "nameKey": "daily.twist.word-of-mouth.name", "descKey": "daily.twist.word-of-mouth.desc", "bonus": { "modifiers": [{ "stat": "seedChance", "op": "mul", "value": 1.4 }, { "stat": "launchCost", "op": "mul", "value": 1.2 }] } },
+    { "id": "friendly-courts", "nameKey": "daily.twist.friendly-courts.name", "descKey": "daily.twist.friendly-courts.desc", "bonus": { "modifiers": [{ "stat": "banDuration", "op": "mul", "value": 0.5 }, { "stat": "riskChance", "op": "mul", "value": 1.3 }] } }
+  ]
+}
