@@ -424,7 +424,7 @@ function scene({ tier, spriteCanvas }) {
       robotics: tier({ x: 46, y: 84, w: 16, h: 20 }, 2, 0.4, (c, level, frame) => c.draw(robot(level, frame), 0, 0)),
       scraper: tier({ x: 20, y: 111, w: 42, h: 8 }, 2, 1, (c, level, frame) => c.draw(phoneRow(frame, [0, 2, 4, 6, 8, 10, 10][level]), 0, 0)),
       chips: tier({ x: 68, y: 139, w: 14, h: 26 }, 1, 0, (c, level) => c.draw(waferStand(level), 0, 0)),
-      intern: tier({ x: 18, y: 88, w: 58, h: 77 }, 2, 3, (c, level, frame) => {
+      intern: tier({ x: 18, y: 88, w: 62, h: 77 }, 2, 3, (c, level, frame) => {
         // Behind the counter: a receptionist (1), a second one (5); hot desks in front (2, 3); a visitor waiting
         // in the lobby (4); and at 6 the second hot desk has been here all night.
         const behind = (x, look, f) => {
@@ -444,7 +444,7 @@ function scene({ tier, spriteCanvas }) {
             c.stamp(Props.sleepZ, desks[1][0] + 11, desks[1][1] - 15, { frame });
           } else c.draw(internDesk((frame + 1) % 2, looks[2]), desks[1][0], desks[1][1]);
         }
-        if (level >= 4) c.stamp(P.internStanding, 48, 24, { map: looks[1] });
+        if (level >= 4) c.stamp(P.internStanding, 52, 24, { map: looks[1] });
       }),
     },
     ambient: [
