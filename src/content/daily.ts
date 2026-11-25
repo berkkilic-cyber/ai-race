@@ -15,6 +15,7 @@
  *   front.sub.<trigger>.<n>                  its subheadline
  *   front.story.<type>.<n>.head / .body      side stories drawn from the run
  *   front.weather.title, front.weather.<meter>.<low|mid|high>   the "weather" box
+ *   front.caption.<n>                        the caption under the map "photo"
  * `<n>` counts from 1 with no gaps; `validateDaily` requires at least MIN_VARIANTS of each.
  */
 import { z } from 'zod';
@@ -72,11 +73,12 @@ export const FAMILY_PLACEHOLDERS: Record<string, readonly string[]> = {
   'story.ban': ['lab', 'region', 'amount'],
   'story.home': ['lab', 'region'],
   weather: ['pct'],
+  caption: ['lab', 'amount'],
   twist: ['rival'],
 };
 
 /** Length limits (characters, after nothing is substituted) so the page fits a phone screenshot. */
-export const FRONT_LIMITS = { paper: 28, headline: 72, sub: 130, head: 34, body: 150, twistName: 34, twistDesc: 70, shareEnding: 32 } as const;
+export const FRONT_LIMITS = { paper: 28, headline: 72, sub: 130, head: 34, body: 150, twistName: 34, twistDesc: 70, shareEnding: 32, caption: 80 } as const;
 
 const twistSchema = z.strictObject({
   id: z.string().regex(/^[a-z0-9-]+$/),
@@ -150,6 +152,7 @@ export function validateDaily(content: unknown, pack: ContentPack): string[] {
     }
   };
   counted('front.paper', 'none', FRONT_LIMITS.paper);
+  counted('front.caption', 'caption', FRONT_LIMITS.caption);
   for (const trigger of TRIGGERS) {
     keys.push({ key: `share.ending.${trigger}`, family: 'none', max: FRONT_LIMITS.shareEnding });
     counted(`front.headline.${trigger}`, 'headline', FRONT_LIMITS.headline);

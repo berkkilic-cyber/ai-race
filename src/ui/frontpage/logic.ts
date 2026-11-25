@@ -45,6 +45,8 @@ export interface FrontPage {
   /** 0 (short headline, biggest type) to 2 (long, smallest). */
   headlineScale: 0 | 1 | 2;
   stories: FrontStory[];
+  /** Under the map "photo". */
+  caption: string;
   weatherTitle: string;
   weather: WeatherLine[];
   footer: string;
@@ -169,14 +171,14 @@ export function buildFrontPage(state: GameState, pack: ContentPack, story: RunSt
   if (!e) return null;
   const seed = state.seed;
   const picks: Record<string, number> = {};
-  const use = (prefix: string, salt: string, suffix = '') => (picks[prefix] = pickVariant(pack, prefix, seed, salt, suffix));
+  const pick = (prefix: string, salt: string, suffix = '') => (picks[prefix] = pickVariant(pack, prefix, seed, salt, suffix));
 
-  const paper = t(`front.paper.${use('front.paper', 'paper')}`);
+  const paper = t(`front.paper.${pick('front.paper', 'paper')}`);
   const hp = headlineParams(state, pack);
-  const headline = t(`front.headline.${e.trigger}.${use(`front.headline.${e.trigger}`, 'headline')}`, hp);
-  const sub = t(`front.sub.${e.trigger}.${use(`front.sub.${e.trigger}`, 'sub')}`, hp);
+  const headline = t(`front.headline.${e.trigger}.${pick(`front.headline.${e.trigger}`, 'headline')}`, hp);
+  const sub = t(`front.sub.${e.trigger}.${pick(`front.sub.${e.trigger}`, 'sub')}`, hp);
   const stories = chooseStories(state, story, pack).map(({ type, params }) => {
-    const n = use(`front.story.${type}`, `story:${type}`, '.head');
+    const n = pick(`front.story.${type}`, `story:${type}`, '.head');
     return { type, head: t(`front.story.${type}.${n}.head`, params), body: t(`front.story.${type}.${n}.body`, params) };
   });
   const meters = getMeters(state, state.playerLabId);
@@ -195,6 +197,7 @@ export function buildFrontPage(state: GameState, pack: ContentPack, story: RunSt
     sub,
     headlineScale: length <= 44 ? 0 : length <= 64 ? 1 : 2,
     stories,
+    caption: t(`front.caption.${pick('front.caption', 'caption')}`, { lab: state.playerLabId, amount: fmtInt(e.tick + 1) }),
     weatherTitle: t('front.weather.title'),
     weather,
     footer: t('ui.front.footer', { title: t('pack.title'), link: SHARE_LINK_SHORT }),
@@ -204,5 +207,5 @@ export function buildFrontPage(state: GameState, pack: ContentPack, story: RunSt
 
 /** Every text on the page, for checks (no leftover placeholders, no empty lines). */
 export function frontPageTexts(page: FrontPage): string[] {
-  return [page.paper, page.motto, page.price, page.edition, page.day, page.headline, page.sub, ...page.stories.flatMap((s) => [s.head, s.body]), page.weatherTitle, ...page.weather.flatMap((w) => [w.label, w.value, w.forecast]), page.footer];
+  return [page.paper, page.motto, page.price, page.edition, page.day, page.headline, page.sub, ...page.stories.flatMap((s) => [s.head, s.body]), page.caption, page.weatherTitle, ...page.weather.flatMap((w) => [w.label, w.value, w.forecast]), page.footer];
 }

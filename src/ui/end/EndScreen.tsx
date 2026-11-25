@@ -27,6 +27,8 @@ import { useCountUp } from './useCountUp';
 import { EndReward } from '../meta/EndReward';
 import { LabTitle } from '../meta/LabTitle';
 import { useMetaStore, withPerks } from '../meta/store';
+import { asPractice } from '../daily/store';
+import { EndFrontPage, EndShareRow } from './EndShare';
 
 const TONE = { good: colors.good, bad: colors.bad, neutral: colors.info } as const;
 
@@ -96,6 +98,7 @@ function EndView({ state }: { state: GameState }) {
   const reset = useGameStore((s) => s.reset);
   const ending = state.ending!;
   const score = useCountUp(Math.round(ending.score));
+  const [front, setFront] = useState(false);
   const wide = useWide();
   const insets = useInsets();
   // Safe area applied once, explicitly (no SafeAreaView): background to the edges, content inside the insets.
@@ -120,7 +123,8 @@ function EndView({ state }: { state: GameState }) {
     router.replace('/game');
   };
   const rematch = () => {
-    newGame(rematchSetup(state));
+    // A daily's rematch is practice: one scored try per day.
+    newGame(asPractice(rematchSetup(state)));
     router.replace('/game');
   };
   const newLab = () => {
@@ -248,6 +252,8 @@ function EndView({ state }: { state: GameState }) {
     </View>
   );
   const rewardEl = <EndReward state={state} pack={pack} onGarage={garage} />;
+  const shareEl = <EndShareRow state={state} pack={pack} onFrontPage={() => setFront(true)} />;
+  const frontEl = <EndFrontPage visible={front} state={state} onClose={() => setFront(false)} />;
   const newLabEl = (
     <Button label={t('ui.sprint.end.newLab')} variant="ghost" compact onPress={newLab} style={styles.newLab} testID="end-new-lab" />
   );
@@ -259,12 +265,14 @@ function EndView({ state }: { state: GameState }) {
           <ScrollView contentContainerStyle={styles.leftContent}>{bannerEl}</ScrollView>
           {closeCallEl}
           {scoreRowEl}
+          {shareEl}
           {buttonsEl}
           <EndReward state={state} pack={pack} onGarage={garage} extra={newLabEl} />
         </View>
         <ScrollView style={styles.rightPane} contentContainerStyle={styles.rightContent} testID="end-right">
           {sectionsEl}
         </ScrollView>
+        {frontEl}
       </View>
     );
   }
@@ -274,11 +282,13 @@ function EndView({ state }: { state: GameState }) {
       <ScrollView contentContainerStyle={styles.content}>
         {bannerEl}
         {scoreEl}
+        {shareEl}
         {rewardEl}
         {sectionsEl}
         {newLabEl}
       </ScrollView>
       {buttonsEl}
+      {frontEl}
     </View>
   );
 }

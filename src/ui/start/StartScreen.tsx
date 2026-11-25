@@ -12,6 +12,9 @@ import { useMetaStore, withPerks } from '../meta/store';
 import { garageContent } from '../garage/content';
 import { clearRunSave, loadRunSave, restoreRun, type RunSave } from '../store/runSave';
 import { ContinueCard } from './ContinueCard';
+import { DailyCard } from '../daily/DailyCard';
+import { DailySheet } from '../daily/DailySheet';
+import { abandonScoredDaily, startDaily } from '../daily/store';
 import { loadRunLengthChoice, runLengthOptions, runLengthParam, saveRunLengthChoice } from './runLength';
 
 import { Button } from '../components/Button';
@@ -76,6 +79,9 @@ export function StartScreen({ beforeEnter }: StartScreenProps = {}) {
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   const [howTo, setHowTo] = useState(false);
   const [perksSheet, setPerksSheet] = useState(false);
+  const [dailySheet, setDailySheet] = useState(false);
+  /** A daily waiting for the player to confirm that the saved run may go (scored or practice). */
+  const pendingDaily = useRef<boolean | null>(null);
   const labRep = useMetaStore((s) => s.labRep);
   const frame = cosmeticsAt(garageContent(), Math.floor(labRep + 1e-9)).frame;
   const perksOn = useMetaStore((s) => s.perksOn);
@@ -164,12 +170,36 @@ export function StartScreen({ beforeEnter }: StartScreenProps = {}) {
       return;
     }
     setConfirmDiscard(false);
-    if (save) {
-      void clearRunSave();
-      setSave(null);
-    }
+    discardSave();
     newGame(withPerks({ playerName: nameCheck.name, founderId, homeRegion: home, ...(difficulty ? { difficulty } : {}), ...(runLength ? { runLength } : {}) }));
     void enterWhenReady(beforeEnter, () => router.replace('/game'));
+  };
+
+  /** Drops the saved run; a saved scored daily then counts as played (the confirmation said so). */
+  const discardSave = () => {
+    if (!save) return;
+    if (save.setup.daily?.scored) abandonScoredDaily();
+    void clearRunSave();
+    setSave(null);
+  };
+
+  const playDaily = (scored: boolean, discardConfirmed = false) => {
+    if (save && !discardConfirmed) {
+      pendingDaily.current = scored;
+      setConfirmDiscard(true);
+      return;
+    }
+    pendingDaily.current = null;
+    setConfirmDiscard(false);
+    discardSave();
+    const labName = nameCheck.ok ? nameCheck.name : randomLabName(labNames, name);
+    if (!nameCheck.ok) setName(labName);
+    startDaily(pack, labName, scored);
+    void enterWhenReady(beforeEnter, () => router.replace('/game'));
+  };
+  const cancelDiscard = () => {
+    pendingDaily.current = null;
+    setConfirmDiscard(false);
   };
 
   const next = () => {
@@ -226,6 +256,7 @@ export function StartScreen({ beforeEnter }: StartScreenProps = {}) {
         onSubmit={next}
         wide={wide}
         compact={wide && keyboard}
+        daily={<DailyCard pack={pack} onPlay={(scored) => playDaily(scored)} onContinue={continueRun} onHistory={() => setDailySheet(true)} />}
       />
     ) : step === 1 ? (
       <FounderStep
@@ -329,14 +360,16 @@ export function StartScreen({ beforeEnter }: StartScreenProps = {}) {
           void enterWhenReady(beforeEnter, () => router.replace('/garage'));
         }}
       />
+      <DailySheet visible={dailySheet} onClose={() => setDailySheet(false)} />
       <RegionListSheet visible={list} regions={pack.regions} selected={home} onSelect={pickFromList} onClose={() => setList(false)} />
-      <ModalCard visible={confirmDiscard} title={t('ui.sprint.discard.title')} tone="bad" onRequestClose={() => setConfirmDiscard(false)} testID="discard-confirm">
+      <ModalCard visible={confirmDiscard} title={t('ui.sprint.discard.title')} tone="bad" onRequestClose={cancelDiscard} testID="discard-confirm">
         <Text style={styles.discardBody}>
           {save ? t('ui.sprint.discard.body', { lab: save.state.labs[save.state.playerLabId].name, day: save.state.tick + 1 }) : ''}
         </Text>
+        {save?.setup.daily?.scored ? <Text style={styles.discardBody}>{t('ui.daily.warn.discard')}</Text> : null}
         <View style={styles.discardRow}>
-          <Button label={t('ui.sprint.discard.cancel')} variant="ghost" onPress={() => setConfirmDiscard(false)} style={styles.discardBtn} testID="discard-cancel" />
-          <Button label={t('ui.sprint.discard.confirm')} variant="danger" onPress={() => found(true)} style={styles.discardBtn} testID="discard-confirm-button" />
+          <Button label={t('ui.sprint.discard.cancel')} variant="ghost" onPress={cancelDiscard} style={styles.discardBtn} testID="discard-cancel" />
+          <Button label={t('ui.sprint.discard.confirm')} variant="danger" onPress={() => (pendingDaily.current !== null ? playDaily(pendingDaily.current, true) : found(true))} style={styles.discardBtn} testID="discard-confirm-button" />
         </View>
       </ModalCard>
     </View>

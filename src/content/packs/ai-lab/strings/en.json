@@ -956,5 +956,8 @@
   "front.weather.backlash.high": "pitchforks",
   "front.weather.rival.low": "far away",
   "front.weather.rival.mid": "closing in",
-  "front.weather.rival.high": "breathing down necks"
+  "front.weather.rival.high": "breathing down necks",
+  "front.caption.1": "The world as {lab} left it, day {amount}.",
+  "front.caption.2": "The market on day {amount}, as painted by an artist who was a model.",
+  "front.caption.3": "Fig. 1: everything {lab} touched. Fig. 2 was redacted by lawyers."
 }

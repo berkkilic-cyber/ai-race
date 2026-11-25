@@ -34,12 +34,18 @@ function isNewRun(next: GameState, before: GameState | null): boolean {
   return next.tick === 0 && before.status === 'ended' && next.status === 'running';
 }
 
+/** True when the run is the day's scored daily attempt (src/ui/daily); practice runs are not. */
+function isScoredDaily(s: GameState): boolean {
+  const setup = useGameStore.getState().setup;
+  return !!(setup && setup.seed === s.seed && setup.daily?.scored);
+}
+
 function runStart(s: GameState): void {
   const me = s.labs[s.playerLabId];
   run = { startedAt: analyticsNow(), seed: s.seed };
   const setup = useGameStore.getState().setup;
   const perks = setup && setup.seed === s.seed ? (setup.perkIds?.length ?? 0) : 0;
-  track({ name: 'run_start', params: { founder: me?.founderId ?? 'unknown', difficulty: s.difficulty ?? 'none', runLength: s.runLength, homeRegion: me?.homeRegion ?? 'unknown', perks } });
+  track({ name: 'run_start', params: { founder: me?.founderId ?? 'unknown', difficulty: s.difficulty ?? 'none', runLength: s.runLength, homeRegion: me?.homeRegion ?? 'unknown', perks, daily: isScoredDaily(s) } });
 }
 
 /** Tracks run_quit for a run that is still going. */
@@ -68,7 +74,7 @@ export function subscribeRace(): () => void {
     if (next.pendingEvent && next.pendingEvent.eventId !== before?.pendingEvent?.eventId) track({ name: 'event_shown', params: { eventId: next.pendingEvent.eventId } });
     if (next.status === 'ended' && before?.status !== 'ended' && next.ending) {
       const e = next.ending;
-      track({ name: 'run_end', params: { ending: e.endingId, won: e.kind === 'win', score: Math.round(e.score), ticks: next.tick, seconds: run ? Math.round((analyticsNow() - run.startedAt) / 1000) : 0 } });
+      track({ name: 'run_end', params: { ending: e.endingId, won: e.kind === 'win', score: Math.round(e.score), ticks: next.tick, seconds: run ? Math.round((analyticsNow() - run.startedAt) / 1000) : 0, daily: isScoredDaily(next) } });
       run = null;
     }
   });

@@ -34,10 +34,10 @@ describe('track', () => {
   it('drops undefined params, cuts long strings and replaces non-finite numbers', () => {
     const mem = createMemoryProvider();
     setAnalyticsProvider(mem);
-    track({ name: 'run_start', params: { founder: 'f', difficulty: 'd', homeRegion: 'r', runLength: undefined } });
+    track({ name: 'run_start', params: { founder: 'f', difficulty: 'd', homeRegion: 'r', runLength: undefined, daily: false } });
     track({ name: 'error', params: { where: 'x', message: 'y'.repeat(500) } });
     track({ name: 'session_end', params: { seconds: Number.NaN } });
-    expect(Object.keys(mem.events[0].params)).toEqual(['founder', 'difficulty', 'homeRegion']);
+    expect(Object.keys(mem.events[0].params)).toEqual(['founder', 'difficulty', 'homeRegion', 'daily']);
     expect((mem.events[1].params.message as string).length).toBe(MAX_PARAM_LENGTH);
     expect(mem.events[2].params.seconds).toBe(0);
   });

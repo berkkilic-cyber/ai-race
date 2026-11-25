@@ -859,7 +859,7 @@
   "front.price": "Fiyatı: bir prompt",
   "front.headline.agi.1": "{lab} bir tanrı yaptı, ilk iş ondan yatırım istedi",
   "front.headline.agi.2": "Ve geldi: {lab} AGI'ya {amount}. günde ulaştı",
-  "front.headline.agi.3": "Süper zekâ geldi, ilk talebi haftada dört gün çalışmak",
+  "front.headline.agi.3": "Süper zekâ {lab} lab'ına geldi, ilk talebi dört günlük hafta",
   "front.headline.agi.4": "{lab} AGI'ya ulaştı, AGI çeyrek hedeflerine öğlene ulaştı",
   "front.sub.agi.1": "Yönetim kurulu, modelin tasarladığı pastayla kutlama yaptı. Pasta \"çoğunlukla hizalı\".",
   "front.sub.agi.2": "Uzmanlar bunun iyi haber olup olmadığı konusunda bölünmüş durumda. AGI bölünmüş değil: iyi haber diyor.",
@@ -903,7 +903,7 @@
   "front.story.launch.1.body": "{lab}, {model} modelini {amount}. günde yayınladı. İlk yorumcular özgüvenini övdü, özellikle yanıldığı anlarda.",
   "front.story.launch.2.head": "Bir yıldız boot edildi",
   "front.story.launch.2.body": "{amount}. gün: {model} yayında. Tanıtım videosunda ağır çekim sunucular ve bir çello var.",
-  "front.story.launch.3.head": "Yeni model: {model}",
+  "front.story.launch.3.head": "{lab} sahnede: {model}",
   "front.story.launch.3.body": "Sunum doksan dakika, demo dört dakika sürdü. İkisi de \"tarihi an\" olarak anıldı.",
   "front.story.rivalLaunch.1.head": "{rival} öne geçti",
   "front.story.rivalLaunch.1.body": "{lab} daha blog yazısını yazarken {rival}, seviye {tier} bir model çıkardı: {model}.",
@@ -911,7 +911,7 @@
   "front.story.rivalLaunch.2.body": "{rival} imzalı {model}, {lab} lab'ını bütün grafiklerde geçti. Grafiklerin birkaçını {rival} kendisi çizmişti.",
   "front.story.rivalLaunch.3.head": "Grafik suçu ihbarı",
   "front.story.rivalLaunch.3.body": "{rival}, {amount}. günde {model} modelini tanıttı. {lab} logosunu büyüterek karşılık verdi.",
-  "front.story.acquisition.1.head": "{lab} rakibini satın aldı",
+  "front.story.acquisition.1.head": "{lab}, {rival} lab'ını aldı",
   "front.story.acquisition.1.body": "Basın bülteninde \"aile\" kelimesi on bir kez geçti. {rival} çalışanlarına yeni yaka kartı ve 48 saat verildi.",
   "front.story.acquisition.2.head": "Rakip bütün yutuldu",
   "front.story.acquisition.2.body": "{amount}. gün: {lab}, {rival} lab'ını tamamen satın aldı. Eski logo \"sevgiyle\" bir çekmeceye kaldırılacak.",
@@ -956,5 +956,8 @@
   "front.weather.backlash.high": "dirgenler",
   "front.weather.rival.low": "çok uzakta",
   "front.weather.rival.mid": "yaklaşıyor",
-  "front.weather.rival.high": "ensemizde"
+  "front.weather.rival.high": "ensemizde",
+  "front.caption.1": "{lab} lab'ının bıraktığı dünya, {amount}. gün.",
+  "front.caption.2": "{amount}. günde pazar; ressamı bir yapay zekâ modeli.",
+  "front.caption.3": "Şekil 1: {lab} lab'ının dokunduğu her şey. Şekil 2 avukatlarca karartıldı."
 }
