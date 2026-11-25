@@ -39,13 +39,13 @@ UI captions live in `src/ui/strings/garage.en.json` (`ui.garage.*`, `ui.ads.*`);
 
 The list shows owned tiers and the next one to buy in full, one teaser ("Something bigger") and the next locked tier with the model that unlocks it. Buy x1 / x10 / Max (closed-form geometric sums).
 
-**Upgrades** (62, one-off, most reset on shipping): four per tier at 5, 15, 40 and 80 owned (×2, ×2, ×2, ×3); tap upgrades (×2, ×2, ×2, ×3 by tap count); "taps also earn a share of production" (1% to 3% each); global multipliers by tokens earned; a combo-cap upgrade; golden-moment value and frequency; and three offline upgrades that are **kept** when you ship (+2 h cap, +15% rate, +4 h cap). The Upgrades tab lists what is on offer, cheapest first, and the next three coming up with their progress.
+**Upgrades** (62, one-off, most reset on shipping): four per tier at 5, 15, 40 and 80 owned (×2, ×2, ×2, ×3); tap upgrades (×2, ×2, ×2, ×3 by tap count); "taps also earn a share of production" (1% to 3% each); global multipliers by tokens earned; a combo-cap upgrade; golden-moment value and frequency; and four away-storage upgrades that are **kept** when you ship (+1 h, +1 h, +15% rate, +2 h; see "Away storage" below). The Upgrades tab lists what is on offer, cheapest first, and the next three coming up with their progress.
 
-**Prestige: "Ship a model".** Shipping generation *n + 1* needs a token total this generation (1B for Model 2, 6.4B for Model 3, then steeper each step: the original curve times an extra 1.6 per step from Model 3 on; 4.01e23 for Model 12; ×10 per step after that). It resets tokens, generators and the non-kept upgrades and grants **Hype = floor((tokens this generation / 6.42e7) ^ 0.4)**; each Hype point adds +10% to all production. The root means each reset is faster than the last at first, and the rising thresholds keep the named models lasting about two weeks for a casual player. Shipping goes through ship day (below), whose choice modifies this formula. Each of the 12 named generations has a parody name, a tabloid launch headline (shown as a card after shipping) and an unlock: a new tier (Models 2, 3, 5, 7, 9) or a mechanic (Model 4: +2 h offline cap; 6: bigger combos and more golden moments; 8: +10% offline rate; 10: taps earn 3% of production; 11: production ×2; 12: ×3). After Model 12 the game goes on with "Model 13", "Model 14" … (endless).
+**Prestige: "Ship a model".** Shipping generation *n + 1* needs a token total this generation (1B for Model 2, 6.4B for Model 3, then steeper each step: the original curve times an extra 1.6 per step from Model 3 on; 4.01e23 for Model 12; ×10 per step for Models 13 to 24, and after that). It resets tokens, generators and the non-kept upgrades and grants **Hype = floor((tokens this generation / 6.42e7) ^ 0.4)**; each Hype point adds +10% to all production. The root means each reset is faster than the last at first, and the rising thresholds keep the named models lasting about two weeks for a casual player. Shipping goes through ship day (below), whose choice modifies this formula. Each of the 24 named generations has a parody name, a tabloid launch headline (shown as a card after shipping) and an unlock: a new tier (Models 2, 3, 5, 7, 9) or a mechanic (Model 4: +1 h away storage; 6: bigger combos and more golden moments; 8: +10% offline rate; 10: taps earn 3% of production; 11: production ×2; 12: ×3). Models 13 to 24 (task 32) each carry a small perk too (golden moments, taps, combos, production ×1.5 to ×3); Model 24, "AGI (Marketing Edition)", is the end of the named ladder, after which the game goes on with "Model 25", "Model 26" … (endless). After Model 12 the lab can also make a **Paradigm Shift** (below).
 
 **Events.** *Golden moments* appear on the stage for 12 s, first after 45 s and then every 2 to 5 minutes: a burst (10 or 15 minutes of production, at least 40 or 60 taps' worth), a frenzy (production ×7 for 30 s, or ×3 for 77 s) or a tap frenzy (taps ×10 for 15 s). *Incidents* start from Model 2, every 4 to 8 minutes, on a tier with at least 5 owned: that tier runs at half speed for 60 s unless tapped five times ("GPU shortage", "overheating", "intern pushed to prod", a stern letter, a union). A *ticker* runs 28 Garage headlines (some unlocked by later models) plus launch, golden-moment, incident and achievement lines. Events are drawn from the save's seeded PRNG.
 
-**Offline earnings.** A gap longer than 60 s is time away: production at 50%, for at most 4 h (upgrades and Model 4 / 8 extend both), events paused. After 2 min away the "While you were away" panel shows the time, the tokens, Collect and the ad that doubles them.
+**Offline earnings (away storage).** A gap longer than 60 s is time away: production at 50%, for at most the away storage's capacity (2 h at the start, about 8 h with upgrades, Model 4 and a Lab Rep perk; kept models and the Paradigm tree go further; see "Away storage"), events paused. After 2 min away the "While you were away" panel shows the time, the tokens, Collect and the ad that doubles them.
 
 **Achievements and stats.** 25 achievements (taps, tokens, models shipped, combo, golden moments, incidents, 100 interns, crates) including five secret ones shown as "Secret" until earned (200 taps before buying anything, ship with no upgrade, fix an incident within two seconds, own exactly 42 of something, let 10 golden moments slip away). The Stats sheet shows lifetime taps, tokens, models shipped, Hype, best combo, golden moments, incidents fixed, earned while away and time in the garage, plus Lab Rep and the ad counts.
 
@@ -97,7 +97,7 @@ The two modes are one game: the race gives stories and mastery, the Garage a rea
 | 3 | Press list | +3 start Hype (`startHype` 3) | added to the founder's start |
 | 6 | Garage Legend | title under the lab name (`title`) | looks only |
 | 9 | Fan club | +0.5% Hype income (`hypeIncome` 0.005) | modifier `hypeIncome` add 0.005 |
-| 12 | Duct-tape frame | frame on the chosen founder card (`frame`) | looks only |
+| 12 | Self-storage unit (task 32; was the duct-tape frame) | +1 h away storage (`awayHours` 1) | nothing (a Garage perk) |
 | 16 | Old friends | +0.5% Cash income (`cashIncome` 0.005) | modifier `cashIncome` add 0.005 |
 | 20 | Angel on line two | +$1M start Cash (`startCash` 1) | added to the founder's start |
 | 25 | Thought Leader | title | looks only |
@@ -152,6 +152,164 @@ So a third to a half of week one's Lab Rep comes from races, and races never swa
 
 `labPerks(content, labRep)` / `nextLabPerk` (src/idle/selectors.ts) list the ladder; `labRepTotal(state)` is Lab Rep with its fraction. The same `LabRepBadge` (level and a bar to the next perk) is on the start chip and sheet, the end screen, the Garage's race note and the Ship panel's Lab Rep card.
 
+## Comeback habits (task 32)
+
+The game was fun for an evening but gave little reason to come back tomorrow. Task 32 adds the habits the best idle games use, in a form that respects the player: a visible away storage, three daily missions with a forgiving streak, and a longer Garage (a second reset layer and twelve more models) so there is something to work towards for a month. No notifications yet (they need a native build); see "Notifications later".
+
+### Away storage
+
+The offline cap was already there but invisible (small print on the return card). It is now **away storage**: a store that fills while the app is closed, at the offline rate, until it is full.
+
+| Source | Hours | Where |
+| --- | --- | --- |
+| The garage shelf (base) | 2 | `offline.capHours` |
+| A Bigger Hard Drive ("two whole terabytes") | +1 | upgrade `offline-1`, from 60K tokens this generation, kept on ships |
+| The Intern Who Stays Late ("he says the racks are good company") | +1 | upgrade `offline-4`, from 20M this generation, kept |
+| A Second Garage, for Storage ("your parents' garage, technically") | +2 | upgrade `offline-3`, from the fourth model and 80B, kept |
+| Model 3.5 Final (2), the fourth model | +1 | generation perk (was +2 h) |
+| Self-storage unit (Lab Rep 12) | +1 | perk `storage-unit`, `awayHours` 1 (replaces the duct-tape frame; the race-start perks are untouched) |
+| **Total from fixed sources** | **8** | a content test keeps it at 8 |
+| Kept models with an away-storage strength | +0.5 to 1.2 each | training runs (unchanged) |
+| Unlimited Cloud Drive* (Paradigm tree) | +2 | "*Unlimited means two hours" |
+| Reserved: a paid extension | floor at 12 | `offline.paidCapHours` 12 with `GarageState.paidStorage`; no purchase exists, nothing sets the flag yet |
+
+The away rate (50%, +15% upgrade, +10% "Now With Feelings", +5% Model 14, +15% Paradigm node, kept models) is unchanged in kind.
+
+**On screen.** The Garage header has a compact **Away storage** chip (`AwayStorage.tsx`): the capacity ("Away storage · 2h") over a segment bar with one segment per hour, lit up to the capacity and dim for the storage still to earn. Tapping it opens a sheet: how it works in one sentence, what fills it (each source and its hours) and the next way to raise it ("Next: A Bigger Hard Drive adds 1 h", or the Lab Rep perk), with "See upgrade" when the upgrade is on offer. When the player returns, the "While you were away" card shows the storage bar filled to what was earned. When it capped it says plainly "Storage full: your lab stopped earning after 2h." and, when there is one, "Want it to hold more? A Bigger Hard Drive adds 1 h (Upgrades)." with a "See upgrade" button that opens the Upgrades tab. Otherwise "Storage 50% full, 1h to spare." The rewarded "Double it" stays. Nothing guilts the player: no "you lost", no countdowns, no red.
+
+**Engine.** `offlineTerms` (rates.ts) adds the Lab Rep `awayHours` perks, the Paradigm tree and the paid floor; `awayStorage(state, content)` (storage.ts) lists the sources and the next step (`nextStorage`), `storageReachHours` the capacity the content's fixed sources reach (the bar's length), `storageFill` a clamped share. The offline report gains `capped` and `capMs`. Tests: src/idle/__tests__/storage.test.ts.
+
+### Daily missions and the streak
+
+Three missions a day for everyone, from the UTC date: one **Garage** mission, one **race** mission and one **either-or or stretch** mission.
+
+- **Content:** `garage.json` → `missions` (18 definitions: `slot`, `titleKey` with `{a}` / `{b}` for the goals, one goal or two for an either-or, optional `minStage` / `minGeneration`, `weight`), validated by `validateGarage` (every slot has a mission for a new lab, goals are positive integers) and by the UI's test (every counter is one the tracker knows; no training-run mission before the Office).
+- **Picking** (src/ui/missions/logic.ts, pure): `pickMissions(cfg, utcDay, { stage, generation })` draws one per slot by weight from a mulberry32 generator seeded by the day, among the missions the player can do now; the stretch avoids a counter already used that day. The set is fixed for the day once picked.
+- **Progress** comes from the existing stores, never from screens: the Garage's lifetime stats (taps, player purchases without auto-buys, happenings, golden moments, upgrades, training runs, incidents fixed, models shipped) minus the day's baseline; the race's `onGameAction` (region launches, moments, the model tier after a node buy) and run endings (a finish, a finish of the shortest run length, so a daily-challenge Sprint counts too, a win, the tier reached). Per Garage tick the subscription compares the stats reference and nine numbers; per race tick a reference and the status.
+- **Rewards** (idle engine `claimDailyReward(state, content, 'mission' | 'crate', now, { streak, crateMult })`, src/idle/daily.ts, tested): a mission pays **10 minutes of production** (at least 40 taps' worth, at most 15% of the tokens the next model needs, so a reward never skips a model) and **+0.2 Lab Rep**; all three claimed open the **daily crate**: 30 minutes (at least 150 taps, at most 30% of the next ship), +0.5 Lab Rep and a free training run once training is on, times the streak bonus. Claims work from the start screen too (into the save, like the race reward). A claim plays the golden-moment sound and haptic; the crate the achievement bell (src/ui/feel, no new cue).
+- **The streak** counts consecutive UTC days with at least one claim. It is forgiving: one missed day is covered automatically by a **day off**, which recharges 7 days after it is used (`streakOnClaim`, `streakView`). The crate grows by +10% per streak day, up to +70% at 7 days. A broken streak just shows 0 and the **best streak**; the words never warn or guilt ("Claim a mission today to add a day.", "Yesterday is covered by your day off.", "Day off ready: if you skip a day, the streak keeps going.").
+- **UI:** a missions button with a badge (missions done and unclaimed, plus the crate) in the Garage header and a "Missions" pill on the start screen's title step (beside the language toggle), both opening one sheet at the screen's root: the countdown to the next set, the three missions with progress bars, "120 / 300", the reward and Claim, the crate, and the streak with its day off. A mission completed during play shows a small toast at the top (`MissionToastHost`, mounted in the Garage screen and the race shell), never an interruption.
+- **Storage:** `missions.v1` (AsyncStorage through src/ui/tutorial/storage.ts), written at most 3 s after progress changes and at once on claims; unreadable or unknown saves start fresh.
+
+| Mission (slot) | Goal | Available |
+| --- | --- | --- |
+| Tap your model (garage) | 300 | always |
+| Buy hardware (garage) | 20 | always |
+| Handle lab happenings (garage) | 5 | always |
+| Catch golden moments (garage) | 3 | always |
+| Buy upgrades (garage) | 4 | always |
+| Launch training runs (garage) | 2 | from the Office |
+| Fix incidents (garage) | 3 | from Model 3 |
+| Finish a Sprint race (race) | 1 | always |
+| Launch in regions, any races (race) | 5 | always |
+| Win a race on any level (race) | 1 | always (weight 0.7) |
+| Reach model tier 3 in a race (race) | 3 | always |
+| Tap race moments (race) | 4 | always |
+| Ship a model or win a race (stretch) | 1 / 1 | always |
+| Tap your model (stretch) | 1000 | always |
+| Finish races (stretch) | 2 | always |
+| Happenings or regions (stretch) | 10 / 8 | always |
+| Hardware or race moments (stretch) | 60 / 8 | always |
+| Training runs or a Sprint (stretch) | 4 / 1 | from the Office |
+
+### Paradigm Shift
+
+A second reset layer, available once the save is at Model 12, "Superintelligence (Beta)" (`paradigm.minGeneration` 11). The casual player gets there on day 13 and the bots shift once they stall (no ship for 1.5 days), on day 14.5.
+
+- **What it trades.** Models shipped (back to Model 1), all Hype, tokens, hardware, the upgrades that reset on a ship, kept models (unless the Model Archive node is owned) and the waiting candidates go. Lab Rep and race perks, achievements, stats, staff, queued training runs, the away-storage upgrades and the tree stay.
+- **The currency: Moats** ("we have no moat" turned into a currency; Turkish "Hendek"). A shift pays `floor(3 + (generation − 11) + 0.5 × log10(1 + Hype))`: 6 at Model 12, more the further the cycle went. Every Moat ever earned multiplies all production by 1.2 (compounding; `paradigm.productionPerPoint`), so each cycle replays the early models fast and goes further.
+- **Stages come back sooner:** after a first shift, a stage's generation requirement is halved, rounded up (`stageEase` 0.5; the Company Town with the fourth model, Latent Space with the fifth). The all-time token stages are already met.
+- **The tree** (`paradigm.nodes`, 16 nodes, 49 Moats in all; each listed after what it needs):
+
+| Node | Cost | Needs | Effect |
+| --- | --- | --- | --- |
+| Lease Signed in Advance | 2 | | every cycle starts in the Data Centre |
+| Compound Interest | 1 | | all production ×3 |
+| Unlimited Cloud Drive* | 1 | | away storage +2 h |
+| Intern Pipeline | 2 | Compound Interest | every model starts with 25 interns |
+| A Fourth Candidate | 3 | Lease | training runs roll four candidates |
+| Two Crates a Day | 2 | Cloud Drive | the daily crate counts twice (no ad) |
+| Nocturnal Compute | 3 | Cloud Drive | away earnings +15% |
+| Muscle Memory | 2 | Compound Interest | taps ×4 |
+| Caffeine Drip | 2 | Muscle Memory | combo window +0.4 s |
+| Open-Plan Chaos | 2 | Lease | lab happenings 30% more often |
+| Lower the Bar | 4 | Intern Pipeline | shipping needs half the tokens |
+| GPU Reservations | 3 | Fourth Candidate | training queue +2 |
+| Lucky Random Seeds | 4 | Fourth Candidate | rarer candidates |
+| Ship It Friday (Automated) | 5 | Lower the Bar | models ship by themselves when worth it, playing it safe (a switch) |
+| Model Archive | 5 | Lucky Seeds | kept models survive a shift |
+| Compound Compound Interest | 8 | Lower the Bar, Compound Interest | all production ×5 |
+
+- **Engine:** src/idle/paradigm.ts (`paradigmShift`, `paradigmGain`, `paradigmStatus`, `buyParadigmNode`, `paradigmNodeBlock`, `setAutoShip`, `autoShipDue`, `runAutoShip`) and paradigmRates.ts (`paradigmEffects`, `paradigmMultiplier`, `comboWindowMs`), folded into rates, training, happenings, stages and ships; state `GarageState.paradigm` (count, points, earned, nodes, auto-ship switch, best generation). Auto-ship runs from the store's tick (and the bots), quietly: the ticker carries the headline. Tests: src/idle/__tests__/paradigm.test.ts.
+- **UI:** the Ship tab gains a Paradigm section (`ParadigmPanel.tsx`): locked, it says what unlocks it and what it trades; ready, the Moats it pays and the production before and after, and "Shift the paradigm…", which opens a confirmation card (at the screen's root) listing what is lost and what is kept, with "Not yet" and "Shift for 6 Moats". Below, the tree with each node's price, what it needs, and the auto-ship switch once owned.
+
+### Notifications later
+
+Two moments are shaped so a local notification can be scheduled from them once there is a native build (expo-notifications):
+
+- **Storage full:** at the moment the app goes to the background, `awayStorage(state, content).capMs` from `state.now` is when the storage fills; schedule "Your away storage is full" for then (cancel it on return). The Garage store already saves on backgrounding (`useGarageLoop`), which is the place to add it.
+- **Missions ready:** `msToNextDay(now)` (src/ui/missions/logic.ts) is when the next set arrives; schedule one quiet "New missions are in" for then, only if the player claimed something today (`streakView(...).countedToday`), so a lapsed player is not chased.
+
+Both should be opt-in in settings, at most one a day each, and never mention a streak at risk.
+
+### Pacing after task 32
+
+`npm run balance:garage -- --days 16 --long 40` (bots as before, plus: casual bots claim the Garage and stretch missions at their last check-in each day; bots buy the storage upgrades like any other "no income" upgrade; the long-game bots shift once they can and no model has shipped for 1.5 days (40 minutes active), then buy the tree in a fixed order). `--missions 0|3`, `--no-paradigm`, `--stall days` and `--no-checkins` vary it.
+
+Headline:
+
+| Metric | Before (task 29) | After |
+| --- | --- | --- |
+| Active, first ship | 14m 31s | 14m 26s |
+| Active, new things to buy in the first 10 min / longest gap | 28 / 1m 19s | 29 / 1m 19s |
+| Casual (no ads), Model 12 | day 13.5 | day 12.9 |
+| Casual + ads, Model 12 | day 5.9 | day 5.5 |
+| Ad speed-up, casual, models 3 / 5 / 7 / 9 / 12 | 1.16x / 1.36x / 1.66x / 1.46x / 2.3x | 1.16x / 1.36x / 1.52x / 1.46x / 2.3x |
+| Casual (no ads), first Paradigm Shift | none | day 14.5 |
+| Casual (no ads), end of content (Model 24) | (no content after day 13.5) | day 38 |
+| Casual + ads, end of content | | day 26 (1.5x faster) |
+| Active (2 h a day), end of content | | day 19 |
+
+Casual check-ins, model reached at the end of each day (before: the previous table above):
+
+| Day | casual | casual + ads |
+| --- | --- | --- |
+| 1 | 2 | 2 |
+| 2 | 3 | 6 |
+| 3 | 6 | 8 |
+| 4 | 7 | 11 |
+| 5 | 9 | 11 |
+| 6 | 10 | 12 |
+| 7 | 11 | 13 |
+| 10 | 11 | 13 (one shift made) |
+| 13 | 12 | 15 |
+| 14 | 12 | 15 |
+
+The casual player is level with or ahead of the old table every day except day 2 (Model 3 instead of 4: the first night now credits 4 h instead of 6 h), and reaches Model 12 half a day sooner. Casual + ads stays about 2.3x faster to Model 12 (the Model 11 to 12 wall amplifies the ad player's head start; through Model 9 it is 1.2x to 1.5x) and 1.5x faster to the end of the new content.
+
+Check-in frequency: the same 10 minutes of play (and 2 minutes of tapping) a day, split into more check-ins, earns clearly more because each gap fills the storage again:
+
+| Check-ins a day | best model day 3 | day 7 | day 14 | tokens by day 7 | vs once a day |
+| --- | --- | --- | --- | --- | --- |
+| once (20:00) | 4 | 9 | 11 | 1.91Qi | 1x |
+| twice (08, 20) | 4 | 10 | 11 | 4.49Sx | 2,300x |
+| three times (08, 13, 21) | 5 | 11 | 12 | 45.3Sx | 24,000x |
+| six times (every 3 h from 08) | 7 | 11 | 12 | 96.8Sx | 51,000x |
+
+(Token ratios look huge because production compounds; the model column is the felt difference: a once-a-day player is two models behind on day 7 and one on day 14.)
+
+The long game, 40 days:
+
+| Profile | Model 12 first | first Paradigm Shift | shifts | Model 18 | end of content (Model 24) | Moats earned |
+| --- | --- | --- | --- | --- | --- | --- |
+| casual | day 13 | day 14.5 | 5 | day 29 | day 38 | 56 |
+| casual + ads | day 6 | day 8.5 | 7 | day 20 | day 26 | 122 |
+| active (2 h a day) | day 6 | day 8.5 | 11 | day 14 | day 19 | 297 |
+
+Shifts: casual on days 14.5 (at Model 12, +6), 20.9 (Model 14, +8), 26.3 (Model 16, +11), 30.9 (Model 19, +14), 34.9 (Model 21, +17); each cycle replays Model 1 to 12 in two to three days and gets further. Best model by day for casual: day 16 12, day 20 14, day 25 16, day 30 19, day 35 21, day 38 25, day 40 26.
+
+What changed in the numbers to get there: base storage 2 h with a cheap first +1 h (150K) and +1 h (60M) so the first night is not punishing; the fourth model's perk +1 h; the 13 to 24 thresholds ×10 per step like the old endless curve; Moats compound at ×1.2 (×1.3 had the casual player at Model 37 on day 40, ×1.15 put the end of content at day 44).
+
 ## Idle engine API (`src/idle/index.ts`)
 
 ```ts
@@ -182,6 +340,11 @@ collectHappening(state, content, now)  happeningQuote  setAutoBuy(state, content
 prestige(state, content, now, { bonus?, choice? })  claimOffer(state, content, id, now, { choice? })
 trainingStatus, nextStage, shipReveal, currentStage, mechanicOn, modelSlots, milestoneMult, nextMilestone,
 modelEffects, staffEffects, incidentFrequency, offlineTerms, shipGain, autoBuyPick
+// habits (task 32)
+awayStorage  nextStorage  storageReachHours  storageFill  perkAwayHours
+claimDailyReward(state, content, 'mission' | 'crate', now, { streak?, crateMult? })  dailyRewardQuote  addLabRep
+paradigmShift(state, content, now)  buyParadigmNode  paradigmNodeBlock  setAutoShip  runAutoShip  autoShipDue
+paradigmGain  paradigmStatus  paradigmEffects  paradigmMultiplier  comboWindowMs  shipNeeded  queueMax  stageRequirement
 // saves
 serialize(state): string; deserialize(text, content, now): { state, migratedFrom?, error? }
 // numbers
@@ -193,7 +356,7 @@ validateGarage(content): string[]
 - **Time:** `advance` walks from breakpoint to breakpoint (a boost, frenzy or incident ending, a golden moment, incident or headline due), so production is exact and a long online gap costs a handful of steps, never one per second. A test checks one 59-second step against 59 one-second steps, events included. A gap above `offline.thresholdMs` is time away (offline rate, capped, piecewise across a boost ending; a test integrates the same span in 1-second steps).
 - **Clock guards:** a clock that goes backwards shifts every stored time by the same delta (no production, boosts and cooldowns keep their remaining time, daily caps cannot be reset by moving the clock back); a forward jump of any size is bounded by the offline cap; `NaN` is ignored.
 - **Big numbers: plain doubles.** Doubles reach 1.8e308 with 15 to 16 significant digits; the content is tuned so a long save stays far below `MAX_AMOUNT` (1e300; the simulator's casual player is near 1e23 after ten days), and every amount written to state goes through `amount()` (NaN and negatives become 0, overflow caps). A mantissa/exponent type would cost allocation on every tap and tick, complicate JSON saves and closed-form maths (`Math.pow`, `Math.log` for Max buys), and buy nothing at this scale. `formatAmount` prints K, M, B, T, Qa, Qi, Sx, Sp, Oc, No, Dc … up to Vg (1e63), then scientific (`3.21e72`). Property tests drive random actions at random times (including clock jumps both ways) and check that every amount, rate and cost stays finite and non-negative.
-- **Saves:** `{ v: 3, state }`. Version 1 (the first prototype's flat format) and version 2 (before the lab) migrate step by step; a version 2 save is placed in the stage its progress has earned (all-time tokens and generation never reset), with staff split evenly, no models and one training run ready if it is already past the Garage (a test loads an old Model 3 save into the Company Town); unknown ids are dropped, bad numbers repaired, unreadable or newer saves fall back to a fresh one with `error`.
+- **Saves:** `{ v: 4, state }`. Version 3 (before task 32) migrates with nothing to move: no Paradigm layer yet, its offline report without the storage fields, and a save past Model 12 keeps its generation (those models are now named and use the new ladder's thresholds; a test loads one). Version 1 (the first prototype's flat format) and version 2 (before the lab) migrate step by step; a version 2 save is placed in the stage its progress has earned (all-time tokens and generation never reset), with staff split evenly, no models and one training run ready if it is already past the Garage (a test loads an old Model 3 save into the Company Town); unknown ids are dropped, bad numbers repaired, unreadable or newer saves fall back to a fresh one with `error`.
 
 ## Ad layer (`src/ui/ads/`)
 
@@ -324,7 +487,7 @@ Landscape (844×390 design size, insets from `useInsets()`): a quiet top bar (�
 - **Rendering:** the counter, the pop-out numbers and the combo meter are shared values shown through `LiveText` (a read-only TextInput whose text reanimated sets on the UI thread; on web it writes the input's value), so neither a tap nor the counter's 100 ms step commits anything in React. The model's squash and the rings run on shared values; lists subscribe through `useGarage(select, key)` and re-render only when a count, a price or an affordability flag changes; the ad slot re-renders only when the chosen placement changes; ship day reads the whole state only while it is open. The engine advances every 250 ms in the foreground.
 - **Overlays:** the offline panel and the stage card (`ModalCard`), ship day, the launch card, the test ad and the Stats / Settings sheets are in-tree; no native `Modal`, no `SafeAreaView`.
 - **Saves:** AsyncStorage through `src/ui/tutorial/storage.ts` (memory fallback), key `garage.save`; at most every 5 s while playing, at once on purchases, ships, rewards and resets, and when the app goes to the background. Settings (haptics) under `garage.settings`.
-- **Debug (web):** `/garage?debug=1` exposes `window.__garage`: `setTokens(n)`, `grant(n)`, `fastForward(ms)` (an offline return), `golden(id?)`, `incident(id?, tier?)`, `frenzy(s?)`, `happening(id?)`, `training()` (a run with candidates), `bonusOffer(source?)`, `shipDay()`, `stage(n)`, `ad(placement)`, `scene('fresh' | 'mid' | 'ship' | 'late' | 'office' | 'datacentre' | 'town' | 'latent')` (a sample placed in the stage it has earned), `owned({ intern: 25, ... })` (set generator counts, to see the room fill), `freeze(on)` (hold the clock), `state()`. `&adseconds=n` shortens the test ad; `&banner=1` shows the banner slot.
+- **Debug (web):** `/garage?debug=1` exposes `window.__garage`: `setTokens(n)`, `grant(n)`, `fastForward(ms)` (an offline return), `golden(id?)`, `incident(id?, tier?)`, `frenzy(s?)`, `happening(id?)`, `training()` (a run with candidates), `bonusOffer(source?)`, `shipDay()`, `stage(n)`, `ad(placement)`, `scene('fresh' | 'mid' | 'ship' | 'late' | 'office' | 'datacentre' | 'town' | 'latent')` (a sample placed in the stage it has earned), `owned({ intern: 25, ... })` (set generator counts, to see the room fill), `freeze(on)` (hold the clock), `setDate(iso | ms)` (move the clock, missions included), `fillStorage(hours?)` (a return after `hours` away, default the capacity plus one hour so it caps), `paradigm('ready' | 'shifted')` (Model 12 shipped with a shift available, or two shifts in with part of the tree), `state()`; and `window.__missions`: `fresh(ids?)`, `progress(done?)`, `claimAll(crate?)`, `streak({ current, best?, lastDay?, dayOffIn?, coveredYesterday? })`, `race(counter, n)`, `clearToasts()`, `state()`. `&adseconds=n` shortens the test ad; `&banner=1` shows the banner slot.
 
 Screenshots: `node scripts/screens/garage.js` (after `npx expo export --platform web`) writes docs/screenshots/garage/`<theme>-<W>x<H>-NN-name.png`: mode choice, fresh, mid-progress, upgrades, golden moment, frenzy, incident, offline return, test ad, doubled, ship panel, the three ship-day steps, launch result, stage card, office, training candidates, swap, kept models, happening, bonus multiplier, data centre, staff, company town, latent space, helpers, the pixel rooms (garage and office: empty, early, full, with a happening and a bonus offer), late save, stats, settings, and narrow. Captured at 844×390 and 926×428 with `INSETS=0,47,21,47` on the default theme (neon); the older blueprint, hazard and candy sets showed the previous screen and were removed.
 

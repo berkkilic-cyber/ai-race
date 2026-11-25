@@ -2250,7 +2250,7 @@
    "nameKey": "garage.up.offline-4.name",
    "descKey": "garage.up.offline-4.desc",
    "icon": "document",
-   "cost": 400000000,
+   "cost": 60000000,
    "effects": [
     {
      "kind": "offlineCap",
@@ -2259,12 +2259,8 @@
    ],
    "requires": [
     {
-     "type": "generation",
-     "min": 1
-    },
-    {
      "type": "lifetime",
-     "tokens": 150000000
+     "tokens": 20000000
     }
    ],
    "keep": true

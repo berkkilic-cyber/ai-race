@@ -495,14 +495,14 @@ if (!process.argv.includes('--no-checkins')) {
   ];
   const span = Math.min(DAYS, 14);
   console.log(`\n## Check-in frequency (casual, no ads, 10 min of play a day, ${span} days)\n`);
-  console.log('| Check-ins | model day 3 | model day 7 | model day 14 | tokens day 3 | tokens day 7 | vs once a day (day 7 tokens) |\n| --- | --- | --- | --- | --- | --- | --- |');
+  console.log('| Check-ins | best model day 3 | day 7 | day 14 | tokens day 3 | tokens day 7 | vs once a day (day 7 tokens) |\n| --- | --- | --- | --- | --- | --- | --- |');
   let base = 0;
   for (const [label, sessions] of plans) {
     const prof: Profile = { ...casualP, name: label, sessions, tapSeconds: 120 / sessions.length };
     const r = run(prof, span, ACTIVE_HOURS);
     const row = (d: number) => r.dayRows[Math.min(r.dayRows.length, d) - 1];
     if (!base) base = row(7).tokens;
-    console.log(`| ${label} | ${row(3).generation + 1} | ${row(7).generation + 1} | ${row(14).generation + 1} | ${formatAmount(row(3).tokens)} | ${formatAmount(row(7).tokens)} | ${(row(7).tokens / base).toFixed(1)}x |`);
+    console.log(`| ${label} | ${row(3).best + 1} | ${row(7).best + 1} | ${row(14).best + 1} | ${formatAmount(row(3).tokens)} | ${formatAmount(row(7).tokens)} | ${(row(7).tokens / base).toFixed(1)}x |`);
   }
 }
 // ---------------------------------------------------------------------------------------

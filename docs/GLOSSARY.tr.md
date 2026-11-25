@@ -132,6 +132,15 @@ The level cards fit about nine capitals, so the names are short game words rathe
 | Hype it / Play it safe / Open the weights | Hype'la / Garantiye oyna / Ağırlıkları aç | |
 | Milestone | Eşik | "{count} adette ×{mult}" |
 | Model names (VibeOracle 3.5 ...) | Unchanged | English puns built from prefix + suffix: never translated |
+| Away storage | Çevrimdışı depo | "Depo" alone in the header chip; built on "çevrimdışı kazanç", which Turkish idle games use. "Depo doldu" = storage full |
+| Daily mission(s) | Günlük görev(ler) | "Görevler" on the button |
+| Claim (a reward) | Al | Button "Al"; done state "Alındı". "Ödülü al" in running text |
+| Daily crate | Günlük sandık | As the existing "Bonus sandık" |
+| Streak | Seri | "{count} günlük seri"; best = "En iyi" |
+| Day off | İzin günü | "Dün izin gününle kapandı" (yesterday is covered by your day off) |
+| Paradigm Shift | Paradigma Kayması | Verb: "paradigmayı kaydır"; the button "{gain} Hendek için kaydır" |
+| Moats (the Paradigm currency) | Hendek | Singular after a number ("6 Hendek"); capitalised as a currency, like Hype |
+| Paradigm tree | Paradigma ağacı | |
 
 ## Numbers
 
