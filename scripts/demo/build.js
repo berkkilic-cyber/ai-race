@@ -44,9 +44,16 @@ function walk(dir) {
   return out;
 }
 
-/** "/_expo/…", "/assets/…" and "/favicon.ico" in quotes or url() become relative. */
-function relativise(text) {
-  return text.replace(/(["'(=])\/(_expo\/|assets\/|favicon\.ico)/g, '$1./$2');
+/**
+ * "/_expo/…", "/assets/…" and "/favicon.ico" in quotes or url() become relative (the page's
+ * <base> resolves them). In JS, the async chunk map ({"763":"/_expo/…js"}) becomes an
+ * expression on the folder the bootstrap found, because Expo resolves chunk URLs against
+ * location (which shows the router "/"), not against <base>.
+ */
+function relativise(text, isJs) {
+  let out = text;
+  if (isJs) out = out.replace(/:"\.?\/_expo\//g, ':(window.__DEMO_BASE__||"/")+"_expo/');
+  return out.replace(/(["'(=])\/(_expo\/|assets\/|favicon\.ico)/g, '$1./$2');
 }
 
 function themeBackground() {
@@ -87,7 +94,7 @@ function patchGame() {
   for (const f of walk(GAME)) {
     if (!/\.(html|js|css)$/.test(f)) continue;
     const before = fs.readFileSync(f, 'utf8');
-    const after = relativise(before);
+    const after = relativise(before, f.endsWith('.js'));
     if (after !== before) {
       fs.writeFileSync(f, after);
       changed++;

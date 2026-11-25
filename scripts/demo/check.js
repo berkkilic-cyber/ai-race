@@ -43,6 +43,12 @@ function serve(dir) {
       res.end(`<!DOCTYPE html><html><body style="margin:0;background:#fff"><iframe id="game" src="${SUB}index.html${req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : ''}" style="border:0;width:100vw;height:100vh" allowfullscreen></iframe></body></html>`);
       return;
     }
+    if (url === '/favicon.ico') {
+      // The browser asks the outer test page's origin for one; itch has its own.
+      res.writeHead(204);
+      res.end();
+      return;
+    }
     if (url.startsWith(SUB)) {
       let file = path.join(dir, url.slice(SUB.length));
       if (url.endsWith('/')) file = path.join(file, 'index.html');
@@ -58,6 +64,49 @@ function serve(dir) {
   return new Promise((resolve) => server.listen(0, '127.0.0.1', () => resolve(server)));
 }
 
+/**
+ * First load on a throttled connection (THROTTLE_MBPS, default 10 Mbit/s down, 40 ms latency,
+ * empty cache): bytes fetched until the start screen is interactive, gzipped estimate, and
+ * the time to it. Lists the biggest files.
+ */
+async function measureFirstLoad(browser, base) {
+  const mbps = Number(process.env.THROTTLE_MBPS || 10);
+  const page = await browser.newPage();
+  await page.setViewport({ width: 1280, height: 720, deviceScaleFactor: 1 });
+  const cdp = await page.createCDPSession();
+  await cdp.send('Network.enable');
+  await cdp.send('Network.setCacheDisabled', { cacheDisabled: true });
+  await cdp.send('Network.emulateNetworkConditions', { offline: false, latency: 40, downloadThroughput: (mbps * 1e6) / 8, uploadThroughput: (5 * 1e6) / 8 });
+  const sizes = new Map();
+  const urls = new Map();
+  cdp.on('Network.responseReceived', (e) => urls.set(e.requestId, e.response.url));
+  cdp.on('Network.loadingFinished', (e) => sizes.set(e.requestId, e.encodedDataLength));
+  const t0 = Date.now();
+  await page.goto(`${base}/embed.html`, { waitUntil: 'load' });
+  let frame = null;
+  for (let i = 0; i < 300 && !frame; i++) {
+    frame = page.frames().find((fr) => fr.parentFrame() && fr.parentFrame().url().includes(`${SUB}index.html`)) || null;
+    if (!frame) await sleep(50);
+  }
+  await frame.waitForSelector('[data-testid="start-next"]', { timeout: 60000 });
+  // Interactive: the wide layout has replaced the server-rendered one and fonts are in.
+  await frame.waitForFunction(() => document.fonts.status === 'loaded' && !!document.querySelector('[data-testid="start-dice"]'), { timeout: 60000 });
+  const ms = Date.now() - t0;
+  await sleep(1500);
+  const rows = [...sizes.entries()].map(([id, n]) => [urls.get(id) || '?', n]).filter(([u]) => u.includes(SUB));
+  const total = rows.reduce((a, [, n]) => a + n, 0);
+  let gz = 0;
+  const zlib = require('node:zlib');
+  for (const [u, n] of rows) {
+    const rel = u.split(SUB)[1]?.split('?')[0];
+    const f = rel ? path.join(process.env.DEMO_SITE || '', rel) : '';
+    gz += f && fs.existsSync(f) && /\.(js|html|css|ttf|json)$/.test(f) ? zlib.gzipSync(fs.readFileSync(f)).length : n;
+  }
+  console.log(`first load at ${mbps} Mbit/s, 40 ms: start screen interactive after ${ms} ms; ${rows.length} files, ${(total / 1024).toFixed(0)} KB as served here (no compression), about ${(gz / 1024).toFixed(0)} KB if the host gzips`);
+  for (const [u, n] of rows.sort((a, b) => b[1] - a[1]).slice(0, 8)) console.log(`    ${(n / 1024).toFixed(0).padStart(6)} KB  ${u.split(SUB)[1]}`);
+  await page.close();
+}
+
 function check(cond, msg) {
   if (!cond) throw new Error(`FAILED: ${msg}`);
   console.log(`ok  ${msg}`);
@@ -71,6 +120,7 @@ async function main() {
   check(fs.existsSync(path.join(dir, 'index.html')), 'the zip has index.html at its root');
   if (SHOTS) fs.mkdirSync(SHOTS, { recursive: true });
 
+  process.env.DEMO_SITE = dir;
   const server = await serve(dir);
   const base = `http://127.0.0.1:${server.address().port}`;
   const browser = await puppeteer.launch({ executablePath: CHROME, headless: true, args: ['--no-sandbox', '--disable-gpu', '--autoplay-policy=no-user-gesture-required'] });
@@ -86,6 +136,7 @@ async function main() {
       if (r.status() >= 400) problems.push(`HTTP ${r.status()}: ${r.url()}`);
     });
     await page.setViewport({ width: 1280, height: 720, deviceScaleFactor: 1 });
+    await measureFirstLoad(browser, base);
     const t0 = Date.now();
     await page.goto(`${base}/embed.html?debug=1`, { waitUntil: 'load' });
     const gameFrame = async () => {
@@ -113,9 +164,21 @@ async function main() {
     check(box.base === `${SUB}game/`, 'the game resolves its files from its own folder');
     if (SHOTS) await page.screenshot({ path: path.join(SHOTS, 'demo-start-1280x720.png') });
 
+    // Puppeteer's frame.click ignores the CSS scale on the game's frame, so clicks are aimed by
+    // hand: element box in the game frame x the frame's scale + the frame's offsets.
     const click = async (id) => {
       await frame.waitForSelector(`[data-testid="${id}"]`, { timeout: 8000 });
-      await frame.click(`[data-testid="${id}"]`);
+      const at = await page.evaluate((sel) => {
+        const outer = document.getElementById('game');
+        const o = outer.getBoundingClientRect();
+        const inner = outer.contentDocument.getElementById('frame');
+        const r = inner.getBoundingClientRect();
+        const k = r.width / inner.offsetWidth;
+        const el = inner.contentDocument.querySelector(sel);
+        const b = el.getBoundingClientRect();
+        return { x: o.x + r.x + (b.x + b.width / 2) * k, y: o.y + r.y + (b.y + b.height / 2) * k };
+      }, `[data-testid="${id}"]`);
+      await page.mouse.click(at.x, at.y);
       await sleep(400);
     };
     check(!!(await frame.$('[data-testid="demo-cta-start-button"]')), 'start screen shows the waitlist button');
@@ -139,7 +202,8 @@ async function main() {
     if (SHOTS) await page.screenshot({ path: path.join(SHOTS, 'demo-founder.png') });
     await click('start-next');
     await click('start-region-list');
-    await frame.type('[data-testid="start-region-search"]', 'can');
+    await click('start-region-search');
+    await page.keyboard.type('can');
     await sleep(300);
     await click('region-row-canada');
     await sleep(600);
@@ -191,7 +255,8 @@ async function main() {
     await page.goto(`${base}/embed.html?debug=1`, { waitUntil: 'load' });
     frame = await gameFrame();
     await frame.waitForSelector('[data-testid="mode-garage"]', { timeout: 20000 });
-    await frame.click('[data-testid="mode-garage"]');
+    await sleep(1200);
+    await click('mode-garage');
     await frame.waitForFunction(() => location.pathname === '/garage' && !!window.__garage && !!window.__garage.state(), { timeout: 15000 });
     await frame.evaluate(() => {
       window.__garage.scene('late');
@@ -203,12 +268,17 @@ async function main() {
     check(stage <= 1, 'the Garage stays within its first two stages');
     check(!!(await frame.$('[data-testid="demo-next-stage"]')), 'the next stage shows "In the full game"');
     if (SHOTS) await page.screenshot({ path: path.join(SHOTS, 'demo-garage.png') });
+  } catch (e) {
+    const pages = await browser.pages();
+    if (SHOTS && pages[0]) await pages[0].screenshot({ path: path.join(SHOTS, 'demo-failed.png') }).catch(() => undefined);
+    for (const p of problems) console.log(`  ${p}`);
+    throw e;
   } finally {
     await browser.close();
     await new Promise((r) => server.close(r));
     fs.rmSync(dir, { recursive: true, force: true });
   }
-  const real = problems.filter((p) => !/favicon/.test(p));
+  const real = problems;
   if (real.length) {
     console.log('Problems:');
     for (const p of real) console.log(`  ${p}`);
