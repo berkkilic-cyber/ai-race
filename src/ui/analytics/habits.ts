@@ -24,6 +24,8 @@ export function subscribeHabits(): () => void {
       const awayMs = b.offline ? report.awayMs - b.offline.awayMs : report.awayMs;
       track({ name: 'away_return', params: { hoursAway: tenth(awayMs / HOUR_MS), capped: report.capped === true, capacityHours: tenth((report.capMs ?? 0) / HOUR_MS) } });
     }
+    const pa = a.paradigm?.count ?? 0;
+    if (b && pa > (b.paradigm?.count ?? 0) && a.createdAt === b.createdAt) track({ name: 'paradigm_shift', params: { count: pa } });
   });
   const offMissions = useMissionsStore.subscribe((st, prev) => {
     const a = st.save.today;

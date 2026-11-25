@@ -7,7 +7,7 @@
 import { create } from 'zustand';
 
 import { getOwnedCapabilityLevel, getRunLengths, type GameState } from '@/engine';
-import { claimDailyReward, deserialize, serialize, type GarageContent, type GarageState, type MissionsConfig } from '@/idle';
+import { claimDailyReward, deserialize, paradigmEffects, serialize, type GarageContent, type GarageState, type MissionsConfig } from '@/idle';
 
 import { logError } from '../diagnostics/log';
 import { garageNow } from '../garage/clock';
@@ -92,8 +92,8 @@ let writeTimer: ReturnType<typeof setTimeout> | null = null;
 const WRITE_DELAY_MS = 3000;
 
 /** The crate's extra multiplier from the Garage (a Paradigm tree node); 1 without one. */
-function crateMultOf(_garage: GarageState): number {
-  return 1;
+function crateMultOf(garage: GarageState): number {
+  return paradigmEffects(garage, garageContent()).crateMult;
 }
 
 export const useMissionsStore = create<MissionsStore>()((set, get) => {

@@ -218,6 +218,32 @@ export function validateGarage(c: GarageContent): string[] {
     // A brand-new lab must have a mission for every slot.
     for (const slot of MISSION_SLOTS) if (!m.defs.some((d) => d.slot === slot && !d.minStage && !d.minGeneration)) err(`missions: no ${slot} mission for a new lab`);
   }
+  if (c.paradigm) {
+    const p = c.paradigm;
+    if (!(Number.isInteger(p.minGeneration) && p.minGeneration >= 1 && p.minGeneration < c.generations.length)) err('paradigm.minGeneration must name a generation after the first');
+    pos(p.base, 'paradigm.base');
+    nonNeg(p.perGeneration, 'paradigm.perGeneration');
+    nonNeg(p.perLogHype, 'paradigm.perLogHype');
+    if (!(p.productionPerPoint >= 1)) err('paradigm.productionPerPoint must be at least 1');
+    if (!(p.stageEase > 0 && p.stageEase <= 1)) err('paradigm.stageEase must be in (0, 1]');
+    key(p.newsKey, 'paradigm news');
+    unique(p.nodes.map((n) => n.id), 'paradigm nodes');
+    const seen = new Set<string>();
+    const stages = c.stages?.length ?? 0;
+    for (const n of p.nodes) {
+      key(n.nameKey, `paradigm node ${n.id}`);
+      key(n.descKey, `paradigm node ${n.id}`);
+      if (!(Number.isInteger(n.cost) && n.cost >= 1)) err(`paradigm node ${n.id}: cost must be a positive integer`);
+      for (const r of n.requires) if (!seen.has(r)) err(`paradigm node ${n.id}: requires ${r}, which must be listed before it`);
+      seen.add(n.id);
+      const f = n.effect;
+      if (f.kind === 'startStage' && !(f.stage >= 0 && f.stage < Math.max(1, stages))) err(`paradigm node ${n.id}: stage out of range`);
+      if (f.kind === 'startGenerators' && (!genIds.has(f.generator) || !(f.count >= 1))) err(`paradigm node ${n.id}: needs a known generator and a count`);
+      if (f.kind === 'autoShip' && c.shipDay && !c.shipDay.choices.some((ch) => ch.id === f.choice)) err(`paradigm node ${n.id}: unknown launch choice ${f.choice}`);
+      if ((f.kind === 'globalMult' || f.kind === 'tapMult' || f.kind === 'crateMult') && !(f.mult >= 1)) err(`paradigm node ${n.id}: mult must be at least 1`);
+      if ((f.kind === 'shipThreshold' || f.kind === 'happeningInterval') && !(f.mult > 0 && f.mult <= 1)) err(`paradigm node ${n.id}: mult must be in (0, 1]`);
+    }
+  }
   validateLab(c, { err, pos, nonNeg, key, unique, requirement });
   return problems;
 }

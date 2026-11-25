@@ -609,8 +609,91 @@ export interface MissionsConfig {
   defs: MissionDef[];
 }
 
+// ---------------------------------------------------------------------------------------
+// Paradigm Shift: the second reset layer.
+
+/** What a Paradigm tree node changes (permanent: kept through every ship and shift). */
+export type ParadigmEffect =
+  /** Each cycle starts in this stage (index into stages). */
+  | { kind: 'startStage'; stage: number }
+  /** More candidates per training run. */
+  | { kind: 'candidates'; add: number }
+  /** More training runs fit in the queue. */
+  | { kind: 'trainingQueue'; add: number }
+  /** The daily crate is worth this many times more (a second crate a day, no ad). */
+  | { kind: 'crateMult'; mult: number }
+  /** Hours of away storage. */
+  | { kind: 'awayHours'; hours: number }
+  /** Away earnings rate added (0..1). */
+  | { kind: 'offlineRate'; add: number }
+  /** Models ship by themselves (with `choice`) when the bots' rule says it is worth it. */
+  | { kind: 'autoShip'; choice: string }
+  /** Every model generation starts with these generators. */
+  | { kind: 'startGenerators'; generator: GeneratorId; count: number }
+  /** Kept models survive a Paradigm Shift. */
+  | { kind: 'keepModels' }
+  /** Lab happenings come more often (interval multiplier below 1). */
+  | { kind: 'happeningInterval'; mult: number }
+  /** The combo window is longer (ms added). */
+  | { kind: 'comboWindow'; addMs: number }
+  /** Tokens needed to ship a model are multiplied by this (below 1 = easier). */
+  | { kind: 'shipThreshold'; mult: number }
+  /** Rarer training candidates (added to Research's rarity luck). */
+  | { kind: 'rarityLuck'; add: number }
+  /** All production multiplied. */
+  | { kind: 'globalMult'; mult: number }
+  /** Tap value multiplied. */
+  | { kind: 'tapMult'; mult: number };
+
+export interface ParadigmNodeDef {
+  id: string;
+  nameKey: string;
+  /** One line: what it does, with a joke. */
+  descKey: string;
+  icon: string;
+  /** Price in the Paradigm currency. */
+  cost: number;
+  /** Nodes that must be owned first. */
+  requires: string[];
+  effect: ParadigmEffect;
+}
+
+export interface ParadigmConfig {
+  /** A shift needs the save at this generation or later (the last named model shipped at least once). */
+  minGeneration: number;
+  /** Currency for a shift: floor(base + perGeneration × (generation − minGeneration) + perLogHype × log10(1 + Hype)). */
+  base: number;
+  perGeneration: number;
+  perLogHype: number;
+  /** Production multiplier per unit of currency ever earned (compounding: mult ^ earned). */
+  productionPerPoint: number;
+  /** After a first shift, stage requirements on the generation are multiplied by this (rounded up). */
+  stageEase: number;
+  /** Ticker line after a shift (`{n}` = the shift's number). */
+  newsKey: string;
+  nodes: ParadigmNodeDef[];
+}
+
+/** The Paradigm layer of a save (absent until the first shift). */
+export interface ParadigmState {
+  /** Shifts made. */
+  count: number;
+  /** Currency in hand. */
+  points: number;
+  /** Currency ever earned (drives the production bonus). */
+  earned: number;
+  /** Tree nodes owned. */
+  nodes: string[];
+  /** The auto-ship switch (once its node is owned). */
+  autoShip: boolean;
+  /** Highest generation reached in any cycle. */
+  bestGeneration: number;
+}
+
 export interface GarageContent {
   id: string;
+  /** The second reset layer (none: no Paradigm Shift). */
+  paradigm?: ParadigmConfig;
   /** Daily missions (none: no missions). */
   missions?: MissionsConfig;
   stages?: StageDef[];
@@ -671,7 +754,7 @@ export interface FrenzyState {
   until: number;
 }
 
-export type NewsKind = 'headline' | 'launch' | 'golden' | 'incident' | 'fixed' | 'achievement' | 'stage' | 'happening' | 'training';
+export type NewsKind = 'headline' | 'launch' | 'golden' | 'incident' | 'fixed' | 'achievement' | 'stage' | 'happening' | 'training' | 'paradigm';
 
 export interface HappeningState {
   uid: number;
@@ -817,6 +900,8 @@ export interface GarageState {
   race?: RaceLinkState;
   /** Reserved: the future paid away-storage extension was bought (cap at least offline.paidCapHours). */
   paidStorage?: boolean;
+  /** The Paradigm layer (absent until the first shift). */
+  paradigm?: ParadigmState;
 }
 
 export type GarageFailure = 'cantAfford' | 'locked' | 'owned' | 'unknownId' | 'notReady' | 'none' | 'cooldown' | 'dailyCap' | 'notApplicable' | 'full' | 'pending';

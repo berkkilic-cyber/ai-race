@@ -15,6 +15,7 @@ import { between, grant, pickWeighted, pushNews, random } from './core';
 import { accrueTraining, autoBuyActive, evenStaff, expireHappening, runAutoBuy, spawnHappening, updateStage } from './lab';
 import { factor, mechanicOn, modelEffects, staffEffects } from './labRates';
 import { amount } from './num';
+import { paradigmEffects } from './paradigmRates';
 import {
   HOUR_MS,
   bulkCost,
@@ -35,7 +36,7 @@ import { seedFrom } from './rng';
 import type { ActionResult, GarageContent, GarageFailure, GarageState, GarageStats, OfferId, Requirement, ShipChoiceDef, TapOutcome, UpgradeDef } from './types';
 import { OFFER_IDS } from './types';
 
-export const GARAGE_VERSION = 3;
+export const GARAGE_VERSION = 4;
 export const DAY_MS = 24 * HOUR_MS;
 
 export function emptyStats(): GarageStats {
@@ -517,8 +518,13 @@ export function shipGain(state: GarageState, content: GarageContent, base: numbe
   return Math.max(1, bonus ? Math.ceil(raw * extra) : Math.floor(raw));
 }
 
+/** Tokens to earn in the current generation before the next model can ship, for this save (the Paradigm tree may lower it). */
+export function shipNeeded(state: Pick<GarageState, 'generation' | 'paradigm'>, content: GarageContent): number {
+  return amount(shipThreshold(content, state.generation + 1) * paradigmEffects(state, content).shipThreshold);
+}
+
 export function prestigePreview(state: GarageState, content: GarageContent): PrestigePreview {
-  const needed = shipThreshold(content, state.generation + 1);
+  const needed = shipNeeded(state, content);
   const baseGain = hypeForLifetime(content, state.genLifetime);
   const gain = shipGain(state, content, baseGain);
   const per = content.prestige.hypePerPoint;
@@ -566,7 +572,7 @@ export function prestige(state: GarageState, content: GarageContent, now: number
   s.generation = next;
   s.tokens = 0;
   s.genLifetime = 0;
-  s.generators = {};
+  s.generators = { ...paradigmEffects(s, content).startGenerators };
   s.upgrades = s.upgrades.filter((id) => upgradeDef(content, id)?.keep);
   s.incident = null;
   s.frenzy = null;
@@ -575,6 +581,7 @@ export function prestige(state: GarageState, content: GarageContent, now: number
   s.stats.genUpgrades = 0;
   s.stats.pureTaps = 0;
   s.lastShip = { generation: next, hypeGained: gain, at: s.now, ...(choice ? { choice: choice.id } : {}) };
+  if (s.paradigm && next > s.paradigm.bestGeneration) s.paradigm = { ...s.paradigm, bestGeneration: next };
   const named = content.generations[next];
   pushNews(s, content, named ? named.headlineKey : content.endlessHeadlineKey, 'launch', s.now, { n: next + 1 });
   checkAchievements(s, content);

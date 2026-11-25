@@ -42,6 +42,13 @@ describe('habits analytics', () => {
     expect(mem.events).toHaveLength(1);
   });
 
+  it('paradigm_shift with the shift count', () => {
+    const s = deserialize(null, content, garageNow()).state;
+    useGarageStore.setState({ state: s });
+    useGarageStore.setState({ state: { ...s, paradigm: { count: 1, points: 5, earned: 5, nodes: [], autoShip: false, bestGeneration: 11 } } });
+    expect(mem.events.map((e) => [e.name, e.params])).toEqual([['paradigm_shift', { count: 1 }]]);
+  });
+
   it('mission_complete, mission_claim, daily_crate_claim and streak_day on their changes', () => {
     const day = utcDay(garageNow());
     const base = { taps: 0, bought: 0, happenings: 0, golden: 0, upgrades: 0, training: 0, incidents: 0, ships: 0 };

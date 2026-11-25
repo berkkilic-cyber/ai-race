@@ -4,7 +4,7 @@
  * ship-day reveal). Every action advances to `now` first and returns a new state.
  */
 import { at, hypeForLifetime, maybeOfferMultiply, requirementProgress } from './garage';
-import { accrueTraining, happeningDef, happeningPenalty, happeningReward, labRequirementMet, resolveHappening, rollCandidates, trainingCooldownMs } from './lab';
+import { accrueTraining, happeningDef, happeningPenalty, happeningReward, labRequirementMet, queueMax, resolveHappening, rollCandidates, stageRequirement, trainingCooldownMs } from './lab';
 import { mechanicOn, mechanicStage, modelSlots } from './labRates';
 import type { ActionResult, GarageContent, GarageState, ModelCandidate, Requirement, StaffSplit, StageDef } from './types';
 import { STAFF_LANES } from './types';
@@ -33,7 +33,7 @@ export function trainingStatus(state: GarageState, content: GarageContent): Trai
     unlocked,
     unlockStage: mechanicStage(content, 'training'),
     charges: unlocked ? state.training.charges : 0,
-    queueMax: cfg?.queueMax ?? 0,
+    queueMax: queueMax(state, content),
     readyAt: unlocked ? state.training.nextChargeAt : 0,
     cooldownMs: unlocked ? trainingCooldownMs(state, content) : 0,
     pending: !!state.training.candidates && state.training.candidates.length > 0,
@@ -48,7 +48,7 @@ export function launchTraining(state: GarageState, content: GarageContent, now: 
   if (!mechanicOn(s, content, 'training')) return { state: s, ok: false, reason: 'locked' };
   if (s.training.candidates && s.training.candidates.length > 0) return { state: s, ok: false, reason: 'pending' };
   if (s.training.charges < 1) return { state: s, ok: false, reason: 'cooldown' };
-  const wasFull = s.training.charges >= content.training.queueMax;
+  const wasFull = s.training.charges >= queueMax(s, content);
   s.training = { ...s.training, charges: s.training.charges - 1, nextChargeAt: wasFull || s.training.nextChargeAt === 0 ? 0 : s.training.nextChargeAt };
   accrueTraining(s, content, s.now);
   s.training = { ...s.training, candidates: rollCandidates(s, content) };
@@ -159,8 +159,9 @@ export function nextStage(state: GarageState, content: GarageContent): NextStage
   const stages = content.stages;
   if (!stages || state.stage + 1 >= stages.length) return null;
   const def = stages[state.stage + 1];
-  const unmet = def.requires.filter((r) => !labRequirementMet(state, r));
-  const reqs = unmet.length ? unmet : def.requires;
+  const all = def.requires.map((r) => stageRequirement(state, content, r));
+  const unmet = all.filter((r) => !labRequirementMet(state, r));
+  const reqs = unmet.length ? unmet : all;
   if (reqs.length === 0) return { index: state.stage + 1, def, requirement: { type: 'generation', min: 0 }, progress: 1 };
   const scored = reqs.map((r) => ({ r, p: requirementProgress(state, r) })).sort((a, b) => a.p - b.p);
   return { index: state.stage + 1, def, requirement: scored[0].r, progress: scored[0].p };

@@ -11,6 +11,7 @@ import { t } from '../i18n';
 import { Text } from '../locale/Text';
 import { colors, radius, shape, spacing, tabular, type, voice } from '../theme';
 import { successHaptic } from './haptics';
+import { ParadigmPanel } from './ParadigmPanel';
 import { useGarage } from './hooks';
 import { useGarageStore, type GarageStore } from './store';
 import { fmt, fmtMult, generationLabel, gt } from './text';
@@ -94,6 +95,7 @@ export const ShipPanel = memo(function ShipPanel() {
         ) : null}
         <LabRepBadge total={labRepTotal(state)} />
       </View>
+      <ParadigmPanel />
     </View>
   );
 });

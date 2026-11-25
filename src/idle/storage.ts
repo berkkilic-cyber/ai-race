@@ -4,6 +4,7 @@
  * and the catch-up in garage.ts.
  */
 import { modelEffects } from './labRates';
+import { paradigmEffects } from './paradigmRates';
 import { HOUR_MS, offlineTerms, perkAwayHours, upgradeDef } from './rates';
 import type { GarageContent, GarageState, UpgradeDef } from './types';
 
@@ -42,7 +43,8 @@ function capHoursOf(def: UpgradeDef): number {
 }
 
 /** Away storage now: capacity, rate, what fills it, and the next way to raise it. */
-export function awayStorage(state: GarageState, content: GarageContent, paradigmHours = 0): AwayStorage {
+export function awayStorage(state: GarageState, content: GarageContent): AwayStorage {
+  const paradigmHours = paradigmEffects(state, content).awayHours;
   const { capMs, rate } = offlineTerms(state, content);
   const sources: StorageSource[] = [{ kind: 'base', id: '', hours: content.offline.capHours }];
   for (const id of state.upgrades) {
@@ -98,6 +100,7 @@ export function nextStorage(state: GarageState, content: GarageContent): Storage
  */
 export function storageReachHours(content: GarageContent, extraHours = 0): number {
   let h = content.offline.capHours + extraHours;
+  for (const n of content.paradigm?.nodes ?? []) if (n.effect.kind === 'awayHours') h += n.effect.hours;
   for (const u of content.upgrades) h += capHoursOf(u);
   for (const g of content.generations) for (const e of g.perks) if (e.kind === 'offlineCap') h += e.hours;
   for (const p of content.labRep.perks) if (p.effect.kind === 'awayHours') h += p.effect.amount;

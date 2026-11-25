@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { dailyRewardQuote, deserialize, type GarageState } from '@/idle';
+import { dailyRewardQuote, deserialize, paradigmEffects, type GarageState } from '@/idle';
 
 import { Button } from '../components/Button';
 import { Sheet } from '../components/Sheet';
@@ -100,7 +100,7 @@ export function MissionsSheet({ visible, onClose }: { visible: boolean; onClose:
   const list = dayProgress(cfg, today);
   const sv = streakView(save.streak, today?.day ?? 0);
   const crateReady = canOpenCrate(today);
-  const crate = garage ? dailyRewardQuote(garage, garageContent(), 'crate', { streak: sv.current }) : null;
+  const crate = garage ? dailyRewardQuote(garage, garageContent(), 'crate', { streak: sv.current, crateMult: paradigmEffects(garage, garageContent()).crateMult }) : null;
   const claim = (id: string) => {
     setBusy(true);
     void useMissionsStore

@@ -22,6 +22,7 @@ import {
   availableUpgrades,
   baseRate,
   buy,
+  buyParadigmNode,
   buyUpgrade,
   claimDailyReward,
   claimOffer,
@@ -42,6 +43,10 @@ import {
   setStaff,
   traitDef,
   offerStatus,
+  paradigmEffects,
+  paradigmNodeBlock,
+  paradigmShift,
+  paradigmStatus,
   prestige,
   prestigePreview,
   tap,
@@ -73,6 +78,12 @@ function withoutParts(c: GarageContent): GarageContent {
   if (!out.staff) out.stages = ((out.stages as GarageContent['stages']) ?? []).map((st) => (st.mechanic === 'staff' ? { ...st, mechanic: 'none' as const } : st));
   return out as unknown as GarageContent;
 }
+const arg = (name: string, fallback: number) => {
+  const i = process.argv.indexOf(`--${name}`);
+  return i > 0 ? Number(process.argv[i + 1]) : fallback;
+};
+/** `--no-paradigm`: bots never shift (the game before the long-game layer). */
+const NO_PARADIGM = process.argv.includes('--no-paradigm');
 const SEC = 1000;
 const MIN = 60 * SEC;
 const HOUR = 60 * MIN;
@@ -141,6 +152,8 @@ interface Log {
   trainingRuns: number;
   modelsKept: number;
   happenings: number;
+  /** Paradigm Shifts (ms from the start) and the currency each gave. */
+  shifts: { at: number; gain: number; generation: number }[];
 }
 
 const seenAffordable = new Set<string>();
@@ -223,6 +236,37 @@ function maybeShip(s: GarageState, p: Profile, log: Log, t0: number): GarageStat
   return r.state;
 }
 
+/** The order bots buy Paradigm tree nodes in (each once its requirements are owned). */
+const NODE_ORDER = ['compound', 'cloud-drive', 'intern-pipeline', 'low-bar', 'campus', 'second-crate', 'muscle-memory', 'compound-2', 'ship-friday', 'fourth-candidate', 'night-owls', 'gpu-reservations', 'open-plan', 'caffeine', 'lucky-seeds', 'model-archive'];
+/** A bot shifts once it can and no model has shipped for this long (stalled). */
+const STALL_CASUAL = arg('stall', 1.5) * DAY;
+const STALL_ACTIVE = 40 * MIN;
+
+/** Paradigm Shift when stalled, then spend the currency down the tree. */
+function maybeParadigm(s: GarageState, p: Profile, log: Log, t0: number): GarageState {
+  if (!content.paradigm || NO_PARADIGM) return s;
+  const st = paradigmStatus(s, content);
+  const lastShip = Math.max(log.ships[log.ships.length - 1]?.at ?? 0, log.shifts[log.shifts.length - 1]?.at ?? 0);
+  const stall = p.sessions ? STALL_CASUAL : STALL_ACTIVE;
+  if (st.available && s.now - t0 - lastShip >= stall) {
+    const r = paradigmShift(s, content, s.now);
+    if (r.ok) {
+      log.shifts.push({ at: s.now - t0, gain: st.gain, generation: s.generation });
+      s = r.state;
+    }
+  }
+  for (let again = true; again; ) {
+    again = false;
+    for (const id of NODE_ORDER) {
+      if (paradigmNodeBlock(s, content, id)) continue;
+      s = buyParadigmNode(s, content, id, s.now).state;
+      again = true;
+      break;
+    }
+  }
+  return s;
+}
+
 function modelScore(m: ModelCandidate, p: Profile): number {
   let v = 0;
   for (const b of [...m.boons, ...(m.drawback ? [m.drawback] : [])]) {
@@ -298,7 +342,7 @@ interface RunResult {
   state: GarageState;
   /** Day (from the start) each generation was first reached. */
   reached: Record<number, number>;
-  dayRows: { day: number; generation: number; tokens: number; rate: number; hype: number }[];
+  dayRows: { day: number; generation: number; tokens: number; rate: number; hype: number; best: number; shifts: number; moats: number }[];
 }
 
 function run(p: Profile, days: number, activeHours: number): RunResult {
@@ -306,7 +350,7 @@ function run(p: Profile, days: number, activeHours: number): RunResult {
   tracing = p.name === 'active';
   seenAffordable.clear();
   let s = createGarage(content, START, 42);
-  const log: Log = { firstGenerator: null, news: [], ships: [], ads: {}, stages: {}, trainingRuns: 0, modelsKept: 0, happenings: 0 };
+  const log: Log = { firstGenerator: null, news: [], ships: [], ads: {}, stages: {}, trainingRuns: 0, modelsKept: 0, happenings: 0, shifts: [] };
   const reached: Record<number, number> = { 0: 0 };
   const dayRows: RunResult['dayRows'] = [];
   const note = () => {
@@ -321,6 +365,7 @@ function run(p: Profile, days: number, activeHours: number): RunResult {
         boosted++;
       }
       s = playSecond(s, p, true, log, START);
+      if ((s.now - START) % MIN === 0) s = maybeParadigm(s, p, log, START);
       note();
     }
     return { profile: p, log, state: s, reached, dayRows };
@@ -333,6 +378,7 @@ function run(p: Profile, days: number, activeHours: number): RunResult {
         if (p.ads) s = watchAd(s, 'offlineDouble', log);
         s = dismissOffline(s);
       }
+      s = maybeParadigm(s, p, log, START);
       s = runLab(s, p, log);
       if (p.ads) for (let b = 0; b < p.boostsPerSession; b++) s = watchAd(s, 'boost', log);
       const end = begin + length;
@@ -343,12 +389,12 @@ function run(p: Profile, days: number, activeHours: number): RunResult {
       }
       if (offset === p.sessions[p.sessions.length - 1][0] && p.missions > 0 && content.missions) {
         for (let m = 0; m < Math.min(3, p.missions); m++) s = claimDailyReward(s, content, 'mission', s.now).state;
-        if (p.missions >= 3) s = claimDailyReward(s, content, 'crate', s.now, { streak: d + 1 }).state;
+        if (p.missions >= 3) s = claimDailyReward(s, content, 'crate', s.now, { streak: d + 1, crateMult: paradigmEffects(s, content).crateMult }).state;
         s = shop(s, p, false, log, START);
       }
     }
     s = advance(s, content, START + (d + 1) * DAY);
-    dayRows.push({ day: d + 1, generation: s.generation, tokens: s.stats.tokensAllTime, rate: baseRate(s, content), hype: s.hype });
+    dayRows.push({ day: d + 1, generation: s.generation, tokens: s.stats.tokensAllTime, rate: baseRate(s, content), hype: s.hype, best: Math.max(s.generation, s.paradigm?.bestGeneration ?? 0), shifts: s.paradigm?.count ?? 0, moats: s.paradigm?.earned ?? 0 });
   }
   return { profile: p, log, state: s, reached, dayRows };
 }
@@ -356,13 +402,9 @@ function run(p: Profile, days: number, activeHours: number): RunResult {
 // ---------------------------------------------------------------------------------------
 // Report
 
-const arg = (name: string, fallback: number) => {
-  const i = process.argv.indexOf(`--${name}`);
-  return i > 0 ? Number(process.argv[i + 1]) : fallback;
-};
 const DAYS = arg('days', 10);
 const ACTIVE_HOURS = arg('hours', 3);
-const lastNamed = content.generations.length - 1;
+const lastNamed = content.paradigm?.minGeneration ?? content.generations.length - 1;
 
 const t0 = Date.now();
 const results = PROFILES.map((p) => run(p, DAYS, ACTIVE_HOURS));
@@ -461,6 +503,32 @@ if (!process.argv.includes('--no-checkins')) {
     const row = (d: number) => r.dayRows[Math.min(r.dayRows.length, d) - 1];
     if (!base) base = row(7).tokens;
     console.log(`| ${label} | ${row(3).generation + 1} | ${row(7).generation + 1} | ${row(14).generation + 1} | ${formatAmount(row(3).tokens)} | ${formatAmount(row(7).tokens)} | ${(row(7).tokens / base).toFixed(1)}x |`);
+  }
+}
+// ---------------------------------------------------------------------------------------
+// The long game (`--long 40`): Paradigm Shifts and the extended model ladder.
+const LONG = arg('long', 0);
+if (LONG > 0 && content.paradigm) {
+  const endGen = content.generations.length - 1;
+  const firstNamedEnd = content.paradigm.minGeneration;
+  const activeDaily: Profile = { ...PROFILES[2], name: 'active (2 h a day)', sessions: [[11 * HOUR, HOUR], [20 * HOUR, HOUR]], tapSeconds: Infinity, missions: 3 };
+  const longRuns = [PROFILES[0], PROFILES[1], activeDaily].map((p) => run(p, LONG, ACTIVE_HOURS));
+  const dayOf = (r: RunResult, g: number) => {
+    const row = r.dayRows.find((x) => x.best >= g);
+    return row ? `day ${row.day}` : '-';
+  };
+  const dayAt = (ms: number | undefined) => (ms === undefined ? '-' : `day ${(ms / DAY).toFixed(1)}`);
+  console.log(`\n## The long game (${LONG} days)${NO_PARADIGM ? ' — no Paradigm Shift' : ''}\n`);
+  console.log(`| Profile | Model ${firstNamedEnd + 1} first | first Paradigm Shift | shifts | Model 18 | end of content (Model ${endGen + 1}) | currency earned |\n| --- | --- | --- | --- | --- | --- | --- |`);
+  for (const r of longRuns) {
+    const last = r.dayRows[r.dayRows.length - 1];
+    console.log(`| ${r.profile.name} | ${dayOf(r, firstNamedEnd)} | ${dayAt(r.log.shifts[0]?.at)} | ${r.log.shifts.length} | ${dayOf(r, 17)} | ${dayOf(r, endGen)} | ${last.moats} |`);
+  }
+  console.log('\nShifts (day, model it was made at, currency):\n');
+  for (const r of longRuns) console.log(`- ${r.profile.name}: ${r.log.shifts.map((x) => `day ${(x.at / DAY).toFixed(1)} at Model ${x.generation + 1} (+${x.gain})`).join(', ') || 'none'}`);
+  console.log(`\n| Day | ${longRuns.map((r) => `${r.profile.name}: model now / best`).join(' | ')} |\n| --- | ${longRuns.map(() => '---').join(' | ')} |`);
+  for (const d of [1, 2, 3, 5, 7, 10, 12, 14, 16, 18, 20, 22, 25, 28, 30, 32, 35, 38, 40, 45, 50, 60].filter((x) => x <= LONG)) {
+    console.log(`| ${d} | ${longRuns.map((r) => { const row = r.dayRows[d - 1]; return `${row.generation + 1} / ${row.best + 1}${row.shifts ? ` (${row.shifts} shifts)` : ''}`; }).join(' | ')} |`);
   }
 }
 console.log(`\n(simulated in ${((Date.now() - t0) / 1000).toFixed(1)} s)`);
