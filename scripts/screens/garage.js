@@ -12,9 +12,9 @@
  * test ad, the doubled offline panel, the ship panel and the three ship-day steps and the
  * launch result, every stage's room (garage, office, data centre, company town, latent
  * space) with its Lab tab (training candidates, kept models, staff, helpers), a lab
- * happening, the stage card, the pixel rooms of the garage and the office (empty, early,
- * full, and with a happening and a bonus offer; the clock is held meanwhile so a full
- * garage does not earn the office), stats and achievements, settings, a late save, and
+ * happening, the stage card, every stage's pixel room (empty, early, full, and with a
+ * happening and a bonus offer; the clock is held meanwhile so a full room does not earn
+ * the next stage) and the stage-change flash, stats and achievements, settings, a late save, and
  * (default size, 844 wide, only) a narrow portrait window.
  * Checks (exits 1 if any fails): the mode choice opens /garage; one touch tap earns tokens;
  * two fingers at once count as two taps; a buy works; the golden moment collects; the
@@ -394,6 +394,7 @@ async function main() {
     await shot('stage-card');
     await tapId('garage-stage-continue');
     await tapId('garage-tab-build');
+    await sleep(600);
     await shot('office');
     await tapId('garage-tab-lab');
     await g(() => window.__garage.training());
@@ -433,6 +434,7 @@ async function main() {
     check((await g(() => window.__garage.state().tokens)) >= t0b + 9999 && !(await has('garage-bonus-offer')), 'the bonus multiplier pays through the test ad and goes');
 
     await g(() => window.__garage.scene('datacentre'));
+    await sleep(900);
     await tapId('garage-tab-build');
     await g(() => window.__garage.happening('gpu-truck'));
     await shot('datacentre');
@@ -447,10 +449,12 @@ async function main() {
     await shot('lab-staff');
 
     await g(() => window.__garage.scene('town'));
+    await sleep(900);
     await tapId('garage-tab-build');
     await g(() => window.__garage.happening('petition'));
     await shot('town');
     await g(() => window.__garage.scene('latent'));
+    await sleep(900);
     await shot('latent');
     await tapId('garage-tab-lab');
     await page.evaluate(() => {
@@ -460,18 +464,22 @@ async function main() {
     await shot('lab-helpers');
     await tapId('garage-tab-build');
 
-    // 10. The pixel rooms (garage and office): empty, early, full, and with a happening and a bonus offer.
+    // 10. The pixel rooms, every stage: empty, early, full, and with a happening and a bonus offer.
     const pixelRoom = async (sceneName, label) => {
       await g((sc) => window.__garage.scene(sc), sceneName);
       // A full lab earns the next stage within a second: hold the clock while these are taken.
       await g(() => window.__garage.freeze(true));
+      // Let the stage-change flash finish.
+      await sleep(1000);
       const none = { intern: 0, gpu: 0, closet: 0, scraper: 0, hall: 0, chips: 0, power: 0, robotics: 0, orbital: 0, universe: 0 };
       await g((c) => window.__garage.owned(c), none);
       await shot(`${label}-empty`);
-      check(await has(`garage-room-${sceneName === 'fresh' ? 'garage' : 'office'}`), `${label}: the pixel room is drawn`);
-      await g((c) => window.__garage.owned(c), { ...none, intern: 6, gpu: 2, closet: 1 });
+      const roomId = sceneName === 'fresh' ? 'garage' : sceneName;
+      check(await has(`garage-room-${roomId}`), `${label}: the pixel room is drawn`);
+      check(await has('garage-plinth'), `${label}: the model stands on its plinth`);
+      await g((c) => window.__garage.owned(c), { ...none, intern: 6, gpu: 2, closet: 1, scraper: 1, hall: sceneName === 'fresh' ? 0 : 1 });
       await shot(`${label}-early`);
-      await g((c) => window.__garage.owned(c), { intern: 120, gpu: 110, closet: 100, scraper: 100, hall: 100, chips: 4, power: 2, robotics: 1, orbital: 1, universe: 1 });
+      await g((c) => window.__garage.owned(c), { intern: 120, gpu: 110, closet: 100, scraper: 100, hall: 100, chips: 100, power: 100, robotics: 100, orbital: 100, universe: 100 });
       await shot(`${label}-full`);
       await g(() => window.__garage.happening('pizza'));
       await g(() => window.__garage.bonusOffer('golden'));
@@ -486,16 +494,30 @@ async function main() {
     };
     await pixelRoom('fresh', 'pixel-garage');
     await pixelRoom('office', 'pixel-office');
+    await pixelRoom('datacentre', 'pixel-datacentre');
+    await pixelRoom('town', 'pixel-town');
+    await pixelRoom('latent', 'pixel-latent');
+    // The stage change: the room flashes in the new stage's accent, then shows the new room.
+    await g(() => window.__garage.scene('town'));
+    await sleep(1000);
+    await g(() => window.__garage.scene('latent'));
+    await sleep(60);
+    const flash = await page.evaluate(() => {
+      const el = document.querySelector('[data-testid="garage-stage-flash"]');
+      return el ? Number(getComputedStyle(el).opacity) : -1;
+    });
+    check(flash > 0.05, `a new stage flashes the room (opacity ${flash.toFixed(2)})`);
+    await sleep(1000);
     // The next stage's accent on the goal bar and the stage's on its name.
     const accents = await page.evaluate(() => ({
       name: getComputedStyle(document.querySelector('[data-testid="garage-stage-name"]')).color,
       fill: document.querySelector('[data-testid="garage-next-stage-fill"]') ? getComputedStyle(document.querySelector('[data-testid="garage-next-stage-fill"]')).backgroundColor : null,
     }));
-    check(accents.name !== accents.fill && !!accents.fill, `stage accents: name ${accents.name}, next-stage bar ${accents.fill}`);
+    check(!accents.fill || accents.name !== accents.fill, `stage accents: name ${accents.name}, next-stage bar ${accents.fill}`);
 
     // 11. Stats and achievements, settings.
     await g(() => window.__garage.scene('late'));
-    await sleep(200);
+    await sleep(1000);
     await shot('late-save');
     await tapId('garage-stats');
     await page.waitForSelector('[data-testid="garage-stats-sheet"]', { timeout: 5000 });

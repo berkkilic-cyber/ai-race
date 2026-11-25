@@ -9,6 +9,7 @@ const { Canvas, sprite } = require('../canvas');
 const { block, line, paint } = require('./draw');
 const P = require('./people');
 const G = require('./garage');
+const Props = require('./props');
 
 const W = G.W;
 const H = G.H;
@@ -136,36 +137,6 @@ const rackPhone = sprite('rack-phone', [
   ['kkkk', 'kAAk', 'kAhk', 'khAk', 'kmmk', 'kkkk'],
 ]);
 
-/** The ring light on its stand: the founder films updates (10 x 26). */
-const ringLight = sprite('ring-light', [
-  '..kkkkkk..',
-  '.khhhhhhk.',
-  'khhkkkkhhk',
-  'khk....khk',
-  'khk....khk',
-  'khk....khk',
-  'khk....khk',
-  'khhkkkkhhk',
-  '.khhhhhhk.',
-  '..kkkkkk..',
-  '....km....',
-  '....km....',
-  '....km....',
-  '....km....',
-  '....km....',
-  '....km....',
-  '....km....',
-  '....km....',
-  '....km....',
-  '....km....',
-  '....km....',
-  '...kkmk...',
-  '..kk.kk...',
-  '.kk...kk..',
-  'kk.....kk.',
-  'k.......k.',
-]);
-
 // ---------------------------------------------------------------- composed objects
 
 /** An intern at a desk with a monitor, in an office chair; frames = typing (24 x 26). */
@@ -211,18 +182,18 @@ function cabinet(frame, units = 7) {
 
 /** A wall-mounted phone rack: two shelves of phones charging (24 x 26). */
 function phoneRack(frame, count) {
-  return paint(24, 26, (c) => {
-    c.rect(0, 0, 24, 26, 'k');
-    c.rect(1, 1, 22, 24, 'n');
-    c.vline(1, 1, 24, 'm');
-    for (const y of [11, 23]) {
+  return paint(24, 21, (c) => {
+    c.rect(0, 0, 24, 21, 'k');
+    c.rect(1, 1, 22, 19, 'n');
+    c.vline(1, 1, 19, 'm');
+    for (const y of [9, 18]) {
       c.rect(1, y, 22, 2, 'M');
       c.hline(1, y + 1, 22, 'm');
     }
     for (let i = 0; i < count; i++) {
       const row = Math.floor(i / 5);
       const x = 2 + (i % 5) * 4;
-      const y = row === 0 ? 5 : 17;
+      const y = row === 0 ? 3 : 12;
       c.stamp(rackPhone, x, y, { frame: (frame + i * 5) % 2 });
     }
   });
@@ -297,20 +268,20 @@ function room() {
   c.hline(0, FLOOR, W, 'k');
   // A rug under the model's spot.
   // Window onto the night skyline, at the right of the back wall.
-  const wx = 126;
-  const wy = 34;
-  const ww = 42;
-  const wh = 32;
+  const wx = 142;
+  const wy = 30;
+  const ww = 50;
+  const wh = 30;
   c.rect(wx - 2, wy - 2, ww + 4, wh + 4, 'k');
   c.rect(wx - 1, wy - 1, ww + 2, wh + 2, 'M');
   c.rect(wx, wy, ww, wh, 'k');
   // Sky: a dark band, a moon.
   c.rect(wx, wy, ww, wh, 'n');
-  c.rect(wx + 32, wy + 4, 4, 4, 'S');
-  c.set(wx + 32, wy + 4, 'n');
-  c.set(wx + 35, wy + 7, 'h');
+  c.rect(wx + 40, wy + 3, 4, 4, 'S');
+  c.set(wx + 40, wy + 3, 'n');
+  c.set(wx + 43, wy + 6, 'h');
   const towers = [
-    [0, 18, 6], [6, 10, 7], [13, 22, 5], [18, 14, 8], [26, 20, 6], [32, 12, 5], [37, 17, 5],
+    [0, 18, 6], [6, 10, 7], [13, 22, 5], [18, 14, 8], [26, 20, 6], [32, 12, 5], [37, 17, 5], [42, 21, 8],
   ];
   for (const [tx, th, tw] of towers) {
     const top = wy + wh - th;
@@ -320,12 +291,12 @@ function room() {
   }
   // Mullion and sill.
   c.vline(wx + ww / 2, wy, wh, 'M');
-  c.hline(wx, wy + 13, ww, 'M');
+  c.hline(wx, wy + 12, ww, 'M');
   c.rect(wx - 3, wy + wh + 1, ww + 6, 2, 'S');
   c.hline(wx - 3, wy + wh + 3, ww + 6, 'k');
   // Whiteboard with the hockey-stick chart, beside the server-room door.
-  const bx = 48;
-  const by = 72;
+  const bx = 46;
+  const by = 74;
   c.rect(bx, by, 24, 18, 'k');
   c.rect(bx + 1, by + 1, 22, 16, 'S');
   c.hline(bx + 1, by + 1, 22, 'h');
@@ -340,27 +311,29 @@ function room() {
   c.rect(bx + 2, by + 18, 20, 1, 'm');
   c.set(bx + 6, by + 17, 'a');
   c.set(bx + 9, by + 17, 'M');
-  // Days since last incident: a warning sign over a big zero.
-  const sx = 74;
+  // Days since last incident: a warning sign with a big red zero, over the coffee counter.
+  const sx = 70;
   const sy = 72;
-  c.rect(sx, sy, 14, 15, 'k');
-  c.rect(sx + 1, sy + 1, 12, 13, 'S');
-  c.hline(sx + 1, sy + 1, 12, 'h');
-  // Triangle.
-  for (let j = 0; j < 4; j++) c.hline(sx + 7 - j, sy + 2 + j, 1 + j * 2 - 1 > 0 ? 1 + j * 2 - 1 : 1, 'k');
-  c.set(sx + 6, sy + 4, 'S');
-  // Zero.
-  c.rect(sx + 4, sy + 7, 6, 6, 'k');
-  c.rect(sx + 6, sy + 8, 2, 4, 'S');
+  c.rect(sx, sy, 18, 16, 'k');
+  c.rect(sx + 1, sy + 1, 16, 14, 'h');
+  c.hline(sx + 1, sy + 14, 16, 'S');
+  // A warning triangle at the left.
+  for (let j = 0; j < 6; j++) c.hline(sx + 5 - Math.floor(j / 1.2), sy + 3 + j, 1 + 2 * Math.floor(j / 1.2), 'a');
+  c.rect(sx + 2, sy + 9, 7, 1, 'a');
+  c.vline(sx + 5, sy + 5, 2, 'k');
+  c.set(sx + 5, sy + 8, 'k');
+  // The big zero (7 x 10).
+  c.rect(sx + 10, sy + 3, 6, 10, 'k');
+  c.rect(sx + 12, sy + 5, 2, 6, 'h');
+  c.set(sx + 10, sy + 3, 'h');
+  c.set(sx + 15, sy + 3, 'h');
+  c.set(sx + 10, sy + 12, 'h');
+  c.set(sx + 15, sy + 12, 'h');
   // Coffee counter at the left of the model, and a plant on the right.
-  c.stamp(coffeeMachine, 72, 88);
-  c.stamp(smallPlant, 82, 92);
+  c.stamp(coffeeMachine, 70, 88);
+  c.stamp(smallPlant, 80, 92);
   // The server-room door, shut.
-  serverDoor(c, 26, 66, 18, FLOOR - 66 - 3, 0, 0);
-  // A wall shelf over the cabinets for the trophies.
-  c.rect(142, 68, 50, 2, 'S');
-  c.hline(142, 68, 50, 'h');
-  c.hline(142, 70, 50, 'k');
+  serverDoor(c, 26, 75, 18, FLOOR - 75 - 3, 0, 0);
   return c;
 }
 
@@ -371,18 +344,30 @@ const looks = [
   { s: 'b', S: 'a', b: 'n', n: 'k' },
 ];
 
+const DESK = { top: 'o', front: 'u', hi: 'S', shade: 'k' };
+
+/** The office's plinth: a white pedestal with a lit strip, like a product launch stand. */
+function officePlinth() {
+  return Props.plinth({ top: 'h', front: 'S', hi: 'h', shade: 's', edge: 'M' }, (c, b) => {
+    c.hline(b.x + 2, b.front + 4, b.w - 4, 'a');
+    c.hline(b.x + 2, b.front + 5, b.w - 4, 'b');
+  });
+}
+
 /** The office scene for scripts/pixel/scenes.js. */
 function scene({ tier, spriteCanvas }) {
   return {
     id: 'office',
     room,
+    plinth: officePlinth,
+    plinthTop: Props.PLINTH_TOP,
     tiers: {
-      hall: tier({ x: 20, y: 60, w: 30, h: 58 }, 2, 1.5, (c, level, frame) => serverDoor(c, 6, 6, 18, 41, level, frame)),
+      hall: tier({ x: 20, y: 69, w: 30, h: 50 }, 2, 1.5, (c, level, frame) => serverDoor(c, 6, 6, 18, FLOOR - 75 - 3, level, frame)),
       closet: tier({ x: 140, y: 70, w: 52, h: 40 }, 3, 2, (c, level, frame) => {
         const racks = [0, 1, 1, 2, 3, 3, 3][level];
         for (let i = 0; i < racks; i++) c.draw(cabinet((frame + i) % 3, level === 1 ? 3 : 7), 36 - i * 17, 0);
       }),
-      scraper: tier({ x: 170, y: 36, w: 24, h: 28 }, 2, 1, (c, level, frame) => {
+      scraper: tier({ x: 98, y: 72, w: 24, h: 21 }, 2, 1, (c, level, frame) => {
         c.draw(phoneRack(frame, [0, 2, 4, 6, 8, 10, 10][level]), 0, 0);
       }),
       gpu: tier({ x: 142, y: 110, w: 52, h: 50 }, 2, 4, (c, level, frame) => {
@@ -395,37 +380,36 @@ function scene({ tier, spriteCanvas }) {
           c.rect(3 + col * 12 + row, 22 + row * 26, 11, 1, 'n');
         }
       }),
-      // At the top level of GPUs the founder starts filming updates: a ring light by the plant.
-      gpuExtra: tier({ x: 129, y: 84, w: 10, h: 26, of: 'gpu' }, 1, 0, (c, level) => {
-        if (level >= 6) c.stamp(ringLight, 0, 0);
-      }),
-      intern: tier({ x: 22, y: 72, w: 56, h: 98 }, 2, 3, (c, level, frame) => {
+      intern: tier({ x: 20, y: 86, w: 62, h: 84 }, 2, 3, (c, level, frame) => {
         const spots = [
-          [2, 30],
-          [28, 32],
-          [2, 58],
-          [28, 60],
+          [2, 24],
+          [30, 25],
+          [2, 54],
+          [30, 55],
         ];
-        if (level >= 5) c.stamp(P.internStanding, 31, 18, { map: looks[2] });
+        // Level 5: one presents at the whiteboard; level 6: the back-right one has been here all night.
+        if (level >= 5) c.stamp(P.internStanding, 26, 4, { map: looks[2] });
         const n = Math.min(4, level);
-        for (let i = 0; i < n; i++) c.draw(internDesk((frame + i) % 2, looks[i]), spots[i][0], spots[i][1]);
-        if (level >= 6) {
-          c.stamp(P.internAsleep, 0, 88, { map: { s: 'm', S: 'M', b: 'n', n: 'u' } });
-          c.stamp(P.snore, 3, 82, { frame });
-          for (let i = 0; i < 3; i++) c.stamp(G.sprites.pizzaBox, 27 + (i % 2), 91 - i * 3);
+        for (let i = 0; i < n; i++) {
+          if (i === 1 && level >= 6) {
+            c.draw(Props.asleepAtDesk(DESK, looks[1], 7), spots[i][0], spots[i][1] - 3);
+            c.stamp(Props.sleepZ, spots[i][0] + 13, spots[i][1] - 18, { frame });
+          } else c.draw(internDesk((frame + i) % 2, looks[i]), spots[i][0], spots[i][1]);
         }
       }),
     },
-    ambient: [{ id: 'steam', x: 77, y: 81, fps: 2.5, count: 3, frames: (f) => spriteCanvas(G.sprites.steam, f) }],
-    shelf: { x: 146, y: 60, step: 9 },
-    shelfItems: G.shelfItems,
+    ambient: [{ id: 'steam', x: 75, y: 89, fps: 2.5, count: 3, frames: (f) => spriteCanvas(G.sprites.steam, f) }],
+    shelf: { x: 143, y: 50, step: 10, h: 11 },
+    shelfItems: Props.trophies,
     sheetSprites: () => [
       ...[0, 1].map((f) => internDesk(f, looks[0])),
       ...[0, 1, 2].map((f) => cabinet(f)),
       phoneRack(0, 10),
-      ...[monitorBack, smallPlant, coffeeMachine, gpuTower, rackPhone, ringLight].flatMap((s) => s.frames.map((_, f) => spriteCanvas(s, f))),
+      Props.asleepAtDesk(DESK, looks[1], 7),
+      officePlinth(),
+      ...[monitorBack, smallPlant, coffeeMachine, gpuTower, rackPhone].flatMap((s) => s.frames.map((_, f) => spriteCanvas(s, f))),
     ],
   };
 }
 
-module.exports = { scene, sprites: { monitorBack, plant, smallPlant, coffeeMachine, gpuTower, rackPhone, ringLight } };
+module.exports = { scene, sprites: { monitorBack, plant, smallPlant, coffeeMachine, gpuTower, rackPhone } };

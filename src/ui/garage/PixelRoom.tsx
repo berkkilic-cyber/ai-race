@@ -74,6 +74,26 @@ function Layers({ art, levels }: { art: ArtScene; levels: PixelLevels }) {
   );
 }
 
+/**
+ * What the model stands on in a pixel stage (a pallet, a launch stand, a server chassis
+ * ...): drawn in the tap target under the model, its top face under the model's feet. The
+ * model's feet sit at 30/32 of its height (src/ui/mascot). Null for a scene without art.
+ */
+export const ModelPlinth = memo(function ModelPlinth({ scene, size, mascot }: { scene: string; size: number; mascot: number }) {
+  const plinth = PIXEL_SCENES[scene]?.plinth;
+  if (!plinth || !allFinite(size, mascot) || size <= 0 || mascot <= 0) return null;
+  const w = px(plinth.w);
+  const h = px(plinth.h);
+  const left = Math.round(size * 0.75 - w / 2);
+  const top = Math.round(size / 2 + mascot * (30 / 32 - 0.5) - px(plinth.top));
+  return <Image source={plinth.src} style={[{ position: 'absolute', left, top, width: w, height: h }, PIXELATED]} testID="garage-plinth" />;
+});
+
+/** Whether a scene stands the model on a pixel plinth (instead of the plain pad). */
+export function hasPlinth(scene: string): boolean {
+  return !!PIXEL_SCENES[scene]?.plinth;
+}
+
 /** The whole pixel room behind the stage's controls. */
 export const PixelRoom = memo(function PixelRoom({ scene, levels, w, h }: { scene: string; levels: PixelLevels; w: number; h: number }) {
   const art = PIXEL_SCENES[scene];

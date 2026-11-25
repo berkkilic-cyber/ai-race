@@ -316,7 +316,7 @@ What changed in the numbers to get there: milestones are mild (×1.25 at 25 and 
 
 Landscape (844×390 design size, insets from `useInsets()`): a quiet top bar (‹ Modes, the stage, Hype and the model name, the banner slot when enabled, Stats, Settings); the lab on the left; Build / Upgrades / Lab / Ship tabs on the right; the ticker along the bottom. Narrow windows stack the lab and the panel.
 
-- **The lab** (`TapStage.tsx`; the garage and the office in pixel art, `PixelRoom.tsx`, see "Art" below; the other stages `LabRoom.tsx`): a room drawn with react-native-svg in px from the measured size: back wall and floor, the stage's backdrop (a roll-up door and a bare bulb; office windows and a whiteboard; raised floor tiles; a window onto the town you bought; a lattice of nodes and a floor that runs to infinity), desks with interns (first tier, 0 to 5 desks by count buckets), racks (next four tiers, 0 to 8 in a front and a back row) with LEDs that blink in two alternating layers on the shared ambient clock, and a shelf with the later tiers' icons. About 60 SVG nodes at most; the drawing re-renders only when a bucket, the stage or the size changes. Over it: the token counter and the next stage goal on a plate (top left), the one ad offer (top right), timed effects and incidents, the model on its pedestal as the tap target, the combo meter, golden moments, lab happenings at their spots and the bonus multiplier offer.
+- **The lab** (`TapStage.tsx`, the room in `PixelRoom.tsx`, see "Art" below): every stage is a pixel-art room, a baked image plus one image per generator tier at its count bucket and a few slow loops on the shared ambient clock; it re-renders only when a bucket, the stage or the size changes. Over it: the token counter and the next stage goal on a plate (top left), the one ad offer (top right), timed effects and incidents, the model on its stage's plinth as the tap target, the combo meter, golden moments, lab happenings at their spots and the bonus multiplier offer. When a new stage unlocks the room flashes in the new stage's accent (under a second, UI thread, off with reduced motion; loading a save does not flash).
 - **Lab tab** (`LabPanel.tsx`): training runs (queue pips, the next run's timer, Launch, the three candidates with rarity, description, green strengths and a red drawback, Keep / Swap in with "Retire which?" inline, Scrap all), active models and empty slots (and how many the next stage brings), staff (three lanes with count, bar, effect in words, − / +), helpers (auto-collect line, auto-buy switch). Locked parts say which stage unlocks them.
 - **Ship tab** shows the progress, the Hype gain and "Start ship day" (`ShipDay.tsx`, an in-tree overlay); Lab Rep below.
 
@@ -326,77 +326,90 @@ Landscape (844×390 design size, insets from `useInsets()`): a quiet top bar (�
 - **Saves:** AsyncStorage through `src/ui/tutorial/storage.ts` (memory fallback), key `garage.save`; at most every 5 s while playing, at once on purchases, ships, rewards and resets, and when the app goes to the background. Settings (haptics) under `garage.settings`.
 - **Debug (web):** `/garage?debug=1` exposes `window.__garage`: `setTokens(n)`, `grant(n)`, `fastForward(ms)` (an offline return), `golden(id?)`, `incident(id?, tier?)`, `frenzy(s?)`, `happening(id?)`, `training()` (a run with candidates), `bonusOffer(source?)`, `shipDay()`, `stage(n)`, `ad(placement)`, `scene('fresh' | 'mid' | 'ship' | 'late' | 'office' | 'datacentre' | 'town' | 'latent')` (a sample placed in the stage it has earned), `owned({ intern: 25, ... })` (set generator counts, to see the room fill), `freeze(on)` (hold the clock), `state()`. `&adseconds=n` shortens the test ad; `&banner=1` shows the banner slot.
 
-Screenshots: `node scripts/screens/garage.js` (after `npx expo export --platform web`) writes docs/screenshots/garage/`<theme>-<W>x<H>-NN-name.png`: mode choice, fresh, mid-progress, upgrades, golden moment, frenzy, incident, offline return, test ad, doubled, ship panel, the three ship-day steps, launch result, stage card, office, training candidates, swap, kept models, happening, bonus multiplier, data centre, staff, company town, latent space, helpers, the pixel rooms (garage and office: empty, early, full, with a happening and a bonus offer), late save, stats, settings, and narrow. Captured at 844×390 and 926×428 with `INSETS=0,47,21,47` on the default theme (neon); the older blueprint, hazard and candy sets showed the previous screen and were removed.
+Screenshots: `node scripts/screens/garage.js` (after `npx expo export --platform web`) writes docs/screenshots/garage/`<theme>-<W>x<H>-NN-name.png`: mode choice, fresh, mid-progress, upgrades, golden moment, frenzy, incident, offline return, test ad, doubled, ship panel, the three ship-day steps, launch result, stage card, office, training candidates, swap, kept models, happening, bonus multiplier, data centre, staff, company town, latent space, helpers, every stage's pixel room (empty, early, full, with a happening and a bonus offer), late save, stats, settings, and narrow. Captured at 844×390 and 926×428 with `INSETS=0,47,21,47` on the default theme (neon); the older blueprint, hazard and candy sets showed the previous screen and were removed.
 
 **Performance** (`PERF=1 node scripts/screens/garage.js`, the method of scripts/screens/perf.js; `DIST=<dir>` measures another export): the data-centre room with blinking racks, a happening and a golden moment on screen, rapid touch taps on the model for 5 s at 6x CPU throttle. Task 28, five interleaved rounds at 926x428 on a shared machine (load 6 to 9): React commits per second while tapping 13.1 to 16.4 before, 0.4 to 0.8 after (each tap committed about twice and the counter up to 10 times a second; now a tap commits nothing, and what remains is the model's mood changing at a 30-tap combo). Frame time p95 50 / 66.6 / 50 / 66.7 / 33.4 ms before and 83.2 / 66.6 / 66.6 / 33.4 / 33.4 ms after: within the machine's noise, no measurable change on web, where reanimated's work runs on the main thread anyway.
 
 ## Presentation (task 28)
 
-- **The room and the HUD.** The token counter and the next goal sit on an opaque plate on the room's ceiling band: `TapStage` measures the HUD row and `LabRoom` starts the wall below it (`ceiling`), so no furniture shows behind the numbers. The goal is two lines: the place ("Next: The Office", cased with `cased()`), then the requirement in plain text, then the bar. Each stage's backdrop sits on the visible wall at the left or on the floor (garage: roll-up door, a bulb hanging from the ceiling, moving boxes, an oil stain; office: two windows with a skyline and a whiteboard; data centre: a lit status panel, cable tray, raised floor and cold aisle; town: a window onto the town with a water tower and the chatbot mayor's billboard; latent space: a node lattice and a floor running to infinity). Racks never reach into the ceiling band. Every room stays at 80 SVG nodes or fewer at its fullest (`__tests__/room.test.tsx`, also finite numbers with a bad ceiling).
+- **The room and the HUD.** The token counter and the next goal sit on an opaque plate at the top left. The goal is two lines: the place ("Next: The Office", cased with `cased()`), then the requirement in plain text, then the bar. Each pixel room keeps its top band (ceiling, trays, sky, the lattice) under the plate and the offer slot and puts everything that matters below them (see "Art", composition). The happening spots and the bubbles' clear-of-the-model helpers live in `LabRoom.ts` (the SVG room that file used to draw is gone).
 - **Bubbles keep clear of the model.** `TapStage` passes the tap target's ring (`avoid`) to the happening, the golden moment and the bonus offer. Happenings and golden moments stay on their side of the model and wrap their label to two lines to fit (`clearSpan`); the "rack" spot is on the floor in front of the racks, so its label never crosses them. The bonus multiplier sits where the bonus was when it fits beside the model, otherwise it takes the stage's offer slot at the top right (empty then: one offer at a time).
 - **First minute.** Until the first generator is bought on a brand-new lab, the line under the model says "Tap your model to make tokens", then, once the first generator is affordable, "Now buy Intern with a laptop in Build →" (`ui.garage.hint.*`, accent colour); after the purchase it is the usual quiet "Tap your model".
 - **Targets.** The staff steppers draw 40 px and carry a 2 px slop each side (44 px targets); candidate buttons are 46 px tall.
 - **Checks.** `scripts/screens/garage.js` checks in every capture that the offer never covers the model or a happening, a happening never covers the model, and the HUD, the model, the offer and the happening stay inside the side insets.
 - **Sound and analytics** for the lab: docs/FEEL.md and docs/ANALYTICS.md; both read `src/ui/garage/moments.ts`.
 
-## Art (task 29)
+## Art (tasks 29 and 30)
 
-The garage and the office are drawn in pixel art; the data centre, the company town and latent space keep the SVG room (`LabRoom.tsx`) for now, coloured with their own palette (`roomTint`), so every stage changes how the room looks.
+All five stages are drawn in pixel art: the garage, the office, the data centre, the company town and latent space. The old SVG room is gone; `LabRoom.ts` keeps only the happening spots and the bubble helpers.
 
-**Grid and scale.** The room is **216 x 170 art pixels**, drawn at **2 dp per art pixel** (432 x 340 dp), centred horizontally and anchored to the bottom of the stage at a whole-dp offset. On a 3x phone one art pixel is 6 device pixels, on a 2x phone 4: whole pixels everywhere, never a blurry scale. Why these numbers: the stage is 349 x 290 dp at 844x390 and 387 x 334 dp at 926x428 (insets 0,47,21,47), so the room covers both with a little to spare (the art from x 21 to 195 is always visible; keep everything that matters between x 24 and 192); anchoring to the bottom keeps the model's pedestal (centre bottom) on the same floor at every size, and bands in the room's ceiling, wall and floor colours fill a bigger stage. The HUD plate covers the top left (to about x 127, y 71 at 844 wide), the offer slot the top right above y 47, the model's pad about x 82 to 135 and y 97 to 150: the contact sheet's last panel draws these guides.
+**Grid and scale.** The room is **216 x 170 art pixels**, drawn at **2 dp per art pixel** (432 x 340 dp), centred horizontally and anchored to the bottom of the stage at a whole-dp offset. On a 3x phone one art pixel is 6 device pixels, on a 2x phone 4: whole pixels everywhere, never a blurry scale. The stage is 348 x 295 dp at 844x390 and 387 x 333 dp at 926x428 (insets 0,47,21,47), so the room covers both with a little to spare (the art from x 21 to 195 is always visible); anchoring to the bottom keeps the model's plinth on the same floor at every size, and bands in the room's wall and floor colours fill a bigger stage.
 
-The view is three-quarter: front faces flat to the viewer, tops visible, the floor receding in rows; light from the top left (top faces lightest, a highlight on the left edge, shade on the right); one-pixel ink outlines; no gradients or dithering, light pools are one or two hard steps.
+**Composition (what the HUD and the offer cover).** Measured in the game: the HUD plate covers art x 25 to 127, y up to 70 at 844 wide (x 15 to 117, y up to 51 at 926); the widest offer (the bonus multiplier) x 96 to 191, y up to 50 (x 106 to 201, y up to 31). So every room keeps its top band for things that do not matter (ceiling, trays and pipes, high windows, sky, the node lattice) and puts what matters lower: **on the left below y 72** (doors, the booth, the whiteboard, the water tower), **in the middle below y 72** above the model's head (the pegboard, the aisle, the campus, the halo), **on the right below y 52** (shelves, the billboard, racks). The model's body is about x 86 to 130, y 94 to 138 and its plinth x 82 to 134, y 133 to 154; no tier draws there. The happening spots land on things that match them: the door (about x 38 to 46, y 90 to 100), the desks (x 50 to 56, y 130 to 135) and the racks (x 169 to 175, y 135 to 140). The contact sheet's last panel per stage draws the visible areas, the plate, the offer, the model and the plinth.
+
+**The model's plinth.** In every stage the model stands on a pixel plinth instead of the old opaque pad: two pallets (garage), a white launch stand with a lit strip (office), a server chassis (data centre), a marble plinth with a brass plaque (town), a slab of light (latent). It is one image per stage (`<stage>-plinth.png`, 52 x 20 art pixels with its contact shadow), drawn in the tap target under the model's feet (`ModelPlinth`); the tap area is unchanged (1.5 x 1 of the target size). The rings now only flash on a press (with the model's squash), so at rest the model just stands in the room.
+
+The view is three-quarter: front faces flat to the viewer, tops visible, the floor receding in rows; light from the top left (top faces lightest, a highlight on the left edge, shade on the right); one-pixel ink outlines; no gradients or dithering, light pools and skies are hard steps.
 
 **Files.**
 
 | Where | What |
 | --- | --- |
 | `src/ui/garage/art/palettes.json` | The five palettes by role letter and each stage's UI accent: read by the generator and by the app (`stageColors.ts`) |
-| `scripts/pixel/png.js` | Indexed PNG writer on Node's zlib (`pngjs` is only a transitive dependency, so it is not used) |
+| `scripts/pixel/png.js` | Indexed PNG writer on Node's zlib |
 | `scripts/pixel/canvas.js` | A canvas of palette roles; `sprite(name, frames, legend?)` turns grids into sprites |
-| `scripts/pixel/art/*.js` | The sprites: `people.js` (interns), `garage.js`, `office.js`; `draw.js` has the three-quarter block, lines, light pools |
-| `scripts/pixel/scenes.js` | Per stage: the baked room, each tier's fixed slot and what it shows per count level, the ambient loops, the shelf |
-| `scripts/pixel/build.js` | `npm run pixel`: writes `assets/garage/*.png` (1x, @2x, @3x), `src/ui/garage/art/manifest.ts` and `docs/screenshots/garage/pixel-contact-sheet.png` (every sprite and each stage empty, early, mid, full and with layout guides, at 4x) |
-| `src/ui/garage/PixelRoom.tsx`, `pixelLevels.ts` | The room in the game |
+| `scripts/pixel/art/*.js` | One file per stage (`garage.js`, `office.js`, `datacentre.js`, `town.js`, `latent.js`: the room, the tier objects, the plinth and the scene), `people.js` (interns), `props.js` (trophies, the sleeper and the pizza tower, the plinth), `draw.js` (the three-quarter block, lines, ellipses, light pools) |
+| `scripts/pixel/scenes.js` | The list of stages and the kit their scenes are built with |
+| `scripts/pixel/build.js` | `npm run pixel`: writes `assets/garage/*.png` (1x, @2x, @3x), `src/ui/garage/art/manifest.ts` and `docs/screenshots/garage/pixel-contact-sheet.png` (every sprite and each stage empty, early, mid, full and with layout guides, at 4x). `PREVIEW=<stage> [SPRITES=1] npm run pixel` writes only that stage's sheet to the temp folder, for quick looks |
+| `src/ui/garage/PixelRoom.tsx`, `pixelLevels.ts` | The room and the plinth in the game |
 
-**Palettes.** 18 roles per stage (some share a colour), sharing the ink, skin and wood families, dark overall with one strong accent. The accent is the stage's UI token: the stage name in the header, the next stage's colour on the "next stage" goal bar, a swatch and the unlock line on the stage card. Buy buttons stay in the brand green and danger stays red: never use an accent for a warning.
+**Palettes.** 18 roles per stage (some share a colour), sharing the ink, skin and wood families, dark overall with one strong accent. The accent is the stage's UI token: the stage name in the header, the next stage's colour on the "next stage" goal bar, a swatch and the unlock line on the stage card, and the stage-change flash. Buy buttons stay in the brand green and danger stays red: never use an accent for a warning.
 
 | Role | garage | office | datacentre | town | latent |
 | --- | --- | --- | --- | --- | --- |
 | **accent (UI token)** | `#FFA726` | `#45FF5C` | `#2FD6C3` | `#FF8A3C` | `#B48CFF` |
 | `k` ink (outlines) | `#141011` | `#0f1214` | `#0a1012` | `#140e12` | `#0e0a16` |
-| `n` dark neutral | `#221c19` | `#1f2528` | `#142023` | `#2a1c24` | `#1d1530` |
-| `m` mid neutral | `#4f443b` | `#46525a` | `#2f4448` | `#563a48` | `#3e3060` |
-| `M` light neutral | `#9c8466` | `#8d9ca5` | `#648a8e` | `#9a7684` | `#7d6aa8` |
-| `h` highlight | `#f2e4c8` | `#eef5f7` | `#dcf6f3` | `#fbe6dc` | `#f0e6ff` |
-| `w` wall | `#302823` | `#2b3337` | `#1a2729` | `#33232b` | `#1f1734` |
-| `W` wall, lit | `#4a3b2e` | `#36414a` | `#223336` | `#432e38` | `#2a1f46` |
-| `f` floor | `#2f2823` | `#22292c` | `#121c1e` | `#281b22` | `#170f26` |
-| `F` floor, lit | `#3e342b` | `#272f33` | `#1b282b` | `#34242c` | `#211833` |
+| `n` dark neutral | `#2a221d` | `#1f2528` | `#162528` | `#2a1c24` | `#1d1530` |
+| `m` mid neutral | `#64554a` | `#46525a` | `#34504f` | `#563a48` | `#3e3060` |
+| `M` light neutral | `#b59a78` | `#8d9ca5` | `#6f9799` | `#9a7684` | `#7d6aa8` |
+| `h` highlight | `#f6e8cc` | `#eef5f7` | `#dcf6f3` | `#fbe6dc` | `#f0e6ff` |
+| `w` wall | `#46392f` | `#2b3337` | `#1d2e31` | `#33232b` | `#1f1734` |
+| `W` wall, lit | `#67513d` | `#36414a` | `#283c3f` | `#432e38` | `#2a1f46` |
+| `f` floor | `#3f342b` | `#22292c` | `#152327` | `#281b22` | `#170f26` |
+| `F` floor, lit | `#5a4938` | `#272f33` | `#1e3237` | `#34242c` | `#211833` |
 | `a` accent | `#ffa726` | `#45ff5c` | `#2fd6c3` | `#ff8a3c` | `#a66bff` |
 | `A` accent glow | `#ffd98a` | `#b8ffc0` | `#a6fff3` | `#ffc48a` | `#d9bcff` |
 | `b` accent shade | `#a85a1c` | `#1f9e34` | `#137269` | `#b0451f` | `#5a2fb0` |
-| `s` second colour | `#9c3f24` | `#9fb3bd` | `#6fa8b0` | `#ff5c9a` | `#ff3cc8` |
-| `S` second colour, lit | `#cf6a3a` | `#d5e2e8` | `#b9e3e6` | `#ffa8ca` | `#ff9ae6` |
+| `s` second colour | `#a8472a` | `#9fb3bd` | `#6fa8b0` | `#ff5c9a` | `#ff3cc8` |
+| `S` second colour, lit | `#d9763f` | `#d5e2e8` | `#b9e3e6` | `#ffa8ca` | `#ff9ae6` |
 | `p` skin | `#e6b08a` | `#e6b08a` | `#e6b08a` | `#e6b08a` | `#e6b08a` |
-| `o` wood and cardboard | `#a87c4c` | `#a87c4c` | `#8a6a48` | `#a87c4c` | `#8a6a9a` |
-| `u` wood shade | `#6e4c2c` | `#6e4c2c` | `#5a4430` | `#6e4c2c` | `#5a4470` |
+| `o` wood and cardboard | `#bd8d57` | `#a87c4c` | `#8a6a48` | `#a87c4c` | `#8a6a9a` |
+| `u` wood shade | `#7d5733` | `#6e4c2c` | `#5a4430` | `#6e4c2c` | `#5a4470` |
 | `G` status light | `#7ad65a` | `#45ff5c` | `#45ff5c` | `#7ad65a` | `#6affd0` |
 
-garage: sodium amber and rust on warm concrete. office: the game's neon green with cool whites. datacentre: cold teal and ice with green status lights (dark, not bright blue). town: sunset orange and pink. latent: violet and magenta.
+garage: sodium amber and rust on warm concrete (task 30 lifted the walls, floor and neutrals so objects separate from the background in daylight; the bulb's pool is still the warmest thing). office: the game's neon green with cool whites. datacentre: cold teal and ice with green status lights (dark, not bright blue; its walls and floor lifted a little). town: sunset orange and pink. latent: violet and magenta.
 
-**What the room shows.** One baked image for the room (walls, floor, the stage's fixed props) and one image per tier slot, swapped at count levels **1, 5, 10, 25, 50, 100 owned** (`LEVELS`; level 0 shows nothing). Slots are fixed so tiers never draw on the same pixel (a test checks, at the fullest; the one exception is the intern walking in through the hall's doorway) and stay clear of the model. The later tiers (chips, power, robotics, orbital, universe) are small trophies on a shelf, up to the highest one owned.
+**What the rooms show.** One baked image for the room and one image per tier slot, swapped at count levels **1, 5, 10, 25, 50, 100 owned** (`LEVELS`; level 0 shows nothing). Slots are fixed so tiers never draw on the same pixel (a test checks, at the fullest; the one exception is the intern walking in through the hall's doorway in the garage and the office) and stay clear of the model and its plinth. In every stage the interns' level 5 adds someone (walking in, presenting, waiting in the lobby, stepping out of the door) and level 6 has one intern asleep at the desk, face on the desk, with big Z's and a pizza tower.
 
-| Tier | Garage | Office |
-| --- | --- | --- |
-| intern | interns at folding tables with laptops (1 to 4 desks), one walking in at the door (50), one asleep by the pizza boxes (100) | interns at wooden desks with monitors in office chairs; the one at 50 presents at the whiteboard |
-| gpu | open rigs of three fan cards (1 to 4); a fire extinguisher appears at 50 | GPU towers with lit fans (1, 2, 4, 6, 8); a ring light at 100 |
-| closet | server racks against the right wall (one half-full, then 1 to 3), cables over them (50), a desk fan on top (100) | rack cabinets with glass doors |
-| scraper | a pegboard of phones (2 to 10) | a wall phone rack (2 to 10) |
-| hall | the roll-up door rises on aisles of racks outside | the server-room door lights up behind its glass, propped open at 50 |
+| Tier | Garage | Office | Data centre | Town | Latent space |
+| --- | --- | --- | --- | --- | --- |
+| intern | folding tables with laptops (1 to 4) | wooden desks with monitors | consoles inside the glass booth | a receptionist behind the counter, hot desks, a visitor in the lobby | floating desks with screens and keyboards of light |
+| gpu | open rigs of fan cards (1 to 4); a big fire extinguisher at 50 | GPU towers with lit fans (1 to 8) | GPU pods with coolant lines | white pods | floating cubes that turn |
+| closet | server racks on the right wall | rack cabinets with glass doors | racks with ice LEDs | glass server pillars | floating monoliths |
+| scraper | a pegboard of phones on the wall behind the model | a phone rack behind the model | the booth's feed wall | phones on display in the counter | a column of floating phones |
+| hall | the roll-up door rises on aisles of racks | the server-room door lights up, propped open at 50 | the aisle's racks light up, nearest first | the campus grows outside the window | doors receding to the horizon |
+| chips | trophy on the shelf | trophy on the window sill | a framed wafer in the booth | a wafer on a pedestal in the lobby | a giant chip hanging like a moon |
+| power | trophy | trophy | a power riser and high-voltage panel | a reactor's cooling tower glowing on the horizon | a halo of light behind the model |
+| robotics | trophy | trophy | robot arms on a gantry over the racks | a robot at the counter | a robot arm made of light |
+| orbital | trophy | trophy | a satellite dish on a stand | a rocket on its pad (flame at 50) | a satellite |
+| universe | trophy | trophy | stars where the end of the aisle was | a ringed planet rising | a galaxy in a glass globe |
 
-**Motion.** Few and slow loops, frames side by side in one image: interns typing, fans, LEDs chasing, the phones' feeds, the bulb swinging, steam off a mug. `PixelRoom` shows one frame through a clipped window and picks it from the shared ambient clock in a worklet (`floor(t x fps + phase) % frames`), so nothing re-renders while it animates and everything stops with the clock (background, reduced motion). The room re-renders only when a count bucket or the stage changes. At most 12 images at the fullest (a test counts). `PERF=1 node scripts/screens/garage.js` at 926x428, 6x throttle, tapping 10 times a second: 0.8 React commits per second in the garage (`SCENE=mid`), the office and the data centre, as before (0.4 to 0.8).
+In the garage and the office the later tiers stay as trophies (11 x 11 art pixels now, big enough to read), on the garage's shelf over the racks and on the office's window sill, up to the highest one owned.
 
-**Add a sprite.** Draw it as a grid in `scripts/pixel/art/<stage>.js`: one string per row, one character per pixel, `.` empty, otherwise a role letter from the table (a `legend` maps extra characters; several grids of the same size are frames). Compose it into a tier's `draw(level, frame)` or the room in `scripts/pixel/scenes.js`, run `npm run pixel`, open the contact sheet and the screenshots, and look at it at phone size. Keep the light from the top left and the ink outline, and use only the palette's roles (swap shirts and hair with role maps, never new colours). To add a stage, give it a palette in `palettes.json` (it is tinted at once) and a scene in `scenes.js`.
+**Motion.** Few and slow loops, frames side by side in one image: interns typing, fans, LEDs chasing, the phones' feeds, the bulb swinging, steam off a mug, the data centre's cooling fans and the booth's light, the billboard's face blinking and the water tower's light, the door's glow and a lattice node in latent space; the rocket's flame, the reactor's steam, the robot's blink and the galaxy's turn ride on their tier's frames. `PixelRoom` shows one frame through a clipped window and picks it from the shared ambient clock in a worklet (`floor(t x fps + phase) % frames`), so nothing re-renders while it animates and everything stops with the clock (background, reduced motion). At most 13 room images at the fullest plus the plinth (a test counts).
 
-**Regenerate.** `npm run pixel` (deterministic: the same sources give the same bytes; `CHECK=1 npm run pixel` exits 1 if a file on disk differs). `src/ui/garage/__tests__/pixelArt.test.ts` fails when the files are stale, checks every referenced image at 1x, 2x and 3x, the slots, and that `assets/garage` stays under 1.5 MB (about 160 KB now).
+**Add a sprite.** Draw it as a grid (`sprite()`) or in code (`paint()` with `block`, `line`, `ellipse`) in the stage's file: role letters from the table, light from the top left, an ink outline, only the palette's roles (swap shirts and hair with role maps, never new colours). Compose it into a tier's `draw(level, frame)` or the room, run `PREVIEW=<stage> npm run pixel` while drawing, then `npm run pixel`, open the contact sheet and the screenshots, and look at it at phone size. To add a stage, give it a palette in `palettes.json` and a module with `scene()` in `scripts/pixel/art/`, listed in `scenes.js`.
+
+**Regenerate.** `npm run pixel` (deterministic: the same sources give the same bytes; `CHECK=1 npm run pixel` exits 1 if a file on disk differs). `src/ui/garage/__tests__/pixelArt.test.ts` fails when the files are stale, checks every referenced image at 1x, 2x and 3x, the slots (no overlaps, clear of the model and the plinth), that the later stages show every later tier at every level, the image count, and that `assets/garage` stays under 1.5 MB (about 430 KB now).
+
+**Screenshots.** `scripts/screens/garage.js` captures every stage's pixel room empty, early, full and with a happening and a bonus offer (`NN-pixel-<stage>-*.png`), checks that each draws its room and its plinth and that a stage change flashes the room.

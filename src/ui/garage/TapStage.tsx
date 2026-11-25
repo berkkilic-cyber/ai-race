@@ -20,9 +20,9 @@ import { BonusOffer } from './BonusOffer';
 import { GoldenBubble } from './GoldenBubble';
 import { HappeningBubble } from './HappeningBubble';
 import { LiveText } from './LiveText';
-import { bucketKey, LabRoom, roomBuckets, type RoomBuckets, type StageRect as Rect } from './LabRoom';
-import { PixelRoom } from './PixelRoom';
-import { hasPixelArt, pixelKey, pixelLevels, type PixelLevels } from './pixelLevels';
+import { type StageRect as Rect } from './LabRoom';
+import { hasPlinth, ModelPlinth, PixelRoom } from './PixelRoom';
+import { pixelKey, pixelLevels, type PixelLevels } from './pixelLevels';
 import { stageAccent } from './stageColors';
 import { StatusRow } from './StatusRow';
 import { useGarageStore, type GarageStore } from './store';
@@ -194,6 +194,8 @@ function TapTarget({ size, combo }: { size: number; combo: ComboDisplay }) {
   const pops = useRef<(PopHandle | null)[]>([]);
   const next = useRef(0);
   const mood = useGarage(selMood, id);
+  const scene = useGarage(selScene, same);
+  const plinth = hasPlinth(scene);
   const clock = useAmbientClock(!reduced);
 
   const fireTap = useCallback(
@@ -237,8 +239,11 @@ function TapTarget({ size, combo }: { size: number; combo: ComboDisplay }) {
     const bob = clock ? wave(clock.get(), 2.6) : 0;
     return { transform: [{ translateY: -3 * bob }, { scale: 1 - 0.07 * kick.get() }] };
   });
-  const ringStyle = useAnimatedStyle(() => ({ transform: [{ scale: 1 + 0.06 * kick.get() }], opacity: 0.55 + 0.45 * kick.get() }));
-  const ring2Style = useAnimatedStyle(() => ({ transform: [{ scale: 1 + 0.12 * kick.get() }], opacity: 0.25 + 0.5 * kick.get() }));
+  // On a plinth the rings only flash with a press: at rest the model just stands in the room.
+  const rest = plinth ? 0 : 1;
+  const ringStyle = useAnimatedStyle(() => ({ transform: [{ scale: 1 + 0.06 * kick.get() }], opacity: 0.55 * rest + (1 - 0.55 * rest) * kick.get() }));
+  const ring2Style = useAnimatedStyle(() => ({ transform: [{ scale: 1 + 0.12 * kick.get() }], opacity: 0.25 * rest + (0.75 - 0.25 * rest) * kick.get() }));
+  const mascot = Math.round(size * 0.62);
 
   const ring = (s: number) => ({ width: s, height: s, borderRadius: ROUND ? s / 2 : radius.s });
   return (
@@ -264,9 +269,9 @@ function TapTarget({ size, combo }: { size: number; combo: ComboDisplay }) {
           <View style={styles.centre}>
             <Animated.View style={[styles.ring2, ring(size * 1.04), ring2Style]} />
             <Animated.View style={[styles.ring, ring(size * 0.88), ringStyle]} />
-            <View style={[styles.pad, ring(size * 0.74)]} />
+            {plinth ? <ModelPlinth scene={scene} size={size} mascot={mascot} /> : <View style={[styles.pad, ring(size * 0.74)]} />}
             <Animated.View style={modelStyle}>
-              <Mascot mood={mood} size={Math.round(size * 0.62)} />
+              <Mascot mood={mood} size={mascot} />
             </Animated.View>
           </View>
           {Array.from({ length: POPS }, (_, i) => (
@@ -303,23 +308,10 @@ function FlashLine() {
   );
 }
 
-/** Room buckets from the generator counts: the first tier fills desks, the next four racks, the rest a shelf. */
-const selBuckets = (s: GarageStore): RoomBuckets => {
-  const st = s.state;
-  const gens = s.content.generators;
-  if (!st) return { desks: 0, racks: 0, shelf: [] };
-  return roomBuckets(st.generators, gens.slice(0, 1).map((g) => g.id), gens.slice(1, 5).map((g) => g.id), gens.slice(5).map((g) => ({ id: g.id, icon: g.icon })));
-};
 const selScene = (s: GarageStore) => (s.state ? (currentStage(s.state, s.content)?.scene ?? 'garage') : 'garage');
 const same = (v: string) => v;
 
 const selPixel = (s: GarageStore): PixelLevels => pixelLevels(s.state?.generators ?? {});
-
-/** The drawn (SVG) room of the stages without pixel art, tinted with the stage's palette. */
-const SvgRoom = memo(function SvgRoom({ scene, w, h, ceiling }: { scene: string; w: number; h: number; ceiling: number }) {
-  const buckets = useGarage(selBuckets, bucketKey);
-  return <LabRoom scene={scene} buckets={buckets} w={w} h={h} ceiling={ceiling} />;
-});
 
 /** The pixel-art room, re-rendered only when a count bucket changes. */
 const ArtRoom = memo(function ArtRoom({ scene, w, h }: { scene: string; w: number; h: number }) {
@@ -327,10 +319,38 @@ const ArtRoom = memo(function ArtRoom({ scene, w, h }: { scene: string; w: numbe
   return <PixelRoom scene={scene} levels={levels} w={w} h={h} />;
 });
 
+/** The scene once a save is loaded ('' before), so the first load does not count as a stage change. */
+const selLoadedScene = (s: GarageStore) => (s.state ? selScene(s) : '');
+
+/**
+ * The moment a new stage unlocks: the room flashes in the new stage's accent and fades
+ * (under a second, on the UI thread; nothing with reduced motion). Loading a save is not
+ * a change.
+ */
+const StageFlash = memo(function StageFlash() {
+  const scene = useGarage(selLoadedScene, same);
+  const reduced = useReducedMotion();
+  const prev = useRef(scene);
+  const p = useSharedValue(0);
+  useEffect(() => {
+    const was = prev.current;
+    prev.current = scene;
+    if (!was || !scene || was === scene || reduced) return;
+    p.set(withSequence(withTiming(1, { duration: 90 }), withTiming(0, { duration: 750, easing: Easing.out(Easing.quad) })));
+  }, [scene, reduced, p]);
+  const style = useAnimatedStyle(() => ({ opacity: 0.75 * p.get() }));
+  return <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: stageAccent(scene) ?? colors.player }, style]} pointerEvents="none" testID="garage-stage-flash" />;
+});
+
 /** The room itself, re-rendered only when the stage, a bucket or the size changes. */
-const Room = memo(function Room({ w, h, ceiling }: { w: number; h: number; ceiling: number }) {
+const Room = memo(function Room({ w, h }: { w: number; h: number }) {
   const scene = useGarage(selScene, same);
-  return hasPixelArt(scene) ? <ArtRoom scene={scene} w={w} h={h} /> : <SvgRoom scene={scene} w={w} h={h} ceiling={ceiling} />;
+  return (
+    <>
+      <ArtRoom scene={scene} w={w} h={h} />
+      <StageFlash />
+    </>
+  );
 });
 
 const selNextStage = (s: GarageStore) => {
@@ -394,7 +414,6 @@ export function TapStage({ compact }: { compact?: boolean }) {
   const combo = useComboDisplay();
   const [target, setTarget] = useState(150);
   const [area, setArea] = useState<Rect | null>(null);
-  const [ceiling, setCeiling] = useState(0);
   const onLayout = (e: LayoutChangeEvent) => {
     const { width, height } = e.nativeEvent.layout;
     setBox((b) => (Math.abs(b.w - width) < 1 && Math.abs(b.h - height) < 1 ? b : { w: width, h: height }));
@@ -405,18 +424,12 @@ export function TapStage({ compact }: { compact?: boolean }) {
     setTarget((prev) => (Math.abs(prev - s) < 2 ? prev : Math.floor(s)));
     setArea((a) => (a && Math.abs(a.x - x) < 1 && Math.abs(a.y - y) < 1 && Math.abs(a.w - width) < 1 && Math.abs(a.h - height) < 1 ? a : { x, y, w: width, h: height }));
   };
-  // The HUD plate sits on the room's ceiling band: the room draws its wall below it, so no furniture shows behind the numbers.
-  const onHudLayout = (e: LayoutChangeEvent) => {
-    const { y, height } = e.nativeEvent.layout;
-    const bottom = Math.ceil(y + height);
-    setCeiling((c) => (Math.abs(c - bottom) < 2 ? c : bottom));
-  };
   // The ring around the model (1.04 x its size), at the bottom centre of the target area.
   const avoid: Rect | null = area ? { x: area.x + area.w / 2 - target * 0.52, y: area.y + area.h - target * 1.02, w: target * 1.04, h: target * 1.04 } : null;
   return (
     <View style={styles.stage} onLayout={onLayout} testID="garage-stage">
-      <Room w={box.w} h={box.h} ceiling={ceiling} />
-      <View style={styles.hud} pointerEvents="box-none" onLayout={onHudLayout}>
+      <Room w={box.w} h={box.h} />
+      <View style={styles.hud} pointerEvents="box-none">
         <View style={styles.hudLeft} pointerEvents="box-none" testID="garage-hud">
           <LiveCounter />
           <NextStageGoal />

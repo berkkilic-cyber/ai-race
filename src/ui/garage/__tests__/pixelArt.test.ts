@@ -70,7 +70,7 @@ describe('pixel art generator', () => {
       expect(stageAccent(id)).toMatch(/^#[0-9A-F]{6}$/i);
     }
     expect(PALETTE_SCENES.sort()).toEqual(['datacentre', 'garage', 'latent', 'office', 'town']);
-    expect(Object.keys(PIXEL_SCENES).sort()).toEqual(['garage', 'office']);
+    expect(Object.keys(PIXEL_SCENES).sort()).toEqual(['datacentre', 'garage', 'latent', 'office', 'town']);
   });
 });
 
@@ -103,12 +103,34 @@ describe('pixel scenes layout', () => {
   it.each(SCENES.map((s) => [s.id, s] as [string, unknown]))('%s: layers stay inside the room and clear of the model', (_id, scene) => {
     for (const l of layersOf(scene as Parameters<typeof layersOf>[0])) {
       expect(l.x >= 0 && l.y >= 0 && l.x + l.c.w <= ROOM_W && l.y + l.c.h <= ROOM_H).toBe(true);
-      // The model itself (about 46 art pixels square, centred, above the combo row).
+      // The model itself (about 46 art pixels square, centred, above the combo row) and its plinth.
       for (const p of pixels(l)) {
         const x = p % 1000;
         const y = Math.floor(p / 1000);
         expect([l.id, x > 88 && x < 128 && y > 104 && y < 146]).toEqual([l.id, false]);
+        expect([l.id, 'plinth', x >= 82 && x < 134 && y >= 133 && y < 154]).toEqual([l.id, 'plinth', false]);
       }
+    }
+  });
+
+  it('the later stages show the later tiers as things in the room, at every level from the first; every stage has a plinth', () => {
+    for (const id of ['datacentre', 'town', 'latent']) {
+      const scene = PIXEL_SCENES[id];
+      expect(scene.shelf).toBeNull();
+      for (const t of ['chips', 'power', 'robotics', 'orbital', 'universe']) {
+        const tier = scene.tiers[t];
+        expect([id, t, !!tier]).toEqual([id, t, true]);
+        expect(tier.levels[0]).toBeNull();
+        for (let l = 1; l <= LEVELS.length; l++) expect([id, t, l, !!tier.levels[l]]).toEqual([id, t, l, true]);
+      }
+    }
+    for (const [id, scene] of Object.entries(PIXEL_SCENES)) expect([id, !!scene.plinth]).toEqual([id, true]);
+  });
+
+  it('at most 13 images in the fullest room (with the plinth, 14)', () => {
+    for (const [id, scene] of Object.entries(PIXEL_SCENES)) {
+      const count = 1 + Object.keys(scene.tiers).length + (scene.shelf ? 1 : 0) + scene.ambient.length;
+      expect([id, count <= 13]).toEqual([id, true]);
     }
   });
 
