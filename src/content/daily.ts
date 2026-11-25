@@ -176,6 +176,8 @@ export function validateDaily(content: unknown, pack: ContentPack): string[] {
       }
       if (max && text.length > max) err(`strings.${locale}: "${key}" is ${text.length} chars (max ${max})`);
       if (locale === 'tr' && /\}['’]/.test(text)) err(`strings.tr: "${key}" glues a suffix to a placeholder (docs/GLOSSARY.tr.md)`);
+      // English possessives break on names ending in s ("Hopefuls's"): write around them.
+      if (locale === 'en' && /\}['’]s\b/.test(text)) err(`strings.en: "${key}" puts 's after a placeholder`);
     }
   }
   return problems;
