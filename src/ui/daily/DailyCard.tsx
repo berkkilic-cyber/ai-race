@@ -181,7 +181,7 @@ const styles = StyleSheet.create({
   score: { ...voice.calmNumber, color: colors.playerText, fontSize: type.m },
   meta: { flexDirection: 'row', justifyContent: 'space-between', gap: spacing.s },
   streak: { ...voice.body, color: colors.text, fontSize: type.xs, flexShrink: 1 },
-  next: { ...voice.calmNumber, color: colors.dim, fontSize: type.xs, ...tabular },
+  next: { ...voice.calmNumber, color: colors.dim, fontSize: type.xs, ...tabular, flexShrink: 0 },
   actions: { flexDirection: 'row', gap: spacing.s, marginTop: 2 },
   main: { flex: 1, minHeight: 44 },
   side: { minHeight: 44, paddingHorizontal: spacing.m },
