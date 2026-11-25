@@ -12,6 +12,8 @@ const { Canvas } = require('./canvas');
 const G = require('./art/garage');
 const O = require('./art/office');
 const D = require('./art/datacentre');
+const T = require('./art/town');
+const L = require('./art/latent');
 
 /** Count buckets: owning at least this many of a tier shows the next level (1..6). */
 const LEVELS = [1, 5, 10, 25, 50, 100];
@@ -50,7 +52,7 @@ function spriteCanvas(spr, frame) {
 
 const kit = { tier, blank, spriteCanvas };
 
-const STAGE_MODULES = [G, O, D];
+const STAGE_MODULES = [G, O, D, T, L];
 
 const SCENES = STAGE_MODULES.map((m) => m.scene(kit));
 

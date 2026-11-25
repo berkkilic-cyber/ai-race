@@ -425,7 +425,7 @@ function scene({ tier, spriteCanvas }) {
           }
         });
         // Level 6: the aisle's floor glows with the cold air.
-        if (level >= 6) for (let y = AISLE.fbot + 1; y < FLOOR; y += 3) {
+        if (level >= 6) for (let y = AISLE.fbot + 1; y < 104; y += 3) {
           const t = (FLOOR - y) / (FLOOR - AISLE.fbot);
           const xa = Math.round(lerp(AISLE.x0 + 4, AISLE.fx0 + 1, t));
           const xb = Math.round(lerp(AISLE.x1 - 5, AISLE.fx1 - 2, t));
@@ -474,7 +474,7 @@ function scene({ tier, spriteCanvas }) {
           if (i === 1 && level >= 6) {
             const sleeper = Props.asleepAtDesk(DESK, looks[1], 5).crop(0, 0, 24, 30);
             c.draw(sleeper, spots[i][0], spots[i][1] - 3);
-            c.stamp(Props.sleepZ, spots[i][0] + 10, spots[i][1] - 16, { frame });
+            c.stamp(Props.sleepZ, spots[i][0] + 15, spots[i][1] - 12, { frame });
           } else c.draw(internConsole((frame + i) % 2, looks[i]), spots[i][0], spots[i][1]);
         }
         // The booth's front glass: two glints over everything inside.
