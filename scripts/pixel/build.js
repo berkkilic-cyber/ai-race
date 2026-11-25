@@ -66,7 +66,7 @@ function renderStage(scene) {
     const { x, y, step } = scene.shelf;
     const items = scene.shelfItems;
     const w = step * SHELF_TIERS.length;
-    const h = 8;
+    const h = scene.shelf.h ?? 8;
     const levels = [null];
     for (let n = 1; n <= SHELF_TIERS.length; n++) {
       const c = new Canvas(w, h);
@@ -74,6 +74,10 @@ function renderStage(scene) {
       levels.push(add(`${scene.id}-shelf-${n}`, c));
     }
     entry.shelf = { x, y, w, h, levels };
+  }
+  if (scene.plinth) {
+    const c = scene.plinth();
+    entry.plinth = { w: c.w, h: c.h, top: scene.plinthTop ?? 2, src: add(`${scene.id}-plinth`, c) };
   }
   for (const a of scene.ambient) {
     const count = a.count ?? 3;
@@ -97,10 +101,14 @@ function compose(scene, rendered, levels, frame = 0) {
     const { x, y, step } = scene.shelf;
     for (let i = 0; i < levels.shelf; i++) {
       const it = scene.shelfItems[SHELF_TIERS[i]];
-      c.stamp(it, x + i * step, y + 8 - it.h);
+      c.stamp(it, x + i * step, y + (scene.shelf.h ?? 8) - it.h);
     }
   }
   for (const a of scene.ambient) c.draw(a.frames(frame % (a.count ?? 3)), a.x, a.y);
+  if (scene.plinth) {
+    const p = scene.plinth();
+    c.draw(p, Math.round(ROOM.w / 2 - p.w / 2), PLINTH_BOX.y);
+  }
   return c;
 }
 
@@ -157,7 +165,7 @@ const GUIDE2 = 0x3dd9ff;
 
 /** The parts of the room that are covered or cut off in the game, drawn as guides on one copy. */
 function guides(rgb, x0, y0, s) {
-  // Visible area at 844x390 (stage 349x290) and 926x428 (stage 387x334), HUD plate, model ring.
+  // Visible area at 844x390 (stage 349x290) and 926x428 (stage 387x334), the HUD plate and the offer slot.
   const cx = ROOM.w / 2;
   for (const [sw, sh, colour] of [
     [349, 290, GUIDE],
@@ -165,16 +173,27 @@ function guides(rgb, x0, y0, s) {
   ]) {
     const vw = sw / DP_PER_PIXEL;
     const vh = sh / DP_PER_PIXEL;
-    const vx = cx - vw / 2;
+    const vx = Math.round((ROOM.w * DP_PER_PIXEL - sw) / 2) / DP_PER_PIXEL;
     const vy = ROOM.h - vh;
     rgb.frame(Math.round(x0 + vx * s), Math.round(y0 + vy * s), Math.round(vw * s), Math.round(vh * s), colour);
-    // HUD plate: 204 x 92 dp at the stage's top left (8 dp in).
-    rgb.frame(Math.round(x0 + (vx + 4) * s), Math.round(y0 + (vy + 2) * s), Math.round(102 * s), Math.round(45 * s), colour);
+    const hud = HUD_PLATE;
+    rgb.frame(Math.round(x0 + (vx + hud.x) * s), Math.round(y0 + (vy + hud.y) * s), Math.round(hud.w * s), Math.round(hud.h * s), colour);
+    const offer = OFFER_SLOT;
+    rgb.frame(Math.round(x0 + (vx + vw - offer.right - offer.w) * s), Math.round(y0 + (vy + offer.y) * s), Math.round(offer.w * s), Math.round(offer.h * s), colour);
   }
-  // The model's ring (156 dp) above the combo row (32 dp), and its opaque pad (111 dp).
-  rgb.frame(Math.round(x0 + (cx - 39) * s), Math.round(y0 + (ROOM.h - 16 - 78) * s), Math.round(78 * s), Math.round(78 * s), GUIDE);
-  rgb.frame(Math.round(x0 + (cx - 28) * s), Math.round(y0 + (ROOM.h - 16 - 39 - 28) * s), Math.round(56 * s), Math.round(56 * s), GUIDE2);
+  // The model (its body, 46 art pixels square) and the plinth under it.
+  const m = MODEL_BOX;
+  rgb.frame(Math.round(x0 + m.x * s), Math.round(y0 + m.y * s), Math.round(m.w * s), Math.round(m.h * s), GUIDE);
+  const p = PLINTH_BOX;
+  rgb.frame(Math.round(x0 + p.x * s), Math.round(y0 + p.y * s), Math.round(p.w * s), Math.round(p.h * s), GUIDE2);
 }
+
+/** In art pixels from the stage's top left: the HUD plate (204 x 90 dp, 8 dp in) and the widest offer (bonus multiplier, about 170 x 48 dp). */
+const HUD_PLATE = { x: 4, y: 1, w: 102, h: 46 };
+const OFFER_SLOT = { right: 4, y: 1, w: 86, h: 26 };
+/** The model's body and its plinth, in room pixels (the same at both phone sizes: the room and the model are bottom-anchored). */
+const MODEL_BOX = { x: 86, y: 94, w: 44, h: 44 };
+const PLINTH_BOX = { x: 82, y: 134, w: 52, h: 20 };
 
 function contactSheet(stages, spriteList) {
   const S = 4;
@@ -222,8 +241,8 @@ function contactSheet(stages, spriteList) {
 const VARIANT_LEVELS = {
   empty: {},
   early: { intern: 2, gpu: 1, closet: 1, scraper: 1 },
-  mid: { intern: 4, gpu: 3, closet: 3, scraper: 2, hall: 1 },
-  full: { intern: 6, gpu: 6, closet: 6, scraper: 6, hall: 6, shelf: 5 },
+  mid: { intern: 4, gpu: 3, closet: 3, scraper: 2, hall: 1, chips: 1, power: 1, shelf: 2 },
+  full: { intern: 6, gpu: 6, closet: 6, scraper: 6, hall: 6, chips: 6, power: 6, robotics: 6, orbital: 6, universe: 6, shelf: 5 },
 };
 
 // ------------------------------------------------------------------ manifest
@@ -238,7 +257,7 @@ function manifest(entries) {
   lines.push('export interface ArtLayer {\n  x: number;\n  y: number;\n  w: number;\n  h: number;\n  frames: number;\n  fps: number;\n}');
   lines.push('export interface ArtTier extends ArtLayer {\n  /** The generator whose count picks the level (a tier can have a second layer elsewhere). */\n  of: string;\n  /** Index = count level (0 = nothing shown). */\n  levels: (ImageSourcePropType | null)[];\n}');
   lines.push('export interface ArtAmbient extends ArtLayer {\n  id: string;\n  src: ImageSourcePropType;\n}');
-  lines.push('export interface ArtScene {\n  room: ImageSourcePropType;\n  /** Back to front. */\n  order: string[];\n  tiers: Record<string, ArtTier>;\n  shelf: { x: number; y: number; w: number; h: number; levels: (ImageSourcePropType | null)[] } | null;\n  ambient: ArtAmbient[];\n}');
+  lines.push('export interface ArtScene {\n  room: ImageSourcePropType;\n  /** Back to front. */\n  order: string[];\n  tiers: Record<string, ArtTier>;\n  shelf: { x: number; y: number; w: number; h: number; levels: (ImageSourcePropType | null)[] } | null;\n  ambient: ArtAmbient[];\n  /** What the model stands on: drawn under it in the tap target, its feet `top` art pixels below the image\'s top edge. */\n  plinth: { w: number; h: number; top: number; src: ImageSourcePropType } | null;\n}');
   lines.push('');
   lines.push(`/** The room in art pixels. */\nexport const ROOM_W = ${ROOM.w};\nexport const ROOM_H = ${ROOM.h};`);
   lines.push(`/** Where the back wall starts and ends (art pixels from the top), to fill a stage wider or taller than the room. */\nexport const ROOM_BANDS = { ceiling: ${ROOM.ceiling}, floor: ${ROOM.floor} };`);
@@ -261,6 +280,7 @@ function manifest(entries) {
     lines.push('    ambient: [');
     for (const a of e.ambient) lines.push(`      { id: '${a.id}', x: ${a.x}, y: ${a.y}, w: ${a.w}, h: ${a.h}, frames: ${a.frames}, fps: ${a.fps}, src: ${req(a.src)} },`);
     lines.push('    ],');
+    lines.push(e.plinth ? `    plinth: { w: ${e.plinth.w}, h: ${e.plinth.h}, top: ${e.plinth.top}, src: ${req(e.plinth.src)} },` : '    plinth: null,');
     lines.push('  },');
   }
   lines.push('};');
@@ -272,6 +292,7 @@ function manifest(entries) {
     for (const t of Object.values(e.tiers)) for (const l of t.levels) if (l) all.push(l);
     if (e.shelf) for (const l of e.shelf.levels) if (l) all.push(l);
     for (const a of e.ambient) all.push(a.src);
+    if (e.plinth) all.push(e.plinth.src);
   }
   lines.push(`export const ART_FILES = ${JSON.stringify([...new Set(all)])};`);
   lines.push('');
@@ -306,7 +327,21 @@ function renderAll() {
   return out;
 }
 
+/** PREVIEW=<stage>: only that stage's scenes (and its sprites) at 4x in /tmp, nothing else written. */
+function preview(id) {
+  const scene = SCENES.find((s) => s.id === id);
+  if (!scene) throw new Error(`no scene ${id}`);
+  const r = renderStage(scene);
+  const variants = {};
+  for (const [v, lv] of Object.entries(VARIANT_LEVELS)) variants[v] = compose(scene, r, lv);
+  const sprites = (scene.sheetSprites ? scene.sheetSprites() : []).map((canvas) => ({ stage: id, canvas }));
+  const file = path.join(require('node:os').tmpdir(), `pixel-preview-${id}.png`);
+  fs.writeFileSync(file, contactSheet([{ id, variants }], process.env.SPRITES ? sprites : []));
+  console.log(`preview: ${file}`);
+}
+
 function main() {
+  if (process.env.PREVIEW) return preview(process.env.PREVIEW);
   const out = renderAll();
   if (process.env.CHECK) {
     let bad = 0;

@@ -21,7 +21,7 @@ import { GoldenBubble } from './GoldenBubble';
 import { HappeningBubble } from './HappeningBubble';
 import { LiveText } from './LiveText';
 import { bucketKey, LabRoom, roomBuckets, type RoomBuckets, type StageRect as Rect } from './LabRoom';
-import { PixelRoom } from './PixelRoom';
+import { hasPlinth, ModelPlinth, PixelRoom } from './PixelRoom';
 import { hasPixelArt, pixelKey, pixelLevels, type PixelLevels } from './pixelLevels';
 import { stageAccent } from './stageColors';
 import { StatusRow } from './StatusRow';
@@ -194,6 +194,8 @@ function TapTarget({ size, combo }: { size: number; combo: ComboDisplay }) {
   const pops = useRef<(PopHandle | null)[]>([]);
   const next = useRef(0);
   const mood = useGarage(selMood, id);
+  const scene = useGarage(selScene, same);
+  const plinth = hasPlinth(scene);
   const clock = useAmbientClock(!reduced);
 
   const fireTap = useCallback(
@@ -237,8 +239,11 @@ function TapTarget({ size, combo }: { size: number; combo: ComboDisplay }) {
     const bob = clock ? wave(clock.get(), 2.6) : 0;
     return { transform: [{ translateY: -3 * bob }, { scale: 1 - 0.07 * kick.get() }] };
   });
-  const ringStyle = useAnimatedStyle(() => ({ transform: [{ scale: 1 + 0.06 * kick.get() }], opacity: 0.55 + 0.45 * kick.get() }));
-  const ring2Style = useAnimatedStyle(() => ({ transform: [{ scale: 1 + 0.12 * kick.get() }], opacity: 0.25 + 0.5 * kick.get() }));
+  // On a plinth the rings only flash with a press: at rest the model just stands in the room.
+  const rest = plinth ? 0 : 1;
+  const ringStyle = useAnimatedStyle(() => ({ transform: [{ scale: 1 + 0.06 * kick.get() }], opacity: 0.55 * rest + (1 - 0.55 * rest) * kick.get() }));
+  const ring2Style = useAnimatedStyle(() => ({ transform: [{ scale: 1 + 0.12 * kick.get() }], opacity: 0.25 * rest + (0.75 - 0.25 * rest) * kick.get() }));
+  const mascot = Math.round(size * 0.62);
 
   const ring = (s: number) => ({ width: s, height: s, borderRadius: ROUND ? s / 2 : radius.s });
   return (
@@ -264,9 +269,9 @@ function TapTarget({ size, combo }: { size: number; combo: ComboDisplay }) {
           <View style={styles.centre}>
             <Animated.View style={[styles.ring2, ring(size * 1.04), ring2Style]} />
             <Animated.View style={[styles.ring, ring(size * 0.88), ringStyle]} />
-            <View style={[styles.pad, ring(size * 0.74)]} />
+            {plinth ? <ModelPlinth scene={scene} size={size} mascot={mascot} /> : <View style={[styles.pad, ring(size * 0.74)]} />}
             <Animated.View style={modelStyle}>
-              <Mascot mood={mood} size={Math.round(size * 0.62)} />
+              <Mascot mood={mood} size={mascot} />
             </Animated.View>
           </View>
           {Array.from({ length: POPS }, (_, i) => (
