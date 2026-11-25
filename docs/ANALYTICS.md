@@ -15,7 +15,7 @@ Providers installed by the app: **buffer** (the rolling log in storage), **memor
 ## Rules the layer keeps
 
 - **Zero work per game tick.** Only discrete actions produce events. The race store subscription compares a few references per tick and returns; actions arrive through `onGameAction` (called by the store's `dispatch`). A test runs 1,000 ticks and checks that no event is tracked and nothing is written.
-- **Batched writes.** The buffer and the retention state are written at most once every 5 s after a change (`BUFFER_FLUSH_MS`), and at once when the app goes to the background. Garage taps are summed and sent as one `garage_tap_batch` at most every 30 s, and when leaving the Garage or going to the background. The same flush sends the settled staff split and the helpers' batched happenings. The auto-buy helper's purchases (every 4 s in Latent Space) are not player purchases and send no `garage_generator_buy`. The pure reader `src/ui/garage/moments.ts` turns two Garage states into the discrete lab changes; the sound mapping uses the same reader.
+- **Batched writes.** The buffer and the retention state are written at most once every 5 s after a change (`BUFFER_FLUSH_MS`), and at once when the app goes to the background. The habits events (task 32, src/ui/analytics/habits.ts) compare a reference or a number per store change: a new away report, the missions store's done and claimed lists, the crate flag, the streak's last day and the Paradigm count. Garage taps are summed and sent as one `garage_tap_batch` at most every 30 s, and when leaving the Garage or going to the background. The same flush sends the settled staff split and the helpers' batched happenings. The auto-buy helper's purchases (every 4 s in Latent Space) are not player purchases and send no `garage_generator_buy`. The pure reader `src/ui/garage/moments.ts` turns two Garage states into the discrete lab changes; the sound mapping uses the same reader.
 - **Never throws into the game.** Every provider and listener call is wrapped; errors are swallowed and counted (`analyticsErrors()`, shown in the debug view). The React mount sits in its own error boundary that renders nothing on failure.
 - **No personal data.** No device identifiers, no advertising ids, no player-typed text (the lab name is never logged: a test plays a run with a marker name and checks it is absent). The install id is random (`crypto.getRandomValues`, else `Math.random`). Params are content ids, numbers and fixed enums; strings are cut to 160 characters. Error messages are logged as they are (cut), so code must not put player text into error messages.
 
@@ -69,6 +69,12 @@ Every event is stored as `{ name, params, t, s }`: `t` is epoch ms, `s` the sess
 | `settings_change` | `key`, `value` | A setting changes (today: Garage haptics). |
 | `demo_cta_tap` | `where`: `start` \| `end` \| `gate` | Browser demo only (`EXPO_PUBLIC_DEMO=1`): the "Join the waitlist" button on the start screen, the end screen or the "In the full game" card. |
 | `demo_gate_seen` | `feature`: `difficulty` \| `runLength` \| `garageStage` | Browser demo only: an "In the full game" note is shown (the card each time it opens; the Garage's next-stage note once per launch). |
+| `away_return` | `hoursAway` (one decimal), `capped` (the away storage filled), `capacityHours` | A return from time away produced a "While you were away" report (a longer gap on top of an unread report counts the extra time). |
+| `mission_complete` | `id` (mission id) | A daily mission reached its goal (once per mission per day). |
+| `mission_claim` | `id` | The player claimed a mission's reward. |
+| `daily_crate_claim` | `streak` | The player opened the daily crate (all three claimed). |
+| `streak_day` | `streak`, `usedDayOff` | The first claim of a UTC day moved the streak (with whether the day off covered a missed day). |
+| `paradigm_shift` | `count` (shifts so far) | The player (after the confirmation) made a Paradigm Shift. |
 | `error` | `where`, `message` | Anything logged through `logError` (error boundary, uncaught errors, failed saves). |
 
 User properties (`setUserProps`): `build` (commit from the build stamp, `+` if dirty), `theme` (content pack id), `locale` (`Intl` locale, e.g. `en-GB`), `platform` (`ios`, `android`, `web`), `installId`.

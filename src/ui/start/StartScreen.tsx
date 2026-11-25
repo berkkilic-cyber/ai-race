@@ -28,6 +28,7 @@ import { colors, shape, spacing, type } from '../theme';
 import { FounderStep } from './FounderStep';
 import { BuildStamp } from '../diagnostics/BuildStamp';
 import { LanguageToggle } from '../locale';
+import { MissionsStartButton } from '../missions';
 import { HowToSheet } from './HowToSheet';
 import { difficultyOptions, difficultyParam, loadDifficultyChoice, saveDifficultyChoice } from './difficulty';
 import { defaultHomeRegion, missingText, randomLabName, validateLabName } from './logic';
@@ -356,6 +357,7 @@ export function StartScreen({ beforeEnter }: StartScreenProps = {}) {
       <BuildStamp style={[styles.stamp, { top: insets.top + 2, right: insets.right + spacing.s }]} />
       <LanguageToggle visible={step === 0} />
       <DemoCta where="start" corner="bottomLeft" visible={step === 0} />
+      <MissionsStartButton hidden={step !== 0} />
       <HowToSheet visible={howTo} onClose={() => setHowTo(false)} />
       <PerksSheet
         visible={perksSheet}

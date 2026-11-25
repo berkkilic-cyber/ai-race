@@ -31,6 +31,35 @@ describe('ai-lab garage content', () => {
     });
   });
 
+  it('the long game: at least 24 named models, a Paradigm tree of 12 to 16 nodes after the last original one, the race-start perks untouched', () => {
+    expect(garage.generations.length).toBeGreaterThanOrEqual(24);
+    const p = garage.paradigm!;
+    expect(p.minGeneration).toBe(11);
+    expect(p.nodes.length).toBeGreaterThanOrEqual(12);
+    expect(p.nodes.length).toBeLessThanOrEqual(16);
+    // Mostly mechanics, not plain multipliers.
+    expect(p.nodes.filter((n) => n.effect.kind === 'globalMult' || n.effect.kind === 'tapMult').length).toBeLessThanOrEqual(3);
+    const race = garage.labRep.perks.filter((x) => ['startCash', 'startHype', 'hypeIncome', 'cashIncome'].includes(x.effect.kind)).map((x) => [x.id, x.rep, x.effect.kind, x.effect.amount]);
+    expect(race).toEqual([
+      ['seed-round', 1, 'startCash', 1],
+      ['press-list', 3, 'startHype', 3],
+      ['fan-club', 9, 'hypeIncome', 0.005],
+      ['old-friends', 16, 'cashIncome', 0.005],
+      ['lucky-breaks', 20, 'startCash', 1],
+      ['insider-list', 38, 'startHype', 2],
+    ]);
+    expect(garage.labRep.perks.some((x) => x.effect.kind === 'awayHours')).toBe(true);
+  });
+
+  it('away storage: 2 h at the start, about 8 h from upgrades, models and perks, a 12 h paid field', () => {
+    expect(garage.offline.capHours).toBe(2);
+    expect(garage.offline.paidCapHours).toBe(12);
+    const ups = garage.upgrades.flatMap((u) => u.effects).filter((e) => e.kind === 'offlineCap').reduce((s, e) => s + (e.kind === 'offlineCap' ? e.hours : 0), 0);
+    const gens = garage.generations.flatMap((g) => g.perks).reduce((s, e) => s + (e.kind === 'offlineCap' ? e.hours : 0), 0);
+    const perks = garage.labRep.perks.reduce((s, x) => s + (x.effect.kind === 'awayHours' ? x.effect.amount : 0), 0);
+    expect(garage.offline.capHours + ups + gens + perks).toBe(8);
+  });
+
   it('the first generator is affordable within about ten seconds of casual tapping', () => {
     expect(garage.generators[0].baseCost / garage.tap.base).toBeLessThanOrEqual(30);
   });
@@ -83,6 +112,8 @@ describe('ai-lab garage content', () => {
       [/^garage\.trait\./, ['value']],
       [/^garage\.stage\.[a-z]+\.unlock$/, []],
       [/^garage\.shipday\.reaction\./, ['rival']],
+      [/^garage\.mission\./, ['a', 'b']],
+      [/^garage\.paradigm\.news$/, ['n']],
     ];
     for (const [key, text] of Object.entries(strings)) {
       const found = [...text.matchAll(/\{(\w+)\}/g)].map((m) => m[1]);

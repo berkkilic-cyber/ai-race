@@ -28,6 +28,7 @@ const TONE: Record<GarageNews['kind'], string> = {
   stage: colors.player,
   happening: colors.info,
   training: colors.good,
+  paradigm: colors.player,
 };
 
 /**

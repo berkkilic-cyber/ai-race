@@ -23,9 +23,9 @@ export interface SetupBonus {
 
 const NO_BONUS: SetupBonus = { perkIds: [] };
 
-/** True for perks that change a race run (not titles or frames). */
+/** True for perks that change a race run (not titles, frames or Garage-only perks such as away storage). */
 export function isPowerPerk(perk: LabPerkDef): boolean {
-  return perk.effect.kind !== 'title' && perk.effect.kind !== 'frame';
+  return perk.effect.kind !== 'title' && perk.effect.kind !== 'frame' && perk.effect.kind !== 'awayHours';
 }
 
 /**

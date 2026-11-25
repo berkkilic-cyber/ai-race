@@ -539,6 +539,474 @@
   "buyIntervalMs": 4000,
   "buyBudgetShare": 0.25
  },
+ "missions": {
+  "reward": {
+   "minutes": 10,
+   "minTaps": 40,
+   "shipShareCap": 0.15,
+   "rep": 0.2
+  },
+  "crate": {
+   "minutes": 30,
+   "minTaps": 150,
+   "shipShareCap": 0.3,
+   "rep": 0.5,
+   "trainingRuns": 1,
+   "streakBonus": 0.1,
+   "streakCap": 7
+  },
+  "dayOffEveryDays": 7,
+  "defs": [
+   {
+    "id": "tap-300",
+    "slot": "garage",
+    "titleKey": "garage.mission.tap-300",
+    "goals": [
+     {
+      "counter": "taps",
+      "goal": 300
+     }
+    ]
+   },
+   {
+    "id": "buy-20",
+    "slot": "garage",
+    "titleKey": "garage.mission.buy-20",
+    "goals": [
+     {
+      "counter": "bought",
+      "goal": 20
+     }
+    ]
+   },
+   {
+    "id": "happenings-5",
+    "slot": "garage",
+    "titleKey": "garage.mission.happenings-5",
+    "goals": [
+     {
+      "counter": "happenings",
+      "goal": 5
+     }
+    ]
+   },
+   {
+    "id": "golden-3",
+    "slot": "garage",
+    "titleKey": "garage.mission.golden-3",
+    "goals": [
+     {
+      "counter": "golden",
+      "goal": 3
+     }
+    ]
+   },
+   {
+    "id": "upgrades-4",
+    "slot": "garage",
+    "titleKey": "garage.mission.upgrades-4",
+    "goals": [
+     {
+      "counter": "upgrades",
+      "goal": 4
+     }
+    ]
+   },
+   {
+    "id": "training-2",
+    "slot": "garage",
+    "titleKey": "garage.mission.training-2",
+    "goals": [
+     {
+      "counter": "training",
+      "goal": 2
+     }
+    ],
+    "minStage": 1
+   },
+   {
+    "id": "incidents-3",
+    "slot": "garage",
+    "titleKey": "garage.mission.incidents-3",
+    "goals": [
+     {
+      "counter": "incidents",
+      "goal": 3
+     }
+    ],
+    "minGeneration": 2
+   },
+   {
+    "id": "sprint-1",
+    "slot": "race",
+    "titleKey": "garage.mission.sprint-1",
+    "goals": [
+     {
+      "counter": "sprintFinish",
+      "goal": 1
+     }
+    ]
+   },
+   {
+    "id": "regions-5",
+    "slot": "race",
+    "titleKey": "garage.mission.regions-5",
+    "goals": [
+     {
+      "counter": "regions",
+      "goal": 5
+     }
+    ]
+   },
+   {
+    "id": "win-1",
+    "slot": "race",
+    "titleKey": "garage.mission.win-1",
+    "goals": [
+     {
+      "counter": "raceWin",
+      "goal": 1
+     }
+    ],
+    "weight": 0.7
+   },
+   {
+    "id": "tier-3",
+    "slot": "race",
+    "titleKey": "garage.mission.tier-3",
+    "goals": [
+     {
+      "counter": "raceTier",
+      "goal": 3
+     }
+    ]
+   },
+   {
+    "id": "moments-4",
+    "slot": "race",
+    "titleKey": "garage.mission.moments-4",
+    "goals": [
+     {
+      "counter": "moments",
+      "goal": 4
+     }
+    ]
+   },
+   {
+    "id": "ship-or-win",
+    "slot": "stretch",
+    "titleKey": "garage.mission.ship-or-win",
+    "goals": [
+     {
+      "counter": "ships",
+      "goal": 1
+     },
+     {
+      "counter": "raceWin",
+      "goal": 1
+     }
+    ]
+   },
+   {
+    "id": "tap-1000",
+    "slot": "stretch",
+    "titleKey": "garage.mission.tap-1000",
+    "goals": [
+     {
+      "counter": "taps",
+      "goal": 1000
+     }
+    ]
+   },
+   {
+    "id": "races-2",
+    "slot": "stretch",
+    "titleKey": "garage.mission.races-2",
+    "goals": [
+     {
+      "counter": "raceFinish",
+      "goal": 2
+     }
+    ]
+   },
+   {
+    "id": "happen-or-regions",
+    "slot": "stretch",
+    "titleKey": "garage.mission.happen-or-regions",
+    "goals": [
+     {
+      "counter": "happenings",
+      "goal": 10
+     },
+     {
+      "counter": "regions",
+      "goal": 8
+     }
+    ]
+   },
+   {
+    "id": "buy-or-moments",
+    "slot": "stretch",
+    "titleKey": "garage.mission.buy-or-moments",
+    "goals": [
+     {
+      "counter": "bought",
+      "goal": 60
+     },
+     {
+      "counter": "moments",
+      "goal": 8
+     }
+    ]
+   },
+   {
+    "id": "train-or-sprint",
+    "slot": "stretch",
+    "titleKey": "garage.mission.train-or-sprint",
+    "goals": [
+     {
+      "counter": "training",
+      "goal": 4
+     },
+     {
+      "counter": "sprintFinish",
+      "goal": 1
+     }
+    ],
+    "minStage": 1
+   }
+  ]
+ },
+ "paradigm": {
+  "minGeneration": 11,
+  "base": 3,
+  "perGeneration": 1,
+  "perLogHype": 0.5,
+  "productionPerPoint": 1.2,
+  "stageEase": 0.5,
+  "newsKey": "garage.paradigm.news",
+  "nodes": [
+   {
+    "id": "campus",
+    "nameKey": "garage.paradigm.node.campus.name",
+    "descKey": "garage.paradigm.node.campus.desc",
+    "icon": "datacentre",
+    "cost": 2,
+    "requires": [],
+    "effect": {
+     "kind": "startStage",
+     "stage": 2
+    }
+   },
+   {
+    "id": "compound",
+    "nameKey": "garage.paradigm.node.compound.name",
+    "descKey": "garage.paradigm.node.compound.desc",
+    "icon": "cash",
+    "cost": 1,
+    "requires": [],
+    "effect": {
+     "kind": "globalMult",
+     "mult": 3
+    }
+   },
+   {
+    "id": "cloud-drive",
+    "nameKey": "garage.paradigm.node.cloud-drive.name",
+    "descKey": "garage.paradigm.node.cloud-drive.desc",
+    "icon": "document",
+    "cost": 1,
+    "requires": [],
+    "effect": {
+     "kind": "awayHours",
+     "hours": 2
+    }
+   },
+   {
+    "id": "intern-pipeline",
+    "nameKey": "garage.paradigm.node.intern-pipeline.name",
+    "descKey": "garage.paradigm.node.intern-pipeline.desc",
+    "icon": "mortarboard",
+    "cost": 2,
+    "requires": [
+     "compound"
+    ],
+    "effect": {
+     "kind": "startGenerators",
+     "generator": "intern",
+     "count": 25
+    }
+   },
+   {
+    "id": "fourth-candidate",
+    "nameKey": "garage.paradigm.node.fourth-candidate.name",
+    "descKey": "garage.paradigm.node.fourth-candidate.desc",
+    "icon": "robot",
+    "cost": 3,
+    "requires": [
+     "campus"
+    ],
+    "effect": {
+     "kind": "candidates",
+     "add": 1
+    }
+   },
+   {
+    "id": "second-crate",
+    "nameKey": "garage.paradigm.node.second-crate.name",
+    "descKey": "garage.paradigm.node.second-crate.desc",
+    "icon": "gpu-crate",
+    "cost": 2,
+    "requires": [
+     "cloud-drive"
+    ],
+    "effect": {
+     "kind": "crateMult",
+     "mult": 2
+    }
+   },
+   {
+    "id": "night-owls",
+    "nameKey": "garage.paradigm.node.night-owls.name",
+    "descKey": "garage.paradigm.node.night-owls.desc",
+    "icon": "bolt",
+    "cost": 3,
+    "requires": [
+     "cloud-drive"
+    ],
+    "effect": {
+     "kind": "offlineRate",
+     "add": 0.15
+    }
+   },
+   {
+    "id": "muscle-memory",
+    "nameKey": "garage.paradigm.node.muscle-memory.name",
+    "descKey": "garage.paradigm.node.muscle-memory.desc",
+    "icon": "star",
+    "cost": 2,
+    "requires": [
+     "compound"
+    ],
+    "effect": {
+     "kind": "tapMult",
+     "mult": 4
+    }
+   },
+   {
+    "id": "caffeine",
+    "nameKey": "garage.paradigm.node.caffeine.name",
+    "descKey": "garage.paradigm.node.caffeine.desc",
+    "icon": "heart",
+    "cost": 2,
+    "requires": [
+     "muscle-memory"
+    ],
+    "effect": {
+     "kind": "comboWindow",
+     "addMs": 400
+    }
+   },
+   {
+    "id": "open-plan",
+    "nameKey": "garage.paradigm.node.open-plan.name",
+    "descKey": "garage.paradigm.node.open-plan.desc",
+    "icon": "crowd",
+    "cost": 2,
+    "requires": [
+     "campus"
+    ],
+    "effect": {
+     "kind": "happeningInterval",
+     "mult": 0.7
+    }
+   },
+   {
+    "id": "low-bar",
+    "nameKey": "garage.paradigm.node.low-bar.name",
+    "descKey": "garage.paradigm.node.low-bar.desc",
+    "icon": "launch",
+    "cost": 4,
+    "requires": [
+     "intern-pipeline"
+    ],
+    "effect": {
+     "kind": "shipThreshold",
+     "mult": 0.5
+    }
+   },
+   {
+    "id": "gpu-reservations",
+    "nameKey": "garage.paradigm.node.gpu-reservations.name",
+    "descKey": "garage.paradigm.node.gpu-reservations.desc",
+    "icon": "chip",
+    "cost": 3,
+    "requires": [
+     "fourth-candidate"
+    ],
+    "effect": {
+     "kind": "trainingQueue",
+     "add": 2
+    }
+   },
+   {
+    "id": "lucky-seeds",
+    "nameKey": "garage.paradigm.node.lucky-seeds.name",
+    "descKey": "garage.paradigm.node.lucky-seeds.desc",
+    "icon": "trophy",
+    "cost": 4,
+    "requires": [
+     "fourth-candidate"
+    ],
+    "effect": {
+     "kind": "rarityLuck",
+     "add": 0.6
+    }
+   },
+   {
+    "id": "ship-friday",
+    "nameKey": "garage.paradigm.node.ship-friday.name",
+    "descKey": "garage.paradigm.node.ship-friday.desc",
+    "icon": "rack-2",
+    "cost": 5,
+    "requires": [
+     "low-bar"
+    ],
+    "effect": {
+     "kind": "autoShip",
+     "choice": "safe"
+    }
+   },
+   {
+    "id": "model-archive",
+    "nameKey": "garage.paradigm.node.model-archive.name",
+    "descKey": "garage.paradigm.node.model-archive.desc",
+    "icon": "news",
+    "cost": 5,
+    "requires": [
+     "lucky-seeds"
+    ],
+    "effect": {
+     "kind": "keepModels"
+    }
+   },
+   {
+    "id": "compound-2",
+    "nameKey": "garage.paradigm.node.compound-2.name",
+    "descKey": "garage.paradigm.node.compound-2.desc",
+    "icon": "cash",
+    "cost": 8,
+    "requires": [
+     "low-bar",
+     "compound"
+    ],
+    "effect": {
+     "kind": "globalMult",
+     "mult": 5
+    }
+   }
+  ]
+ },
  "generators": [
   {
    "id": "intern",
@@ -1762,21 +2230,37 @@
    "nameKey": "garage.up.offline-1.name",
    "descKey": "garage.up.offline-1.desc",
    "icon": "document",
-   "cost": 500000.0,
+   "cost": 150000,
    "effects": [
     {
      "kind": "offlineCap",
-     "hours": 2
+     "hours": 1
     }
    ],
    "requires": [
     {
-     "type": "generation",
-     "min": 1
-    },
+     "type": "lifetime",
+     "tokens": 60000
+    }
+   ],
+   "keep": true
+  },
+  {
+   "id": "offline-4",
+   "nameKey": "garage.up.offline-4.name",
+   "descKey": "garage.up.offline-4.desc",
+   "icon": "document",
+   "cost": 60000000,
+   "effects": [
+    {
+     "kind": "offlineCap",
+     "hours": 1
+    }
+   ],
+   "requires": [
     {
      "type": "lifetime",
-     "tokens": 200000.0
+     "tokens": 20000000
     }
    ],
    "keep": true
@@ -1810,21 +2294,21 @@
    "nameKey": "garage.up.offline-3.name",
    "descKey": "garage.up.offline-3.desc",
    "icon": "document",
-   "cost": 5000000000000.0,
+   "cost": 200000000000,
    "effects": [
     {
      "kind": "offlineCap",
-     "hours": 4
+     "hours": 2
     }
    ],
    "requires": [
     {
      "type": "generation",
-     "min": 6
+     "min": 3
     },
     {
      "type": "lifetime",
-     "tokens": 1000000000000.0
+     "tokens": 80000000000
     }
    ],
    "keep": true
@@ -1959,7 +2443,7 @@
    "perks": [
     {
      "kind": "offlineCap",
-     "hours": 2
+     "hours": 1
     }
    ]
   },
@@ -2049,6 +2533,162 @@
    "headlineKey": "garage.model.super.headline",
    "unlockKey": "garage.model.super.unlock",
    "shipAt": 4.01e+23,
+   "perks": [
+    {
+     "kind": "globalMult",
+     "mult": 3
+    }
+   ]
+  },
+  {
+   "id": "stable",
+   "nameKey": "garage.model.stable.name",
+   "headlineKey": "garage.model.stable.headline",
+   "unlockKey": "garage.model.stable.unlock",
+   "shipAt": 4.01e+24,
+   "perks": [
+    {
+     "kind": "goldenMult",
+     "mult": 1.5
+    }
+   ]
+  },
+  {
+   "id": "openish",
+   "nameKey": "garage.model.openish.name",
+   "headlineKey": "garage.model.openish.headline",
+   "unlockKey": "garage.model.openish.unlock",
+   "shipAt": 4.01e+25,
+   "perks": [
+    {
+     "kind": "offlineRate",
+     "add": 0.05
+    }
+   ]
+  },
+  {
+   "id": "nohallu",
+   "nameKey": "garage.model.nohallu.name",
+   "headlineKey": "garage.model.nohallu.headline",
+   "unlockKey": "garage.model.nohallu.unlock",
+   "shipAt": 4.0099999999999996e+26,
+   "perks": [
+    {
+     "kind": "goldenInterval",
+     "mult": 0.9
+    }
+   ]
+  },
+  {
+   "id": "sorry",
+   "nameKey": "garage.model.sorry.name",
+   "headlineKey": "garage.model.sorry.headline",
+   "unlockKey": "garage.model.sorry.unlock",
+   "shipAt": 4.01e+27,
+   "perks": [
+    {
+     "kind": "comboStacks",
+     "add": 5
+    }
+   ]
+  },
+  {
+   "id": "longctx",
+   "nameKey": "garage.model.longctx.name",
+   "headlineKey": "garage.model.longctx.headline",
+   "unlockKey": "garage.model.longctx.unlock",
+   "shipAt": 4.01e+28,
+   "perks": [
+    {
+     "kind": "tapMult",
+     "mult": 2
+    }
+   ]
+  },
+  {
+   "id": "finalfinal",
+   "nameKey": "garage.model.finalfinal.name",
+   "headlineKey": "garage.model.finalfinal.headline",
+   "unlockKey": "garage.model.finalfinal.unlock",
+   "shipAt": 4.01e+29,
+   "perks": [
+    {
+     "kind": "globalMult",
+     "mult": 2
+    }
+   ]
+  },
+  {
+   "id": "multiverse",
+   "nameKey": "garage.model.multiverse.name",
+   "headlineKey": "garage.model.multiverse.headline",
+   "unlockKey": "garage.model.multiverse.unlock",
+   "shipAt": 4.01e+30,
+   "perks": [
+    {
+     "kind": "globalMult",
+     "mult": 1.5
+    }
+   ]
+  },
+  {
+   "id": "champion",
+   "nameKey": "garage.model.champion.name",
+   "headlineKey": "garage.model.champion.headline",
+   "unlockKey": "garage.model.champion.unlock",
+   "shipAt": 4.01e+31,
+   "perks": [
+    {
+     "kind": "tapFromRate",
+     "share": 0.02
+    }
+   ]
+  },
+  {
+   "id": "monarch",
+   "nameKey": "garage.model.monarch.name",
+   "headlineKey": "garage.model.monarch.headline",
+   "unlockKey": "garage.model.monarch.unlock",
+   "shipAt": 4.01e+32,
+   "perks": [
+    {
+     "kind": "goldenMult",
+     "mult": 1.5
+    }
+   ]
+  },
+  {
+   "id": "vibes",
+   "nameKey": "garage.model.vibes.name",
+   "headlineKey": "garage.model.vibes.headline",
+   "unlockKey": "garage.model.vibes.unlock",
+   "shipAt": 4.01e+33,
+   "perks": [
+    {
+     "kind": "globalMult",
+     "mult": 2
+    }
+   ]
+  },
+  {
+   "id": "singlite",
+   "nameKey": "garage.model.singlite.name",
+   "headlineKey": "garage.model.singlite.headline",
+   "unlockKey": "garage.model.singlite.unlock",
+   "shipAt": 4.0099999999999997e+34,
+   "perks": [
+    {
+     "kind": "globalMult",
+     "mult": 2
+    }
+   ]
+  },
+  {
+   "id": "agi",
+   "nameKey": "garage.model.agi.name",
+   "headlineKey": "garage.model.agi.headline",
+   "unlockKey": "garage.model.agi.unlock",
+   "shipAt": 4.01e+35,
    "perks": [
     {
      "kind": "globalMult",
@@ -2205,8 +2845,9 @@
  "offline": {
   "thresholdMs": 60000,
   "rate": 0.5,
-  "capHours": 4,
-  "reportMinMs": 120000
+  "capHours": 2,
+  "reportMinMs": 120000,
+  "paidCapHours": 12
  },
  "offers": [
   {
@@ -2617,15 +3258,14 @@
     }
    },
    {
-    "id": "frame-tape",
+    "id": "storage-unit",
     "rep": 12,
-    "textKey": "garage.perk.frame-tape",
-    "nameKey": "garage.perk.frame-tape.name",
-    "quipKey": "garage.perk.frame-tape.quip",
+    "textKey": "garage.perk.storage-unit",
+    "nameKey": "garage.perk.storage-unit.name",
+    "quipKey": "garage.perk.storage-unit.quip",
     "effect": {
-     "kind": "frame",
-     "amount": 1,
-     "color": "#C9A66B"
+     "kind": "awayHours",
+     "amount": 1
     }
    },
    {

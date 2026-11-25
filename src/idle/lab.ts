@@ -6,9 +6,25 @@
 import { between, grant, pickWeighted, pushNews, random } from './core';
 import { factor, mechanicOn, modelEffects, staffEffects } from './labRates';
 import { amount } from './num';
+import { paradigmEffects } from './paradigmRates';
 import { bulkCost, generatorDef, multipliers, tapValue, totalRate, trainingSpeed, unitCost, withoutRaceBoost } from './rates';
 import type { GarageContent, GarageState, HappeningDef, ModelCandidate, ModelStat, Requirement, StaffSplit, TraitDef } from './types';
 import { STAFF_LANES } from './types';
+
+/** The training queue's size after the Paradigm tree. */
+export function queueMax(state: Pick<GarageState, 'paradigm'>, content: GarageContent): number {
+  return (content.training?.queueMax ?? 0) + paradigmEffects(state, content).trainingQueue;
+}
+
+/**
+ * A stage requirement as it applies to this save: after a first Paradigm Shift, the
+ * generation a stage needs is eased (paradigm.stageEase, rounded up, at least 1).
+ */
+export function stageRequirement(state: Pick<GarageState, 'paradigm'>, content: GarageContent, req: Requirement): Requirement {
+  const ease = content.paradigm?.stageEase;
+  if (req.type !== 'generation' || !ease || !(state.paradigm && state.paradigm.count > 0)) return req;
+  return { type: 'generation', min: Math.max(1, Math.ceil(req.min * ease)) };
+}
 
 /** A requirement against the save (stages use the all-time and generation kinds). */
 export function labRequirementMet(state: GarageState, req: Requirement): boolean {
@@ -48,23 +64,24 @@ export function accrueTraining(s: GarageState, content: GarageContent, t: number
   const cfg = content.training;
   if (!cfg || !mechanicOn(s, content, 'training')) return;
   const tr = s.training;
-  if (tr.charges >= cfg.queueMax) {
+  const max = queueMax(s, content);
+  if (tr.charges >= max) {
     tr.nextChargeAt = 0;
     return;
   }
   const cd = trainingCooldownMs(s, content);
   if (!(tr.nextChargeAt > 0)) tr.nextChargeAt = t + cd;
   if (t < tr.nextChargeAt) return;
-  const gained = Math.min(cfg.queueMax - tr.charges, 1 + Math.floor((t - tr.nextChargeAt) / cd));
+  const gained = Math.min(max - tr.charges, 1 + Math.floor((t - tr.nextChargeAt) / cd));
   tr.charges += gained;
-  tr.nextChargeAt = tr.charges >= cfg.queueMax ? 0 : tr.nextChargeAt + gained * cd;
+  tr.nextChargeAt = tr.charges >= max ? 0 : tr.nextChargeAt + gained * cd;
 }
 
 /** Moves into every stage whose requirements now hold (stages are never lost). */
 export function updateStage(s: GarageState, content: GarageContent): void {
   const stages = content.stages;
   if (!stages) return;
-  while (s.stage + 1 < stages.length && stages[s.stage + 1].requires.every((r) => labRequirementMet(s, r))) {
+  while (s.stage + 1 < stages.length && stages[s.stage + 1].requires.every((r) => labRequirementMet(s, stageRequirement(s, content, r)))) {
     s.stage += 1;
     const def = stages[s.stage];
     pushNews(s, content, def.unlockKey, 'stage', s.now, { stage: def.nameKey });
@@ -105,7 +122,7 @@ export function happeningPenalty(state: GarageState, content: GarageContent, def
 export function spawnHappening(s: GarageState, content: GarageContent, t: number): void {
   const cfg = content.happenings;
   if (!cfg) return;
-  const interval = between(s, cfg.intervalMinMs, cfg.intervalMaxMs);
+  const interval = between(s, cfg.intervalMinMs, cfg.intervalMaxMs) * paradigmEffects(s, content).happeningInterval;
   const def = pickWeighted(s, cfg.defs.filter((d) => (d.minStage ?? 0) <= s.stage));
   if (!def) {
     s.nextHappeningAt = t + interval;
@@ -208,10 +225,11 @@ function roll(s: GarageState, def: TraitDef, power: number): number {
 export function rollCandidates(s: GarageState, content: GarageContent): ModelCandidate[] {
   const cfg = content.training;
   if (!cfg) return [];
-  const luck = staffEffects(s, content).luck;
+  const pe = paradigmEffects(s, content);
+  const luck = staffEffects(s, content).luck + pe.rarityLuck;
   const out: ModelCandidate[] = [];
   const leads = new Set<ModelStat>();
-  for (let i = 0; i < cfg.candidates; i++) {
+  for (let i = 0; i < cfg.candidates + pe.candidates; i++) {
     const rarity = pickWeighted(s, cfg.rarities, (r) => r.weight * Math.max(0.05, 1 + r.luck * luck)) ?? cfg.rarities[0];
     const boons: { trait: string; value: number }[] = [];
     const used = new Set<ModelStat>();

@@ -33,6 +33,7 @@ export {
   requirementProgress,
   shipGain,
   shipHypeMult,
+  shipNeeded,
   shipThreshold,
   tap,
   tapIncident,
@@ -106,7 +107,12 @@ export {
   type TrainingStatus,
 } from './labActions';
 export { MAX_AMOUNT, amount, finite, formatAmount, formatDuration } from './num';
-export { deserialize, migrateV1, migrateV2, sanitize, serialize, type LoadResult } from './save';
+export { deserialize, migrateV1, migrateV2, migrateV3, sanitize, serialize, type LoadResult } from './save';
+export { autoShipDue, buyParadigmNode, emptyParadigm, paradigmGain, paradigmNodeBlock, paradigmShift, paradigmStatus, runAutoShip, setAutoShip, type ParadigmStatus } from './paradigm';
+export { comboWindowMs, paradigmEffects, paradigmMultiplier, paradigmNode, type ParadigmEffects } from './paradigmRates';
+export { queueMax, stageRequirement } from './lab';
 export { validateGarage } from './validate';
+export { addLabRep, claimDailyReward, dailyRewardQuote, type DailyRewardKind, type DailyRewardOpts, type DailyRewardQuote } from './daily';
+export { awayStorage, nextStorage, perkAwayHours, storageFill, storageReachHours, type AwayStorage, type StorageNext, type StorageSource, type StorageSourceKind } from './storage';
 export { nextRandom, seedFrom } from './rng';
 export { emptyRaceLink, grantRaceReward, labRepTotal, markRaceNoteSeen, raceBoostLeftMs, raceRewardQuote, type RaceRewardQuote } from './race';

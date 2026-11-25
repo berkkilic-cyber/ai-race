@@ -3,6 +3,7 @@ import { create } from 'zustand';
 import {
   advance,
   buy,
+  buyParadigmNode,
   buyMax,
   buyUpgrade,
   claimOffer,
@@ -14,11 +15,14 @@ import {
   keepModel,
   launchTraining,
   moveStaff,
+  paradigmShift,
   prestige,
+  runAutoShip,
   retireModel,
   scrapCandidates,
   serialize,
   setAutoBuy,
+  setAutoShip,
   tap,
   tapIncident,
   type StaffLane,
@@ -94,6 +98,10 @@ export interface GarageStore {
   retireModel(uid: number): void;
   moveStaff(from: StaffLane, to: StaffLane): boolean;
   setAutoBuy(on: boolean): void;
+  /** Paradigm Shift (after the player confirmed). */
+  paradigmShift(): boolean;
+  buyParadigmNode(id: string): boolean;
+  setAutoShip(on: boolean): void;
   collectGolden(): ActionResult | null;
   tapIncident(): void;
   claim(offer: OfferId, choice?: string): ActionResult | null;
@@ -168,11 +176,18 @@ export const useGarageStore = create<GarageStore>()((set, get) => {
     tick() {
       const s = get().state;
       if (!s) return;
-      const next = advance(s, get().content, now());
+      let next = advance(s, get().content, now());
+      // Auto-ship (a Paradigm tree node): ships quietly, the ticker carries the headline.
+      const auto = runAutoShip(next, get().content, now());
+      if (auto.ok) {
+        logLifecycle('garage auto-shipped', { generation: auto.state.generation });
+        next = auto.state;
+      }
       if (next !== s) {
         set({ state: next });
         noteStage(s, next);
-        get().save();
+        if (auto.ok) get().save(true);
+        else get().save();
       }
     },
 
@@ -276,6 +291,30 @@ export const useGarageStore = create<GarageStore>()((set, get) => {
     setAutoBuy(on) {
       const s = get().state;
       if (s) apply(setAutoBuy(s, get().content, on, now()), true);
+    },
+
+    paradigmShift() {
+      const s = get().state;
+      if (!s) return false;
+      const r = paradigmShift(s, get().content, now());
+      if (!r.ok) return apply(r, false);
+      logLifecycle('garage paradigm shift', { count: r.state.paradigm?.count ?? 0 });
+      set({ state: r.state, tab: 'build', shipDay: null, launch: null, stageCard: null });
+      get().save(true);
+      return true;
+    },
+
+    buyParadigmNode(id) {
+      const s = get().state;
+      if (!s) return false;
+      const r = buyParadigmNode(s, get().content, id, now());
+      if (r.ok) logLifecycle('garage paradigm node', { id });
+      return apply(r, true);
+    },
+
+    setAutoShip(on) {
+      const s = get().state;
+      if (s) apply(setAutoShip(s, get().content, on, now()), true);
     },
 
     collectGolden() {

@@ -170,7 +170,7 @@ describe('advance', () => {
     const r = advance(s, calm, T0 + 10 * 3_600_000);
     const expected = 60 * 4 * 3600 * 0.5;
     expect(r.tokens).toBeCloseTo(expected);
-    expect(r.offline).toEqual({ awayMs: 10 * 3_600_000, creditedMs: 4 * 3_600_000, tokens: r.tokens, doubled: false });
+    expect(r.offline).toEqual({ awayMs: 10 * 3_600_000, creditedMs: 4 * 3_600_000, tokens: r.tokens, doubled: false, capped: true, capMs: 4 * 3_600_000 });
     expect(dismissOffline(r).offline).toBeNull();
   });
   it('offline catch-up equals the same time integrated in steps (a boost ending midway)', () => {

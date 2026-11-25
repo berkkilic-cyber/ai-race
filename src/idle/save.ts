@@ -8,7 +8,7 @@ import { GARAGE_VERSION, createGarage, emptyStats } from './garage';
 import { evenStaff, labRequirementMet } from './lab';
 import { modelSlots, traitDef } from './labRates';
 import { amount, finite } from './num';
-import type { GarageContent, GarageNews, GarageState, ModelCandidate, OfferId, RaceLinkState, StaffSplit } from './types';
+import type { GarageContent, GarageNews, GarageState, ModelCandidate, OfferId, ParadigmState, RaceLinkState, StaffSplit } from './types';
 import { OFFER_IDS, STAFF_LANES } from './types';
 
 export interface LoadResult {
@@ -55,7 +55,16 @@ export function migrateV2(raw: Raw): Raw {
   return { ...raw, version: 3, stage: undefined, training: undefined, models: [], staff: undefined, shipChoice: null, autoBuy: false, migratedLab: true };
 }
 
-const MIGRATIONS: Record<number, (raw: Raw) => Raw> = { 1: migrateV1, 2: migrateV2 };
+/**
+ * Version 3 had no Paradigm layer, no away-storage fields and twelve named models. Nothing to
+ * move: the layer starts empty (absent), and a save past Model 12 keeps its generation (the
+ * models that were "Model 13" … are now named; their ship thresholds are the new ladder's).
+ */
+export function migrateV3(raw: Raw): Raw {
+  return { ...raw, version: 4, paradigm: undefined };
+}
+
+const MIGRATIONS: Record<number, (raw: Raw) => Raw> = { 1: migrateV1, 2: migrateV2, 3: migrateV3 };
 
 function sanitizeModel(v: unknown, content: GarageContent): ModelCandidate | null {
   const cfg = content.training;
@@ -116,7 +125,7 @@ export function sanitize(raw: Raw, content: GarageContent, fresh: GarageState): 
       : null;
   const frenzy = isObj(raw.frenzy) && Number.isFinite(raw.frenzy.until) ? { mult: num(raw.frenzy.mult, 1) || 1, tapMult: num(raw.frenzy.tapMult, 1) || 1, until: time(raw.frenzy.until, 0) } : null;
   const news = Array.isArray(raw.news) ? (raw.news.filter((n) => isObj(n) && typeof n.key === 'string') as unknown as GarageNews[]).slice(-content.news.keep) : [];
-  const offline = isObj(raw.offline) ? { awayMs: num(raw.offline.awayMs), creditedMs: num(raw.offline.creditedMs), tokens: num(raw.offline.tokens), doubled: raw.offline.doubled === true } : null;
+  const offline = isObj(raw.offline) ? { awayMs: num(raw.offline.awayMs), creditedMs: num(raw.offline.creditedMs), tokens: num(raw.offline.tokens), doubled: raw.offline.doubled === true, ...(raw.offline.capped === true ? { capped: true } : {}), ...(typeof raw.offline.capMs === 'number' && raw.offline.capMs > 0 ? { capMs: num(raw.offline.capMs) } : {}) } : null;
   const choiceIds = new Set((content.shipDay?.choices ?? []).map((c) => c.id));
   const lastShip = isObj(raw.lastShip)
     ? { generation: num(raw.lastShip.generation), hypeGained: num(raw.lastShip.hypeGained), at: time(raw.lastShip.at, now), ...(typeof raw.lastShip.choice === 'string' && choiceIds.has(raw.lastShip.choice) ? { choice: raw.lastShip.choice } : {}) }
@@ -174,9 +183,12 @@ export function sanitize(raw: Raw, content: GarageContent, fresh: GarageState): 
     autoBuy: raw.autoBuy === true,
     nextAutoBuyAt: time(raw.nextAutoBuyAt, 0),
     bonusOffer: null,
+    ...(raw.paidStorage === true ? { paidStorage: true } : {}),
   };
   const race = sanitizeRace(raw.race, now);
   if (race) state.race = race;
+  const paradigm = sanitizeParadigm(raw.paradigm, content);
+  if (paradigm) state.paradigm = paradigm;
   // Stages are earned by progress that never resets: a save is at least where its progress puts it.
   const stages = content.stages ?? [];
   while (state.stage + 1 < stages.length && stages[state.stage + 1].requires.every((r) => labRequirementMet(state, r))) state.stage += 1;
@@ -185,6 +197,21 @@ export function sanitize(raw: Raw, content: GarageContent, fresh: GarageState): 
   if (uids.length) state.uidSeq = Math.max(state.uidSeq, ...uids.map((u) => u + 1));
   if (raw.migratedLab === true && content.training && stages.slice(0, state.stage + 1).some((st) => st.mechanic === 'training')) state.training = { charges: 1, nextChargeAt: now + content.training.cooldownMs, candidates: null };
   return state;
+}
+
+/** The Paradigm layer of a save (undefined when it has none, it is unusable, or the content has no layer). */
+function sanitizeParadigm(value: unknown, content: GarageContent): ParadigmState | undefined {
+  if (!isObj(value) || !content.paradigm) return undefined;
+  const ids = new Set(content.paradigm.nodes.map((n) => n.id));
+  const nodes = Array.isArray(value.nodes) ? [...new Set(value.nodes.filter((x): x is string => typeof x === 'string' && ids.has(x)))] : [];
+  return {
+    count: Math.floor(num(value.count)),
+    points: Math.floor(num(value.points)),
+    earned: Math.floor(num(value.earned)),
+    nodes,
+    autoShip: value.autoShip === true,
+    bestGeneration: Math.floor(num(value.bestGeneration)),
+  };
 }
 
 /** The race link of a save (undefined when it has none or it is unusable). */

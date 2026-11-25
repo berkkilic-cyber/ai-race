@@ -37,7 +37,7 @@ describe('garage content in the UI', () => {
       'Taps +2% of production',
       'Rented GPU ×3',
       'All production ×1.5',
-      'Away cap +2h',
+      'Away storage +2 h',
       'Away earnings +15%',
       'Combo cap +5',
       'Golden moments ×2',

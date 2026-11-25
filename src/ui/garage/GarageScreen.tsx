@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { MockAdHost, useAdStore } from '../ads';
+import { MissionsSheetHost, MissionToastHost } from '../missions';
 import { Ground } from '../components/Deco';
 import { GarageRaceNote } from '../meta/GarageRaceNote';
 import { useInsets } from '../hooks/useInsets';
@@ -9,12 +10,14 @@ import { useLayoutMode } from '../hooks/useLayoutMode';
 import { t } from '../i18n';
 import { AmbientProvider } from '../motion/ambient';
 import { colors, shape, voice } from '../theme';
+import { AwayStorageSheet } from './AwayStorage';
 import { installGarageDebug } from './debug';
 import { GarageHeader } from './GarageHeader';
 import { GarageTicker } from './GarageTicker';
 import { useGarageLoop } from './hooks';
 import { LaunchCard } from './LaunchCard';
 import { OfflinePanel } from './OfflinePanel';
+import { ParadigmConfirmHost } from './ParadigmPanel';
 import { SettingsSheet } from './SettingsSheet';
 import { ShipDay } from './ShipDay';
 import { SidePanel } from './SidePanel';
@@ -81,6 +84,10 @@ export function GarageScreen() {
         <GarageRaceNote />
         <ShipDay />
         <LaunchCard />
+        <AwayStorageSheet />
+        <ParadigmConfirmHost />
+        <MissionsSheetHost />
+        <MissionToastHost />
         <MockAdHost />
       </AmbientProvider>
     </View>

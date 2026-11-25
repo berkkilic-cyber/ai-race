@@ -3,6 +3,7 @@
  */
 import { factor, milestoneMult, modelEffects, staffEffects } from './labRates';
 import { amount } from './num';
+import { comboWindowMs, paradigmEffects, paradigmMultiplier } from './paradigmRates';
 import type { GarageContent, GarageState, GeneratorDef, GeneratorId, OfferDef, OfferId, UpgradeDef, UpgradeEffect } from './types';
 
 export const HOUR_MS = 3_600_000;
@@ -133,7 +134,7 @@ export function generatorRate(state: GarageState, content: GarageContent, id: Ge
   if (!def || count <= 0) return 0;
   const m = multipliers(state, content);
   let r = count * def.baseRate * (m.generator[id] ?? 1) * m.global * hypeMultiplier(state, content) * timedMultiplier(state, content, at);
-  r *= milestoneMult(content, count) * labProductionMult(state, content);
+  r *= milestoneMult(content, count) * labProductionMult(state, content) * paradigmMultiplier(state, content);
   const inc = state.incident;
   if (inc && inc.generator === id && at < inc.until) {
     const idef = incidentDef(content, inc.id);
@@ -159,11 +160,28 @@ export function incidentFrequency(state: Pick<GarageState, 'models' | 'staff' | 
   return Math.max(0.1, staffEffects(state, content).incidentFreq * factor(modelEffects(state, content).incident, 0.2) * (choice?.incidentMult ?? 1));
 }
 
-/** Offline cap (ms) and rate after upgrades, generation perks and kept models. */
-export function offlineTerms(state: Pick<GarageState, 'upgrades' | 'generation' | 'models'>, content: GarageContent): { capMs: number; rate: number } {
+/** Hours of away storage from Lab Rep perks (`awayHours`) at this Lab Rep. */
+export function perkAwayHours(state: Pick<GarageState, 'labRep'>, content: GarageContent): number {
+  let h = 0;
+  const rep = Number.isFinite(state.labRep) ? state.labRep : 0;
+  for (const p of content.labRep.perks) if (p.effect.kind === 'awayHours' && rep >= p.rep && Number.isFinite(p.effect.amount)) h += p.effect.amount;
+  return h;
+}
+
+type OfflineInputs = Pick<GarageState, 'upgrades' | 'generation' | 'models'> & Partial<Pick<GarageState, 'labRep' | 'paidStorage' | 'paradigm'>>;
+
+/**
+ * Offline cap ("away storage", ms) and rate: the base, upgrades and generation perks, kept
+ * models, Lab Rep perks, and the reserved paid extension (a floor at offline.paidCapHours).
+ */
+export function offlineTerms(state: OfflineInputs, content: GarageContent): { capMs: number; rate: number } {
   const m = multipliers(state, content);
   const e = modelEffects(state, content);
-  return { capMs: Math.max(HOUR_MS / 2, m.offlineCapMs + e.offlineCap * HOUR_MS), rate: Math.max(0.05, Math.min(1, m.offlineRate + e.offlineRate)) };
+  const perks = perkAwayHours({ labRep: state.labRep ?? 0 }, content);
+  const pe = paradigmEffects({ paradigm: state.paradigm }, content);
+  let capMs = Math.max(HOUR_MS / 2, m.offlineCapMs + (e.offlineCap + perks + pe.awayHours) * HOUR_MS);
+  if (state.paidStorage && content.offline.paidCapHours) capMs = Math.max(capMs, content.offline.paidCapHours * HOUR_MS);
+  return { capMs, rate: Math.max(0.05, Math.min(1, m.offlineRate + e.offlineRate + pe.offlineRate)) };
 }
 
 /** Training speed multiplier: Research staff and kept models. */
@@ -197,18 +215,18 @@ export function comboMultiplier(state: Pick<GarageState, 'upgrades' | 'generatio
 
 /** The combo count a tap at `at` would reach. */
 export function comboAfterTap(state: GarageState, content: GarageContent, at: number): number {
-  return at - state.combo.lastAt <= content.tap.comboWindowMs && state.combo.count > 0 ? state.combo.count + 1 : 1;
+  return at - state.combo.lastAt <= comboWindowMs(state, content) && state.combo.count > 0 ? state.combo.count + 1 : 1;
 }
 
 /** The combo count as it stands at `at` (0 once the window has passed). */
 export function comboAt(state: GarageState, content: GarageContent, at: number): number {
-  return at - state.combo.lastAt <= content.tap.comboWindowMs ? state.combo.count : 0;
+  return at - state.combo.lastAt <= comboWindowMs(state, content) ? state.combo.count : 0;
 }
 
 /** Tokens a tap at `at` with combo `count` produces. */
 export function tapValue(state: GarageState, content: GarageContent, at: number = state.now, count: number = comboAfterTap(state, content, at)): number {
   const m = multipliers(state, content);
-  const base = content.tap.base * m.tap * m.global * hypeMultiplier(state, content) * timedMultiplier(state, content, at) * factor(modelEffects(state, content).tap);
+  const base = content.tap.base * m.tap * m.global * hypeMultiplier(state, content) * timedMultiplier(state, content, at) * factor(modelEffects(state, content).tap) * paradigmMultiplier(state, content) * paradigmEffects(state, content).tapMult;
   const fromRate = m.tapFromRate * totalRate(state, content, at);
   const frenzyTap = state.frenzy && at < state.frenzy.until ? state.frenzy.tapMult : 1;
   return amount((base + fromRate) * comboMultiplier(state, content, count) * frenzyTap);

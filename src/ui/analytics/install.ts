@@ -20,6 +20,7 @@ import { buildInfo } from '../diagnostics/build';
 import { useGameStore } from '../store/game';
 import { readValue, writeValue } from '../tutorial/storage';
 import { subscribeDaily } from './daily';
+import { subscribeHabits } from './habits';
 import { flushTaps, subscribeAds, subscribeErrors, subscribeGarage, subscribeMeta, subscribeRace, subscribeTutorial } from './subscriptions';
 
 /** AsyncStorage (memory fallback) through the tutorial's tiny key-value helper. */
@@ -88,7 +89,7 @@ export function installAnalytics(opts: InstallOptions = {}): AnalyticsRuntime {
   const info = buildInfo();
   setUserProps({ build: `${info.commit}${info.dirty ? '+' : ''}`, theme: useGameStore.getState().packId, locale: locale(), platform: Platform.OS });
   const session = createAnalyticsSession({ storage, random, tzOffset: (t) => new Date(t).getTimezoneOffset() });
-  const offs = [subscribeErrors(), subscribeRace(), subscribeTutorial(), subscribeGarage(), subscribeAds(), subscribeMeta(), subscribeDaily()];
+  const offs = [subscribeErrors(), subscribeRace(), subscribeTutorial(), subscribeGarage(), subscribeAds(), subscribeMeta(), subscribeDaily(), subscribeHabits()];
   void buffer.load().then(() => session.start());
   runtime = {
     buffer,

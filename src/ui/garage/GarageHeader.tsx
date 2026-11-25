@@ -4,6 +4,8 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { currentStage, hypeMultiplier } from '@/idle';
 
 import { BannerSlot } from '../ads';
+import { MissionsButton } from '../missions';
+import { AwayStorageChip } from './AwayStorage';
 import { Icon } from '../icons';
 import { t } from '../i18n';
 import { Text } from '../locale/Text';
@@ -60,6 +62,8 @@ export function GarageHeader({ onStats, onSettings, wide }: { onStats: () => voi
       <Title />
       <View style={styles.spacer} />
       {wide ? <BannerSlot /> : null}
+      <AwayStorageChip />
+      <MissionsButton />
       <IconButton icon="trophy" label={t('ui.garage.statsButton')} onPress={onStats} testID="garage-stats" />
       <IconButton icon="settings" label={t('ui.garage.settingsButton')} onPress={onSettings} testID="garage-settings" />
     </View>

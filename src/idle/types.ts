@@ -168,9 +168,15 @@ export interface OfflineConfig {
   thresholdMs: number;
   /** Share of production earned while away (0..1). */
   rate: number;
+  /** Away storage before any extension (hours). */
   capHours: number;
   /** A "While you were away" report appears after at least this long away. */
   reportMinMs: number;
+  /**
+   * Reserved for a future paid extension of away storage: with `GarageState.paidStorage` set,
+   * the cap is at least this many hours. No purchase exists yet (see docs/GARAGE.md).
+   */
+  paidCapHours?: number;
 }
 
 export type OfferId = 'offlineDouble' | 'boost' | 'frenzyExtend' | 'incidentFix' | 'crate' | 'prestigeBonus' | 'bonusMultiply';
@@ -266,6 +272,8 @@ export interface AchievementDef {
 export type LabPerkPowerKind = 'startHype' | 'startCash' | 'hypeIncome' | 'cashIncome' | 'momentRate';
 /** Perk kinds that only change looks: a title under the lab name, a frame around the founder card. */
 export type LabPerkCosmeticKind = 'title' | 'frame';
+/** Perk kinds that change the Garage, not race runs: `awayHours` adds hours of away storage. */
+export type LabPerkGarageKind = 'awayHours';
 
 /** A Lab Rep reward: a small start bonus for race runs, or a cosmetic unlock (see labPerks). */
 export interface LabPerkDef {
@@ -281,7 +289,7 @@ export interface LabPerkDef {
    * What a race run applies (the UI turns the power kinds into the run's start bonus). For
    * cosmetic kinds `amount` is unused (1); `key` is a title's text key, `color` a frame's colour.
    */
-  effect: { kind: LabPerkPowerKind | LabPerkCosmeticKind; amount: number; key?: string; color?: string };
+  effect: { kind: LabPerkPowerKind | LabPerkCosmeticKind | LabPerkGarageKind; amount: number; key?: string; color?: string };
 }
 
 /**
@@ -548,8 +556,146 @@ export interface AutomationConfig {
   buyBudgetShare: number;
 }
 
+// ---------------------------------------------------------------------------------------
+// Daily missions (the UI picks and tracks them; the engine grants the rewards).
+
+/** One goal of a mission: a counter (named by the UI's mission tracker) reaching `goal`. */
+export interface MissionGoal {
+  counter: string;
+  goal: number;
+}
+
+/** Which of the day's three places a mission fills: one Garage, one race, one either-or or stretch. */
+export type MissionSlot = 'garage' | 'race' | 'stretch';
+
+export const MISSION_SLOTS: readonly MissionSlot[] = ['garage', 'race', 'stretch'];
+
+export interface MissionDef {
+  id: string;
+  slot: MissionSlot;
+  /** What to do; `{a}` / `{b}` = the goals. */
+  titleKey: string;
+  /** Done when ANY goal is reached (one goal for most; two for an either-or). */
+  goals: MissionGoal[];
+  /** Offered only from this Garage stage on (index into stages). */
+  minStage?: number;
+  /** Offered only from this model generation on. */
+  minGeneration?: number;
+  weight?: number;
+}
+
+/** A reward in minutes of production (at least `minTaps` taps' worth), at most `shipShareCap` of the next ship's tokens. */
+export interface DailyRewardConfig {
+  minutes: number;
+  minTaps: number;
+  shipShareCap: number;
+  /** Lab Rep progress (fractions wait like race rewards do). */
+  rep: number;
+}
+
+export interface DailyCrateConfig extends DailyRewardConfig {
+  /** Training runs added (when training is on; may pass the queue cap). */
+  trainingRuns: number;
+  /** Each streak day adds this share to the crate, up to `streakCap` days. */
+  streakBonus: number;
+  streakCap: number;
+}
+
+export interface MissionsConfig {
+  reward: DailyRewardConfig;
+  crate: DailyCrateConfig;
+  /** A missed day is covered by a day off, which recharges this many days after it is used. */
+  dayOffEveryDays: number;
+  defs: MissionDef[];
+}
+
+// ---------------------------------------------------------------------------------------
+// Paradigm Shift: the second reset layer.
+
+/** What a Paradigm tree node changes (permanent: kept through every ship and shift). */
+export type ParadigmEffect =
+  /** Each cycle starts in this stage (index into stages). */
+  | { kind: 'startStage'; stage: number }
+  /** More candidates per training run. */
+  | { kind: 'candidates'; add: number }
+  /** More training runs fit in the queue. */
+  | { kind: 'trainingQueue'; add: number }
+  /** The daily crate is worth this many times more (a second crate a day, no ad). */
+  | { kind: 'crateMult'; mult: number }
+  /** Hours of away storage. */
+  | { kind: 'awayHours'; hours: number }
+  /** Away earnings rate added (0..1). */
+  | { kind: 'offlineRate'; add: number }
+  /** Models ship by themselves (with `choice`) when the bots' rule says it is worth it. */
+  | { kind: 'autoShip'; choice: string }
+  /** Every model generation starts with these generators. */
+  | { kind: 'startGenerators'; generator: GeneratorId; count: number }
+  /** Kept models survive a Paradigm Shift. */
+  | { kind: 'keepModels' }
+  /** Lab happenings come more often (interval multiplier below 1). */
+  | { kind: 'happeningInterval'; mult: number }
+  /** The combo window is longer (ms added). */
+  | { kind: 'comboWindow'; addMs: number }
+  /** Tokens needed to ship a model are multiplied by this (below 1 = easier). */
+  | { kind: 'shipThreshold'; mult: number }
+  /** Rarer training candidates (added to Research's rarity luck). */
+  | { kind: 'rarityLuck'; add: number }
+  /** All production multiplied. */
+  | { kind: 'globalMult'; mult: number }
+  /** Tap value multiplied. */
+  | { kind: 'tapMult'; mult: number };
+
+export interface ParadigmNodeDef {
+  id: string;
+  nameKey: string;
+  /** One line: what it does, with a joke. */
+  descKey: string;
+  icon: string;
+  /** Price in the Paradigm currency. */
+  cost: number;
+  /** Nodes that must be owned first. */
+  requires: string[];
+  effect: ParadigmEffect;
+}
+
+export interface ParadigmConfig {
+  /** A shift needs the save at this generation or later (the last named model shipped at least once). */
+  minGeneration: number;
+  /** Currency for a shift: floor(base + perGeneration × (generation − minGeneration) + perLogHype × log10(1 + Hype)). */
+  base: number;
+  perGeneration: number;
+  perLogHype: number;
+  /** Production multiplier per unit of currency ever earned (compounding: mult ^ earned). */
+  productionPerPoint: number;
+  /** After a first shift, stage requirements on the generation are multiplied by this (rounded up). */
+  stageEase: number;
+  /** Ticker line after a shift (`{n}` = the shift's number). */
+  newsKey: string;
+  nodes: ParadigmNodeDef[];
+}
+
+/** The Paradigm layer of a save (absent until the first shift). */
+export interface ParadigmState {
+  /** Shifts made. */
+  count: number;
+  /** Currency in hand. */
+  points: number;
+  /** Currency ever earned (drives the production bonus). */
+  earned: number;
+  /** Tree nodes owned. */
+  nodes: string[];
+  /** The auto-ship switch (once its node is owned). */
+  autoShip: boolean;
+  /** Highest generation reached in any cycle. */
+  bestGeneration: number;
+}
+
 export interface GarageContent {
   id: string;
+  /** The second reset layer (none: no Paradigm Shift). */
+  paradigm?: ParadigmConfig;
+  /** Daily missions (none: no missions). */
+  missions?: MissionsConfig;
   stages?: StageDef[];
   milestones?: MilestoneConfig;
   training?: TrainingConfig;
@@ -608,7 +754,7 @@ export interface FrenzyState {
   until: number;
 }
 
-export type NewsKind = 'headline' | 'launch' | 'golden' | 'incident' | 'fixed' | 'achievement' | 'stage' | 'happening' | 'training';
+export type NewsKind = 'headline' | 'launch' | 'golden' | 'incident' | 'fixed' | 'achievement' | 'stage' | 'happening' | 'training' | 'paradigm';
 
 export interface HappeningState {
   uid: number;
@@ -658,6 +804,10 @@ export interface OfflineReport {
   creditedMs: number;
   tokens: number;
   doubled: boolean;
+  /** Away storage filled up: the lab stopped earning after `capMs` (older saves: absent). */
+  capped?: boolean;
+  /** The away storage capacity when the player came back (ms). */
+  capMs?: number;
 }
 
 export interface GarageStats {
@@ -748,6 +898,10 @@ export interface GarageState {
   bonusOffer: BonusOfferState | null;
   /** Rewards from race runs (absent until the first one). */
   race?: RaceLinkState;
+  /** Reserved: the future paid away-storage extension was bought (cap at least offline.paidCapHours). */
+  paidStorage?: boolean;
+  /** The Paradigm layer (absent until the first shift). */
+  paradigm?: ParadigmState;
 }
 
 export type GarageFailure = 'cantAfford' | 'locked' | 'owned' | 'unknownId' | 'notReady' | 'none' | 'cooldown' | 'dailyCap' | 'notApplicable' | 'full' | 'pending';
