@@ -1,0 +1,11 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`date to daily is deterministic: the same date gives the same challenge, every time 1`] = `
+{
+  "founder": "insider",
+  "home": "italy",
+  "number": 25,
+  "seed": 1817097497,
+  "twist": "watchdog",
+}
+`;

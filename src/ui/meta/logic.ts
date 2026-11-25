@@ -6,10 +6,12 @@
 import { getScoreMultiplier, type ContentPack, type GameSetup, type GameState, type Modifier, type StartBonus } from '@/engine';
 import { labPerks, nextLabPerk, type GarageContent, type LabPerkDef, type RaceRewardInput } from '@/idle';
 
-/** What decides whether a run gets perks. A future daily challenge adds `daily: true` here. */
+/** What decides whether a run gets perks. */
 export interface PerkSetup {
   /** The player's switch on the start screen. */
   perksOn: boolean;
+  /** A daily challenge run (src/ui/daily): perks are always off, the same run for everyone. */
+  daily?: boolean;
 }
 
 export interface SetupBonus {
@@ -70,7 +72,7 @@ export function racePerks(content: GarageContent, labRep: number): LabPerkDef[] 
  * through here (the start screen, Play again, autostart). Perks off = no bonus.
  */
 export function bonusForSetup(setup: PerkSetup, labRep: number, content: GarageContent): SetupBonus {
-  if (!setup.perksOn) return NO_BONUS;
+  if (!setup.perksOn || setup.daily) return NO_BONUS;
   const perks = racePerks(content, labRep);
   const bonus = startBonusOf(perks);
   return bonus ? { bonus, perkIds: perks.map((p) => p.id) } : NO_BONUS;
