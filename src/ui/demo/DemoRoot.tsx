@@ -1,3 +1,4 @@
+import { useLocale } from '../locale/store';
 import { isDemo } from './config';
 import { DemoGateCard } from './DemoGateCard';
 import { RotateHint } from './RotateHint';
@@ -9,6 +10,8 @@ import { useWebFit } from './webFit';
  */
 export function DemoRoot() {
   const on = isDemo();
+  // Outside the router's remount on a language change: re-render the card and hint with it.
+  useLocale();
   useWebFit(on);
   if (!on) return null;
   return (

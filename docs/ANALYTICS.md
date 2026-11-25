@@ -63,6 +63,8 @@ Every event is stored as `{ name, params, t, s }`: `t` is epoch ms, `s` the sess
 | `race_reward_granted` | `rep` (Lab Rep, one decimal), `boost` (blueprints minutes) | A finished race granted the Garage its reward (end screen). |
 | `perks_toggle` | `on` | The player flips "Play this run with perks" in the perks sheet. |
 | `settings_change` | `key`, `value` | A setting changes (today: Garage haptics). |
+| `demo_cta_tap` | `where`: `start` \| `end` \| `gate` | Browser demo only (`EXPO_PUBLIC_DEMO=1`): the "Join the waitlist" button on the start screen, the end screen or the "In the full game" card. |
+| `demo_gate_seen` | `feature`: `difficulty` \| `runLength` \| `garageStage` | Browser demo only: an "In the full game" note is shown (the card each time it opens; the Garage's next-stage note once per launch). |
 | `error` | `where`, `message` | Anything logged through `logError` (error boundary, uncaught errors, failed saves). |
 
 User properties (`setUserProps`): `build` (commit from the build stamp, `+` if dirty), `theme` (content pack id), `locale` (`Intl` locale, e.g. `en-GB`), `platform` (`ios`, `android`, `web`), `installId`.

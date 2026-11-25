@@ -59,7 +59,7 @@ function relativise(text, isJs) {
 function themeBackground() {
   try {
     const src = fs.readFileSync(path.join(ROOT, 'src/ui/theme.ts'), 'utf8');
-    const neon = src.slice(src.indexOf('neon:'));
+    const neon = src.slice(src.indexOf('const neon'));
     const m = neon.match(/\bbg:\s*'(#[0-9A-Fa-f]{6})'/);
     if (m) return m[1];
   } catch {
@@ -157,6 +157,11 @@ function report() {
     .map(([k, v]) => `${k} ${kb(v)}`)
     .join(', ')}`);
   log(`zip: ${path.relative(ROOT, ZIP)} (${kb(fs.statSync(ZIP).size)})`);
+  // itch.io's HTML5 limits (itch.io/docs/creators/html5): 1,000 files, 500 MB, 200 MB a file,
+  // paths up to 240 characters.
+  const longest = files.map((f) => path.relative(SITE, f)).sort((a, b) => b.length - a.length)[0] || '';
+  log(`itch limits: ${files.length}/1000 files, longest path ${longest.length}/240 characters`);
+  if (files.length > 1000 || longest.length > 240 || raw > 500 * 1024 * 1024) throw new Error('over itch.io HTML5 limits');
   const links = fs.readFileSync(path.join(ROOT, 'src/ui/demo/links.ts'), 'utf8');
   if (/example\.com/.test(links)) log('WARNING: src/ui/demo/links.ts still has placeholder links (example.com). Fill them in before uploading.');
 }
