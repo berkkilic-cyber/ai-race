@@ -43,7 +43,7 @@ export function validateGarage(c: GarageContent): string[] {
   if (!c.generators.some((g) => g.unlockGeneration === 0)) err('at least one generator must be available at generation 0');
 
   const effect = (e: UpgradeEffect, what: string) => {
-    if (e.kind === 'generatorMult' && !genIds.has(e.generator)) err(`${what}: unknown generator "${e.generator}"`);
+    if ((e.kind === 'generatorMult' || e.kind === 'crewBonus') && !genIds.has(e.generator)) err(`${what}: unknown generator "${e.generator}"`);
     const v = 'mult' in e ? e.mult : 'share' in e ? e.share : 'hours' in e ? e.hours : e.add;
     pos(v, `${what} ${e.kind}`);
   };

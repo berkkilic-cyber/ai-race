@@ -2,7 +2,7 @@ import { memo, useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { Easing, FadeIn, FadeOut, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 
-import { happeningDef, offerDef, offerStatus, type BonusOfferState } from '@/idle';
+import { bonusMultiplyValue, happeningDef, offerDef, offerStatus, type BonusOfferState } from '@/idle';
 
 import { AdButton } from '../ads';
 import { t } from '../i18n';
@@ -46,6 +46,9 @@ const BonusOfferBody = memo(function BonusOfferBody({ width, height, avoid }: { 
   if (!bonus || !state || placement !== 'bonusMultiply' || !(width > 0 && height > 0)) return null;
   const def = offerDef(content, 'bonusMultiply');
   const mult = def?.multiplyMult ?? 2;
+  // The ad pays the multiplied bonus or the offer's minimum, whichever is more; the label says which.
+  const extra = bonusMultiplyValue(state, content);
+  const floored = extra > bonus.reward * (mult - 1) * 1.001;
   const spot = bonus.source === 'happening' ? happeningDef(content, bonus.id)?.spot : undefined;
   const p = spot ? spotPosition(spot, bonus.x, bonus.y, width, height) : { x: bonus.x * width, y: bonus.y * height };
   let left = Math.max(2, Math.min(width - WRAP - 2, p.x - WRAP / 2));
@@ -61,8 +64,8 @@ const BonusOfferBody = memo(function BonusOfferBody({ width, height, avoid }: { 
         placement="bonusMultiply"
         compact
         variant="primary"
-        label={t('ui.ads.placement.bonusMultiply', { mult })}
-        reward={t('ui.ads.reward.bonusMultiply', { amount: fmt(bonus.reward * (mult - 1)) })}
+        label={floored ? t('ui.ads.placement.bonusBig') : t('ui.ads.placement.bonusMultiply', { mult })}
+        reward={t('ui.ads.reward.bonusMultiply', { amount: fmt(extra) })}
         status={offerStatus(state, content, 'bonusMultiply', garageNow())}
         onRewarded={() => {
           const r = useGarageStore.getState().claim('bonusMultiply');

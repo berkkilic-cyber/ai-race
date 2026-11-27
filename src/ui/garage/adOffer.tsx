@@ -1,7 +1,7 @@
 import { memo, useSyncExternalStore } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { availableUpgrades, crateValue, isGeneratorUnlocked, offerDef, offerStatus, totalRate, unitCost } from '@/idle';
+import { availableUpgrades, crateValue, incidentFixValue, isGeneratorUnlocked, offerDef, offerStatus, totalRate, unitCost } from '@/idle';
 
 import { AdButton, adReady, pickPlacement, useAdStore, type PlacementId } from '../ads';
 import { t } from '../i18n';
@@ -128,10 +128,13 @@ export const OfferSlot = memo(function OfferSlot({ compact = true }: { compact?:
     }
     case 'incidentFix':
       label = t('ui.ads.placement.incidentFix');
-      reward = t('ui.ads.reward.incidentFix');
+      reward = t('ui.ads.reward.incidentFix', { amount: fmt(incidentFixValue(state, content)) });
       onRewarded = () => {
-        useGarageStore.getState().claim('incidentFix');
-        successHaptic();
+        const r = useGarageStore.getState().claim('incidentFix');
+        if (r?.ok) {
+          successHaptic();
+          if ((r.gained ?? 0) > 0) useGarageStore.getState().setFlash(`+${fmt(r.gained ?? 0)}`);
+        }
       };
       break;
   }

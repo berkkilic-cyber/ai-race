@@ -13,6 +13,8 @@ export interface Multipliers {
   tapFromRate: number;
   global: number;
   generator: Record<GeneratorId, number>;
+  /** Share of all generator output gained per unit owned, by tier (crew bonuses). */
+  crew: Record<GeneratorId, number>;
   offlineCapMs: number;
   offlineRate: number;
   comboStacks: number;
@@ -67,6 +69,7 @@ export function multipliers(state: Pick<GarageState, 'upgrades' | 'generation'>,
     tapFromRate: 0,
     global: 1,
     generator: {},
+    crew: {},
     offlineCapMs: content.offline.capHours * HOUR_MS,
     offlineRate: content.offline.rate,
     comboStacks: content.tap.comboMaxStacks,
@@ -86,6 +89,9 @@ export function multipliers(state: Pick<GarageState, 'upgrades' | 'generation'>,
         break;
       case 'generatorMult':
         m.generator[e.generator] = (m.generator[e.generator] ?? 1) * e.mult;
+        break;
+      case 'crewBonus':
+        m.crew[e.generator] = (m.crew[e.generator] ?? 0) + e.add;
         break;
       case 'offlineCap':
         m.offlineCapMs += e.hours * HOUR_MS;
@@ -113,6 +119,14 @@ export function hypeMultiplier(state: Pick<GarageState, 'hype'>, content: Garage
   return 1 + Math.max(0, state.hype) * content.prestige.hypePerPoint;
 }
 
+/** Generator output multiplier from crew bonuses: 1 + the sum over tiers of (share per unit × units owned). */
+export function crewMultiplier(state: Pick<GarageState, 'upgrades' | 'generation' | 'generators'>, content: GarageContent): number {
+  const crew = multipliers(state, content).crew;
+  let add = 0;
+  for (const id in crew) add += (crew[id] ?? 0) * Math.max(0, state.generators[id] ?? 0);
+  return Number.isFinite(add) ? 1 + add : 1;
+}
+
 /** The state without the race's blueprints boost (for "calm" rates that leave timed effects out). */
 export function withoutRaceBoost(state: GarageState): GarageState {
   return state.race && state.race.boostUntil > 0 ? { ...state, race: { ...state.race, boostFrom: 0, boostUntil: 0 } } : state;
@@ -134,7 +148,7 @@ export function generatorRate(state: GarageState, content: GarageContent, id: Ge
   if (!def || count <= 0) return 0;
   const m = multipliers(state, content);
   let r = count * def.baseRate * (m.generator[id] ?? 1) * m.global * hypeMultiplier(state, content) * timedMultiplier(state, content, at);
-  r *= milestoneMult(content, count) * labProductionMult(state, content) * paradigmMultiplier(state, content);
+  r *= milestoneMult(content, count) * labProductionMult(state, content) * paradigmMultiplier(state, content) * crewMultiplier(state, content);
   const inc = state.incident;
   if (inc && inc.generator === id && at < inc.until) {
     const idef = incidentDef(content, inc.id);

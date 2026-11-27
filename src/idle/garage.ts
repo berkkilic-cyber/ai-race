@@ -696,7 +696,25 @@ export function offerStatus(state: GarageState, content: GarageContent, id: Offe
 export function crateValue(state: GarageState, content: GarageContent): number {
   const def = offerDef(content, 'crate');
   if (!def) return 0;
-  return amount(Math.max(totalRate({ ...withoutRaceBoost(state), frenzy: null, boostUntil: 0, incident: null }, content, state.now) * (def.crateSeconds ?? 0), tapValue(state, content, state.now, 1) * (def.crateMinTaps ?? 0)));
+  return amount(Math.max(steadyRate(state, content) * (def.crateSeconds ?? 0), tapValue(state, content, state.now, 1) * (def.crateMinTaps ?? 0)));
+}
+
+/** Production per second with no frenzy, boost or incident: what offer rewards are measured in. */
+function steadyRate(state: GarageState, content: GarageContent): number {
+  return totalRate({ ...withoutRaceBoost(state), frenzy: null, boostUntil: 0, incident: null }, content, state.now);
+}
+
+/** Extra tokens the bonusMultiply offer would add to the bonus just tapped (0 without one). */
+export function bonusMultiplyValue(state: GarageState, content: GarageContent): number {
+  const def = offerDef(content, 'bonusMultiply');
+  if (!def || !state.bonusOffer) return 0;
+  return amount(Math.max(state.bonusOffer.reward * Math.max(0, (def.multiplyMult ?? 2) - 1), steadyRate(state, content) * (def.multiplyMinSeconds ?? 0)));
+}
+
+/** Tokens the incidentFix offer pays on top of the fix. */
+export function incidentFixValue(state: GarageState, content: GarageContent): number {
+  const def = offerDef(content, 'incidentFix');
+  return def ? amount(steadyRate(state, content) * (def.fixSeconds ?? 0)) : 0;
 }
 
 /** Claims an offer's reward (the UI calls this after the ad, or straight away with ads removed). */
@@ -722,6 +740,7 @@ export function claimOffer(state: GarageState, content: GarageContent, id: Offer
       s.frenzy = { ...s.frenzy!, until: s.frenzy!.until + (def.extendMs ?? 0) };
       break;
     case 'incidentFix':
+      gained = grant(s, incidentFixValue(s, content));
       fixIncident(s, content);
       break;
     case 'crate':
@@ -729,7 +748,7 @@ export function claimOffer(state: GarageState, content: GarageContent, id: Offer
       s.stats.cratesOpened += 1;
       break;
     case 'bonusMultiply':
-      gained = grant(s, s.bonusOffer!.reward * Math.max(0, (def.multiplyMult ?? 2) - 1));
+      gained = grant(s, bonusMultiplyValue(s, content));
       s.bonusOffer = null;
       break;
   }

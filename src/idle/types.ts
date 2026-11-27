@@ -34,6 +34,8 @@ export type UpgradeEffect =
   | { kind: 'tapFromRate'; share: number }
   /** Multiplies one generator tier. */
   | { kind: 'generatorMult'; generator: GeneratorId; mult: number }
+  /** All generator output gains this share per unit of the tier owned (0.002 = +0.2% each); tiers add up. */
+  | { kind: 'crewBonus'; generator: GeneratorId; add: number }
   /** Multiplies all production (generators and taps). */
   | { kind: 'globalMult'; mult: number }
   /** Adds hours to the offline earnings cap. */
@@ -213,6 +215,10 @@ export interface OfferDef {
   multiplyChance?: number;
   multiplyWindowMs?: number;
   multiplyAfterMs?: number;
+  /** bonusMultiply: the ad pays at least this many seconds of production on top of the free reward. */
+  multiplyMinSeconds?: number;
+  /** incidentFix: seconds of production paid on top of the fix. */
+  fixSeconds?: number;
 }
 
 /** A bonus that was just tapped and may be multiplied by the bonusMultiply offer. */

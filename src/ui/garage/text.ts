@@ -52,6 +52,10 @@ export function effectText(e: UpgradeEffect, content: GarageContent = garageCont
       const def = generatorDef(content, e.generator);
       return t('ui.garage.effect.generatorMult', { name: def ? gt(def.nameKey) : e.generator, mult: mult(e.mult) });
     }
+    case 'crewBonus': {
+      const def = generatorDef(content, e.generator);
+      return t('ui.garage.effect.crewBonus', { name: def ? gt(def.nameKey) : e.generator, pct: pct(e.add) });
+    }
     case 'globalMult':
       return t('ui.garage.effect.globalMult', { mult: mult(e.mult) });
     case 'offlineCap':

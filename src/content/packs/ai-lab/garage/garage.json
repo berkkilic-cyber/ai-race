@@ -1184,6 +1184,11 @@
      "kind": "generatorMult",
      "generator": "intern",
      "mult": 3
+    },
+    {
+     "kind": "crewBonus",
+     "generator": "intern",
+     "add": 0.002
     }
    ],
    "requires": [
@@ -1268,6 +1273,11 @@
      "kind": "generatorMult",
      "generator": "gpu",
      "mult": 3
+    },
+    {
+     "kind": "crewBonus",
+     "generator": "gpu",
+     "add": 0.002
     }
    ],
    "requires": [
@@ -1352,6 +1362,11 @@
      "kind": "generatorMult",
      "generator": "closet",
      "mult": 3
+    },
+    {
+     "kind": "crewBonus",
+     "generator": "closet",
+     "add": 0.002
     }
    ],
    "requires": [
@@ -1436,6 +1451,11 @@
      "kind": "generatorMult",
      "generator": "scraper",
      "mult": 3
+    },
+    {
+     "kind": "crewBonus",
+     "generator": "scraper",
+     "add": 0.002
     }
    ],
    "requires": [
@@ -1520,6 +1540,11 @@
      "kind": "generatorMult",
      "generator": "hall",
      "mult": 3
+    },
+    {
+     "kind": "crewBonus",
+     "generator": "hall",
+     "add": 0.002
     }
    ],
    "requires": [
@@ -1604,6 +1629,11 @@
      "kind": "generatorMult",
      "generator": "chips",
      "mult": 3
+    },
+    {
+     "kind": "crewBonus",
+     "generator": "chips",
+     "add": 0.002
     }
    ],
    "requires": [
@@ -1688,6 +1718,11 @@
      "kind": "generatorMult",
      "generator": "power",
      "mult": 3
+    },
+    {
+     "kind": "crewBonus",
+     "generator": "power",
+     "add": 0.002
     }
    ],
    "requires": [
@@ -1772,6 +1807,11 @@
      "kind": "generatorMult",
      "generator": "robotics",
      "mult": 3
+    },
+    {
+     "kind": "crewBonus",
+     "generator": "robotics",
+     "add": 0.002
     }
    ],
    "requires": [
@@ -1856,6 +1896,11 @@
      "kind": "generatorMult",
      "generator": "orbital",
      "mult": 3
+    },
+    {
+     "kind": "crewBonus",
+     "generator": "orbital",
+     "add": 0.002
     }
    ],
    "requires": [
@@ -1940,6 +1985,11 @@
      "kind": "generatorMult",
      "generator": "universe",
      "mult": 3
+    },
+    {
+     "kind": "crewBonus",
+     "generator": "universe",
+     "add": 0.002
     }
    ],
    "requires": [
@@ -2431,7 +2481,7 @@
    "nameKey": "garage.model.turbo.name",
    "headlineKey": "garage.model.turbo.headline",
    "unlockKey": "garage.model.turbo.unlock",
-   "shipAt": 6400000000.0,
+   "shipAt": 8830000000.0,
    "perks": []
   },
   {
@@ -2439,7 +2489,7 @@
    "nameKey": "garage.model.final.name",
    "headlineKey": "garage.model.final.headline",
    "unlockKey": "garage.model.final.unlock",
-   "shipAt": 59400000000.0,
+   "shipAt": 113000000000.0,
    "perks": [
     {
      "kind": "offlineCap",
@@ -2452,7 +2502,7 @@
    "nameKey": "garage.model.omni.name",
    "headlineKey": "garage.model.omni.headline",
    "unlockKey": "garage.model.omni.unlock",
-   "shipAt": 799000000000.0,
+   "shipAt": 2100000000000.0,
    "perks": []
   },
   {
@@ -2460,7 +2510,7 @@
    "nameKey": "garage.model.reasoner.name",
    "headlineKey": "garage.model.reasoner.headline",
    "unlockKey": "garage.model.reasoner.unlock",
-   "shipAt": 15600000000000.0,
+   "shipAt": 56600000000000.0,
    "perks": [
     {
      "kind": "comboStacks",
@@ -2477,7 +2527,7 @@
    "nameKey": "garage.model.agentic.name",
    "headlineKey": "garage.model.agentic.headline",
    "unlockKey": "garage.model.agentic.unlock",
-   "shipAt": 441000000000000.0,
+   "shipAt": 2210000000000000.0,
    "perks": []
   },
   {
@@ -2485,7 +2535,7 @@
    "nameKey": "garage.model.feelings.name",
    "headlineKey": "garage.model.feelings.headline",
    "unlockKey": "garage.model.feelings.unlock",
-   "shipAt": 1.81e+16,
+   "shipAt": 1.25e+17,
    "perks": [
     {
      "kind": "offlineRate",
@@ -2498,7 +2548,7 @@
    "nameKey": "garage.model.bigone.name",
    "headlineKey": "garage.model.bigone.headline",
    "unlockKey": "garage.model.bigone.unlock",
-   "shipAt": 1.08e+18,
+   "shipAt": 1.03e+19,
    "perks": []
   },
   {
@@ -2506,7 +2556,7 @@
    "nameKey": "garage.model.ultralite.name",
    "headlineKey": "garage.model.ultralite.headline",
    "unlockKey": "garage.model.ultralite.unlock",
-   "shipAt": 7.73e+19,
+   "shipAt": 1.02e+21,
    "perks": [
     {
      "kind": "tapFromRate",
@@ -2519,7 +2569,7 @@
    "nameKey": "garage.model.preview.name",
    "headlineKey": "garage.model.preview.headline",
    "unlockKey": "garage.model.preview.unlock",
-   "shipAt": 5.58e+21,
+   "shipAt": 1.01e+23,
    "perks": [
     {
      "kind": "globalMult",
@@ -2532,7 +2582,7 @@
    "nameKey": "garage.model.super.name",
    "headlineKey": "garage.model.super.headline",
    "unlockKey": "garage.model.super.unlock",
-   "shipAt": 4.01e+23,
+   "shipAt": 1e+25,
    "perks": [
     {
      "kind": "globalMult",
@@ -2545,7 +2595,7 @@
    "nameKey": "garage.model.stable.name",
    "headlineKey": "garage.model.stable.headline",
    "unlockKey": "garage.model.stable.unlock",
-   "shipAt": 4.01e+24,
+   "shipAt": 1e+26,
    "perks": [
     {
      "kind": "goldenMult",
@@ -2558,7 +2608,7 @@
    "nameKey": "garage.model.openish.name",
    "headlineKey": "garage.model.openish.headline",
    "unlockKey": "garage.model.openish.unlock",
-   "shipAt": 4.01e+25,
+   "shipAt": 1e+27,
    "perks": [
     {
      "kind": "offlineRate",
@@ -2571,7 +2621,7 @@
    "nameKey": "garage.model.nohallu.name",
    "headlineKey": "garage.model.nohallu.headline",
    "unlockKey": "garage.model.nohallu.unlock",
-   "shipAt": 4.0099999999999996e+26,
+   "shipAt": 1e+28,
    "perks": [
     {
      "kind": "goldenInterval",
@@ -2584,7 +2634,7 @@
    "nameKey": "garage.model.sorry.name",
    "headlineKey": "garage.model.sorry.headline",
    "unlockKey": "garage.model.sorry.unlock",
-   "shipAt": 4.01e+27,
+   "shipAt": 1e+29,
    "perks": [
     {
      "kind": "comboStacks",
@@ -2597,7 +2647,7 @@
    "nameKey": "garage.model.longctx.name",
    "headlineKey": "garage.model.longctx.headline",
    "unlockKey": "garage.model.longctx.unlock",
-   "shipAt": 4.01e+28,
+   "shipAt": 1e+30,
    "perks": [
     {
      "kind": "tapMult",
@@ -2610,7 +2660,7 @@
    "nameKey": "garage.model.finalfinal.name",
    "headlineKey": "garage.model.finalfinal.headline",
    "unlockKey": "garage.model.finalfinal.unlock",
-   "shipAt": 4.01e+29,
+   "shipAt": 1e+31,
    "perks": [
     {
      "kind": "globalMult",
@@ -2623,7 +2673,7 @@
    "nameKey": "garage.model.multiverse.name",
    "headlineKey": "garage.model.multiverse.headline",
    "unlockKey": "garage.model.multiverse.unlock",
-   "shipAt": 4.01e+30,
+   "shipAt": 1e+32,
    "perks": [
     {
      "kind": "globalMult",
@@ -2636,7 +2686,7 @@
    "nameKey": "garage.model.champion.name",
    "headlineKey": "garage.model.champion.headline",
    "unlockKey": "garage.model.champion.unlock",
-   "shipAt": 4.01e+31,
+   "shipAt": 1e+33,
    "perks": [
     {
      "kind": "tapFromRate",
@@ -2649,7 +2699,7 @@
    "nameKey": "garage.model.monarch.name",
    "headlineKey": "garage.model.monarch.headline",
    "unlockKey": "garage.model.monarch.unlock",
-   "shipAt": 4.01e+32,
+   "shipAt": 1e+34,
    "perks": [
     {
      "kind": "goldenMult",
@@ -2662,7 +2712,7 @@
    "nameKey": "garage.model.vibes.name",
    "headlineKey": "garage.model.vibes.headline",
    "unlockKey": "garage.model.vibes.unlock",
-   "shipAt": 4.01e+33,
+   "shipAt": 1e+35,
    "perks": [
     {
      "kind": "globalMult",
@@ -2675,7 +2725,7 @@
    "nameKey": "garage.model.singlite.name",
    "headlineKey": "garage.model.singlite.headline",
    "unlockKey": "garage.model.singlite.unlock",
-   "shipAt": 4.0099999999999997e+34,
+   "shipAt": 1e+36,
    "perks": [
     {
      "kind": "globalMult",
@@ -2688,7 +2738,7 @@
    "nameKey": "garage.model.agi.name",
    "headlineKey": "garage.model.agi.headline",
    "unlockKey": "garage.model.agi.unlock",
-   "shipAt": 4.01e+35,
+   "shipAt": 1e+37,
    "perks": [
     {
      "kind": "globalMult",
@@ -2859,43 +2909,45 @@
   {
    "id": "boost",
    "cooldownMs": 0,
-   "dailyCap": 12,
+   "dailyCap": 6,
    "boostMult": 2,
-   "boostMs": 1800000,
+   "boostMs": 3600000,
    "boostCapMs": 14400000
   },
   {
    "id": "frenzyExtend",
    "cooldownMs": 900000,
    "dailyCap": 6,
-   "extendMs": 20000
+   "extendMs": 60000
   },
   {
    "id": "incidentFix",
-   "cooldownMs": 300000,
-   "dailyCap": 10
+   "cooldownMs": 900000,
+   "dailyCap": 6,
+   "fixSeconds": 300
   },
   {
    "id": "crate",
    "cooldownMs": 10800000,
-   "dailyCap": 4,
-   "crateSeconds": 1200,
+   "dailyCap": 3,
+   "crateSeconds": 3600,
    "crateMinTaps": 60
   },
   {
    "id": "prestigeBonus",
    "cooldownMs": 0,
    "dailyCap": 3,
-   "prestigeBonus": 0.3
+   "prestigeBonus": 0.5
   },
   {
    "id": "bonusMultiply",
-   "cooldownMs": 0,
-   "dailyCap": 20,
+   "cooldownMs": 300000,
+   "dailyCap": 10,
    "multiplyMult": 3,
    "multiplyChance": 0.33,
    "multiplyWindowMs": 6000,
-   "multiplyAfterMs": 180000
+   "multiplyAfterMs": 180000,
+   "multiplyMinSeconds": 600
   }
  ],
  "achievements": [

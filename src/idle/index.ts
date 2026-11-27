@@ -15,6 +15,8 @@ export {
   collectGolden,
   costOf,
   crateValue,
+  bonusMultiplyValue,
+  incidentFixValue,
   createGarage,
   dismissOffline,
   emptyStats,
