@@ -17,10 +17,11 @@ function Row({ label, hint, value, onChange, testID }: { label: string; hint: st
   );
 }
 
-/** Sound and haptics switches, for any settings panel (Garage settings; the race's run menu at merge). */
+/** Sound, music and haptics switches, for any settings panel (Garage settings; the race's run menu at merge). */
 export function SoundSettingsRows() {
   const sound = useFeelSettings((s) => s.sound);
   const haptics = useFeelSettings((s) => s.haptics);
+  const music = useFeelSettings((s) => s.music);
   return (
     <View style={styles.rows} testID="feel-settings">
       <Row
@@ -32,6 +33,16 @@ export function SoundSettingsRows() {
           if (on) feedback('tap');
         }}
         testID="feel-sound"
+      />
+      <Row
+        label={t('ui.feel.music')}
+        hint={t('ui.feel.musicHint')}
+        value={music}
+        onChange={(on) => {
+          useFeelSettings.getState().setMusic(on);
+          feedback('tap');
+        }}
+        testID="feel-music"
       />
       <Row
         label={t('ui.feel.haptics')}

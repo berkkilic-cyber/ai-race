@@ -6,6 +6,7 @@ import { useGarageStore } from '../garage/store';
 import { useGameStore } from '../store/game';
 import { feedback, playCues } from './cues';
 import { getSoundLog, preloadSounds } from './engine';
+import { getMusicState, installMusic } from './music';
 import { createGarageMemo, deriveGarageCues, deriveShipDayCues } from './garageSounds';
 import { createRaceMemo, deriveRaceCues } from './raceSounds';
 import { useFeelSettings } from './settings';
@@ -29,6 +30,7 @@ const unsubscribers: (() => void)[] = [];
 export function installFeel(): void {
   if (installed) return;
   installed = true;
+  installMusic();
 
   const memo = createRaceMemo();
   const garageMemo = createGarageMemo();
@@ -84,13 +86,15 @@ export interface FeelDebugHandle {
   /** The same with time (ms) and rate. */
   entries(): readonly { name: string; at: number; rate: number }[];
   settings: typeof useFeelSettings;
+  /** What music is wanted and how loud each track is. */
+  music: typeof getMusicState;
 }
 
 /** Web only, and only when the URL has `debug=1`: `window.__feel` for headless checks. */
 function installFeelDebugHandle(): void {
   if (Platform.OS !== 'web' || typeof window === 'undefined') return;
   if (!/[?&]debug=1\b/.test(window.location?.search ?? '')) return;
-  const handle: FeelDebugHandle = { log: () => getSoundLog().map((e) => e.name), entries: getSoundLog, settings: useFeelSettings };
+  const handle: FeelDebugHandle = { log: () => getSoundLog().map((e) => e.name), entries: getSoundLog, settings: useFeelSettings, music: getMusicState };
   (window as unknown as { __feel?: FeelDebugHandle }).__feel = handle;
 }
 

@@ -1,6 +1,8 @@
 {
   "ui.feel.sound": "Sound effects",
   "ui.feel.soundHint": "Follows the silent switch",
+  "ui.feel.music": "Music",
+  "ui.feel.musicHint": "One track for the race, one for the Garage",
   "ui.feel.haptics": "Haptics",
   "ui.feel.hapticsHint": "Taps and buzzes on supported phones"
 }

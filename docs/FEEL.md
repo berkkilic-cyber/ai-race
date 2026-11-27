@@ -92,3 +92,18 @@ node scripts/sfx/generate.js --check     # only checks the committed files
 ```
 
 The synth is deterministic (seeded noise, no clock): the same script writes byte-identical files. Add a sound by adding a recipe to `SOUNDS` in the script, its `require` in `src/ui/feel/sounds.ts` (a test checks both lists match), a cue in `src/ui/feel/cues.ts`, and a row here. Budget: most sounds under 300 ms, all files together under 900 KB (now 820 KB, 34 files; `du` shows about 892 KB with file-system blocks). The generator's `--check` and `engine.test.ts` enforce it.
+
+## Music
+
+Two looping tracks, one per mode, in `assets/music` (AAC `.m4a`, 44.1 kHz stereo, 112 kb/s, about
+2.3 MB each): `race.m4a` for the race and its end screen, `garage.m4a` for the Garage and the
+start screen. `src/ui/feel/music.ts` follows the route (`trackForPath`), cross-fades between the
+two in 0.7 s, plays at 0.4 volume under the sound effects, pauses when the app leaves the
+foreground, and obeys the Music switch in settings. expo-audio is loaded lazily, as for sounds.
+
+The files are prepared from the owner's WAV masters with ffmpeg: trailing silence trimmed; the
+last 4 s (the outro) cross-faded into the first 4 s (the intro) and moved to the end of the file,
+so the file's end runs into its start and a plain `loop` has no musical seam; loudness set to
+about -18 LUFS. AAC can still leave a gap of a few milliseconds at the loop point on some
+devices; if it is audible, the fix is two players overlapping at the join. The 60 s trailer
+track is not in the app; it is mixed into the three videos in `docs/marketing/clips`.

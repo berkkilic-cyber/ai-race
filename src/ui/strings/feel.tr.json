@@ -1,6 +1,8 @@
 {
   "ui.feel.sound": "Ses efektleri",
   "ui.feel.soundHint": "Sessiz mod anahtarına uyar",
+  "ui.feel.music": "Müzik",
+  "ui.feel.musicHint": "Yarış için bir parça, Garaj için bir parça",
   "ui.feel.haptics": "Titreşim",
   "ui.feel.hapticsHint": "Desteklenen telefonlarda hafif titreşimler"
 }
