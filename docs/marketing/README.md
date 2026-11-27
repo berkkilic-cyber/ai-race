@@ -4,7 +4,7 @@ Everything for a zero-budget launch that can be prepared without an account: a f
 
 | File | What |
 | --- | --- |
-| [NAME.md](NAME.md) | Twelve names checked against existing games and apps, the top three, and what to check before choosing |
+| [NAME.md](NAME.md) | The chosen name (Benchmaxxing) and the research behind it |
 | [STORE.md](STORE.md) | App Store listing in English and Turkish (name, subtitle, promotional text, description, keywords, what's new), expected age rating, privacy label, itch.io page text and tags |
 | [POSTS.md](POSTS.md) | Six build-in-public posts for X and LinkedIn, Reddit posts for three communities with their rules, a Show HN post, Turkish posts and a message for Turkish creators |
 | [CLIPS.md](CLIPS.md) | Twelve short-video ideas with hooks, shots, captions (six with Turkish captions) and how to make vertical versions |
@@ -16,7 +16,7 @@ The demo itself is built by `npm run demo` (code in src/ui/demo and scripts/demo
 
 ## What the owner does by hand, in order
 
-1. **Choose the name.** Read NAME.md. Search both stores and the trademark registers (USPTO, EUIPO, TÜRKPATENT) for your finalist, and try to get the handles. Then replace `[NAME]` in STORE.md, POSTS.md and PRESSKIT.md, and decide whether to rename the app (`app.json` → `expo.name`, and the title string in the pack).
+1. **The name is chosen: Benchmaxxing** (store title "Benchmaxxing: AI Lab Race"). Still to do by hand: search the App Store, Google Play and the trademark registers (USPTO, EUIPO, TÜRKPATENT) for it, and take the handles in both spellings (benchmaxxing and benchmaxing).
 2. **Create the accounts** (free): itch.io, X, LinkedIn (you have one), TikTok, Instagram, YouTube, Reddit, Discord, and a free form service for the waitlist. Use the same handle everywhere if you can.
 3. **Set up the waitlist**: a free form (for example a Google Form or any free newsletter service's signup page) that asks for an email address only, says what it is for ("one email when the game is out") and how to unsubscribe. Keep the list private and use it only for that.
 4. **Create the Discord server**: a few channels are enough (#announcements, #feedback, #bugs, #turkce). Make an invite link that does not expire.

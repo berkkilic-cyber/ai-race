@@ -1,6 +1,6 @@
 # Store and itch.io texts
 
-Ready to paste once the name is chosen. `[NAME]` stands for the final name (see NAME.md); where a field has a hard limit, each option was counted with the name "AGI Speedrun" (12 characters) and the count is shown. Counts include spaces.
+The name is **Benchmaxxing** (chosen 28 November 2026; see NAME.md). Where a field has a hard limit, the count is given beside it.
 
 ## Apple's limits (checked 25 November 2026)
 
@@ -16,13 +16,13 @@ Ready to paste once the name is chosen. `[NAME]` stands for the final name (see 
 
 ## App Store, English
 
-**Name options** (pick one per the final name)
+**Name**
 
 | Name field | Chars |
 | --- | --- |
-| AGI Speedrun | 12 |
-| AGI Speedrun: AI Lab Race | 25 |
-| Safety Third: AI Lab Race | 25 |
+| Benchmaxxing: AI Lab Race | 25 |
+
+Put `benchmaxing` (one x) in the keyword field so the common misspelling still finds the game.
 
 **Subtitle options**
 
@@ -42,7 +42,7 @@ Ready to paste once the name is chosen. `[NAME]` stands for the final name (see 
 
 > Found a frontier AI lab in a garage. Win the world before it notices.
 >
-> [NAME] is a satirical strategy game about the race to build the smartest machine on Earth. You pick a founder, a home region and a lab name, then grow from one rented server to a global empire on a living world map while four rival labs do the same in their own colours.
+> Benchmaxxing is a satirical strategy game about the race to build the smartest machine on Earth. You pick a founder, a home region and a lab name, then grow from one rented server to a global empire on a living world map while four rival labs do the same in their own colours.
 >
 > THE RACE
 > • 40 regions to spread through: oceans, languages and strict regulators slow you down, and the right upgrades open new routes.
@@ -66,9 +66,9 @@ Ready to paste once the name is chosen. `[NAME]` stands for the final name (see 
 
 **Keywords** (100 bytes; do not repeat words already in the name or subtitle, Apple indexes those already)
 
-`strategy,satire,AGI,startup,simulator,idle,clicker,incremental,world,map,tech,parody,singularity`
+`strategy,satire,AGI,startup,simulator,idle,clicker,incremental,world,map,tech,parody,benchmaxing`
 
-(96 bytes. If the name contains "AGI", replace `AGI,` with `AI,`.)
+(96 bytes. `benchmaxing` covers the one-x misspelling.)
 
 **What's New in version 1.0**
 
@@ -78,7 +78,7 @@ Ready to paste once the name is chosen. `[NAME]` stands for the final name (see 
 
 Turkish follows docs/GLOSSARY.tr.md (Hype, AGI and lab stay; Cash = Nakit; the player is "sen").
 
-**Name**: the same as English (names are not translated). Optional suffix: `AGI Speedrun: AI Lab Yarışı` (27).
+**Name**: the same as English (names are not translated). Optional suffix: `Benchmaxxing: AI Lab Yarışı` (27).
 
 **Subtitle options**
 
@@ -98,7 +98,7 @@ Turkish follows docs/GLOSSARY.tr.md (Hype, AGI and lab stay; Cash = Nakit; the p
 
 > Garajda bir öncü AI lab'ı kur. Dünya fark etmeden dünyayı kap.
 >
-> [NAME], dünyanın en akıllı makinesini yapma yarışını hicveden bir strateji oyunu. Bir kurucu, bir merkez bölge ve bir lab adı seç; tek bir kiralık sunucudan yaşayan bir dünya haritasında küresel bir imparatorluğa büyü. Bu arada dört rakip lab da kendi renkleriyle aynısını yapıyor.
+> Benchmaxxing, dünyanın en akıllı makinesini yapma yarışını hicveden bir strateji oyunu. Bir kurucu, bir merkez bölge ve bir lab adı seç; tek bir kiralık sunucudan yaşayan bir dünya haritasında küresel bir imparatorluğa büyü. Bu arada dört rakip lab da kendi renkleriyle aynısını yapıyor.
 >
 > YARIŞ
 > • Yayılacak 40 bölge: okyanuslar, diller ve katı denetçiler seni yavaşlatır; doğru geliştirmeler yeni yollar açar.
@@ -120,9 +120,9 @@ Turkish follows docs/GLOSSARY.tr.md (Hype, AGI and lab stay; Cash = Nakit; the p
 
 **Keywords** (100 bytes: Turkish letters count double)
 
-`strateji,hiciv,AGI,girişim,simülasyon,boşta,tıklama,dünya,harita,teknoloji,parodi,yapay,zeka`
+`strateji,hiciv,AGI,girişim,simülasyon,boşta,tıklama,dünya,harita,benchmaxing,parodi,yapay,zeka`
 
-(97 bytes.)
+(99 bytes.)
 
 **Yenilikler, sürüm 1.0**
 
@@ -178,7 +178,7 @@ If EAS Update is removed from the store build, the label becomes "Data Not Colle
 
 > **Found a frontier AI lab in a garage. Win the world before it notices.**
 >
-> This is the free browser demo of [NAME], a satirical strategy game for phones. Pick a founder and a home region, ship models, spread across a living world map, answer event cards, and keep three meters out of the red: Regulation, Backlash and the Rival AGI race.
+> This is the free browser demo of Benchmaxxing, a satirical strategy game for phones. Pick a founder and a home region, ship models, spread across a living world map, answer event cards, and keep three meters out of the red: Regulation, Backlash and the Rival AGI race.
 >
 > **In the demo**
 > - The Sprint run (about ten minutes) on the two easier difficulty levels
@@ -195,7 +195,7 @@ If EAS Update is removed from the store build, the label becomes "Data Not Colle
 
 > **Garajda bir öncü AI lab'ı kur. Dünya fark etmeden dünyayı kap.**
 >
-> Bu, telefonlar için hicivli bir strateji oyunu olan [NAME]'in ücretsiz tarayıcı demosu. Bir kurucu ve merkez bölge seç, modeller yayınla, yaşayan bir dünya haritasına yayıl, olay kartlarını yanıtla ve üç göstergeyi kırmızıdan uzak tut: Denetim, Tepki ve Rakip AGI yarışı.
+> Bu, telefonlar için hicivli bir strateji oyunu olan Benchmaxxing'in ücretsiz tarayıcı demosu. Bir kurucu ve merkez bölge seç, modeller yayınla, yaşayan bir dünya haritasına yayıl, olay kartlarını yanıtla ve üç göstergeyi kırmızıdan uzak tut: Denetim, Tepki ve Rakip AGI yarışı.
 >
 > **Demoda**
 > - Sprint oyunu (yaklaşık on dakika), iki kolay zorluk seviyesinde
@@ -210,4 +210,4 @@ If EAS Update is removed from the store build, the label becomes "Data Not Colle
 
 **Genre**: Strategy. **Tags** (itch limits the number of tags per page; use the first ones if the field stops you): `strategy`, `satire`, `incremental`, `idle`, `simulation`, `artificial-intelligence`, `world-map`, `mobile-friendly`, `singleplayer`, `turkish`.
 
-(The `[NAME]'in` suffix in Turkish depends on the name's last vowel: "AGI Speedrun'ın", "Safety Third'ün", "AGI Rush'ın". Fix it when the name is chosen.)
+(Turkish suffix: "Benchmaxxing'in".)

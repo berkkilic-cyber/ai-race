@@ -1,6 +1,6 @@
 # Posts, ready to paste
 
-Placeholders: `[NAME]` the final name, `[DEMO_URL]` the itch.io page, `[WAITLIST_URL]` the waitlist form, `[DISCORD_URL]` the Discord invite, `[TOOLS]` the AI tools Berk used (optional: leave the sentence out to stay generic). Every fact below comes from this brief or the repository (git log, docs/BALANCE.md, docs/GARAGE.md, the test run); nothing is invented. Numbers that will change (tests, commits) are as of 25 November 2026.
+Placeholders: `[DEMO_URL]` the itch.io page, `[WAITLIST_URL]` the waitlist form, `[DISCORD_URL]` the Discord invite, `[TOOLS]` the AI tools Berk used (optional: leave the sentence out to stay generic). Every fact below comes from this brief or the repository (git log, docs/BALANCE.md, docs/GARAGE.md, the test run); nothing is invented. Numbers that will change (tests, commits) are as of 25 November 2026.
 
 ## Platform limits used
 
@@ -185,7 +185,7 @@ Read each community's rules again on the day: rules change, and the summaries be
 Feedback Friday comment:
 
 ```
-[NAME] (browser demo): an idle lab inside a strategy game. Feedback welcome.
+Benchmaxxing (browser demo): an idle lab inside a strategy game. Feedback welcome.
 
 I'm the developer. The game is a satirical AI-lab strategy game, but it has an idle mode, the Garage: tap your model for tokens, buy ten tiers of generators (interns, rented GPUs, server closets...), hit milestones, and "ship" a model to reset with permanent Hype. Stages change the room and switch on new mechanics (training runs, staff, helpers, auto-buy).
 
@@ -196,12 +196,12 @@ What I'd like to know: does the first ten minutes pull you in, and at what point
 
 Post (no earlier than 30 days after the first):
 
-Title: `I made an idle lab that feeds a strategy game: [NAME] (browser demo, free)`
+Title: `I made an idle lab that feeds a strategy game: Benchmaxxing (browser demo, free)`
 
 ```
 Hi, I'm the developer (one person, first game).
 
-[NAME] has two modes. The Garage is an incremental game: tap your model, buy ten generator tiers with milestone multipliers, ship models to prestige into permanent Hype, and move through stages that each switch on a mechanic (training runs that roll model candidates you keep or scrap, staff lanes, helpers that collect for you, auto-buy). Progress in the Garage earns small perks for the other mode, a ten-minute strategy run on a world map.
+Benchmaxxing has two modes. The Garage is an incremental game: tap your model, buy ten generator tiers with milestone multipliers, ship models to prestige into permanent Hype, and move through stages that each switch on a mechanic (training runs that roll model candidates you keep or scrap, staff lanes, helpers that collect for you, auto-buy). Progress in the Garage earns small perks for the other mode, a ten-minute strategy run on a world map.
 
 The browser demo has the first two Garage stages and the short strategy run: [DEMO_URL]
 
@@ -214,7 +214,7 @@ Since the last Feedback Friday I changed: [WHAT CHANGED]. Happy to answer anythi
 
 **Plan:** one post, linking straight to the itch.io page, once. The demo needs no account, which this community expects.
 
-Title: `[HTML5] [NAME]: found a fictional AI lab and race four rivals to AGI on a world map`
+Title: `[HTML5] Benchmaxxing: found a fictional AI lab and race four rivals to AGI on a world map`
 
 First comment (from the developer):
 
@@ -232,10 +232,10 @@ Every lab and person in it is made up. Feedback on the first two minutes is the 
 
 **Plan:** post when the iOS version is on the App Store (or a public TestFlight, if the rules allow it then), on a Saturday with the pinned post up.
 
-Title: `[Dev] [NAME]: a satirical strategy game about running an AI lab (iPhone, landscape)`
+Title: `[Dev] Benchmaxxing: a satirical strategy game about running an AI lab (iPhone, landscape)`
 
 ```
-Hi, I'm the developer. [NAME] is a strategy game where you found a fictional AI lab and race four rival labs to AGI on a living world map. You spread across 40 regions, buy upgrades on three routes (bigger models, more reach, or shadier tactics), answer event cards, and try to keep Regulation, public Backlash and the Rival AGI race under 100%.
+Hi, I'm the developer. Benchmaxxing is a strategy game where you found a fictional AI lab and race four rival labs to AGI on a living world map. You spread across 40 regions, buy upgrades on three routes (bigger models, more reach, or shadier tactics), answer event cards, and try to keep Regulation, public Backlash and the Rival AGI race under 100%.
 
 Runs are about ten minutes (Sprint) or twenty-five (full). There's also an idle mode, the Garage, for the minutes in between. Plays offline, no account, English and Turkish.
 
@@ -315,7 +315,7 @@ Send only to creators who cover indie or strategy games, one at a time, by their
 ```
 Merhaba [İSİM],
 
-Ben Berk, [NAME] adında hicivli bir strateji oyunu yapıyorum: hayali bir AI lab'ı kurup dünya haritasında dört rakip lab'la AGI'ya yarışıyorsun; denetçiler, kamuoyu tepkisi ve rakipler seni durdurmaya çalışıyor. Bir oyun 10 dakika sürüyor, Türkçe tam çeviriyle geliyor ve ilk olarak Türkiye'de çıkacak.
+Ben Berk, Benchmaxxing adında hicivli bir strateji oyunu yapıyorum: hayali bir AI lab'ı kurup dünya haritasında dört rakip lab'la AGI'ya yarışıyorsun; denetçiler, kamuoyu tepkisi ve rakipler seni durdurmaya çalışıyor. Bir oyun 10 dakika sürüyor, Türkçe tam çeviriyle geliyor ve ilk olarak Türkiye'de çıkacak.
 
 Kanalında [VİDEO ADI] videosunu izledim; [KISA, GERÇEK BİR YORUM]. Oyunun tarzına uyabileceğini düşündüm.
 

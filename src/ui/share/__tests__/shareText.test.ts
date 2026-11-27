@@ -9,17 +9,17 @@ afterEach(() => setCurrentLocale('en'));
 
 describe('share text', () => {
   it('reads as a short Wordle-style result in English', () => {
-    expect(buildShareText(daily)).toBe(['AI Race Daily #25', 'Reached AGI first · day 212', 'AGI race ■■□■■', 'Score 4,210 · Streak 3', SHARE_LINK].join('\n'));
+    expect(buildShareText(daily)).toBe(['Benchmaxxing Daily #25', 'Reached AGI first · day 212', 'AGI race ■■□■■', 'Score 4,210 · Streak 3', SHARE_LINK].join('\n'));
   });
 
   it('drops the daily line and the streak after a normal run', () => {
-    expect(buildShareText(run)).toBe(['AI Race', 'Banned worldwide · day 1,301', 'AGI race □□■·□', 'Score 980', SHARE_LINK].join('\n'));
+    expect(buildShareText(run)).toBe(['Benchmaxxing', 'Banned worldwide · day 1,301', 'AGI race □□■·□', 'Score 980', SHARE_LINK].join('\n'));
   });
 
   it('is in Turkish with Turkish numbers', () => {
     setCurrentLocale('tr');
-    expect(buildShareText(daily)).toBe(['AI Race Günlük #25', "AGI'ya ilk biz ulaştık · 212. gün", 'AGI yarışı ■■□■■', 'Skor 4.210 · Seri 3', SHARE_LINK].join('\n'));
-    expect(buildShareText(run)).toBe(['AI Race', 'Dünya çapında yasaklandık · 1.301. gün', 'AGI yarışı □□■·□', 'Skor 980', SHARE_LINK].join('\n'));
+    expect(buildShareText(daily)).toBe(['Benchmaxxing Günlük #25', "AGI'ya ilk biz ulaştık · 212. gün", 'AGI yarışı ■■□■■', 'Skor 4.210 · Seri 3', SHARE_LINK].join('\n'));
+    expect(buildShareText(run)).toBe(['Benchmaxxing', 'Dünya çapında yasaklandık · 1.301. gün', 'AGI yarışı □□■·□', 'Skor 980', SHARE_LINK].join('\n'));
   });
 
   it('has a phrase for every ending family and stays tweet-sized, emoji-free', () => {

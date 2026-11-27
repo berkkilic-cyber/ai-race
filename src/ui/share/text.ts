@@ -4,7 +4,7 @@
  * who led the AGI race in each fifth of the run (filled = you, hollow = a rival). Nothing
  * about the day's events, so it spoils nothing for players who have not played yet.
  *
- *   AI Race Daily #25
+ *   Benchmaxxing Daily #25
  *   Reached AGI first · day 212
  *   AGI race ■■□■■
  *   Score 4,210 · Streak 3
