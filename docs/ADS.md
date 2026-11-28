@@ -13,18 +13,17 @@ A store build never shows the built-in test ad. If AdMob cannot start, the ad bu
 
 Start-up order in a real build (`src/ui/ads/installAds.ts`): Apple's tracking prompt (iOS) → Google's consent form where the law asks for one (`AdsConsent.gatherConsent`) → `mobileAds().initialize()` → the first rewarded ad loads. One ad is kept loaded and shared by all placements; after it closes or fails the next is requested, with retries at 5, 15, 30 and 60 seconds.
 
-## Ids: still Google's samples
+## Ids
 
-Until the owner's ids are filled in, the build uses Google's public sample ids and shows **test ads only** (no revenue, and safe to tap).
-
-| What | Where | Looks like |
+| What | Where | Value |
 | --- | --- | --- |
-| iOS app id, Android app id | `app.json` → plugins → `react-native-google-mobile-ads` (`iosAppId`, `androidAppId`) | `ca-app-pub-XXXXXXXXXXXXXXXX~YYYYYYYYYY` |
-| Rewarded ad unit id, per platform | `src/ui/ads/admobIds.ts` | `ca-app-pub-XXXXXXXXXXXXXXXX/ZZZZZZZZZZ` |
+| iOS app id | `app.json` → plugins → `react-native-google-mobile-ads` → `iosAppId` | `ca-app-pub-2761229802602660~8787359842` |
+| iOS rewarded unit (`rewarded_ios`) | `src/ui/ads/admobIds.ts` | `ca-app-pub-2761229802602660/2249871659` |
+| Android app id and rewarded unit | same two places | still Google's samples: not created in AdMob yet |
 
-In AdMob: Apps → Add app (iOS, "not yet published"), then Ad units → Add ad unit → Rewarded. One rewarded unit per platform is enough. Changing an app id needs a new native build; a unit id can go out as an update.
+**Live ads are served only by a store build.** The production profile in `eas.json` sets `EXPO_PUBLIC_ADS_LIVE=1`; development and preview builds use Google's sample units and show test ads (labelled "Test Ad"), so nobody can tap a live ad by accident. AdMob suspends accounts for tapping your own live ads. An over-the-air update for the production channel must be published with the same variable set, or it would switch store players to test ads.
 
-Never tap live ads in your own app: AdMob can suspend the account. While developing, keep the sample ids or register the phone as a test device in AdMob.
+Changing an app id needs a new native build; a unit id can go out as an update.
 
 ## Dependencies added (and why)
 

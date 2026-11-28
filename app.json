@@ -49,7 +49,7 @@
       [
         "react-native-google-mobile-ads",
         {
-          "iosAppId": "ca-app-pub-3940256099942544~1458002511",
+          "iosAppId": "ca-app-pub-2761229802602660~8787359842",
           "androidAppId": "ca-app-pub-3940256099942544~3347511713",
           "userTrackingUsageDescription": "This lets the ads you choose to watch be more relevant. The game works the same either way.",
           "skAdNetworkItems": [
