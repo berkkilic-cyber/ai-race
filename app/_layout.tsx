@@ -7,6 +7,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { AnalyticsRoot } from '@/ui/analytics/AnalyticsRoot';
 import { DemoRoot } from '@/ui/demo/DemoRoot';
+import { installAds } from '@/ui/ads/installAds';
 import { installDebugHandle } from '@/ui/debug';
 import { installFeel, useFeelRoutes } from '@/ui/feel';
 import { ErrorBoundary } from '@/ui/diagnostics/ErrorBoundary';
@@ -19,6 +20,7 @@ import { localeScreenLayout } from '@/ui/locale';
 installGlobalErrorHandlers();
 installDebugHandle();
 installFeel();
+installAds();
 SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
 export default function RootLayout() {
